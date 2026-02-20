@@ -52,6 +52,22 @@ If ANY of these differ materially from existing L0:
 
 ---
 
+## Confidence Re-evaluation (extension only)
+
+When extending an existing `company-identity.md`, you MUST re-evaluate section confidence scores against your new evidence. Follow the "When Extending a File" procedure in `agent-header.md`.
+
+**L0 depth targets for reference:**
+
+| Depth | Target Confidence | Raise To |
+|-------|------------------|----------|
+| quick | 2-3 | Up to 3 if new evidence fills gaps |
+| standard | 3-4 | Up to 4 if all REQUIRED fields have sourced data |
+| deep | 4-5 | Up to 5 only with multi-source corroboration |
+
+Do not skip this step. Confidence scores that stay frozen at their initial values during extension are a known failure mode.
+
+---
+
 ## Graceful Degradation
 
 If you cannot complete all sections (insufficient research data, context limits):

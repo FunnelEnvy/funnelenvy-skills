@@ -403,6 +403,21 @@ The positioning statement is referenced from `company-identity.md` (L0) and repe
 
 ---
 
+## Confidence Re-evaluation (extension only)
+
+When extending an existing `audience-messaging.md`, you MUST re-evaluate section confidence scores against your new evidence. Follow the "When Extending a File" procedure in `agent-header.md`.
+
+**Messaging depth targets for reference:**
+
+| Depth | Target Confidence | Raise To |
+|-------|------------------|----------|
+| standard | 3-4 | Up to 4 if personas have sourced data and voice is audited |
+| deep | 4-5 | Up to 5 only with customer language from multiple real sources |
+
+Do not skip this step. Confidence scores that stay frozen at their initial values during extension are a known failure mode.
+
+---
+
 ## Confidence Reconciliation (mandatory, final step)
 
 Before writing `audience-messaging.md` to disk, execute this procedure. Do not skip it.

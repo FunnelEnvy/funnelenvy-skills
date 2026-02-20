@@ -52,6 +52,32 @@ Every agent follows this precedence: **accuracy > completeness > format**.
 3. Surface the contradiction to the user in the checkpoint summary: "Prior L0 stated [X]. Current website says [Y]. Confidence decreased from [N] to [M]. Please verify which is current."
 4. Do NOT silently overwrite. The user must see the conflict.
 
+### When Extending a File
+
+When you are extending an existing context file (prior work detected), execute this procedure for every section that has a confidence score. Do not skip it.
+
+1. **Read the existing section confidence.** Note the current score before you change anything.
+2. **Assess your new evidence against the section.** Does the new research add data, corroborate existing claims, or fill gaps?
+3. **Determine the new section confidence using the depth target table:**
+
+   | Depth | Target Confidence | Raise To |
+   |-------|------------------|----------|
+   | quick | 2-3 | Up to 3 if new evidence fills gaps |
+   | standard | 3-4 | Up to 4 if all REQUIRED fields have sourced data |
+   | deep | 4-5 | Up to 5 only with multi-source corroboration |
+
+4. **Apply the directional rules:**
+   - New evidence fills previously empty sections: confidence CAN increase.
+   - Higher-tier sources confirm lower-tier findings: confidence CAN increase.
+   - More data points corroborate existing claims: confidence CAN increase.
+   - You found less data than the prior run: confidence CANNOT decrease (absence is not contradiction).
+   - New evidence directly contradicts existing content: confidence CAN decrease (follow "When Decreasing Confidence" above).
+5. **Write the updated section confidence** into the section body (e.g., `**Confidence:** 4`).
+6. **After all sections are updated, run Confidence Reconciliation** (the mandatory final step in your phase file) to set frontmatter confidence = min(all section scores).
+7. **Add an extension comment** at the top of each modified section: `<!-- extended by [skill-name] [date] -->`.
+
+This procedure exists because confidence scores were freezing at their initial values during extension runs. The root cause: agents read existing scores, saw they were "already set," and moved on without re-evaluating against new evidence. This procedure makes re-evaluation explicit.
+
 ---
 
 ## Proof Point Protocol
