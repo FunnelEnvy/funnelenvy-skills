@@ -111,7 +111,7 @@ After extracting the homepage H1, compare it against the page's `<title>` tag an
 
 Example of a mismatch that signals wrong extraction:
 - Extracted "H1": "Turn complex problems into clear solutions" (actually a nav dropdown tagline)
-- Meta title: "Financial Consulting and Advisory Firm | Acme Corp"
+- Meta title: "Financial Consulting and Advisory Firm | Acme"
 - These share no semantic overlap. The real H1 is probably further down in the document.
 
 ### Common Traps

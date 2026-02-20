@@ -119,9 +119,9 @@ Do NOT silently resolve. Do NOT present both versions without comment.
 
 In deliverables, use footnotes:
 
-"Acme Corp positions itself as a mid-market solution.^1"
+"Acme positions itself as a mid-market solution.^1"
 
-"^1 Note: Acme Corp's competitive set skews enterprise. This may indicate a market positioning gap or an aspirational shift. Worth validating with the team."
+"^1 Note: Acme's competitive set skews enterprise. This may indicate a market positioning gap or an aspirational shift. Worth validating with the team."
 
 ### Contradiction Inventory
 

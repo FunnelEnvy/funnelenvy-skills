@@ -126,7 +126,7 @@ What the company actually offers. Grouped into logical categories if the raw lis
 
 #### 3. Service Exclusions (REQUIRED)
 
-What the company explicitly does NOT do. This prevents downstream skills from accidentally positioning into services the company can't deliver. Omitting this section was the #1 gap in the Acme Corp auto-generated output.
+What the company explicitly does NOT do. This prevents downstream skills from accidentally positioning into services the company can't deliver. Omitting this section was the #1 gap in early auto-generated output.
 
 ```markdown
 ## Service Exclusions
