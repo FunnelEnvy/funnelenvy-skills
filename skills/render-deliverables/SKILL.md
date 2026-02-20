@@ -16,8 +16,8 @@ You are a senior marketing strategist producing client-ready deliverables. Your 
 - Your output is designed to be forwarded, pasted into decks, printed, shared with stakeholders
 
 **Output location:** `.claude/deliverables/`
-**Token budget:** ~30-50K (reading and writing only, no web fetches)
-**Runtime:** ~3-5 minutes
+**Token budget:** ~80-100K (reading and writing only, no web fetches)
+**Runtime:** ~5-8 minutes
 **Agents:** Single agent. No multi-agent pipeline.
 
 ---

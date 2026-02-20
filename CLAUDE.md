@@ -200,9 +200,9 @@ When a consuming skill (render-deliverables, future L2 skills) needs `company-id
 
 ### Recommended execution order
 
-1. **`/positioning-framework <url> --depth quick`** (optional fast triage, ~3-5 min, ~50-70K tokens across subagents)
-2. **`/positioning-framework <url>`** (standard depth, produces all L0 + L1 context, ~200K tokens across subagents)
-3. **`/positioning-framework <url> --depth deep`** (extends competitive context to deep, ~300K+ tokens across subagents)
+1. **`/positioning-framework <url> --depth quick`** (optional fast triage, ~5-8 min, ~70-90K tokens)
+2. **`/positioning-framework <url>`** (standard depth, produces all L0 + L1 context + deliverables, ~450-500K tokens across subagents)
+3. **`/positioning-framework <url> --depth deep`** (extends competitive context to deep, ~550-650K tokens across subagents)
 4. **`/render-deliverables`** (produces human-readable deliverables from L0 + L1 context)
 
 Each depth level builds on prior work. Running quick then standard then deep is incremental, not redundant. The skill detects existing context and extends rather than overwrites. Deliverables can be re-rendered at any time after context files exist.
@@ -255,11 +255,11 @@ Positioning dimensions use categorical ratings (Strong / Needs Work / Missing) i
 Consolidated positioning, competitive research, and messaging framework. Feed it a company URL with a depth level and it researches, analyzes, and produces structured L0 + L1 context files.
 
 **Depth levels:**
-- `--depth quick` (~3-5 min, ~50-70K tokens across subagents): Fast positioning triage. Agent 1 only + inline health check. Produces L0 + minimal scorecard.
-- `--depth standard` (default, ~15 min, ~200K tokens across subagents): Full framework. All 4 agents. Produces L0 + 3 L1 context files.
-- `--depth deep` (~25 min, ~300K+ tokens across subagents): Extended competitive analysis. 6+ competitors, Tier 2/3 sources, post-research questionnaire.
+- `--depth quick` (~5-8 min, ~70-90K tokens): Fast positioning triage. Agent 1 only + inline health check. Produces L0 + minimal scorecard.
+- `--depth standard` (default, ~30-35 min, ~450-500K tokens across subagents): Full framework. All 4 agents + render-deliverables. Produces L0 + 3 L1 context files + deliverables.
+- `--depth deep` (~40-50 min, ~550-650K tokens across subagents): Extended competitive analysis. 6+ competitors, Tier 2/3 sources, post-research questionnaire.
 
-**Note:** Token usage is distributed across subagents. The main context window never needs to auto-compact.
+**Note:** Token totals for standard/deep include render-deliverables, which auto-runs. Usage is distributed across subagents -- the main context window never needs to auto-compact.
 
 **Additional flags:**
 - `--competitive-depth none|standard|deep`: Override competitive analysis depth independently.

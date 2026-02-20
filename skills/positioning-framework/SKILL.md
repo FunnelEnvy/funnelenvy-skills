@@ -65,9 +65,9 @@ If the user requests **Guided Interview**, **Audit & Update**, or **Reconciliati
 
 | Depth | Agents | Competitive Scope | Context Files Produced | Time | Tokens |
 |-------|--------|-------------------|----------------------|------|--------|
-| `quick` | Agent 1 (reduced budget) + inline health check | None (lightweight competitive context from web searches only) | company-identity.md + positioning-scorecard.md (minimal) | ~3-5 min | ~50-70K |
-| `standard` (default) | All 4 agents | 3-5 competitors, Tier 1 + basic Tier 2 | All 4 context files | ~15 min | ~130K |
-| `deep` | All 4 agents + extended competitive pass | 6+ competitors, all Tier 2 + Tier 3 sources | All 4 context files | ~25 min | ~200K+ |
+| `quick` | Agent 1 (reduced budget) + inline health check | None (lightweight competitive context from web searches only) | company-identity.md + positioning-scorecard.md (minimal) | ~5-8 min | ~70-90K |
+| `standard` (default) | All 4 agents + render-deliverables | 3-5 competitors, Tier 1 + basic Tier 2 | All 4 context files + deliverables | ~30-35 min | ~450-500K |
+| `deep` | All 4 agents + extended competitive pass + render-deliverables | 6+ competitors, all Tier 2 + Tier 3 sources | All 4 context files + deliverables | ~40-50 min | ~550-650K |
 
 Default: `--depth standard`
 
@@ -788,9 +788,11 @@ When running at standard or deep depth and no `company-identity.md` exists, Agen
 
 | Depth | Target Total | Notes |
 |-------|-------------|-------|
-| Quick | ~50-70K | Single agent + inline health check. 4-7 page fetches. |
-| Standard | ~130K | All 4 agents. Full framework. |
-| Deep | ~200K+ | Extended Agent 2. No hard cap at deep depth. |
+| Quick | ~70-90K | Single agent + inline health check. 4-7 page fetches. |
+| Standard | ~450-500K | All 4 agents + render-deliverables. Full framework. |
+| Deep | ~550-650K | Extended Agent 2 + render-deliverables. No hard cap at deep depth. |
+
+Token totals for standard/deep include render-deliverables, which auto-runs after Agent 4. Token usage is distributed across subagents -- the main context window never needs to auto-compact.
 
 ### Per-Component Breakdown (Standard)
 
@@ -799,15 +801,17 @@ When running at standard or deep depth and no `company-identity.md` exists, Agen
 | agent-header.md per agent | ~1.5K |
 | Phase file(s) per agent | ~3-5K |
 | Context file reads (Agents 2-4) | ~10-15K per file |
-| Web research (Agents 1-2) | ~40-60K |
-| Output generation | ~25-35K |
+| Web research (Agents 1-2) | ~80-100K |
+| Output generation per agent | ~40-50K |
+| render-deliverables (auto-invoked) | ~90K |
+| Orchestrator overhead | ~30-50K |
 
 ---
 
 ## Tips for Better Results
 
 ### Depth Selection
-- Use `--depth quick` for fast triage, demos, or initial assessments when token budget matters (~3-5 min, ~50-70K tokens across subagents).
+- Use `--depth quick` for fast triage, demos, or initial assessments when token budget matters (~5-8 min, ~70-90K tokens).
 - Use `--depth standard` (default) for the full positioning framework with battle cards, messaging, and health check.
 - Use `--depth deep` for extended competitive coverage (6+ competitors, Tier 2/3 sources, post-research questionnaire).
 - Use `--competitive-depth deep` when you want deep competitive analysis but don't need the full positioning stack at deep depth.
