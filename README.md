@@ -33,8 +33,8 @@ Research output goes to `.claude/context/`. Deliverables go to `.claude/delivera
 | Depth | What It Does | Time | Tokens |
 |-------|-------------|------|--------|
 | `--depth quick` | Fast triage. Company identity + inline health check. | ~3-5 min | ~50-70K |
-| `--depth standard` (default) | Full framework. Competitive analysis, messaging, scorecard. | ~15 min | ~200K |
-| `--depth deep` | Extended competitive. 6+ competitors, deeper sources. | ~25 min | ~250K+ |
+| `--depth standard` (default) | Full framework. Competitive analysis, messaging, scorecard. | ~15 min | 200K+ |
+| `--depth deep` | Extended competitive. 6+ competitors, deeper sources. | ~25 min | 350k+ |
 
 Each depth builds on prior work. Running quick then standard then deep is incremental, not redundant.
 
