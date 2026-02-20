@@ -7,3 +7,7 @@ test-runs/
 
 # Business briefs contain client-specific data
 .claude/business-brief.md
+
+# Task tracking (session-specific)
+tasks/
+TODO/
