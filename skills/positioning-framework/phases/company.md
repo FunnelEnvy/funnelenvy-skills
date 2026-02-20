@@ -329,7 +329,7 @@ Add a dedicated section to `company-identity.md` that captures the homepage mess
 - `meta-derived`: Pulled from meta/og tags, not visible page content
 - `not-extracted`: JS-rendered, content could not be obtained
 
-Downstream agents and render-deliverables should treat `not-extracted` content as a gap, not as something to build on. Never quote `not-extracted` copy as a current baseline in experiments or recommendations.
+Downstream agents and render-default-deliverables should treat `not-extracted` content as a gap, not as something to build on. Never quote `not-extracted` copy as a current baseline in experiments or recommendations.
 
 ---
 
@@ -337,6 +337,18 @@ Downstream agents and render-deliverables should treat `not-extracted` content a
 <!-- Output: company-identity.md > Proof Point Registry -->
 
 Consolidate every piece of evidence from research into a single tagged table. This is the single source of truth for proof. All L1 files reference proof points by ID from this registry.
+
+**L0 Proof Point Rule:** Record the company's OWN claimed metrics only. Strip all comparative framing:
+- Remove "vs. [benchmark]" clauses (e.g., "vs. industry average of 51")
+- Remove "above/below/higher/lower than [industry/competitor]" language
+- Remove "X% more/less than" or "half the/double the" relative claims
+- Keep the company's absolute metric (the number they claim)
+- Keep the source URL and date/timeframe if stated
+
+Example:
+  Source says: "NPS 87, over 70% higher than the industry average of 51"
+  L0 records: "NPS 87 (2023)"
+  The benchmark comparison belongs in competitive-landscape.md, not here.
 
 ### Strength Scoring
 
@@ -610,6 +622,7 @@ A `company-identity.md` file is **complete** when:
 - [ ] Proof Point Registry has entries from verified sources (target: 5+; fewer is acceptable with gap marker)
 - [ ] Constraints section is present (even if no regulatory constraints exist)
 - [ ] `confidence` score is set and honest
+- [ ] Proof points contain zero comparative language (no "vs.", "above average", "higher than", "compared to", "half the", "more than [industry/competitor]")
 
 A file missing REQUIRED sections should have `confidence: 1` and a note about what's missing.
 
