@@ -456,12 +456,7 @@ If you catch yourself writing any prohibited term, rewrite the sentence to attri
 
 **Files:** `.claude/deliverables/battle-cards/[competitor-slug].md` (one per competitor)
 
-**Battle card file naming:** Slugs are generated as: lowercase, spaces to hyphens, strip all characters that are not alphanumeric or hyphens, collapse consecutive hyphens to one.
-
-Examples:
-- `Acme Corp` becomes `battle-cards/acme-corp.md`
-- `6sense (ABM Platform)` becomes `battle-cards/6sense-abm-platform.md`
-- `HubSpot Marketing Hub` becomes `battle-cards/hubspot-marketing-hub.md`
+**Battle card file naming:** Read `modules/slugify.md` before generating any battle card filenames. Generate slugs using the slugification rules in that module. The canonical input is the `name` field from each competitor entry in `competitive-landscape.md`.
 
 **Tier:** 3
 **Length:** 400-700 words per card
@@ -522,7 +517,7 @@ Examples:
 - [ ] Every claim sourced from `competitive-landscape.md`
 - [ ] "Landmines" section is actionable (specific objection + specific response)
 - [ ] 400-700 words (fits on one printed page)
-- [ ] Filename: lowercase, hyphens, no spaces (e.g., `acme-corp.md`)
+- [ ] Filename matches `modules/slugify.md` rules (e.g., `acme-corp.md`)
 - [ ] No system internals
 
 ---

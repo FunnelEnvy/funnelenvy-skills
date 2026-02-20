@@ -18,7 +18,8 @@ funnelenvy-skills/
 ├── modules/
 │   ├── reddit-research.md        # Shared Reddit API integration (all skills)
 │   ├── web-extract.md            # curl + python3 HTML extractor (first-pass)
-│   └── business-brief.md         # Pre-flight intake template + protocol
+│   ├── business-brief.md         # Pre-flight intake template + protocol
+│   └── slugify.md                # Deterministic name-to-slug rules for filenames
 ├── skills/
 │   ├── positioning-framework/
 │   │   ├── SKILL.md              # Orchestration hub v1 (~840 lines, depth-gated)
