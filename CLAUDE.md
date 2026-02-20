@@ -11,10 +11,7 @@ funnelenvy-skills/
 │   ├── competitive-landscape.md  # L1 schema (merged: market + competitors + battle cards)
 │   ├── audience-messaging.md     # L1 schema (merged: personas + messaging + voice)
 │   ├── positioning-scorecard.md  # L1 schema (includes quick reference)
-│   ├── _fetch-registry.md        # Operational metadata schema (not L0/L1)
-│   └── DESIGN-NOTES.md           # Schema design decision records
-├── docs/
-│   └── ARCHITECTURE.md           # Architecture reference (LLM-optimized handoff doc)
+│   └── _fetch-registry.md        # Operational metadata schema (not L0/L1)
 ├── modules/
 │   ├── reddit-research.md        # Shared Reddit API integration (all skills)
 │   ├── web-extract.md            # curl + python3 HTML extractor (first-pass)
