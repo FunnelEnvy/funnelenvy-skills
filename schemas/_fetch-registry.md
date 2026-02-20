@@ -14,7 +14,7 @@
 Coordination file that prevents duplicate fetches across agents. Agent 1 logs every URL it fetches. Agent 2 reads the registry before fetching and skips URLs where usable data already exists in L0. Agent 2 appends its own fetches after completing.
 
 Not consumed by Agent 3 or Agent 4 (neither makes web requests).
-Not consumed by render-deliverables (does not need fetch metadata).
+Not consumed by render-default-deliverables (does not need fetch metadata).
 
 ---
 
@@ -50,4 +50,4 @@ Markdown table with the following columns:
 
 ## Classification
 
-This file is NOT L0 (facts) or L1 (analysis). It is operational metadata used for cross-agent coordination. It has no downstream consumers beyond Agent 2. render-deliverables should ignore it. Future skills that glob context files should filter it out by the underscore prefix.
+This file is NOT L0 (facts) or L1 (analysis). It is operational metadata used for cross-agent coordination. It has no downstream consumers beyond Agent 2. render-default-deliverables should ignore it. Future skills that glob context files should filter it out by the underscore prefix.

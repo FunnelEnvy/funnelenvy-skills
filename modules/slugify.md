@@ -1,6 +1,6 @@
 # Slugify Module
 
-Deterministic name-to-slug conversion for filenames. Referenced by render-deliverables (battle cards) and any skill that writes files keyed by entity name.
+Deterministic name-to-slug conversion for filenames. Referenced by render-default-deliverables (battle cards) and any skill that writes files keyed by entity name.
 
 ---
 

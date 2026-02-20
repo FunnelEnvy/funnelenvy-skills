@@ -372,7 +372,7 @@ Exact copy extracted from the homepage hero and top landing pages, with source a
 
 **Purpose:** Consumed by Agent 3 Content Integrity Check and Orchestrator Copy Verification Checkpoint (SKILL.md step 6.5). Provides the experiment baseline for any CRO work on hero copy.
 
-**Used by:** Orchestrator copy verification checkpoint, render-deliverables (experiment roadmap baseline), website-audit.
+**Used by:** Orchestrator copy verification checkpoint, render-default-deliverables (experiment roadmap baseline), website-audit.
 
 ---
 

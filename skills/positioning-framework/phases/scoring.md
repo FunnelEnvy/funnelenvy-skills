@@ -189,7 +189,7 @@ The YAML frontmatter `ratings`, category counts, `top_gap`, and `top_opportunity
 
 Battle cards are INLINED in `competitive-landscape.md` as per-competitor profile sections. They are not produced as separate files by this phase. The competitive phase handles this.
 
-**Note:** This phase does NOT produce deliverables (copy briefs, experiment hypotheses, etc.). Human-readable deliverables are produced by the render-deliverables skill (L2), which consumes the context files this phase produces.
+**Note:** This phase does NOT produce deliverables (copy briefs, experiment hypotheses, etc.). Human-readable deliverables are produced by the render-default-deliverables skill (L2), which consumes the context files this phase produces.
 
 ## Quality Checks
 

@@ -30,7 +30,7 @@ funnelenvy-skills/
 │   │       ├── competitive.md    # Competitive analysis + inline schema (depth-gated)
 │   │       ├── messaging.md      # Personas + messaging + voice + inline schema
 │   │       └── scoring.md        # Scorecard + QA + inline schema (depth-gated)
-│   └── render-deliverables/
+│   └── render-default-deliverables/
 │       └── SKILL.md              # L2 rendering skill v1.0 (~single agent, no research)
 ├── examples/                     # Public examples
 ├── CLAUDE.md
@@ -44,7 +44,7 @@ funnelenvy-skills/
 L2: RENDERING (human-readable deliverables)
     Consumes L0 + L1. Produces polished documents for people.
     No new research. No new analysis. Pure synthesis and formatting.
-    Owned by: render-deliverables skill
+    Owned by: render-default-deliverables skill
     Location: .claude/deliverables/
     ---------------------------------------------------------------
 L1: ANALYSIS (machine-readable context files)
@@ -79,7 +79,7 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 - If a deliverable says something that can't be traced to a context file, it's a bug
 - Human-readable: no YAML frontmatter, no confidence scores inline, no `[NEEDS CONFIRMATION]` inline (footnotes only), no references to agents, skills, context files, frontmatter, or any system internals
 - Designed to be forwarded, pasted into decks, printed, shared with stakeholders
-- Single owner: the render-deliverables skill
+- Single owner: the render-default-deliverables skill
 - Can be re-rendered any time L0 or L1 changes without re-running research
 
 ### Cross-Layer Contracts
@@ -93,24 +93,24 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 
 | File | Layer | Produced By | Consumed By |
 |------|-------|------------|-------------|
-| `.claude/context/company-identity.md` | L0 | positioning-framework (all depths) | All L1 skills, render-deliverables |
-| `.claude/context/competitive-landscape.md` | L1 | positioning-framework (standard/deep) | render-deliverables, website-audit, content strategy, hypothesis roadmap |
-| `.claude/context/audience-messaging.md` | L1 | positioning-framework (standard/deep) | render-deliverables, website-audit, content strategy |
-| `.claude/context/positioning-scorecard.md` | L1 | positioning-framework (all depths, minimal at quick) | render-deliverables, website-audit, hypothesis roadmap |
+| `.claude/context/company-identity.md` | L0 | positioning-framework (all depths) | All L1 skills, render-default-deliverables |
+| `.claude/context/competitive-landscape.md` | L1 | positioning-framework (standard/deep) | render-default-deliverables, website-audit, content strategy, hypothesis roadmap |
+| `.claude/context/audience-messaging.md` | L1 | positioning-framework (standard/deep) | render-default-deliverables, website-audit, content strategy |
+| `.claude/context/positioning-scorecard.md` | L1 | positioning-framework (all depths, minimal at quick) | render-default-deliverables, website-audit, hypothesis roadmap |
 | `.claude/context/_fetch-registry.md` | Operational | positioning-framework Agent 1 (appended by Agent 2) | Agent 2 (duplicate fetch prevention) |
 
 ### Deliverable Files (L2)
 
 | File | Description | Produced By |
 |------|-------------|-------------|
-| `.claude/deliverables/manifest.md` | Index of all deliverables | render-deliverables |
-| `.claude/deliverables/executive-summary.md` | Tier 1 | render-deliverables |
-| `.claude/deliverables/messaging-guide.md` | Tier 2 | render-deliverables |
-| `.claude/deliverables/experiment-roadmap.md` | Tier 1 | render-deliverables |
-| `.claude/deliverables/competitive-comparison-matrix.md` | Tier 3 | render-deliverables |
-| `.claude/deliverables/battle-cards/[competitor-slug].md` | Tier 3 | render-deliverables |
+| `.claude/deliverables/manifest.md` | Index of all deliverables | render-default-deliverables |
+| `.claude/deliverables/executive-summary.md` | Tier 1 | render-default-deliverables |
+| `.claude/deliverables/messaging-guide.md` | Tier 2 | render-default-deliverables |
+| `.claude/deliverables/experiment-roadmap.md` | Tier 1 | render-default-deliverables |
+| `.claude/deliverables/competitive-comparison-matrix.md` | Tier 3 | render-default-deliverables |
+| `.claude/deliverables/battle-cards/[competitor-slug].md` | Tier 3 | render-default-deliverables |
 
-**Note:** The `.claude/deliverables/` directory is empty until render-deliverables runs. positioning-framework does not produce deliverables.
+**Note:** The `.claude/deliverables/` directory is empty until render-default-deliverables runs. positioning-framework does not produce deliverables.
 
 **Migration notes:**
 - Prior to v1.0, competitive and messaging data lived in separate files (`market-landscape.md` + `competitor-profiles.md`, `audience-personas.md` + `messaging-framework.md` + `brand-voice.md`). These were merged into `competitive-landscape.md` and `audience-messaging.md`. Deprecated schema files have been removed.
@@ -142,7 +142,7 @@ Before researching, producing skills MUST glob `.claude/context/` and read the f
 
 ## L0 Bootstrap Protocol
 
-When a consuming skill (render-deliverables, future L2 skills) needs `company-identity.md` and none exists, it runs this protocol transparently instead of stopping the user or asking them to run a different skill.
+When a consuming skill (render-default-deliverables, future L2 skills) needs `company-identity.md` and none exists, it runs this protocol transparently instead of stopping the user or asking them to run a different skill.
 
 **Any skill can invoke this protocol. The canonical definition lives here so it's not duplicated across SKILL.md files.**
 
@@ -203,7 +203,7 @@ When a consuming skill (render-deliverables, future L2 skills) needs `company-id
 1. **`/positioning-framework <url> --depth quick`** (optional fast triage, ~5-8 min, ~70-90K tokens)
 2. **`/positioning-framework <url>`** (standard depth, produces all L0 + L1 context + deliverables, ~450-500K tokens across subagents)
 3. **`/positioning-framework <url> --depth deep`** (extends competitive context to deep, ~550-650K tokens across subagents)
-4. **`/render-deliverables`** (produces human-readable deliverables from L0 + L1 context)
+4. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
 
 Each depth level builds on prior work. Running quick then standard then deep is incremental, not redundant. The skill detects existing context and extends rather than overwrites. Deliverables can be re-rendered at any time after context files exist.
 
@@ -244,7 +244,7 @@ Positioning dimensions use categorical ratings (Strong / Needs Work / Missing) i
 
 - L0 + L1 context files output to `.claude/context/`
 - L2 deliverables output to `.claude/deliverables/`
-- L1 skills never produce deliverables. L2 skill never performs research. All human-facing output goes through render-deliverables.
+- L1 skills never produce deliverables. L2 skill never performs research. All human-facing output goes through render-default-deliverables.
 - Skills are standalone. No external dependencies required.
 - Every skill should work in at least two modes: automated (agent does the research) and guided (user provides input manually)
 - When a skill needs a context file that doesn't exist, it should either produce it (if capable) or instruct the user which skill to run first.
@@ -256,10 +256,10 @@ Consolidated positioning, competitive research, and messaging framework. Feed it
 
 **Depth levels:**
 - `--depth quick` (~5-8 min, ~70-90K tokens): Fast positioning triage. Agent 1 only + inline health check. Produces L0 + minimal scorecard.
-- `--depth standard` (default, ~30-35 min, ~450-500K tokens across subagents): Full framework. All 4 agents + render-deliverables. Produces L0 + 3 L1 context files + deliverables.
+- `--depth standard` (default, ~30-35 min, ~450-500K tokens across subagents): Full framework. All 4 agents + render-default-deliverables. Produces L0 + 3 L1 context files + deliverables.
 - `--depth deep` (~40-50 min, ~550-650K tokens across subagents): Extended competitive analysis. 6+ competitors, Tier 2/3 sources, post-research questionnaire.
 
-**Note:** Token totals for standard/deep include render-deliverables, which auto-runs. Usage is distributed across subagents -- the main context window never needs to auto-compact.
+**Note:** Token totals for standard/deep include render-default-deliverables, which auto-runs. Usage is distributed across subagents -- the main context window never needs to auto-compact.
 
 **Additional flags:**
 - `--competitive-depth none|standard|deep`: Override competitive analysis depth independently.
@@ -275,10 +275,10 @@ Runs up to 4 sequential agents depending on depth (Research+L0, Competitive, Mes
 
 Four modes: Autonomous Research (default), Guided Interview, Audit & Update, Reconciliation (compare research against client's manual worksheet).
 
-### render-deliverables (v1.0.0)
+### render-default-deliverables (v1.0.0)
 L2 rendering skill. Consumes L0 + L1 context files and produces human-readable deliverables. No research, no analysis. Pure synthesis and formatting.
 
-Auto-invoked by positioning-framework at standard/deep depth. Also available standalone via `/render-deliverables` for re-rendering after context updates.
+Auto-invoked by positioning-framework at standard/deep depth. Also available standalone via `/render-default-deliverables` for re-rendering after context updates.
 
 **Deliverable tiers:**
 - Tier 1: Executive Summary, Experiment Roadmap (needs L0 + scorecard)

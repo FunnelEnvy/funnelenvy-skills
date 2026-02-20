@@ -1,7 +1,7 @@
 ---
 name: positioning-framework
 version: 1.0.0
-description: "When the user wants to build, audit, or update a positioning and messaging framework for a company or product. Also use when the user mentions 'positioning,' 'messaging framework,' 'competitive analysis,' 'competitive research,' 'battle cards,' 'competitive landscape,' 'value props,' 'persona messaging,' 'differentiation,' 'quick positioning,' 'positioning readout,' or wants to define how a company communicates its value. Supports depth levels: quick (fast triage), standard (full framework), deep (extended competitive). Produces structured context files (.claude/context/ L0 + L1). Runs autonomous research by default. Run /render-deliverables afterward to generate client-ready documents."
+description: "When the user wants to build, audit, or update a positioning and messaging framework for a company or product. Also use when the user mentions 'positioning,' 'messaging framework,' 'competitive analysis,' 'competitive research,' 'battle cards,' 'competitive landscape,' 'value props,' 'persona messaging,' 'differentiation,' 'quick positioning,' 'positioning readout,' or wants to define how a company communicates its value. Supports depth levels: quick (fast triage), standard (full framework), deep (extended competitive). Produces structured context files (.claude/context/ L0 + L1). Runs autonomous research by default. Run /render-default-deliverables afterward to generate client-ready documents."
 ---
 
 # Positioning & Messaging Framework
@@ -10,7 +10,7 @@ You are an expert positioning strategist with deep research capabilities. Your j
 
 **Outputs:** `.claude/context/` directory (1 L0 file + up to 3 L1 files, depending on depth)
 
-**Note:** This skill produces L0 + L1 context files only. Human-readable deliverables (copy briefs, experiment hypotheses, battle card PDFs, etc.) are produced by the render-deliverables skill, which consumes these context files.
+**Note:** This skill produces L0 + L1 context files only. Human-readable deliverables (copy briefs, experiment hypotheses, battle card PDFs, etc.) are produced by the render-default-deliverables skill, which consumes these context files.
 
 ### Accuracy Over Completeness
 
@@ -66,8 +66,8 @@ If the user requests **Guided Interview**, **Audit & Update**, or **Reconciliati
 | Depth | Agents | Competitive Scope | Context Files Produced | Time | Tokens |
 |-------|--------|-------------------|----------------------|------|--------|
 | `quick` | Agent 1 (reduced budget) + inline health check | None (lightweight competitive context from web searches only) | company-identity.md + positioning-scorecard.md (minimal) | ~5-8 min | ~70-90K |
-| `standard` (default) | All 4 agents + render-deliverables | 3-5 competitors, Tier 1 + basic Tier 2 | All 4 context files + deliverables | ~30-35 min | ~450-500K |
-| `deep` | All 4 agents + extended competitive pass + render-deliverables | 6+ competitors, all Tier 2 + Tier 3 sources | All 4 context files + deliverables | ~40-50 min | ~550-650K |
+| `standard` (default) | All 4 agents + render-default-deliverables | 3-5 competitors, Tier 1 + basic Tier 2 | All 4 context files + deliverables | ~30-35 min | ~450-500K |
+| `deep` | All 4 agents + extended competitive pass + render-default-deliverables | 6+ competitors, all Tier 2 + Tier 3 sources | All 4 context files + deliverables | ~40-50 min | ~550-650K |
 
 Default: `--depth standard`
 
@@ -442,7 +442,7 @@ Each agent reads `agent-header.md` (shared agent rules) plus its specific phase 
    If depth != quick:
      Launch Agent 4 (pass intake payload) → wait for completion
 10. If depth != quick:
-      Auto-invoke render-deliverables (see below)
+      Auto-invoke render-default-deliverables (see below)
 11. Present completion message (see below)
 12. User reviews, provides corrections
 13. If corrections needed: re-run affected agent(s) only
@@ -527,11 +527,11 @@ If it looks right, say "confirmed."
 
 This catches JS rendering failures, stale CDN content, geo-targeted page variations, A/B test variants, and pages behind auth or gating.
 
-### Auto-Invoke: render-deliverables
+### Auto-Invoke: render-default-deliverables
 
-At `--depth standard` and `--depth deep`, after all agents complete, automatically invoke the render-deliverables skill. This produces human-readable deliverables from the context files just generated.
+At `--depth standard` and `--depth deep`, after all agents complete, automatically invoke the render-default-deliverables skill. This produces human-readable deliverables from the context files just generated.
 
-**How to invoke:** Use the Skill tool to invoke `render-deliverables`. The skill handles its own context discovery, tiering, and generation. Do not pass arguments. Do not read or modify its output.
+**How to invoke:** Use the Skill tool to invoke `render-default-deliverables`. The skill handles its own context discovery, tiering, and generation. Do not pass arguments. Do not read or modify its output.
 
 **At `--depth quick`:** Do NOT auto-invoke. Quick depth produces minimal context (L0 + minimal scorecard). Prompt the user to run it manually if desired.
 
@@ -545,7 +545,7 @@ Quick positioning triage complete for [Company Name].
 
 Context files written to .claude/context/ (quick depth).
 Run /positioning-framework for full analysis.
-Run /render-deliverables to generate shareable documents.
+Run /render-default-deliverables to generate shareable documents.
 ```
 
 **After `--depth standard` or `--depth deep`:**
@@ -559,7 +559,7 @@ Context files written to .claude/context/:
   positioning-scorecard.md (depth: [level], confidence: [N])
 
 Deliverables written to .claude/deliverables/:
-  [list from render-deliverables output]
+  [list from render-default-deliverables output]
 
 Review the deliverables and let me know if any need adjustment.
 ```
@@ -789,10 +789,10 @@ When running at standard or deep depth and no `company-identity.md` exists, Agen
 | Depth | Target Total | Notes |
 |-------|-------------|-------|
 | Quick | ~70-90K | Single agent + inline health check. 4-7 page fetches. |
-| Standard | ~450-500K | All 4 agents + render-deliverables. Full framework. |
-| Deep | ~550-650K | Extended Agent 2 + render-deliverables. No hard cap at deep depth. |
+| Standard | ~450-500K | All 4 agents + render-default-deliverables. Full framework. |
+| Deep | ~550-650K | Extended Agent 2 + render-default-deliverables. No hard cap at deep depth. |
 
-Token totals for standard/deep include render-deliverables, which auto-runs after Agent 4. Token usage is distributed across subagents -- the main context window never needs to auto-compact.
+Token totals for standard/deep include render-default-deliverables, which auto-runs after Agent 4. Token usage is distributed across subagents -- the main context window never needs to auto-compact.
 
 ### Per-Component Breakdown (Standard)
 
@@ -803,7 +803,7 @@ Token totals for standard/deep include render-deliverables, which auto-runs afte
 | Context file reads (Agents 2-4) | ~10-15K per file |
 | Web research (Agents 1-2) | ~80-100K |
 | Output generation per agent | ~40-50K |
-| render-deliverables (auto-invoked) | ~90K |
+| render-default-deliverables (auto-invoked) | ~90K |
 | Orchestrator overhead | ~30-50K |
 
 ---

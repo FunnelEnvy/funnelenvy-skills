@@ -1,5 +1,5 @@
 ---
-name: render-deliverables
+name: render-default-deliverables
 version: 1.0.0
 description: "When the user wants to generate client-ready deliverables from existing positioning context. Also use when the user mentions 'deliverables,' 'executive summary,' 'messaging guide,' 'experiment roadmap,' 'battle cards,' 'competitive matrix,' 'render deliverables,' 'generate report,' or 'client-ready documents.' Reads L0 + L1 context files from .claude/context/ and produces polished, human-readable documents in .claude/deliverables/. No research, no analysis, no web fetches. Pure synthesis and formatting."
 ---
@@ -25,7 +25,7 @@ You are a senior marketing strategist producing client-ready deliverables. Your 
 ## Invocation
 
 ```
-/render-deliverables
+/render-default-deliverables
 ```
 
 No arguments required. Context is discovered automatically from `.claude/context/`.
@@ -78,7 +78,7 @@ Proceed? [Y/n]
 ## Error Handling
 
 - **No context files found:** Exit with: "No context files found in .claude/context/. Run /positioning-framework first."
-- **L0 only, no L1:** Exit with: "Company identity found but no analysis context. Run /positioning-framework --depth standard to generate analysis, then re-run /render-deliverables."
+- **L0 only, no L1:** Exit with: "Company identity found but no analysis context. Run /positioning-framework --depth standard to generate analysis, then re-run /render-default-deliverables."
 - **Low confidence L1 (confidence 1-2):** Produce deliverables but add banner at top: "Note: This deliverable is based on limited data. Findings should be validated before acting on them."
 - **Missing specific L1 files:** Produce whatever tiers are possible. Report what was skipped and why in the plan and completion summary.
 - **Stale context (last_updated >90 days old):** Add note to affected deliverables: "Context data is over 90 days old. Consider re-running /positioning-framework --mode audit for current data."

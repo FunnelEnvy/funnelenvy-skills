@@ -9,7 +9,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | Skill | Version | Description |
 |-------|---------|-------------|
 | positioning-framework | 1.0.0 | Autonomous positioning and messaging framework from web research |
-| render-deliverables | 1.0.0 | Generates client-ready deliverables from positioning context |
+| render-default-deliverables | 1.0.0 | Generates client-ready deliverables from positioning context |
 
 ## Quick Start
 
@@ -72,15 +72,15 @@ Examples:
 
 **positioning-framework** researches a company and its competitors, then produces structured context files with evidence-backed analysis. It runs autonomous web research across multiple source tiers (website, reviews, Reddit, SEC filings, job postings) depending on depth level.
 
-**render-deliverables** converts those context files into polished, shareable documents. No research, no analysis. Pure synthesis and formatting.
+**render-default-deliverables** converts those context files into polished, shareable documents. No research, no analysis. Pure synthesis and formatting.
 
-At standard and deep depth, render-deliverables runs automatically after positioning-framework completes. Run it manually with `/render-deliverables` any time after editing context files.
+At standard and deep depth, render-default-deliverables runs automatically after positioning-framework completes. Run it manually with `/render-default-deliverables` any time after editing context files.
 
 ## Vision
 
 The research layer (L0 company identity + L1 analysis) is the foundation. Once those context files exist, any number of skills can consume them to produce different outputs.
 
-Today, render-deliverables produces a fixed set: executive summary, messaging guide, experiment roadmap, competitive matrix, and battle cards. That's the starting point, not the ceiling.
+Today, render-default-deliverables produces a fixed set: executive summary, messaging guide, experiment roadmap, competitive matrix, and battle cards. That's the starting point, not the ceiling.
 
 The goal is a library of composable skills that read from the same structured context: website audits that score pages against the messaging framework, GA4 analysis that ties traffic data to positioning gaps, content strategies built on proven value themes, ad copy generators that pull from the language bank. Each skill does one thing well, and none of them need to re-run the research.
 
