@@ -37,7 +37,7 @@ Markdown table with the following columns:
 |--------|------|-------------|
 | URL | string | Full URL fetched |
 | Agent | string | Which agent fetched it (e.g., "Agent 1", "Agent 2") |
-| Tag | string | Extraction quality tag: `[FULL]`, `[PARTIAL]`, `[PARTIAL:TOOL]`, `[PARTIAL:FALLBACK]`, `[EMPTY:SPA]`, `[EMPTY:BLOCKED]` |
+| Tag | string | Extraction quality tag: `[FULL]`, `[PARTIAL]`, `[PARTIAL:TOOL]`, `[EMPTY:SPA]`, `[EMPTY:BLOCKED]` |
 | Words | int | Word count extracted |
 | Key Content | string | Brief description of what was found |
 

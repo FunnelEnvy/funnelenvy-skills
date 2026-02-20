@@ -216,7 +216,7 @@ total_fetches: [row count]
 
 **Body:** Markdown table with columns: URL, Agent, Tag, Words, Key Content.
 
-**Tag values:** `[FULL]` (500+ words), `[PARTIAL]` (100-499 words), `[PARTIAL:TOOL]` (WebFetch fallback, 100+ words), `[PARTIAL:FALLBACK]` (curl partial), `[EMPTY:SPA]` (JS-rendered), `[EMPTY:BLOCKED]` (bot protection).
+**Tag values:** `[FULL]` (500+ words), `[PARTIAL]` (100-499 words), `[PARTIAL:TOOL]` (WebFetch fallback, 100+ words), `[EMPTY:SPA]` (JS-rendered), `[EMPTY:BLOCKED]` (bot protection).
 
 Update `total_fetches` in frontmatter to match the actual row count before writing.
 
