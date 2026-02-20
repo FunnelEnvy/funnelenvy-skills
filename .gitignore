@@ -1,0 +1,9 @@
+# Test run outputs (generated, not source)
+test-runs/
+
+# Claude Code context files (generated per-project)
+.claude/context/
+.claude/deliverables/
+
+# Business briefs contain client-specific data
+.claude/business-brief.md
