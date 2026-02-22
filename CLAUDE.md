@@ -285,6 +285,11 @@ Auto-invoked by positioning-framework at standard/deep depth. Also available sta
 
 **Output:** `.claude/deliverables/` with manifest
 
+### hypothesis-generator
+Standalone CRO hypothesis engine. Reads positioning context (L0 + L1), applies
+13 experiment patterns across 6 categories, and produces a prioritized experiment
+roadmap with ICE scoring. Manually invoked: /hypothesis-generator
+
 ## Development
 
 When creating or editing skills:

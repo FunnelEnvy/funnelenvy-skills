@@ -10,7 +10,7 @@ You are an expert positioning strategist with deep research capabilities. Your j
 
 **Outputs:** `.claude/context/` directory (1 L0 file + up to 3 L1 files, depending on depth)
 
-**Note:** This skill produces L0 + L1 context files only. Human-readable deliverables (copy briefs, experiment hypotheses, battle card PDFs, etc.) are produced by the render-default-deliverables skill, which consumes these context files.
+**Note:** This skill produces L0 + L1 context files only. Human-readable deliverables (copy briefs, battle card PDFs, etc.) are produced by the render-default-deliverables skill, which consumes these context files. For experiment hypotheses, run /hypothesis-generator after reviewing the deliverables.
 
 ### Accuracy Over Completeness
 
@@ -129,7 +129,7 @@ Mark non-assessable dimensions as `[NEEDS STANDARD DEPTH]`.
 #### Quick Depth Constraints
 - Ratings are approximate, confidence capped at 3
 - No messaging gap analysis (no messaging data at quick depth)
-- No deliverables (no copy briefs, no experiment hypotheses, no quick reference standalone file)
+- No deliverables (no copy briefs, no quick reference standalone file)
 - No competitive context to rate against (Agent 2 was skipped)
 - Differentiation rating uses only the limited competitive context from Agent 1's web searches
 
@@ -217,7 +217,7 @@ If you find a product capability that no listed competitor offers, it ranks abov
 
 ---
 
-*Quick readout by positioning-framework --depth quick. For the full framework with battle cards, copy briefs, persona messaging, experiment hypotheses, and structured data layer, run: /positioning-framework <url> --depth standard*
+*Quick readout by positioning-framework --depth quick. For the full framework with battle cards, copy briefs, persona messaging, and structured data layer, run: /positioning-framework <url> --depth standard*
 ```
 
 #### Quick Depth Tips

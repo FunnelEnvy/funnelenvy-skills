@@ -1,7 +1,7 @@
 ---
 name: render-default-deliverables
 version: 1.0.0
-description: "When the user wants to generate client-ready deliverables from existing positioning context. Also use when the user mentions 'deliverables,' 'executive summary,' 'messaging guide,' 'experiment roadmap,' 'battle cards,' 'competitive matrix,' 'render deliverables,' 'generate report,' or 'client-ready documents.' Reads L0 + L1 context files from .claude/context/ and produces polished, human-readable documents in .claude/deliverables/. No research, no analysis, no web fetches. Pure synthesis and formatting."
+description: "When the user wants to generate client-ready deliverables from existing positioning context. Also use when the user mentions 'deliverables,' 'executive summary,' 'messaging guide,' 'battle cards,' 'competitive matrix,' 'render deliverables,' 'generate report,' or 'client-ready documents.' Reads L0 + L1 context files from .claude/context/ and produces polished, human-readable documents in .claude/deliverables/. No research, no analysis, no web fetches. Pure synthesis and formatting."
 ---
 
 # Render Deliverables
@@ -57,7 +57,6 @@ Available context:
 Will produce:
   - Executive Summary
   - Messaging Guide
-  - Experiment Roadmap
   - Competitive Comparison Matrix
   - Battle Cards (3 competitors)
 
@@ -144,13 +143,12 @@ If 3+ contradictions found, add a "Positioning Tensions" callout box to the Exec
 | Tier | Deliverable | Required Context | File |
 |------|------------|-----------------|------|
 | 1 | Executive Summary | L0 + positioning-scorecard.md | executive-summary.md |
-| 1 | Experiment Roadmap | L0 + positioning-scorecard.md | experiment-roadmap.md |
 | 2 | Messaging Guide | L0 + audience-messaging.md | messaging-guide.md |
 | 3 | Competitive Comparison Matrix | L0 + competitive-landscape.md | competitive-comparison-matrix.md |
 | 3 | Battle Cards | L0 + competitive-landscape.md | battle-cards/[competitor-slug].md |
 | 4 | Opportunity Sizing Report | L0 + all L1 including performance-profile.md | opportunity-sizing.md |
 
-**Enrichment rule:** Deliverables are richer when more context exists. The executive summary includes a competitive section only if `competitive-landscape.md` exists. The experiment roadmap includes quantitative sizing only if `performance-profile.md` exists. Missing context degrades gracefully, not catastrophically.
+**Enrichment rule:** Deliverables are richer when more context exists. The executive summary includes a competitive section only if `competitive-landscape.md` exists. Missing context degrades gracefully, not catastrophically.
 
 **Tier 4:** Deferred. Include the tiering logic and "cannot produce" messaging now. Actual generation logic will be added when performance-profile.md becomes available (after ga4-audit, Phase 3).
 
@@ -308,80 +306,11 @@ If you catch yourself writing any prohibited term, rewrite the sentence to attri
 
 ---
 
-### 5.3 Experiment Roadmap
-
-**File:** `.claude/deliverables/experiment-roadmap.md`
-**Tier:** 1
-**Length:** 1500-3000 words
-
-**Purpose:** Prioritized, sequenced experiment plan. Sells the testing engagement.
-
-**Structure:**
-
-```markdown
-# [Company Name]: Experiment Roadmap
-
-## How to Read This Roadmap
-[Impact x Confidence framework. What "Quick Win" vs. "Strategic Bet" vs. "Foundation" means.]
-
-## Roadmap Overview
-
-| # | Experiment | Page | Type | Impact | Confidence | Effort |
-|---|-----------|------|------|--------|------------|--------|
-| 1 | [name] | [url] | Quick Win | High | High | Low |
-| 2 | ... | ... | ... | ... | ... | ... |
-
-## Quick Wins (implement first)
-
-### Experiment 1: [Name]
-**Page:** [specific URL or page name]
-**What to test:** [concrete change with before/after copy]
-**Why:** [which positioning gap this addresses]
-**Expected impact:** [qualitative; quantitative if performance-profile.md exists]
-**What this proves:** [what a positive result validates]
-**Audience:** [target persona]
-
-### Experiment 2: [Name]
-[Same structure]
-
-## Strategic Bets (higher effort, higher payoff)
-[Same structure per experiment, with effort context]
-
-## Foundations (measurement + infrastructure)
-[Only include this section if performance-profile.md exists and flagged tracking gaps. Examples: scroll depth tracking, micro-conversion events.]
-
-## Sequencing Rationale
-[2-3 paragraphs. Why this order. What early experiments teach. How quick wins build confidence for strategic bets.]
-
----
-*Analysis produced by FunnelEnvy | [Date]*
-```
-
-**Data sources:**
-- Experiment targets: `positioning-scorecard.md` Missing and Needs Work dimensions and gap analysis
-- Page recommendations: `audience-messaging.md` channel adaptations + `company-identity.md` website claims
-- Competitive framing: `competitive-landscape.md` white space and claim overlap (if available)
-- Traffic/conversion data: `performance-profile.md` frontmatter (if available)
-- Current copy ("before"): `company-identity.md` Homepage Messaging section and stated differentiators
-- Suggested copy ("after"): `audience-messaging.md` channel adaptations and per-persona lead messages. Do not invent new copy. Adapt existing messaging hierarchy content to the specific page and experiment context.
-
-**When performance-profile.md is missing:**
-- Use qualitative impact assessment only (no conversion rate estimates)
-- Omit the "Foundations" section entirely
-- Add note at bottom: "Quantitative sizing available after running /ga4-audit"
-
-**Quality gate:**
-- [ ] Every experiment names a specific page and specific change
-- [ ] No vague recommendations ("improve messaging" = failure)
-- [ ] Before/after copy examples for headline and CTA experiments ("before" from L0 Homepage Messaging, "after" adapted from audience-messaging.md channel adaptations)
-- [ ] Sequencing rationale explains dependencies between experiments
-- [ ] Impact/Confidence/Effort ratings vary (not everything is "High")
-- [ ] At least 5 experiments, no more than 12
-- [ ] No system internals
+**Experiment Roadmap:** Not produced by this skill. Run `/hypothesis-generator` separately for a prioritized experiment plan with ICE scoring and causal reasoning.
 
 ---
 
-### 5.4 Competitive Comparison Matrix
+### 5.3 Competitive Comparison Matrix
 
 **File:** `.claude/deliverables/competitive-comparison-matrix.md`
 **Tier:** 3
@@ -452,7 +381,7 @@ If you catch yourself writing any prohibited term, rewrite the sentence to attri
 
 ---
 
-### 5.5 Battle Cards
+### 5.4 Battle Cards
 
 **Files:** `.claude/deliverables/battle-cards/[competitor-slug].md` (one per competitor)
 
@@ -538,7 +467,6 @@ After writing all deliverables, produce `.claude/deliverables/manifest.md`:
 |-------------|------|-----------------|
 | Executive Summary | executive-summary.md | company-identity, positioning-scorecard |
 | Messaging Guide | messaging-guide.md | company-identity, audience-messaging |
-| Experiment Roadmap | experiment-roadmap.md | company-identity, positioning-scorecard, [+ others if available] |
 | Competitive Matrix | competitive-comparison-matrix.md | company-identity, competitive-landscape |
 | Battle Card: [Name] | battle-cards/[slug].md | competitive-landscape |
 
@@ -570,7 +498,6 @@ Deliverables written to .claude/deliverables/
 
   executive-summary.md
   messaging-guide.md
-  experiment-roadmap.md
   competitive-comparison-matrix.md
   battle-cards/[competitor-1].md
   battle-cards/[competitor-2].md
