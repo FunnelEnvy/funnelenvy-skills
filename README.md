@@ -10,6 +10,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 |-------|---------|-------------|
 | positioning-framework | 1.0.0 | Autonomous positioning and messaging framework from web research |
 | render-default-deliverables | 1.0.0 | Generates client-ready deliverables from positioning context |
+| hypothesis-generator | 1.0.0 | CRO experiment engine with 13 patterns, ICE scoring, and causal reasoning |
 
 ## Quick Start
 
@@ -64,7 +65,7 @@ Examples:
 |------|-------------|
 | executive-summary.md | Positioning assessment for executives |
 | messaging-guide.md | Persona-by-persona messaging with voice rules |
-| experiment-roadmap.md | Prioritized, sequenced experiment plan |
+| experiment-roadmap.md | Prioritized experiment plan (produced by hypothesis-generator) |
 | competitive-comparison-matrix.md | Structured comparison grid across competitors |
 | battle-cards/[competitor].md | One-page competitor reference cards |
 
@@ -74,13 +75,15 @@ Examples:
 
 **render-default-deliverables** converts those context files into polished, shareable documents. No research, no analysis. Pure synthesis and formatting.
 
-At standard and deep depth, render-default-deliverables runs automatically after positioning-framework completes. Run it manually with `/render-default-deliverables` any time after editing context files.
+**hypothesis-generator** reads the same context files and produces a prioritized experiment roadmap. Run it with `/hypothesis-generator` after positioning context exists.
+
+At standard and deep depth, render-default-deliverables runs automatically after positioning-framework completes. Run it manually with `/render-default-deliverables` any time after editing context files. hypothesis-generator is always manually invoked.
 
 ## Vision
 
 The research layer (L0 company identity + L1 analysis) is the foundation. Once those context files exist, any number of skills can consume them to produce different outputs.
 
-Today, render-default-deliverables produces a fixed set: executive summary, messaging guide, experiment roadmap, competitive matrix, and battle cards. That's the starting point, not the ceiling.
+Today, render-default-deliverables produces executive summary, messaging guide, competitive matrix, and battle cards. hypothesis-generator adds experiment roadmaps with ICE-scored hypotheses. That's the starting point, not the ceiling.
 
 The goal is a library of composable skills that read from the same structured context: website audits that score pages against the messaging framework, GA4 analysis that ties traffic data to positioning gaps, content strategies built on proven value themes, ad copy generators that pull from the language bank. Each skill does one thing well, and none of them need to re-run the research.
 

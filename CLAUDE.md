@@ -103,7 +103,7 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 | `.claude/deliverables/manifest.md` | Index of all deliverables | render-default-deliverables |
 | `.claude/deliverables/executive-summary.md` | Tier 1 | render-default-deliverables |
 | `.claude/deliverables/messaging-guide.md` | Tier 2 | render-default-deliverables |
-| `.claude/deliverables/experiment-roadmap.md` | Tier 1 | render-default-deliverables |
+| `.claude/deliverables/experiment-roadmap.md` | Standalone | hypothesis-generator |
 | `.claude/deliverables/competitive-comparison-matrix.md` | Tier 3 | render-default-deliverables |
 | `.claude/deliverables/battle-cards/[competitor-slug].md` | Tier 3 | render-default-deliverables |
 
@@ -278,7 +278,7 @@ L2 rendering skill. Consumes L0 + L1 context files and produces human-readable d
 Auto-invoked by positioning-framework at standard/deep depth. Also available standalone via `/render-default-deliverables` for re-rendering after context updates.
 
 **Deliverable tiers:**
-- Tier 1: Executive Summary, Experiment Roadmap (needs L0 + scorecard)
+- Tier 1: Executive Summary (needs L0 + scorecard)
 - Tier 2: Messaging Guide (needs L0 + audience-messaging)
 - Tier 3: Competitive Comparison Matrix, Battle Cards (needs L0 + competitive-landscape)
 - Tier 4: Opportunity Sizing (deferred, needs performance-profile.md from ga4-audit)
