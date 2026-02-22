@@ -152,9 +152,9 @@ Capture:
 
 Format as a table:
 
-| Term | Correct Usage | Incorrect / Avoid |
-|------|--------------|-------------------|
-| [Term] | [How to use it] | [What not to say] |
+| Term | Correct Usage | Incorrect / Avoid | Origin |
+|------|--------------|-------------------|--------|
+| [Term] | [How to use it] | [What not to say] | research |
 
 ### Target Segments
 <!-- Output: company-identity.md > Target Segments -->
@@ -170,9 +170,9 @@ Expand the frontmatter `target_market` with behavioral detail:
 
 Format as a table:
 
-| Segment | Description | Buying Condition |
-|---------|-------------|-----------------|
-| [Name]  | [Who they are] | [What's happening when they buy] |
+| Segment | Description | Buying Condition | Origin |
+|---------|-------------|-----------------|--------|
+| [Name]  | [Who they are] | [What's happening when they buy] | research |
 
 Segments are behavioral, not firmographic. "PE-backed" is a segment. "100-500 employees" is a firmographic that goes in `company_size` frontmatter.
 
@@ -185,9 +185,9 @@ Be specific. "Startups" is too vague. "Pre-revenue startups with no finance team
 
 Format:
 
-| Anti-Persona | Why Not Us | Better Served By |
-|-------------|-----------|-----------------|
-| [Who]       | [Reason]  | [Alternative]    |
+| Anti-Persona | Why Not Us | Better Served By | Origin |
+|-------------|-----------|-----------------|--------|
+| [Who]       | [Reason]  | [Alternative]    | research |
 
 For each anti-persona, think in terms of:
 - "We DON'T help..." -> Anti-Persona column
@@ -208,9 +208,9 @@ For each claimed attribute, assess:
 
 Format:
 
-| # | Differentiator | Claim | Proof Point IDs |
-|---|---------------|-------|-----------------|
-| 1 | [Short name]  | [The specific claim] | P1, P2 |
+| # | Differentiator | Claim | Proof Point IDs | Origin |
+|---|---------------|-------|-----------------|--------|
+| 1 | [Short name]  | [The specific claim] | P1, P2 | research |
 
 ### Pricing Model
 <!-- Output: company-identity.md > Pricing Model -->
@@ -255,9 +255,9 @@ Past value props, taglines, or campaigns the company moved away from. Hard const
 
 Format:
 
-| What | When Used | Why Retired |
-|------|-----------|------------|
-| "[Past tagline]" | [Timeframe] | [Why stopped] |
+| What | When Used | Why Retired | Origin |
+|------|-----------|------------|--------|
+| "[Past tagline]" | [Timeframe] | [Why stopped] | client |
 
 **MUST be populated.** Even if "None identified" or user didn't answer.
 
@@ -287,6 +287,31 @@ Rules:
 - The mechanism should be what makes you different, not what you do.
 
 This informs the Company Overview framing and anchors the audience-messaging.md positioning statement.
+
+---
+
+## Provenance Application
+
+Apply these rules when writing origin tags in `company-identity.md`.
+
+**Rule 1: Default origin is `research`.** If you don't know the origin of a piece of data, tag it `research`.
+
+**Rule 2: Intake payload items are `client`.** Anything tagged `[origin: client]` in the launch prompt carries that tag into L0. Map each tagged item to the appropriate section and preserve the `client` origin.
+
+**Rule 3: Codebase findings are `tier-0`.** Anything from Tier 0 sources (local files, config, README, codebase) is tagged `tier-0`.
+
+**Rule 4: Mixed-origin entries use the origin of the primary claim.** For Differentiators, the primary claim is the Claim column. For Proof Points, the primary claim is the Content column. If the claim itself came from intake, the row is `client`. If the claim came from research but was corroborated by intake, the row is `client`.
+
+**Rule 5: Frontmatter `provenance` block.** After writing all sections, scan for any `client` or `tier-0` origin tags. Set `has_client_input: true` if any `client` tags exist. Set `has_tier0_input: true` if any `tier-0` tags exist.
+
+**Rule 6: Provenance Preservation on re-runs.** When extending an existing `company-identity.md` that already contains origin tags, these rules apply (aligned with the existing prior work detection invariant "never overwrite, always extend"):
+
+- **Never downgrade `client` to `research`.** If an existing entry has `client` origin and the current run has no intake contradicting it, preserve the `client` tag.
+- **Never downgrade `tier-0` to `research`.** Same logic. Codebase evidence does not become less authoritative because the agent re-ran.
+- **New intake overrides old intake.** If the current run's business brief explicitly contradicts a previous `client`-origin entry, the new entry is `client` origin and replaces the old one. Add a changelog comment: `<!-- origin updated: client -> client [date] [reason: new intake] -->`.
+- **Research can upgrade to `client` or `tier-0`.** If a previously `research`-origin entry is now provided by the business brief or found in codebase, upgrade the tag.
+- **When no intake is provided** (user said "go"), read existing origin tags before modifying any section. Preserve `client`-origin entries and their tags verbatim. Add new `research`-origin entries alongside them. Do not replace, rewrite, or reformat `client`-origin rows.
+- **Frontmatter preservation:** If existing L0 has `has_client_input: true` and the current run has no intake, the boolean stays `true`. Only set to `false` if a re-scan of the body confirms zero `client` tags remain.
 
 ---
 
@@ -373,13 +398,13 @@ Add domain-specific tags as needed. Keep total tags per proof point to 2-4.
 ```markdown
 ## Proof Point Registry
 
-| ID | Type | Content | Source | Strength | Tags |
-|----|------|---------|--------|----------|------|
-| P1 | Metric | [Specific metric with numbers] | [URL or source] | [1-5] | [tags] |
-| P2 | Testimonial | "[Exact quote]" - [Name, Title, Company] | [URL] | [1-5] | [tags] |
-| P3 | Case study | [What happened, with quantified outcome] | [URL] | [1-5] | [tags] |
-| P4 | Third-party | [Award, certification, ranking] | [URL] | [1-5] | [tags] |
-| P5 | Logo | [Company names] | [URL] | [1-5] | [tags] |
+| ID | Type | Content | Source | Strength | Tags | Origin |
+|----|------|---------|--------|----------|------|--------|
+| P1 | Metric | [Specific metric with numbers] | [URL or source] | [1-5] | [tags] | research |
+| P2 | Testimonial | "[Exact quote]" - [Name, Title, Company] | [URL] | [1-5] | [tags] | research |
+| P3 | Case study | [What happened, with quantified outcome] | [URL] | [1-5] | [tags] | research |
+| P4 | Third-party | [Award, certification, ranking] | [URL] | [1-5] | [tags] | research |
+| P5 | Logo | [Company names] | [URL] | [1-5] | [tags] | research |
 ```
 
 **Type values:** Metric, Testimonial, Case study, Third-party, Institutional, Logo
@@ -417,6 +442,11 @@ generated_by: positioning-framework  # or "manual"
 last_updated: 2026-02-14
 last_updated_by: positioning-framework
 confidence: 3  # 1-5, overall confidence in data accuracy
+
+provenance:
+  has_client_input: false  # true if any section contains client-origin data
+  has_tier0_input: false   # true if any section contains tier-0-origin data
+  # Fast-path hints only. The body is always authoritative for section-level provenance.
 
 company:
   name: ""
@@ -456,6 +486,7 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 
 [Company name] is a [category] serving [target market]. [Key fact about scale/scope].
 [One sentence on what makes them notable, if anything obvious].
+<!-- origin: research -->
 ```
 
 #### 2. Services & Capabilities (REQUIRED)
@@ -481,6 +512,7 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 
 - **[Excluded service]**: [Why]
 - **[Excluded service]**: [Why]
+<!-- origin: client -->
 ```
 
 #### 4. Target Segments (REQUIRED)
@@ -488,9 +520,9 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 ```markdown
 ## Target Segments
 
-| Segment | Description | Buying Condition |
-|---------|-------------|-----------------|
-| [Name]  | [Who they are] | [What's happening when they buy] |
+| Segment | Description | Buying Condition | Origin |
+|---------|-------------|-----------------|--------|
+| [Name]  | [Who they are] | [What's happening when they buy] | research |
 ```
 
 #### 5. Anti-Personas (REQUIRED)
@@ -498,9 +530,9 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 ```markdown
 ## Anti-Personas
 
-| Anti-Persona | Why Not Us | Better Served By |
-|-------------|-----------|-----------------|
-| [Who]       | [Reason]  | [Alternative]    |
+| Anti-Persona | Why Not Us | Better Served By | Origin |
+|-------------|-----------|-----------------|--------|
+| [Who]       | [Reason]  | [Alternative]    | research |
 ```
 
 #### 6. Stated Differentiators (REQUIRED)
@@ -508,9 +540,9 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 ```markdown
 ## Stated Differentiators
 
-| # | Differentiator | Claim | Proof Point IDs |
-|---|---------------|-------|-----------------|
-| 1 | [Short name]  | [The specific claim] | P1, P2 |
+| # | Differentiator | Claim | Proof Point IDs | Origin |
+|---|---------------|-------|-----------------|--------|
+| 1 | [Short name]  | [The specific claim] | P1, P2 | research |
 ```
 
 #### 7. Proof Point Registry (REQUIRED)
@@ -518,13 +550,13 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 ```markdown
 ## Proof Point Registry
 
-| ID | Type | Content | Source | Strength | Tags |
-|----|------|---------|--------|----------|------|
-| P1 | Metric | [Specific metric with numbers] | [URL or source] | [1-5] | [tags] |
-| P2 | Testimonial | "[Exact quote]" - [Name, Title, Company] | [URL] | [1-5] | [tags] |
-| P3 | Case study | [What happened, with quantified outcome if available] | [URL] | [1-5] | [tags] |
-| P4 | Third-party | [Award, certification, ranking] | [URL] | [1-5] | [tags] |
-| P5 | Institutional | [Board member, investor, partnership] | [URL] | [1-5] | [tags] |
+| ID | Type | Content | Source | Strength | Tags | Origin |
+|----|------|---------|--------|----------|------|--------|
+| P1 | Metric | [Specific metric with numbers] | [URL or source] | [1-5] | [tags] | research |
+| P2 | Testimonial | "[Exact quote]" - [Name, Title, Company] | [URL] | [1-5] | [tags] | research |
+| P3 | Case study | [What happened, with quantified outcome if available] | [URL] | [1-5] | [tags] | research |
+| P4 | Third-party | [Award, certification, ranking] | [URL] | [1-5] | [tags] | research |
+| P5 | Institutional | [Board member, investor, partnership] | [URL] | [1-5] | [tags] | research |
 ```
 
 **Tags:** Use the tag taxonomy from the Proof Point Registry construction section above. Core tags: `retention`, `culture`, `talent`, `execution`, `cost`, `speed`, `quality`, `enterprise`, `credibility`, `client-voice`, `scale`, `innovation`, `specialization`. Keep 2-4 tags per proof point.
@@ -536,10 +568,10 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 ```markdown
 ## Company Stats
 
-| Stat | Value | As Of | Source |
-|------|-------|-------|--------|
-| Revenue | $149M | 2023 | PR Newswire |
-| Headcount | 673 | 2024 | Website |
+| Stat | Value | As Of | Source | Origin |
+|------|-------|-------|--------|--------|
+| Revenue | $149M | 2023 | PR Newswire | research |
+| Headcount | 673 | 2024 | Website | research |
 ```
 
 #### 9. Pricing Model (OPTIONAL)
@@ -550,6 +582,7 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 - **Model**: [Hourly / Project-based / Retainer / Subscription / Outcome-based / Hybrid]
 - **Relative positioning**: [Budget / Mid-market / Premium / Ultra-premium]
 - **Notes**: [Any relevant context]
+<!-- origin: research -->
 ```
 
 #### 10. Constraints (REQUIRED)
@@ -566,6 +599,7 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 - **[Constraint name]**: [What's restricted and why]
   - Restricted terms: [list]
   - Context: [why this matters to the brand]
+<!-- origin: client -->
 ```
 
 #### 11. Glossary (OPTIONAL)
@@ -573,9 +607,9 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 ```markdown
 ## Glossary
 
-| Term | Correct Usage | Incorrect / Avoid |
-|------|--------------|-------------------|
-| [Term] | [How to use it] | [What not to say] |
+| Term | Correct Usage | Incorrect / Avoid | Origin |
+|------|--------------|-------------------|--------|
+| [Term] | [How to use it] | [What not to say] | research |
 ```
 
 #### 12. Buying Triggers (OPTIONAL)
@@ -584,6 +618,7 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 ## Buying Triggers
 
 - [Trigger event]: [Why it creates urgency]
+<!-- origin: research -->
 ```
 
 #### 13. Retired Positioning (OPTIONAL)
@@ -591,9 +626,9 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 ```markdown
 ## Retired Positioning
 
-| What | When Used | Why Retired |
-|------|-----------|------------|
-| "[Past tagline or value prop]" | [Approximate timeframe] | [Why they stopped using it] |
+| What | When Used | Why Retired | Origin |
+|------|-----------|------------|--------|
+| "[Past tagline or value prop]" | [Approximate timeframe] | [Why they stopped using it] | client |
 ```
 
 #### 14. Category Gap (OPTIONAL)
@@ -604,6 +639,7 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 - **Company says**: "[Their self-described category]"
 - **Buyers search for**: "[Terms buyers actually use]"
 - **Gap**: [Brief description of the mismatch]
+<!-- origin: research -->
 ```
 
 ### Completeness Checklist
@@ -623,6 +659,10 @@ A `company-identity.md` file is **complete** when:
 - [ ] Constraints section is present (even if no regulatory constraints exist)
 - [ ] `confidence` score is set and honest
 - [ ] Proof points contain zero comparative language (no "vs.", "above average", "higher than", "compared to", "half the", "more than [industry/competitor]")
+- [ ] All table sections have Origin column populated
+- [ ] All prose sections have `<!-- origin: X -->` comments
+- [ ] Frontmatter provenance booleans (`has_client_input`, `has_tier0_input`) match body content
+- [ ] On re-runs: no `client` or `tier-0` tags were downgraded
 
 A file missing REQUIRED sections should have `confidence: 1` and a note about what's missing.
 

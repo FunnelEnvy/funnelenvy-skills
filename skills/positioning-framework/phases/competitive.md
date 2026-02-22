@@ -369,6 +369,9 @@ Show which claims are unique vs. shared with competitors.
 - **Claim overlap score formula:** For each L0 stated differentiator, count how many competitors make a substantially similar claim. `claim_overlap_score = claims_shared / total_claims` (0-1). Higher = more generic positioning.
 - **When all competitors use similar language, document the sameness explicitly.** That IS the finding. A Claim Overlap Map where every claim is marked "NO" for uniqueness tells the company it has a differentiation problem. Do not treat unanimous similarity as a failure of the analysis.
 
+**Origin-aware rules for Claim Overlap analysis:**
+When reading L0's Stated Differentiators and competitors, check the `Origin` column. `client`-origin competitors from L0 are **confirmed targets** -- do not question whether they're actually competitors; research them directly. `research`-origin competitors are **candidates** -- use judgment on relevance and deprioritize or exclude if evidence is thin. `client`-origin differentiators are **real market claims the company makes in deals** -- treat them as validated starting points, not hypotheses to test. `research`-origin differentiators may be aspirational website copy; validate them more skeptically before mapping overlap. When a `client`-origin differentiator has no competitive overlap, that is a **stronger white space signal** than a `research`-origin one with no overlap, because the client has confirmed the claim matters in actual sales conversations.
+
 ---
 
 ## Step 8: Competitive White Space

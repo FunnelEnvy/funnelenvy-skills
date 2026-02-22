@@ -52,6 +52,11 @@ last_updated: 2026-02-14
 last_updated_by: positioning-framework
 confidence: 3  # 1-5, overall confidence in data accuracy
 
+provenance:
+  has_client_input: false  # true if any section contains client-origin data
+  has_tier0_input: false   # true if any section contains tier-0-origin data
+  # Fast-path hints only. The body is always authoritative for section-level provenance.
+
 company:
   name: ""
   url: ""
@@ -96,6 +101,7 @@ Every section below is a heading in the markdown body. Sections marked **REQUIRE
 
 [Company name] is a [category] serving [target market]. [Key fact about scale/scope].
 [One sentence on what makes them notable, if anything obvious].
+<!-- origin: research -->
 ```
 
 **Used by:** Every skill. This is the "who am I talking about?" context.
@@ -133,6 +139,7 @@ What the company explicitly does NOT do. This prevents downstream skills from ac
 
 - **[Excluded service]**: [Why -- e.g., "Regulatory restriction", "Not our model", "Out of scope"]
 - **[Excluded service]**: [Why]
+<!-- origin: client -->
 ```
 
 **Used by:** Every skill. Hard constraint. Copy skills must never imply the company offers excluded services. Competitive research must not position against firms in excluded categories.
@@ -146,9 +153,9 @@ Expands on the frontmatter `target_market` with behavioral detail. Who are the i
 ```markdown
 ## Target Segments
 
-| Segment | Description | Buying Condition |
-|---------|-------------|-----------------|
-| [Name]  | [Who they are] | [What's happening when they buy] |
+| Segment | Description | Buying Condition | Origin |
+|---------|-------------|-----------------|--------|
+| [Name]  | [Who they are] | [What's happening when they buy] | research |
 ```
 
 **Used by:** Audience personas (builds full persona profiles from these segments), website audit (checks if the site speaks to these segments), ad copy (targeting criteria).
@@ -162,9 +169,9 @@ Who the company explicitly does NOT serve. Include why and who's a better fit. T
 ```markdown
 ## Anti-Personas
 
-| Anti-Persona | Why Not Us | Better Served By |
-|-------------|-----------|-----------------|
-| [Who]       | [Reason]  | [Alternative]    |
+| Anti-Persona | Why Not Us | Better Served By | Origin |
+|-------------|-----------|-----------------|--------|
+| [Who]       | [Reason]  | [Alternative]    | research |
 ```
 
 **Used by:** Every content skill. Never write copy that would attract anti-personas. Ad targeting skills use this as an exclusion list.
@@ -180,10 +187,10 @@ Each differentiator should reference proof points by ID (from the Proof Point Re
 ```markdown
 ## Stated Differentiators
 
-| # | Differentiator | Claim | Proof Point IDs |
-|---|---------------|-------|-----------------|
-| 1 | [Short name]  | [The specific claim] | P1, P2 |
-| 2 | [Short name]  | [The specific claim] | P7, P8 |
+| # | Differentiator | Claim | Proof Point IDs | Origin |
+|---|---------------|-------|-----------------|--------|
+| 1 | [Short name]  | [The specific claim] | P1, P2 | research |
+| 2 | [Short name]  | [The specific claim] | P7, P8 | research |
 ```
 
 **Used by:** Competitive research (tests which claims are actually unique), messaging framework (builds value themes from proven differentiators), website audit (checks if differentiators are visible).
@@ -197,13 +204,13 @@ Every piece of evidence the company can cite. This is the single source of truth
 ```markdown
 ## Proof Point Registry
 
-| ID | Type | Content | Source | Strength | Tags |
-|----|------|---------|--------|----------|------|
-| P1 | Metric | [Specific metric with numbers] | [URL or source] | [1-5] | [tags] |
-| P2 | Testimonial | "[Exact quote]" -- [Name, Title, Company] | [URL] | [1-5] | [tags] |
-| P3 | Case study | [What happened, with quantified outcome if available] | [URL] | [1-5] | [tags] |
-| P4 | Third-party | [Award, certification, ranking] | [URL] | [1-5] | [tags] |
-| P5 | Institutional | [Board member, investor, partnership] | [URL] | [1-5] | [tags] |
+| ID | Type | Content | Source | Strength | Tags | Origin |
+|----|------|---------|--------|----------|------|--------|
+| P1 | Metric | [Specific metric with numbers] | [URL or source] | [1-5] | [tags] | research |
+| P2 | Testimonial | "[Exact quote]" -- [Name, Title, Company] | [URL] | [1-5] | [tags] | research |
+| P3 | Case study | [What happened, with quantified outcome if available] | [URL] | [1-5] | [tags] | research |
+| P4 | Third-party | [Award, certification, ranking] | [URL] | [1-5] | [tags] | research |
+| P5 | Institutional | [Board member, investor, partnership] | [URL] | [1-5] | [tags] | research |
 ```
 
 **Type values:** Metric, Testimonial, Case study, Third-party, Institutional, Logo
@@ -227,12 +234,12 @@ Key numbers about the company. Used for credibility statements and scale argumen
 ```markdown
 ## Company Stats
 
-| Stat | Value | As Of | Source |
-|------|-------|-------|--------|
-| Revenue | $149M | 2023 | PR Newswire |
-| Headcount | 673 | 2024 | Website |
-| Locations | 26 US markets | 2024 | Website |
-| YoY Growth | 41% | 2023 | Inc. 5000 |
+| Stat | Value | As Of | Source | Origin |
+|------|-------|-------|--------|--------|
+| Revenue | $149M | 2023 | PR Newswire | research |
+| Headcount | 673 | 2024 | Website | research |
+| Locations | 26 US markets | 2024 | Website | research |
+| YoY Growth | 41% | 2023 | Inc. 5000 | research |
 ```
 
 **Used by:** Copy briefs (scale proof), objection handling ("you're too small"), competitive battle cards.
@@ -249,6 +256,7 @@ How the company prices. Not the specific dollar amounts (those rarely go in a co
 - **Model**: [Hourly / Project-based / Retainer / Subscription / Outcome-based / Hybrid]
 - **Relative positioning**: [Budget / Mid-market / Premium / Ultra-premium]
 - **Notes**: [Any relevant context -- e.g., "No public pricing. Industry standard is $X-Y/hr."]
+<!-- origin: research -->
 ```
 
 **Used by:** Competitive research (pricing comparison), objection handling ("you're too expensive"), ad targeting (qualify by budget).
@@ -271,6 +279,7 @@ Hard guardrails on what can and cannot be said. Two categories: regulatory (lega
 - **[Constraint name]**: [What's restricted and why]
   - Restricted terms: [list]
   - Context: [why this matters to the brand]
+<!-- origin: client -->
 ```
 
 **Used by:** Every content skill. These are non-negotiable. A copy brief that violates a regulatory constraint is worse than no copy brief at all.
@@ -284,9 +293,9 @@ Product names, service names, and terminology that must be used correctly. Inclu
 ```markdown
 ## Glossary
 
-| Term | Correct Usage | Incorrect / Avoid |
-|------|--------------|-------------------|
-| [Term] | [How to use it] | [What not to say] |
+| Term | Correct Usage | Incorrect / Avoid | Origin |
+|------|--------------|-------------------|--------|
+| [Term] | [How to use it] | [What not to say] | research |
 ```
 
 **Used by:** Every content skill. Prevents downstream copy from using wrong product names or deprecated terminology.
@@ -302,6 +311,7 @@ What events cause prospects to seek this company. These are the "moments" that c
 
 - [Trigger event]: [Why it creates urgency]
 - [Trigger event]: [Why it creates urgency]
+<!-- origin: research -->
 ```
 
 **Used by:** Ad targeting (event-based campaigns), content strategy (trigger-specific content), email sequences (trigger-based nurture).
@@ -315,9 +325,9 @@ Past value props, taglines, or campaigns the company has moved away from. This i
 ```markdown
 ## Retired Positioning
 
-| What | When Used | Why Retired |
-|------|-----------|------------|
-| "[Past tagline or value prop]" | [Approximate timeframe] | [Why they stopped using it] |
+| What | When Used | Why Retired | Origin |
+|------|-----------|------------|--------|
+| "[Past tagline or value prop]" | [Approximate timeframe] | [Why they stopped using it] | client |
 ```
 
 **Used by:** Every content skill. Prevents proposing messaging the company has already tried and abandoned.
@@ -334,6 +344,7 @@ If the company's self-described category doesn't match how buyers search, docume
 - **Company says**: "[Their self-described category]"
 - **Buyers search for**: "[Terms buyers actually use]"
 - **Gap**: [Brief description of the mismatch]
+<!-- origin: research -->
 ```
 
 **Used by:** SEO audit, website audit, positioning scorecard.

@@ -485,12 +485,14 @@ The orchestrator runs Pre-Flight intake BEFORE launching any agents. This ensure
 
 ```
 Pre-Flight intake:
-- Named competitors: [list, or "none provided"]
-- Priority pages: [list of URLs/paths, or "none provided"]
-- Existing docs: [summary of what was provided, or "none"]
-- Language constraints: [must-use terms, must-avoid terms, or "none"]
-- Additional context: [freeform, or "none"]
+- Named competitors [origin: client]: [list, or "none provided"]
+- Priority pages [origin: client]: [list of URLs/paths, or "none provided"]
+- Existing docs [origin: client]: [summary of what was provided, or "none"]
+- Language constraints [origin: client]: [must-use terms, must-avoid terms, or "none"]
+- Additional context [origin: client]: [freeform, or "none"]
 ```
+
+When no business brief or intake is provided (user said "go"), all data defaults to `research` origin. The `[origin: client]` tags are omitted from the payload in this case.
 
 ### Step 6.5: Copy Verification Checkpoint
 
@@ -641,10 +643,10 @@ Depth: [quick/standard/deep]
 Prior work: [summary of what exists in .claude/context/]
 
 Pre-Flight intake:
-- Named competitors: [list from intake, or "none provided"]
-- Existing docs: [summary of docs provided, or "none"]
-- Language constraints: [must-use/must-avoid terms, or "none"]
-- Additional context: [freeform context, or "none"]
+- Named competitors [origin: client]: [list from intake, or "none provided"]
+- Existing docs [origin: client]: [summary of docs provided, or "none"]
+- Language constraints [origin: client]: [must-use/must-avoid terms, or "none"]
+- Additional context [origin: client]: [freeform context, or "none"]
 
 Execute the research and build company-identity.md. Thread language constraints into the Glossary and Constraints sections. Named competitors are required competitive research targets. Return a completion summary with:
 - Key findings
@@ -666,8 +668,8 @@ Competitive focus: [name or "none"]
 Prior work: [summary of existing competitive-landscape.md, if any]
 
 Pre-Flight intake:
-- Named competitors: [list -- these are REQUIRED analysis targets, research them even if not found in web searches]
-- Additional context: [any sales context, win/loss notes from user]
+- Named competitors [origin: client]: [list -- these are REQUIRED analysis targets, research them even if not found in web searches]
+- Additional context [origin: client]: [any sales context, win/loss notes from user]
 
 Read .claude/context/company-identity.md for L0 context.
 Execute competitive analysis and build competitive-landscape.md. Return a completion summary with:
@@ -689,8 +691,8 @@ Company: [name] ([url])
 Prior work: [summary of existing audience-messaging.md, if any]
 
 Pre-Flight intake:
-- Language constraints: [must-use/must-avoid terms -- these are AUTHORITATIVE, override research-discovered patterns where they conflict]
-- Additional context: [voice preferences, audience nuances from user]
+- Language constraints [origin: client]: [must-use/must-avoid terms -- these are AUTHORITATIVE, override research-discovered patterns where they conflict]
+- Additional context [origin: client]: [voice preferences, audience nuances from user]
 
 Read .claude/context/company-identity.md and .claude/context/competitive-landscape.md.
 Execute messaging analysis and build audience-messaging.md. Return a completion summary.
@@ -707,9 +709,9 @@ Read your instructions from:
 Company: [name] ([url])
 
 Pre-Flight intake:
-- Named competitors: [for scoring context]
-- Language constraints: [for scoring context]
-- Additional context: [for scoring context]
+- Named competitors [origin: client]: [for scoring context]
+- Language constraints [origin: client]: [for scoring context]
+- Additional context [origin: client]: [for scoring context]
 
 Read all 3 prior context files. Execute health check and build positioning-scorecard.md. Return a completion summary with overall positioning health check.
 ```

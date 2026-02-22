@@ -244,6 +244,8 @@ Be specific. "Startups" is too vague. "Pre-revenue startups with no finance team
 
 Structured vocabulary reference that ALL downstream skills must respect. **Pre-Flight intake language constraints are authoritative.** Where intake constraints conflict with research-discovered patterns (e.g., intake says "avoid 'consulting'" but the website uses it), the intake constraint wins. Note the conflict in the relevant entry.
 
+**Origin-aware rules:** When reading L0's Glossary and Constraints sections, check the `Origin` column or tag. `client`-origin glossary terms and constraints are **mandatory** -- if the client says "never use 'disruptor,'" that is a hard rule regardless of what the website says. `client`-origin terms go directly into Banned Terms or the relevant Language Bank subsection **without validation**. `research`-origin glossary terms are **recommendations** -- you can override them with justification if messaging analysis suggests a different approach (e.g., the website avoids a term but reviews show customers use it heavily).
+
 ### Customer Language (use in headlines, ads, email subjects)
 Captured from reviews, forums, testimonials, and Reddit. These are the words buyers actually use.
 - "[exact phrase]" - Source: [G2 review / Reddit thread / testimonial]

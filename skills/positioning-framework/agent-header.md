@@ -110,3 +110,23 @@ Before referencing any website copy from L0 (headlines, CTAs, claims):
 - If tagged `[NOT EXTRACTED]`, `[not-extracted]`, or `[CAROUSEL - MAY NOT MATCH VISIBLE CONTENT]`: do NOT quote this copy as current baseline
 - When comparing or analyzing against the target company's messaging, use only `website-confirmed` or `user-confirmed` copy as the baseline
 - If unverified copy is the only baseline available, state explicitly that copy could not be verified and your analysis is based on available page structure and meta content
+
+---
+
+## Provenance Protocol
+
+Every piece of data in `company-identity.md` carries an origin tag indicating where it came from. Three origin values only:
+
+| Origin | Description |
+|--------|-------------|
+| `research` | Discovered by autonomous web research (any tier) |
+| `client` | Provided by user via business brief or intake answers |
+| `tier-0` | Extracted from local codebase/project files |
+
+**Authority rule:** `client` origin is authoritative -- accepted as ground truth, overrides research when they conflict. `tier-0` origin overrides website data when they conflict. `research` origin is assessed on merits.
+
+**Default rule:** If origin is unknown, default to `research`.
+
+**Preservation invariant:** Origin tags follow a one-way authority chain. They can upgrade (`research` -> `client` or `tier-0`) but never downgrade (`client` -> `research` or `tier-0` -> `research`). On re-runs, existing `client` and `tier-0` tags are preserved unless explicitly overridden by new intake at the same or higher authority level.
+
+**Backward compatibility:** L0 files without provenance tags should be treated as all-`research` origin. Do not fail or halt if tags are absent -- assume research and proceed.

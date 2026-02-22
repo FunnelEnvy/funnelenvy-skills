@@ -129,6 +129,8 @@ Rate each dimension as **Strong**, **Needs Work**, or **Missing**. Each rating r
 | **Consistency** | Same core narrative across homepage, about, LinkedIn, ads, sales collateral. Voice and claims aligned. | Core message exists but varies across channels. LinkedIn says one thing, homepage says another. | No coherent narrative. Each channel tells a different story or contradicts others. |
 | **Category Fit** | Company appears where buyers search. Category term matches buyer vocabulary. SEO and positioning aligned. | Category claimed but buyers use different terms. Or right terms but poor visibility. | Company doesn't show up in the category buyers search. Misaligned or invisible. |
 
+**Origin-aware proof assessment:** When evaluating the Proof dimension, check the `Origin` column in L0's Proof Point Registry. `client`-origin proof points skip the "is this real?" question -- the client vouched for them. This does NOT inflate strength scores; it **reduces the uncertainty discount** on client-provided evidence. A client-confirmed metric is more likely to be accurate than a website-scraped one, but its strength still depends on specificity and third-party verification per the existing scale. `research`-origin proof points are assessed normally per the strength scale above -- no change to current behavior. `tier-0`-origin proof points (extracted from local codebase or config files) are the **most reliable** evidence available -- treat as highest-confidence input since they are verified from source code.
+
 ### Health Check Output Format
 
 ```markdown

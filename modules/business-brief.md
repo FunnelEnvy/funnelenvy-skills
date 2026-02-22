@@ -70,6 +70,7 @@ The orchestrator (SKILL.md step 5) runs Pre-Flight intake and passes results to 
 3. **If not found + standard/deep depth:** Present 4-question intake prompt (see SKILL.md step 5).
 4. **If not found + quick depth:** Skip entirely. Zero prompts.
 5. **Package answers into intake payload** and include in each agent's launch prompt.
+6. **Tag all brief-derived items with `[origin: client]`** in the intake payload. The brief template itself does not carry origin tags; tagging happens at the orchestrator layer when constructing agent launch prompts. This ensures agents can distinguish client-provided facts from research-discovered facts when writing L0 provenance tags.
 
 See SKILL.md "Step 5: Pre-Flight Intake" for the full protocol, intake questions, and payload format.
 
