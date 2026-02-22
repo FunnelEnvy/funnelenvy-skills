@@ -142,9 +142,9 @@ Review the roadmap and let me know if any hypotheses need adjustment.
 ## How to Read This Roadmap
 
 Experiments are scored using the ICE framework:
-- **Impact** (1-10): Expected effect on conversion or revenue if the variant wins
-- **Confidence** (1-10): How certain we are this will produce a measurable result
-- **Ease** (1-10): Implementation effort (10 = trivial, 1 = major engineering)
+- **Impact** (1-5): Expected effect on conversion or revenue if the variant wins
+- **Confidence** (1-5): How certain we are this will produce a measurable result
+- **Ease** (1-5): Implementation effort (5 = trivial, 1 = major engineering)
 
 Experiments are grouped into three tiers:
 - **Quick Wins:** High confidence, high ease. Run these first to build momentum.
@@ -155,7 +155,7 @@ Experiments are grouped into three tiers:
 
 | # | Experiment | Page | Tier | I | C | E | ICE |
 |---|-----------|------|------|---|---|---|-----|
-| 1 | [name] | [page] | Quick Win | 8 | 7 | 9 | 24 |
+| 1 | [name] | [page] | Quick Win | 4 | 4 | 5 | 13 |
 | 2 | ... | ... | ... | ... | ... | ... | ... |
 
 ## Quick Wins

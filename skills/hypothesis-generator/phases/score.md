@@ -15,10 +15,10 @@ This phase does not vary by depth.
 
 | Condition | Impact |
 |-----------|--------|
-| No positioning-scorecard.md | Confidence scores capped at 6 for all hypotheses (less certainty about gap severity). |
-| No competitive-landscape.md | Impact scores for competitive-pressure hypotheses capped at 6. |
-| No audience-messaging.md | Confidence scores for persona-based hypotheses capped at 5 (less certainty about messaging fit). |
-| No baseline traffic/conversion data | Confidence scores capped at 5 globally. Add note to roadmap: "Quantitative confidence improves with analytics data." |
+| No positioning-scorecard.md | Confidence scores capped at 3 for all hypotheses (less certainty about gap severity). |
+| No competitive-landscape.md | Impact scores for competitive-pressure hypotheses capped at 3. |
+| No audience-messaging.md | Confidence scores for persona-based hypotheses capped at 3 (less certainty about messaging fit). |
+| No baseline traffic/conversion data | Confidence scores capped at 3 globally. Add note to roadmap: "Quantitative confidence improves with analytics data." |
 | Calibration data from evidence modules | Override pattern baselines with calibrated scores where available. Calibrated scores take precedence. |
 
 ---
@@ -38,7 +38,7 @@ Each pattern in `modules/experiment-patterns.md` defines conditional modifiers. 
 - If the modifier condition can be confirmed from context, apply the adjustment
 - If the modifier condition can't be evaluated (data not available), do not apply it
 - Modifiers are additive. Multiple modifiers can apply to the same hypothesis.
-- Scores are clamped to 1-10 after all modifiers are applied
+- Scores are clamped to 1-5 after all modifiers are applied
 
 ### Step 3: Apply Calibration Overrides
 
@@ -54,7 +54,7 @@ These adjustments are based on the overall context quality, not individual patte
 **Confidence adjustments:**
 - If the "before" state for a copy experiment is exact text from context: no adjustment
 - If the "before" state is inferred/described rather than exact: Confidence -1
-- If the hypothesis was triggered by a partial trigger: Confidence -2
+- If the hypothesis was triggered by a partial trigger: Confidence -1
 - If audience-messaging.md provided the "after" copy: no adjustment
 - If the "after" copy was derived from L0 value props instead: Confidence -1
 
@@ -66,33 +66,33 @@ These adjustments are based on the overall context quality, not individual patte
 **Ease adjustments:**
 - If the hypothesis requires only copy changes: Ease +1
 - If the hypothesis requires structural/layout changes: no adjustment
-- If the hypothesis requires personalization infrastructure: Ease -2 (unless context suggests it exists)
+- If the hypothesis requires personalization infrastructure: Ease -1 (unless context suggests it exists)
 - If the hypothesis requires changes to third-party embedded elements (forms, chatbots): Ease -1
 
 ### Step 5: Score Validation
 
 Before finalizing, check for scoring anti-patterns:
 
-**Anti-pattern: Score clustering.** If >70% of hypotheses have ICE totals within 3 points of each other, the scoring is too flat. Re-examine: are you defaulting to safe middle scores? Force differentiation by re-evaluating the strongest and weakest hypotheses first, then spreading the rest.
+**Anti-pattern: Score clustering.** If >70% of hypotheses have ICE totals within 2 points of each other, the scoring is too flat. Re-examine: are you defaulting to safe middle scores? Force differentiation by re-evaluating the strongest and weakest hypotheses first, then spreading the rest.
 
-**Anti-pattern: All high scores.** If no hypothesis scores below 5 on any dimension, you're being too generous. At least one hypothesis should have a low-Confidence or low-Ease score. Real experiment portfolios have range.
+**Anti-pattern: All high scores.** If no hypothesis scores below 3 on any dimension, you're being too generous. At least one hypothesis should have a low-Confidence or low-Ease score. Real experiment portfolios have range.
 
-**Anti-pattern: Impact inflation.** If every hypothesis has Impact >= 7, recalibrate. Impact 7+ means "measurable revenue effect." Most copy changes on secondary pages are Impact 4-6.
+**Anti-pattern: Impact inflation.** If every hypothesis has Impact >= 4, recalibrate. Impact 4+ means "measurable revenue effect." Most copy changes on secondary pages are Impact 2-3.
 
 Read the full calibration anchors in `modules/ice-scoring.md` to ground your scores.
 
 ### Step 6: Compute ICE Totals and Tier
 
-**ICE Total** = Impact + Confidence + Ease (range: 3-30)
+**ICE Total** = Impact + Confidence + Ease (range: 3-15)
 
 **Tiering rules:**
 
 | Tier | Criteria | Purpose |
 |------|----------|---------|
-| **Quick Win** | Confidence >= 7 AND Ease >= 7 | Build testing momentum. Low risk. |
-| **Strategic Bet** | Impact >= 7 AND ICE Total >= 18 AND not Quick Win | Move the needle. Worth the effort. |
-| **Exploration** | Everything else with ICE Total >= 12 | Learn something. Run when bandwidth allows. |
-| **Cut** | ICE Total < 12 | Not worth running. Exclude from roadmap. |
+| **Quick Win** | Confidence >= 4 AND Ease >= 4 | Build testing momentum. Low risk. |
+| **Strategic Bet** | Impact >= 4 AND ICE Total >= 10 AND not Quick Win | Move the needle. Worth the effort. |
+| **Exploration** | Everything else with ICE Total >= 7 | Learn something. Run when bandwidth allows. |
+| **Cut** | ICE Total < 7 | Not worth running. Exclude from roadmap. |
 
 If `--max` cap is hit after tiering, cut from the bottom of Explorations first, then Strategic Bets. Never cut Quick Wins (they build organizational confidence in testing).
 

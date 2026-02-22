@@ -41,10 +41,10 @@ Each pattern follows this structure:
 
 **Causal mechanism:** B2B buyers scanning above the fold decide in 3-5 seconds whether a page is relevant. Category language ("AI-powered revenue platform") forces cognitive work to translate features into personal value. Outcome language ("Close deals 40% faster") self-qualifies the visitor immediately.
 
-**ICE baseline:** Impact 8 | Confidence 7 | Ease 9
+**ICE baseline:** Impact 4 | Confidence 4 | Ease 5
 **Modifiers:**
 - Confidence +1 if audience-messaging provides specific channel adaptation for homepage
-- Confidence -2 if no exact current headline copy available in context
+- Confidence -1 if no exact current headline copy available in context
 - Impact +1 if scorecard rates Clarity as "Missing" (not just "Needs Work")
 
 **Common mistakes:**
@@ -68,9 +68,9 @@ Each pattern follows this structure:
 
 **Causal mechanism:** Specificity signals credibility. "Trusted by hundreds of companies" triggers skepticism (why not say the number?). "Trusted by 340+ B2B SaaS companies including [Logo]" activates a different trust evaluation: the specificity implies confidence in the claim.
 
-**ICE baseline:** Impact 6 | Confidence 8 | Ease 9
+**ICE baseline:** Impact 3 | Confidence 4 | Ease 5
 **Modifiers:**
-- Impact +2 if the company has "verified" proof points (named customer + metric) not currently displayed on the page
+- Impact +1 if the company has "verified" proof points (named customer + metric) not currently displayed on the page
 - Confidence -1 if proof points are only "claimed" strength
 - Impact +1 if applied to pricing or demo request page (high-intent context where proof reduces last-mile friction)
 
@@ -97,11 +97,11 @@ Each pattern follows this structure:
 
 **Causal mechanism:** Each additional form field increases perceived effort and triggers a cost-benefit reevaluation. For mid-funnel actions where the visitor hasn't committed to a purchase decision, the perceived value of the content often doesn't justify the effort of filling out 7+ fields.
 
-**ICE baseline:** Impact 7 | Confidence 8 | Ease 7
+**ICE baseline:** Impact 4 | Confidence 4 | Ease 4
 **Modifiers:**
-- Confidence -3 if form is for high-intent action (demo request, consultation) where qualification matters more
-- Impact +2 if mobile traffic represents >40% of page visits
-- Ease -2 if form is embedded third-party (Marketo, HubSpot) with limited field customization
+- Confidence -2 if form is for high-intent action (demo request, consultation) where qualification matters more
+- Impact +1 if mobile traffic represents >40% of page visits
+- Ease -1 if form is embedded third-party (Marketo, HubSpot) with limited field customization
 - Impact diminishing: if form already has 4-5 fields, reducing to 3 has smaller effect than reducing from 8 to 4
 
 **Common mistakes:**
@@ -125,10 +125,10 @@ Each pattern follows this structure:
 
 **Causal mechanism:** Commitment and consistency bias. Once someone completes Step 1, they've invested effort and are more likely to finish. The multi-step structure also reduces perceived effort at the moment of decision: the visitor sees "Step 1 of 3" with two fields, not a wall of seven fields.
 
-**ICE baseline:** Impact 7 | Confidence 7 | Ease 5
+**ICE baseline:** Impact 4 | Confidence 4 | Ease 3
 **Modifiers:**
-- Ease -3 if form is embedded third-party with limited step/flow customization
-- Confidence +2 if baseline form abandonment data is available
+- Ease -2 if form is embedded third-party with limited step/flow customization
+- Confidence +1 if baseline form abandonment data is available
 - Impact +1 if current single-page form has a measurably low completion rate
 
 **Common mistakes:**
@@ -151,9 +151,9 @@ Each pattern follows this structure:
 
 **Causal mechanism:** At the moment of form submission, the visitor re-evaluates their decision. Reinforcement at the point of action addresses the implicit question "Is this worth my information?" Trust signals and expectation-setting reduce last-moment abandonment.
 
-**ICE baseline:** Impact 5 | Confidence 7 | Ease 9
+**ICE baseline:** Impact 3 | Confidence 4 | Ease 5
 **Modifiers:**
-- Impact +3 if form is for high-commitment action (demo, consultation) where the ask feels larger
+- Impact +2 if form is for high-commitment action (demo, consultation) where the ask feels larger
 - Impact -1 if form is for low-friction content download
 - Confidence +1 if L0 proof point registry has "verified" proof points available to display
 
@@ -180,10 +180,10 @@ Each pattern follows this structure:
 
 **Causal mechanism:** When a B2B site serves multiple buyer personas, feature-based navigation forces each persona to self-filter through features to find what's relevant. Use-case or role-based navigation acts as a shortcut: "For VP Sales" immediately signals "this section is about my problems." It reduces navigation effort and increases perceived relevance.
 
-**ICE baseline:** Impact 7 | Confidence 5 | Ease 4
+**ICE baseline:** Impact 4 | Confidence 3 | Ease 2
 **Modifiers:**
-- Confidence +2 if analytics show high bounce from current navigation pages
-- Ease -2 if CMS doesn't support dynamic navigation or dropdown customization
+- Confidence +1 if analytics show high bounce from current navigation pages
+- Ease -1 if CMS doesn't support dynamic navigation or dropdown customization
 - Impact +1 if 3+ distinct personas identified (more audience diversity = more navigation friction)
 - Confidence +1 if competitor sites already use persona-based navigation successfully
 
@@ -208,9 +208,9 @@ Each pattern follows this structure:
 
 **Causal mechanism:** Hick's Law: decision time increases logarithmically with the number of choices. Multiple equal-weight CTAs create decision paralysis. A single, specific CTA reduces cognitive load. Specific language ("Book a 15-min Demo") also sets expectations, reducing the fear of unknown commitment that vague CTAs ("Contact Us") create.
 
-**ICE baseline:** Impact 6 | Confidence 8 | Ease 8
+**ICE baseline:** Impact 3 | Confidence 4 | Ease 4
 **Modifiers:**
-- Impact +2 if page has 3+ CTAs of equal visual prominence
+- Impact +1 if page has 3+ CTAs of equal visual prominence
 - Confidence +1 if A/B testing platform already configured on the page
 - Impact +1 if CTA change addresses the primary conversion action (not a secondary engagement)
 
@@ -235,10 +235,10 @@ Each pattern follows this structure:
 
 **Causal mechanism:** Not every visitor is ready to buy, demo, or talk to sales. Offering a lower-commitment action captures visitors who are interested but not ready, moving them into a nurture path instead of losing them entirely. The secondary offer acts as a safety net for the conversion funnel.
 
-**ICE baseline:** Impact 5 | Confidence 6 | Ease 6
+**ICE baseline:** Impact 3 | Confidence 3 | Ease 3
 **Modifiers:**
-- Impact +3 if page traffic is high and primary conversion rate is <1%
-- Ease +2 if exit-intent tooling already deployed
+- Impact +2 if page traffic is high and primary conversion rate is <1%
+- Ease +1 if exit-intent tooling already deployed
 - Confidence +1 if the secondary offer already exists (content, calculator, etc.) and just needs placement
 
 **Common mistakes:**
@@ -264,12 +264,12 @@ Each pattern follows this structure:
 
 **Causal mechanism:** Relevance drives conversion. A CFO and a VP of Engineering visit the same homepage but evaluate through completely different lenses. The CFO cares about ROI and risk reduction. The VP of Engineering cares about integration complexity and team adoption. Matching the opening message to their frame reduces cognitive distance between "this page exists" and "this page is for me."
 
-**ICE baseline:** Impact 9 | Confidence 5 | Ease 3
+**ICE baseline:** Impact 5 | Confidence 3 | Ease 2
 **Modifiers:**
-- Confidence +3 if traffic segments are identifiable via existing UTM structure or ad campaign segmentation
-- Ease +3 if the testing/personalization platform supports audience targeting natively (Optimizely, VWO, etc.)
-- Ease -4 if no personalization infrastructure exists and this would be the first implementation
-- Confidence -2 if personas are loosely defined (only 2 personas with overlapping challenges)
+- Confidence +2 if traffic segments are identifiable via existing UTM structure or ad campaign segmentation
+- Ease +2 if the testing/personalization platform supports audience targeting natively (Optimizely, VWO, etc.)
+- Ease -2 if no personalization infrastructure exists and this would be the first implementation
+- Confidence -1 if personas are loosely defined (only 2 personas with overlapping challenges)
 
 **Common mistakes:**
 - Personalizing the headline but leaving everything else generic, creating a jarring relevance mismatch below the fold
@@ -292,11 +292,11 @@ Each pattern follows this structure:
 
 **Causal mechanism:** "Companies like mine use this" is a stronger trust signal than "companies use this." Industry-matched proof reduces perceived risk by making the buyer's context feel understood. A fintech buyer seeing fintech logos and a fintech case study gets implicit validation that the product handles their specific regulatory and scaling challenges.
 
-**ICE baseline:** Impact 7 | Confidence 6 | Ease 4
+**ICE baseline:** Impact 4 | Confidence 3 | Ease 2
 **Modifiers:**
-- Confidence +2 if company has 3+ case studies per target vertical
-- Ease +3 if CMS supports dynamic content blocks or personalization rules
-- Confidence -2 if proof points are only "claimed" strength (logos without testimonials)
+- Confidence +1 if company has 3+ case studies per target vertical
+- Ease +2 if CMS supports dynamic content blocks or personalization rules
+- Confidence -1 if proof points are only "claimed" strength (logos without testimonials)
 - Impact -1 if the company operates in a single vertical (personalization adds no differentiation)
 
 **Common mistakes:**
@@ -322,10 +322,10 @@ Each pattern follows this structure:
 
 **Causal mechanism:** B2B buyers arrive with a question: "Is this for me?" Feature-first layouts answer a different question: "What does it do?" The hierarchy should match the buyer's decision sequence. Relevance first (am I in the right place?), then capability (what does it do?), then proof (can I trust this?). Violating this sequence forces visitors to work backward through the page to answer their first question.
 
-**ICE baseline:** Impact 8 | Confidence 6 | Ease 5
+**ICE baseline:** Impact 4 | Confidence 3 | Ease 3
 **Modifiers:**
-- Impact +2 if current bounce rate >60% (suggests visitors aren't finding relevance quickly)
-- Ease -3 if page is template-locked in CMS or requires developer involvement for layout changes
+- Impact +1 if current bounce rate >60% (suggests visitors aren't finding relevance quickly)
+- Ease -2 if page is template-locked in CMS or requires developer involvement for layout changes
 - Confidence +1 if audience-messaging provides a clear primary message hierarchy to implement
 
 **Common mistakes:**
@@ -348,11 +348,11 @@ Each pattern follows this structure:
 
 **Causal mechanism:** B2B purchase decisions involve multiple stakeholders and higher risk than B2C. Short pages often under-serve the "convince my boss" use case: the champion who needs ammunition to sell internally. Overly long pages lose the already-convinced buyer who just wants to find the CTA. The test reveals which audience dominates and what information architecture serves both.
 
-**ICE baseline:** Impact 6 | Confidence 5 | Ease 4
+**ICE baseline:** Impact 3 | Confidence 3 | Ease 2
 **Modifiers:**
-- Confidence +2 if scroll depth data is available (confirms whether visitors engage with or abandon long content)
-- Impact +2 if page serves both early and late funnel traffic (validated by mixed-intent traffic sources)
-- Ease -2 if the change requires significant content creation (not just restructuring existing content)
+- Confidence +1 if scroll depth data is available (confirms whether visitors engage with or abandon long content)
+- Impact +1 if page serves both early and late funnel traffic (validated by mixed-intent traffic sources)
+- Ease -1 if the change requires significant content creation (not just restructuring existing content)
 
 **Common mistakes:**
 - Treating page length as the variable when the real issue is information architecture (a long page with clear sections outperforms a short page missing critical info)
@@ -377,11 +377,11 @@ Each pattern follows this structure:
 
 **Causal mechanism:** B2B buyers increasingly self-serve through the evaluation process. Hiding pricing creates friction: the buyer can't assess fit without talking to sales, which many buyers (especially technical evaluators) resist. Competitors who publish pricing gain an evaluation advantage. Conversely, transparent pricing anchors expectations and filters unqualified leads, improving sales efficiency.
 
-**ICE baseline:** Impact 8 | Confidence 4 | Ease 6
+**ICE baseline:** Impact 4 | Confidence 2 | Ease 3
 **Modifiers:**
-- Confidence +3 if competitors already publish pricing and the company is losing on "ease of evaluation" signals
-- Impact -2 if deal sizes are highly variable (enterprise custom pricing is legitimately hard to publish)
-- Ease -2 if pricing requires internal stakeholder alignment before publishing
+- Confidence +2 if competitors already publish pricing and the company is losing on "ease of evaluation" signals
+- Impact -1 if deal sizes are highly variable (enterprise custom pricing is legitimately hard to publish)
+- Ease -1 if pricing requires internal stakeholder alignment before publishing
 - Confidence +1 if company has clear tiers or packages that map to published pricing
 
 **Common mistakes:**
