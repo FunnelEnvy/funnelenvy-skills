@@ -11,7 +11,8 @@ funnelenvy-skills/
 │   ├── competitive-landscape.md  # L1 schema (merged: market + competitors + battle cards)
 │   ├── audience-messaging.md     # L1 schema (merged: personas + messaging + voice)
 │   ├── positioning-scorecard.md  # L1 schema (includes quick reference)
-│   └── _fetch-registry.md        # Operational metadata schema (not L0/L1)
+│   ├── _fetch-registry.md        # Operational metadata schema (not L0/L1)
+│   └── _research-extractions.md  # Raw page extractions schema (operational)
 ├── modules/
 │   ├── reddit-research.md        # Shared Reddit API integration (all skills)
 │   ├── web-extract.md            # curl + python3 HTML extractor (first-pass)
@@ -95,6 +96,7 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 | `.claude/context/audience-messaging.md` | L1 | positioning-framework (standard/deep) | render-default-deliverables, website-audit, content strategy |
 | `.claude/context/positioning-scorecard.md` | L1 | positioning-framework (all depths, minimal at quick) | render-default-deliverables, website-audit, hypothesis roadmap |
 | `.claude/context/_fetch-registry.md` | Operational | positioning-framework Agent 1 (appended by Agent 2) | Agent 2 (duplicate fetch prevention) |
+| `.claude/context/_research-extractions.md` | Internal/Operational | positioning-framework Agent 1 | Agents 2, 3, 4 (selectively). Ephemeral, overwritten on each run. Not prior work. |
 
 ### Deliverable Files (L2)
 
@@ -192,6 +194,7 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 - **Single checkpoint.** L0 review and skill-specific questions are combined into one prompt. The user answers once, not three times.
 - **confidence: 2.** Explicitly signals "bootstrap stub, not a full L0." positioning-framework sees this and knows to extend, not skip.
 - **Not a full L0 build.** The bootstrap is intentionally shallow (3 fetches, no competitor research, no review mining). The full L0 comes from positioning-framework.
+- **Minimal extractions file.** Bootstrap should also write a minimal `_research-extractions.md` with those 3 pages (following the same streaming write pattern and artifact stripping rules as the full research phase).
 
 ## Workflow Order
 
@@ -240,6 +243,7 @@ Positioning dimensions use categorical ratings (Strong / Needs Work / Missing) i
 ## Conventions
 
 - L0 + L1 context files output to `.claude/context/`
+- **Operational files** use underscore prefix: `_fetch-registry.md`, `_research-extractions.md`. These are internal coordination artifacts. They are NOT considered "prior work" for depth evaluation and are overwritten (not extended) on each run.
 - L2 deliverables output to `.claude/deliverables/`
 - L1 skills never produce deliverables. L2 skill never performs research. All human-facing output goes through render-default-deliverables.
 - Skills are standalone. No external dependencies required.

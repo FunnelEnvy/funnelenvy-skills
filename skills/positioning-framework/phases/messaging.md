@@ -25,12 +25,41 @@ Before starting messaging analysis, verify these preconditions:
    - Target Segments
    - Stated Differentiators
    - Proof Point Registry (at least 1 proof point)
+5. `.claude/context/_research-extractions.md` exists (OPTIONAL but strongly recommended)
+   - Run the Extractions Validation check:
+     1. **Frontmatter check:** File has valid YAML frontmatter with `schema: research-extractions` and `total_pages` field.
+        - If frontmatter exists and is valid: use the Index table for selective reads.
+        - If frontmatter is missing: scan for `## N. [Page Type]` headers to discover available entries.
+        - If file is entirely absent or empty: treat as absent.
+     2. **Entry body spot-check:** For each entry you want to read, verify the corresponding `## N. [Page Type]` section exists. If missing: skip, note in research log.
+   - If valid: read the Index table. Then read entries for: Homepage, About, Case Study, and Review Site page types. Use the raw content for voice derivation, problem framing analysis, and emotional language patterns.
+   - If absent or invalid: proceed with L0 and L1 data only (current behavior). Note in completion summary: "No research extractions available. Voice profile and language bank derived from structured L0 data only. Confidence capped at 3 for voice-dependent sections."
 
 If any precondition fails:
 - STOP. Report to orchestrator with specific missing precondition.
 - If only competitive-landscape.md is missing/empty, messaging CAN proceed with reduced scope: skip Switching Dynamics (Four Forces) and Competitor Voice Comparison sections. Flag these as `[SKIPPED - NO COMPETITIVE DATA]`.
 
 **Note:** This agent does not perform web fetches. All source data comes from L0 (company-identity.md) and L1 (competitive-landscape.md). If `.claude/context/_fetch-registry.md` exists, you may consult it to understand extraction quality of upstream data but do not fetch URLs yourself.
+
+---
+
+## Raw Content Consumption
+
+When `_research-extractions.md` is available, use it for these specific purposes:
+
+### Voice Profile Derivation
+Read Homepage, About, and Case Study page entries. Analyze the raw copy directly for tone (formal/casual, technical/accessible), person (1st/3rd), jargon density, and voice patterns.
+
+Use 3-5 verbatim copy samples from the Key Content Sections as voice examples in the Voice Profile. Attribute each sample to its source page.
+
+### Language Bank Population
+Read Review Site extractions for verbatim customer language. Read Case Study extractions for "before" state language and outcome descriptions. These feed the Customer Language column of the Language Bank.
+
+### Problem Framing for Switching Dynamics
+Read Homepage and Case Study page entries for problem-framing patterns (fear, aspiration, urgency, rational). "Push" forces should use the company's actual problem language, not paraphrased versions from L0.
+
+### Objection Surface Mining
+Read FAQ and Pricing page entries for objection preemption patterns. These are direct inputs to the Objection Handling table.
 
 ---
 

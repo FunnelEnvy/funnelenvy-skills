@@ -27,6 +27,7 @@ Every agent follows this precedence: **accuracy > completeness > format**.
 | `audience-messaging.md` | L1 | Personas, switching dynamics, objections, value themes, messaging hierarchy, language bank, voice rules |
 | `positioning-scorecard.md` | L1 | Quick reference summary, positioning health check, messaging gaps, section confidence |
 | `_fetch-registry.md` | Internal | Fetch registry -- logs all URLs fetched by each agent with extraction quality and content summary. Internal coordination file, not consumed by downstream skills. |
+| `_research-extractions.md` | Internal/Operational | Raw page extractions from Agent 1 research phase. Read selectively by page type. |
 
 ---
 

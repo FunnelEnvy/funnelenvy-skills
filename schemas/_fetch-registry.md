@@ -51,3 +51,7 @@ Markdown table with the following columns:
 ## Classification
 
 This file is NOT L0 (facts) or L1 (analysis). It is operational metadata used for cross-agent coordination. It has no downstream consumers beyond Agent 2. render-default-deliverables should ignore it. Future skills that glob context files should filter it out by the underscore prefix.
+
+## Cross-Reference
+
+For raw page content from Agent 1 extractions, see `_research-extractions.md`. The fetch registry records all fetches; the extractions file only records entries up to the page-count cap for the current depth.

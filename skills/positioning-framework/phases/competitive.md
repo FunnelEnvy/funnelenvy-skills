@@ -137,6 +137,23 @@ Also check for legacy split files (`market-landscape.md` + `competitor-profiles.
 
 ---
 
+## Extractions Pre-Check
+
+Before checking `_fetch-registry.md`, run the Extractions Validation check on `_research-extractions.md`:
+
+1. **Frontmatter check:** File has valid YAML frontmatter with `schema: research-extractions` and `total_pages` field.
+   - If frontmatter exists and is valid: use the Index table for selective reads.
+   - If frontmatter is missing (streaming crash before index was written): scan for `## N. [Page Type]` headers to discover available entries. Proceed with what exists.
+   - If file is entirely absent or empty: treat as absent. Proceed to Fetch Registry Check with current behavior.
+2. **Entry body spot-check:** For each entry you want to read, verify the corresponding `## N. [Page Type]` section exists in the file body. If missing: skip that entry, note in research log: "Extraction entry #N missing body, skipping."
+
+If valid, read the Index table. For any page you would re-fetch for subject company data (buyer scenarios, objection language, feature detail, pricing framing), check whether the extraction entry contains the specific data you need.
+- If the extraction contains the data: use it. Do not re-fetch. Note in research log: "Using Agent 1 extraction for [URL] -- [specific data found]."
+- If the extraction exists but lacks the specific data: re-fetch is allowed. Note: "Re-fetching [URL] -- extraction does not contain [specific data needed]."
+- If no extraction exists for the URL: fetch normally.
+
+---
+
 ## Fetch Registry Check
 
 Before fetching any URL, read `.claude/context/_fetch-registry.md` if it exists.
@@ -264,6 +281,10 @@ At deep depth, also extract for each Major and Emerging competitor:
 ### Deep Depth: Target Company Deep Extraction
 
 At deep depth, beyond what L0 provides, extract the following from the target company's own website. These are inputs the client would normally provide in a workshop, but autonomous research should attempt to surface them from public content.
+
+**Extractions-first for target company deep extraction:**
+
+Read `_research-extractions.md` entries for the target company first. Extract buyer scenarios, objections, ICP signals, and glossary terms from the raw content. Only fetch additional pages if the extractions don't cover the specific content needed (e.g., a "Who We Serve" page that Agent 1 didn't fetch).
 
 **Buyer Scenarios:** Search the target company's website for signals of how they segment their own buyers:
 - "Who we serve" / "Who is this for" pages

@@ -183,6 +183,7 @@ For each URL fetched during this phase:
 1. Record the URL, your agent name (Agent 1), the extraction quality tag, word count, and a 1-2 sentence summary of key content extracted.
 2. Include ALL fetches, including failed ones ([EMPTY] tags). Downstream agents need to know a URL was attempted and failed, not just what succeeded.
 3. Write the registry BEFORE writing company-identity.md (consistent with write-before-checkpoint pattern).
+4. If page is tagged [FULL] or [PARTIAL]: strip rendering artifacts and append extraction entry to `_research-extractions.md` (see Research Extractions Output above). Release raw content from working memory.
 
 **Registry format:**
 
@@ -219,6 +220,100 @@ total_fetches: [row count]
 **Tag values:** `[FULL]` (500+ words), `[PARTIAL]` (100-499 words), `[PARTIAL:TOOL]` (WebFetch fallback, 100+ words), `[EMPTY:SPA]` (JS-rendered), `[EMPTY:BLOCKED]` (bot protection).
 
 Update `total_fetches` in frontmatter to match the actual row count before writing.
+
+After all pages are fetched: read back extraction entries, build index, and rewrite `_research-extractions.md` with frontmatter + index + all entries (see Research Extractions Output above). Then proceed to L0 construction.
+
+---
+
+## Research Extractions Output
+
+Write raw page extractions to `.claude/context/_research-extractions.md` using a streaming pattern. This preserves content that would otherwise be lost between extraction and L0 schema construction. Downstream agents read this file selectively.
+
+Schema reference: `schemas/_research-extractions.md`
+
+### Streaming Write Pattern
+
+Write each extraction entry to disk immediately after extracting it. Do NOT batch-write after all fetches.
+
+**Per-page (inside the fetch loop), for each page tagged [FULL] or [PARTIAL]:**
+
+1. Strip rendering artifacts from extracted content (see Artifact Stripping below)
+2. Append page entry to `_research-extractions.md` in this format:
+
+        ## N. [Page Type]: [URL]
+        <!-- tag: [TAG] | words: NNN | fetched_by: Agent 1 -->
+
+        ### Structured Extraction
+        (Homepage only. Use the existing Structured Extraction Template:
+        HERO SECTION, NAV TAGLINES, META.)
+
+        ### Key Content Sections
+        [Main body content organized by page sections. Preserve heading
+        hierarchy and content structure.]
+
+3. Release raw content from working memory. The entry is on disk.
+
+**After all pages are fetched:**
+
+4. Read back all entries from `_research-extractions.md`. Build the index table by scanning `## N.` headers. Count total words across entries.
+5. Rewrite the complete file in one operation: YAML frontmatter (with `schema: research-extractions`, `schema_version: "1.0"`, `generated_by: "positioning-framework/research"`, `last_updated`, `company`, `url`, `depth`, `total_pages`, `total_words`) + index table + all entries. This is a full file rewrite, not a prepend. The entries survive a crash between per-page writes and this step.
+6. Proceed to L0 construction. You can re-read specific extraction entries from disk during L0 construction if you need to revisit content.
+
+Skip pages tagged [EMPTY], [EMPTY:SPA], or [EMPTY:BLOCKED]. These are logged in `_fetch-registry.md` only.
+
+Skip pages beyond the page-count limit for the current depth. Log them in `_fetch-registry.md` normally, but do not write extraction entries.
+
+### Artifact Stripping
+
+Strip rendering artifacts (never real content):
+
+- **Nav/header/footer chrome.** Identical on every page. Remove entirely.
+- **Animated counter widget artifacts.** JS counter widgets render as repeated digit sequences (e.g., "0 1 2 3 4 5 6 7 8 9 . , + % b $"). Remove these sequences. Preserve only the final displayed value if identifiable (e.g., "5,000+ customers"). If not identifiable, write "[animated stat]" as placeholder.
+- **Duplicate carousel/slider content.** Testimonial carousels and content sliders often render all slides in HTML. If the same testimonial or content block appears more than once in the extraction, keep the first occurrence and remove duplicates.
+- **Boilerplate.** Newsletter signup, cookie consent, social links. Remove.
+
+### Cross-Page Deduplication
+
+Track a lightweight in-memory list of testimonials, CTAs, and content blocks already written. If the same content appears on a subsequent page, write "See entry #[N]" instead of duplicating it.
+
+### Verbatim Preservation
+
+Never paraphrase, summarize, or truncate these items:
+
+- H1, subheads, CTAs, testimonial quotes
+- Pricing tier names, feature gate labels
+- FAQ questions and answers
+- Case study metrics and before/after statements
+
+These are baseline measurements for downstream analysis.
+
+### Page-Count Limits
+
+| Depth | Max Extraction Entries |
+|-------|----------------------|
+| Quick | 7 |
+| Standard | 18 |
+| Deep | 30 |
+
+Pages beyond the cap are logged in `_fetch-registry.md` but do not get extraction entries. The caps are generous -- they only constrain sites with unusually high page counts.
+
+### Sanity-Check Ceiling
+
+| Depth | Warning Ceiling |
+|-------|----------------|
+| Quick | 8K words |
+| Standard | 20K words |
+| Deep | 35K words |
+
+If the file exceeds the ceiling after the final rewrite, log a warning: "Extractions file is [N] words at [depth] depth. Verify artifact stripping is working correctly." Do NOT trim content to hit the ceiling.
+
+### Graceful Degradation
+
+If you hit context limits before completing all extractions:
+
+1. Whatever entries are on disk are complete (streaming wrote them as they were extracted).
+2. Write the frontmatter + index table covering only the entries that exist. `total_pages` reflects actual entries written, not pages fetched.
+3. If you must choose between writing the index/frontmatter and completing L0, **L0 wins**. An extractions file with entries but no index is still usable -- consuming agents scan headers.
 
 ---
 

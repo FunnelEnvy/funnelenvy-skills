@@ -31,6 +31,7 @@ Every agent follows this precedence: **accuracy > completeness > format**.
 | `audience-messaging.md` | L1 | Personas, switching dynamics, objections, value themes, messaging hierarchy, language bank, voice rules |
 | `positioning-scorecard.md` | L1 | Quick reference summary, positioning health check, messaging gaps, section confidence |
 | `_fetch-registry.md` | Internal | Fetch registry -- logs all URLs fetched by each agent with extraction quality and content summary. Internal coordination file, not consumed by downstream skills. |
+| `_research-extractions.md` | Internal/Operational | Raw page extractions from research phase. Streaming write pattern. Overwritten on each run. Written by Agent 1, consumed selectively by Agents 2, 3, 4. |
 
 ---
 
@@ -318,7 +319,10 @@ User provides a company URL, name, or existing docs. The skill does the work.
 
 ## Prior Work Detection
 
-Before starting research, glob `.claude/context/` and read frontmatter of any existing files:
+Before starting research, glob `.claude/context/*.md`. Partition into two sets:
+
+- **Operational files** (filename starts with `_`): skip for depth evaluation. These are coordination artifacts, not research output. They are overwritten (not extended) on each run.
+- **Context files** (all others): read frontmatter, evaluate depth and confidence for prior work decisions.
 
 1. **company-identity.md exists with `confidence >= 3`:** Offer to reuse L0 data and skip to L1 analysis. At quick depth, if L0 exists at any confidence >= 2, reuse it entirely.
 2. **competitive-landscape.md exists:** Check the `depth` field.
@@ -369,7 +373,7 @@ Each agent reads `agent-header.md` (shared agent rules) plus its specific phase 
 **Depth-aware:** Yes. At quick depth, uses reduced page budget (4-7 fetches, Tier 1 only). At standard/deep, uses full tier hierarchy.
 
 1. Consumes Pre-Flight intake payload from orchestrator launch prompt. At quick depth: no intake (business brief consumed silently if present). At standard/deep: intake contains user-provided competitors, docs, language constraints, and context.
-2. Researches company (tiers gated by depth - see research.md Depth Budget section). Named competitors from intake are required research targets.
+2. Researches company (tiers gated by depth - see research.md Depth Budget section). Named competitors from intake are required research targets. Agent 1 streams raw page extractions to `_research-extractions.md` during the fetch loop (append per page, rewrite with index after all fetches).
 3. At standard/deep: researches competitors (unless existing competitive-landscape.md consumed)
 4. Builds company-identity.md directly from research. Threads intake language constraints into Glossary and Constraints sections. No intermediate files.
 5. Returns completion summary with key findings.
@@ -587,6 +591,7 @@ Dependency implications of skipping agents:
 At standard/deep depth, after Agent 4 returns and before presenting the completion message, the orchestrator verifies:
 
 - [ ] All 4 context files exist in `.claude/context/` with valid YAML frontmatter
+- [ ] `_research-extractions.md` exists in `.claude/context/`. Check `total_pages` in frontmatter matches actual entry count (count `## N.` headers). Log warning on mismatch, proceed. Check `total_words` in frontmatter against sanity-check ceiling for depth (Quick: 8K, Standard: 20K, Deep: 35K). Log warning if exceeded, do not trim.
 - [ ] Tier 0 (local project data) checked if running inside a codebase. If unavailable, noted in Section Confidence.
 - [ ] Tier 1 sources (website, LinkedIn, reviews, competitors, category) all attempted
 - [ ] Tier 2 sources (Reddit/forums, financial data, job postings, Google Trends) attempted

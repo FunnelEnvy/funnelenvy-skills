@@ -104,6 +104,16 @@ Rate every section of the positioning framework on a 1-5 confidence scale. Downs
 
 **Rule:** Sections scoring 1-2 produce content marked DRAFT. Sections scoring 4-5 produce final copy.
 
+### Extraction Quality Cross-Reference
+
+If `_research-extractions.md` exists and passes the Extractions Validation check (valid YAML frontmatter with `schema: research-extractions` and `total_pages` field), read the Index table only. Use extraction quality tags and page coverage to calibrate section confidence:
+
+- Sections built from [FULL] extractions: no confidence penalty
+- Sections built from [PARTIAL] extractions: confidence capped at 4
+- Sections with no corresponding extraction (page not fetched): note in Section Confidence table
+
+If the file is absent or invalid, skip this cross-reference. Do not penalize confidence for missing extractions -- they are an optional enhancement.
+
 ---
 
 ## Positioning Health Check (6 Dimensions)
