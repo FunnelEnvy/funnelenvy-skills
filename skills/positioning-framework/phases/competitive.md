@@ -29,6 +29,14 @@ If any precondition fails:
 - Report to orchestrator: "[PRECONDITION FAILED] Agent 2 requires L0 confidence >= 3 with populated Company Overview, Services, Target Segments, and Differentiators. Current state: confidence={X}, missing sections: {list}."
 - The orchestrator decides whether to re-run Agent 1 at deeper depth or proceed with user-supplied context.
 
+### Required Reads
+
+Load before beginning Step 5 (Competitive Attributes Matrix) and Step 7 (Claim Overlap Map):
+
+- `modules/competitive-assessment.md` -- Claim Assessment Framework, Claim Similarity
+  Assessment, and Overlap Score Calculation. These are the authoritative analytical
+  methods for Steps 5 and 7. Do not improvise alternative assessment approaches.
+
 ---
 
 ## Graceful Degradation
@@ -375,22 +383,29 @@ Generic contextual facts are not actionable intelligence. Example of what to avo
 
 ## Step 5: Competitive Attributes Matrix
 
-Map company attributes against each competitor type. Company attributes sourced from L0's Stated Differentiators.
+For each Stated Differentiator from L0's company-identity.md, build a row in the matrix.
 
-| Category | Your Company | vs. Direct | vs. Secondary | vs. Indirect |
-|----------|-------------|-----------|--------------|-------------|
-| Capabilities | | | | |
-| Service model | | | | |
-| Pricing/structure | | | | |
-| Expertise/credentials | | | | |
-| Customer experience | | | | |
+**Assessment method:** Apply the Claim Assessment Framework from `modules/competitive-assessment.md`.
+Assess each differentiator against each competitor type (Direct, Secondary, Indirect) using the
+three-dimension evaluation: Claim Status, Proof Status, Replicability.
 
-For each claimed attribute, answer:
-- Is this verifiable or just an opinion?
-- Could a competitor claim this tomorrow? If yes, it's not a differentiator.
-- What evidence exists? (Reference P_ IDs from L0)
+Write each matrix cell in the module's prescribed format:
+`[Claim] | [Proof] | [Replicability] -- [one sentence summary]`
 
-After filling the matrix, add a **Moat depth** summary row with one value per attribute: `commodity` (any competitor could claim this tomorrow with no investment), `investment` (requires significant time, capital, or expertise to replicate), or `structural` (requires fundamentally changing their business model to replicate). Only `structural` attributes qualify as true differentiators in downstream messaging. `commodity` attributes are table stakes and should never lead positioning.
+**Differentiator qualification:** Per the module, only attributes where competitors face
+STRUCTURAL replicability barriers qualify as true differentiators. Flag any L0 Stated
+Differentiator that scores EASY replicability across all competitor types -- this is a
+positioning vulnerability, not a strength.
+
+| Stated Differentiator | vs. Direct | vs. Secondary | vs. Indirect | True Differentiator? |
+|----------------------|-----------|--------------|-------------|---------------------|
+| [from L0] | [Claim]\|[Proof]\|[Repl] -- summary | ... | ... | YES if any STRUCTURAL |
+
+**Moat depth** summary row: Derive from per-cell Replicability ratings above. For each differentiator, summarize as `commodity` (all competitors rated EASY), `investment` (any competitor rated HARD, none STRUCTURAL), or `structural` (any competitor rated STRUCTURAL). Only `structural` attributes qualify as true differentiators in downstream messaging. `commodity` attributes are table stakes and should never lead positioning.
+
+**Depth behavior:**
+- **Standard:** Assess top 3-5 direct competitors individually. Group secondary/indirect.
+- **Deep:** Assess all profiled competitors individually across all types.
 
 ---
 
@@ -416,33 +431,33 @@ If pricing is unknown, document what's inferrable from positioning language. "Pr
 
 **Critical distinction:** Positioning vs. Campaigns. Campaign taglines like "Consulting is Dead" are marketing tactics, not positioning elements. If a campaign reveals positioning intent, note the underlying thesis, not the tagline. Campaign taglines should NOT appear in the Claim Overlap Map.
 
-Show which claims are unique vs. shared with competitors.
+Map every claim from the target company against claims from all profiled competitors.
+
+**Similarity assessment:** Apply the Claim Similarity Assessment from
+`modules/competitive-assessment.md`. Use the three-category system:
+
+| Unique? | Meaning |
+|---------|---------|
+| UNIQUE | No competitor makes a substantially similar promise |
+| PARTIAL | Surface overlap but differs on mechanism, audience, or proof. Add note explaining the difference. |
+| SHARED | A buyer would perceive these as interchangeable promises |
 
 | Claim | Us | Comp A | Comp B | Comp C | Unique? | Use As |
 |-------|-----|--------|--------|--------|---------|--------|
-| [claim] | x | x | x | - | NO | Qualifier (body copy) |
-| [claim] | x | - | - | - | YES | Headline / lead |
+| [claim] | x | x | x | - | SHARED | Qualifier (body copy) |
+| [claim] | x | - | - | - | UNIQUE | Headline / lead |
+| [claim] | x | x | - | - | PARTIAL -- Overlaps on [X] but differs on [Y] | Headline IF differentiator explicit |
 
 **Rules:**
 - Company claims sourced from L0's Stated Differentiators.
-- Mark unique ONLY if no competitor makes a substantially similar claim.
 - Campaign taglines are NOT claims. Only durable positioning statements.
-- Downstream skills: never lead with a claim marked "NO" in the Unique column.
-- **Claim overlap score formula:** For each L0 stated differentiator, count how many competitors make a substantially similar claim. `claim_overlap_score = claims_shared / total_claims` (0-1). Higher = more generic positioning.
-- **When all competitors use similar language, document the sameness explicitly.** That IS the finding. A Claim Overlap Map where every claim is marked "NO" for uniqueness tells the company it has a differentiation problem. Do not treat unanimous similarity as a failure of the analysis.
+- Downstream skills: never lead with a SHARED claim. PARTIAL claims can lead IF the differentiating mechanism is made explicit in copy.
+- **When all competitors use similar language, document the sameness explicitly.** That IS the finding. A Claim Overlap Map where every claim is marked SHARED tells the company it has a differentiation problem. Do not treat unanimous similarity as a failure of the analysis.
 
-### PARTIAL Overlap
-
-Two claims are "substantially similar" when a buyer hearing both would perceive them as interchangeable promises. They are NOT similar when the mechanism of delivery, target buyer segment, or proof type differs meaningfully.
-
-`PARTIAL` is a valid value in the Unique? column. Use it when a claim overlaps on the surface promise but differs on mechanism, audience, or proof. Format: `PARTIAL ([surface claim] overlaps; differs on [mechanism/audience/proof])`.
-
-**Downstream rule:** PARTIAL overlap claims can be used as headlines IF the differentiating mechanism is made explicit in the copy. A PARTIAL claim used without surfacing the differentiator is indistinguishable from the competitor's version.
-
-Example:
-- Us: "AI-powered CRO" (proprietary ML model trained on 500+ experiments)
-- Competitor: "AI-powered CRO" (GPT wrapper with template suggestions)
-- Unique? = `PARTIAL (both claim AI-powered; differs on proof depth and model ownership)`
+**Score calculation:** After completing the map, calculate `claim_overlap_score` using
+the formula from `modules/competitive-assessment.md`:
+`claim_overlap_score = (SHARED count + 0.5 * PARTIAL count) / total claims mapped`
+Write to frontmatter as a float (2 decimal places).
 
 **Origin-aware rules for Claim Overlap analysis:**
 When reading L0's Stated Differentiators and competitors, check the `Origin` column. `client`-origin competitors from L0 are **confirmed targets** -- do not question whether they're actually competitors; research them directly. `research`-origin competitors are **candidates** -- use judgment on relevance and deprioritize or exclude if evidence is thin. `client`-origin differentiators are **real market claims the company makes in deals** -- treat them as validated starting points, not hypotheses to test. `research`-origin differentiators may be aspirational website copy; validate them more skeptically before mapping overlap. When a `client`-origin differentiator has no competitive overlap, that is a **stronger white space signal** than a `research`-origin one with no overlap, because the client has confirmed the claim matters in actual sales conversations.
@@ -587,7 +602,7 @@ white_spaces:
   - "unclaimed territory 2"
 overlap_zones:
   - "claim made by 2+ competitors"
-claim_overlap_score: 0.72               # non-unique claims / total claims (0-1)
+claim_overlap_score: 0.72               # (SHARED + 0.5*PARTIAL) / total claims (0-1)
 ---
 ```
 
@@ -701,21 +716,18 @@ One subsection per Major and Emerging competitor. Minor competitors get a row in
 
 #### 5. Competitive Attributes Matrix (REQUIRED)
 
-Company attributes mapped against competitor types. Sourced from L0's Stated Differentiators.
+Per-differentiator matrix using three-dimension assessment from `modules/competitive-assessment.md` (Claim/Proof/Replicability). Rows are L0 Stated Differentiators, not generic categories.
 
 ```markdown
 ## Competitive Attributes Matrix
 
-| Category | Target Company | vs. Direct | vs. Secondary | vs. Indirect |
-|----------|---------------|-----------|--------------|-------------|
-| Capabilities | | | | |
-| Service model | | | | |
-| Pricing/structure | | | | |
-| Expertise/credentials | | | | |
-| Customer experience | | | | |
+| Stated Differentiator | vs. Direct | vs. Secondary | vs. Indirect | True Differentiator? |
+|----------------------|-----------|--------------|-------------|---------------------|
+| [from L0] | [Claim]|[Proof]|[Repl] -- summary | ... | ... | YES if any STRUCTURAL |
+| Moat depth | commodity/investment/structural | ... | ... | -- |
 ```
 
-For each attribute: Is it verifiable? Could a competitor claim it? What evidence exists (P_ IDs)?
+Each cell uses the module's `[Claim] | [Proof] | [Replicability] -- [summary]` format. Moat depth row derived from per-cell Replicability: EASY->commodity, HARD->investment, STRUCTURAL->structural.
 
 **Used by:** Battle cards (win/lose scenarios), messaging framework (proof mapping).
 
@@ -744,14 +756,20 @@ Target company pricing pulled from L0's Pricing Model.
 
 | Claim | Us | Comp A | Comp B | Comp C | Unique? | Use As |
 |-------|-----|--------|--------|--------|---------|--------|
-| [claim] | x | x | x | - | NO | Qualifier (body copy) |
-| [claim] | x | - | - | - | YES | Headline / lead |
+| [claim] | x | x | x | - | SHARED | Qualifier (body copy) |
+| [claim] | x | - | - | - | UNIQUE | Headline / lead |
+| [claim] | x | x | - | - | PARTIAL -- Overlaps on [X] but differs on [Y] | Headline IF differentiator explicit |
 ```
+
+**Unique? column values:** `UNIQUE` / `PARTIAL` / `SHARED` (assessed per `modules/competitive-assessment.md`).
+PARTIAL entries MUST include a note: "Overlaps on [X] but differs on [Y]."
+
+**Score:** `claim_overlap_score = (SHARED + 0.5 * PARTIAL) / total claims` (written to frontmatter).
 
 **Rules:**
 - Company claims from L0's Stated Differentiators.
-- Unique = no competitor makes a substantially similar claim.
 - Campaign taglines are NOT claims.
+- SHARED claims are qualifiers only. PARTIAL can lead if differentiator is explicit. UNIQUE leads.
 
 **Used by:** Copy briefs (headline selection), messaging framework (hierarchy), website audit.
 

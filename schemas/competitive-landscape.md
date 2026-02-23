@@ -63,13 +63,13 @@ white_spaces:
   - "unclaimed territory 2"
 overlap_zones:
   - "claim made by 2+ competitors"
-claim_overlap_score: 0.72               # non-unique claims / total claims (0-1)
+claim_overlap_score: 0.72               # (SHARED + 0.5*PARTIAL) / total claims (0-1)
 ---
 ```
 
 **Field notes:**
 - `depth`: "quick" = surface level. "standard" = enough for messaging. "deep" = extended competitive analysis (Tier 2/3 sources).
-- `claim_overlap_score`: Number of non-unique claims / total claims in the Claim Overlap Map. Higher = more generic positioning.
+- `claim_overlap_score`: `(SHARED count + 0.5 * PARTIAL count) / total claims` in the Claim Overlap Map. Higher = more generic positioning. Weighted formula from `modules/competitive-assessment.md`.
 - `top_competitors`: Only the top 3 in frontmatter. Full list in body and in `competitor_names`.
 - `category_buyer_term`: What buyers search for, not what the company calls itself. If these differ, the Category Gap section in `company-identity.md` documents the mismatch.
 - `competitor_names`: Full list of all competitors with profiles in the body. Downstream skills check this to see who's covered.
@@ -189,21 +189,18 @@ One subsection per Major and Emerging competitor. Minor competitors get a row in
 
 #### 5. Competitive Attributes Matrix (REQUIRED)
 
-Company attributes mapped against competitor types. Company attributes sourced from L0's Stated Differentiators.
+Per-differentiator matrix using three-dimension assessment from `modules/competitive-assessment.md` (Claim/Proof/Replicability). Rows are L0 Stated Differentiators, not generic categories.
 
 ```markdown
 ## Competitive Attributes Matrix
 
-| Category | Target Company | vs. Direct | vs. Secondary | vs. Indirect |
-|----------|---------------|-----------|--------------|-------------|
-| Capabilities | | | | |
-| Service model | | | | |
-| Pricing/structure | | | | |
-| Expertise/credentials | | | | |
-| Customer experience | | | | |
+| Stated Differentiator | vs. Direct | vs. Secondary | vs. Indirect | True Differentiator? |
+|----------------------|-----------|--------------|-------------|---------------------|
+| [from L0] | [Claim]|[Proof]|[Repl] -- summary | ... | ... | YES if any STRUCTURAL |
+| Moat depth | commodity/investment/structural | ... | ... | -- |
 ```
 
-For each claimed attribute: Is it verifiable? Could a competitor claim it tomorrow? What evidence exists (reference P_ IDs from L0)?
+Each cell uses the `[Claim] | [Proof] | [Replicability] -- [summary]` format. Moat depth row derived from per-cell Replicability: EASY->commodity, HARD->investment, STRUCTURAL->structural.
 
 **Used by:** Battle cards (win/lose scenarios), messaging framework (proof mapping).
 
@@ -233,23 +230,27 @@ Target company pricing pulled from L0's Pricing Model. Do not re-research.
 
 #### 7. Claim Overlap Map (REQUIRED)
 
-Which company claims are unique vs. shared with competitors.
+Which company claims are unique vs. shared with competitors. Assessed per `modules/competitive-assessment.md`.
 
 ```markdown
 ## Claim Overlap Map
 
 | Claim | Us | Comp A | Comp B | Comp C | Unique? | Use As |
 |-------|-----|--------|--------|--------|---------|--------|
-| [claim] | x | x | x | - | NO | Qualifier (body copy) |
-| [claim] | x | - | - | - | YES | Headline / lead |
+| [claim] | x | x | x | - | SHARED | Qualifier (body copy) |
+| [claim] | x | - | - | - | UNIQUE | Headline / lead |
+| [claim] | x | x | - | - | PARTIAL -- Overlaps on [X] but differs on [Y] | Headline IF differentiator explicit |
 ```
+
+**Unique? column values:** `UNIQUE` / `PARTIAL` / `SHARED`.
+PARTIAL entries MUST include a note: "Overlaps on [X] but differs on [Y]."
+
+**Score:** `claim_overlap_score = (SHARED + 0.5 * PARTIAL) / total claims` (written to frontmatter).
 
 **Rules:**
 - Company claims sourced from L0's Stated Differentiators.
-- Mark as unique ONLY if no competitor makes a substantially similar claim.
-- `PARTIAL` is a valid value in the Unique? column: use when a claim overlaps on surface promise but differs on mechanism, audience, or proof. Format: `PARTIAL ([surface claim] overlaps; differs on [mechanism/audience/proof])`.
 - Campaign taglines are NOT claims. Only durable positioning statements.
-- Downstream skills: never lead with a claim marked "NO" in the Unique column. Those are table stakes. Lead with "YES" claims only. PARTIAL claims can lead IF the differentiating mechanism is made explicit.
+- SHARED claims are qualifiers only (body copy). PARTIAL can lead if differentiator is explicit. UNIQUE leads.
 
 **Used by:** Copy briefs (headline selection), messaging framework (hierarchy), website audit (claim validation).
 
