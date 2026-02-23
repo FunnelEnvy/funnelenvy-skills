@@ -152,6 +152,13 @@ If valid, read the Index table. For any page you would re-fetch for subject comp
 - If the extraction exists but lacks the specific data: re-fetch is allowed. Note: "Re-fetching [URL] -- extraction does not contain [specific data needed]."
 - If no extraction exists for the URL: fetch normally.
 
+### Extractions Fallback Rules
+
+When the extractions file exists but has issues:
+- **Index/body mismatch** (index lists an entry but `## N.` section is missing in body): use body entries only. Log: "Extraction index references entry #N but body section missing, using body entries only."
+- **Truncated entry** (section header exists but content is cut off mid-sentence or abnormally short): use what exists, tag data as `[PARTIAL]` in your research log. Do not discard partial data.
+- **Duplicate URLs** (same URL appears in multiple entries): use the later entry. Agent 1's streaming write pattern means the later entry is from the final rewrite pass and more likely to be complete/corrected.
+
 ---
 
 ## Fetch Registry Check
@@ -202,6 +209,17 @@ Probe for:
 
 Write in buyer language, not analyst language. "We just had our controller handle it" not "Internal resource reallocation."
 
+### Source Requirements
+
+Use this expanded table format with a Source column:
+
+| Alternative Behavior | Why They Do It | What It Costs Them | When They Outgrow It | Source |
+|---------------------|---------------|-------------------|---------------------|--------|
+
+Each alternative must cite at least one source (review site complaint, Reddit thread, case study, job posting), or be marked `[INFERRED]` if sourced from positioning logic rather than direct evidence.
+
+If fewer than 2 alternatives have source citations after research, mark the entire section `[LOW EVIDENCE]` and add a buyer-alternatives question to the Post-Research Questionnaire.
+
 ---
 
 ## Step 2: Competitor Identification
@@ -221,11 +239,21 @@ If "[company] vs" and "[company] alternative" searches return zero results about
 
 ### Competitor Sizing
 
-For each identified competitor, assess scale using available signals (LinkedIn headcount, team page, careers page, funding data, web traffic indicators). Classify into tiers:
+For each identified competitor, assess scale using available signals (LinkedIn headcount, team page, careers page, funding data, web traffic indicators). Classify into tiers using this decision tree:
 
-- **Major** (50+ employees OR significant market presence/funding): Full deep extraction + battle card.
-- **Minor** (under 10 employees, minimal web footprint, no funding): Mention in the JTBD Taxonomy table only. No battle card. No deep extraction. Do not invest research time on players that are not real competitive threats.
-- **Emerging** (small but growing fast, recent funding, aggressive hiring): Full extraction. Flag as "watch" in competitive intelligence. These are future threats.
+**Major** (full profile + battle card):
+- 100+ employees on LinkedIn, OR
+- $10M+ confirmed funding, OR
+- Appears in "[company] vs [competitor]" search results (buyer-generated comparison), OR
+- Listed in L0's Named Competitors with `origin: client` (client-provided always gets full profile)
+
+**Emerging** (full profile, flagged "watch"):
+- <100 employees AND at least one of: recent funding ($1M+ in last 18 months), 20%+ headcount growth signal, or founded <3 years ago with notable traction (press, awards, growing customer list)
+
+**Minor** (JTBD table row only, no profile, no battle card):
+- <50 employees, no recent funding, does not appear in "[company] vs" results, not client-provided
+
+**Default when data is insufficient:** Classify as Emerging. This triggers a profile (better to over-research than miss a threat) but flags uncertainty in the Competitor Confidence Ratings table.
 
 ### Depth-Specific Competitor Counts
 
@@ -332,6 +360,17 @@ If any are missing, make one more targeted attempt before proceeding.
 - Proof points must reference P_ IDs that resolve to entries in L0's Proof Point Registry.
 - Verbatim competitor quotes (H1, key claims) make battle cards actionable. Sales reps need to know exactly what the competitor says.
 
+**"When We Lose" specificity requirements:**
+
+Each "when we lose" entry must include at least one of:
+- A specific buyer scenario: who they are, what they need, why the competitor fits better. Not "large companies" but "enterprise teams with 500+ employees needing dedicated account management and SLA guarantees."
+- A specific capability gap with detail: not "they're better at X" but "their platform handles [specific workflow] natively while ours requires [workaround]."
+- A specific proof gap: what evidence they have that we don't. "They can cite [specific metric/case study] while our best proof for this claim is [weaker evidence or none]."
+
+Generic contextual facts are not actionable intelligence. Example of what to avoid vs. what to write:
+- BAD: "When the buyer is backed by PE." (This is a fact about the buyer, not a competitive insight.)
+- GOOD: "When the buyer is backed by PE and under mandate to cut vendor costs 30% within 12 months -- [Competitor] offers a lower-cost self-service tier we can't match without margin compression."
+
 ---
 
 ## Step 5: Competitive Attributes Matrix
@@ -350,6 +389,8 @@ For each claimed attribute, answer:
 - Is this verifiable or just an opinion?
 - Could a competitor claim this tomorrow? If yes, it's not a differentiator.
 - What evidence exists? (Reference P_ IDs from L0)
+
+After filling the matrix, add a **Moat depth** summary row with one value per attribute: `commodity` (any competitor could claim this tomorrow with no investment), `investment` (requires significant time, capital, or expertise to replicate), or `structural` (requires fundamentally changing their business model to replicate). Only `structural` attributes qualify as true differentiators in downstream messaging. `commodity` attributes are table stakes and should never lead positioning.
 
 ---
 
@@ -390,6 +431,19 @@ Show which claims are unique vs. shared with competitors.
 - **Claim overlap score formula:** For each L0 stated differentiator, count how many competitors make a substantially similar claim. `claim_overlap_score = claims_shared / total_claims` (0-1). Higher = more generic positioning.
 - **When all competitors use similar language, document the sameness explicitly.** That IS the finding. A Claim Overlap Map where every claim is marked "NO" for uniqueness tells the company it has a differentiation problem. Do not treat unanimous similarity as a failure of the analysis.
 
+### PARTIAL Overlap
+
+Two claims are "substantially similar" when a buyer hearing both would perceive them as interchangeable promises. They are NOT similar when the mechanism of delivery, target buyer segment, or proof type differs meaningfully.
+
+`PARTIAL` is a valid value in the Unique? column. Use it when a claim overlaps on the surface promise but differs on mechanism, audience, or proof. Format: `PARTIAL ([surface claim] overlaps; differs on [mechanism/audience/proof])`.
+
+**Downstream rule:** PARTIAL overlap claims can be used as headlines IF the differentiating mechanism is made explicit in the copy. A PARTIAL claim used without surfacing the differentiator is indistinguishable from the competitor's version.
+
+Example:
+- Us: "AI-powered CRO" (proprietary ML model trained on 500+ experiments)
+- Competitor: "AI-powered CRO" (GPT wrapper with template suggestions)
+- Unique? = `PARTIAL (both claim AI-powered; differs on proof depth and model ownership)`
+
 **Origin-aware rules for Claim Overlap analysis:**
 When reading L0's Stated Differentiators and competitors, check the `Origin` column. `client`-origin competitors from L0 are **confirmed targets** -- do not question whether they're actually competitors; research them directly. `research`-origin competitors are **candidates** -- use judgment on relevance and deprioritize or exclude if evidence is thin. `client`-origin differentiators are **real market claims the company makes in deals** -- treat them as validated starting points, not hypotheses to test. `research`-origin differentiators may be aspirational website copy; validate them more skeptically before mapping overlap. When a `client`-origin differentiator has no competitive overlap, that is a **stronger white space signal** than a `research`-origin one with no overlap, because the client has confirmed the claim matters in actual sales conversations.
 
@@ -421,7 +475,10 @@ White space = positioning territory that buyers care about but no analyzed compe
 - The territory (what's unclaimed)
 - Buyer signal source (which review, forum post, or job posting surfaced this need)
 - Why no competitor owns it (brief: "None of the [N] analyzed competitors mention X in their positioning or proof points")
-- Addressability note (can the target company credibly claim this?)
+- Addressability rating:
+  - **Ready** = L0 shows existing capability in Services & Capabilities AND existing proof in the Proof Point Registry (cite P_ IDs)
+  - **Credible** = L0 shows existing capability but no proof yet (default rating when unsure)
+  - **Aspirational** = no existing capability in L0 (requires investment to claim this territory)
 
 White spaces without a sourced buyer signal are speculation, not analysis. Mark any unsourced entry: `[SPECULATIVE - no buyer signal found]`.
 
@@ -562,12 +619,12 @@ How buyers solve the problem without hiring any vendor. At least 3 alternatives.
 ```markdown
 ## Buyer Alternatives
 
-| Alternative Behavior | Why They Do It | What It Costs Them | When They Outgrow It |
-|---------------------|---------------|-------------------|---------------------|
-| | | | |
+| Alternative Behavior | Why They Do It | What It Costs Them | When They Outgrow It | Source |
+|---------------------|---------------|-------------------|---------------------|--------|
+| | | | | |
 ```
 
-Write in buyer language, not analyst language.
+Write in buyer language, not analyst language. Each alternative must cite a source or be marked `[INFERRED]`.
 
 **Used by:** Messaging framework (push/pull dynamics), copy briefs (problem-aware content), ad copy (objection handling).
 
@@ -703,11 +760,11 @@ Target company pricing pulled from L0's Pricing Model.
 ```markdown
 ## Competitive White Space
 
-1. **[Territory name]** - [Why it's unclaimed and why it matters to buyers]
-2. **[Territory name]** - [...]
+1. **[Territory name]** [Ready/Credible/Aspirational] - [Why it's unclaimed and why it matters to buyers]
+2. **[Territory name]** [Credible] - [...]
 ```
 
-At least 1 white space. Include where the market is over-indexed.
+At least 1 white space. Include where the market is over-indexed. Each entry includes an addressability rating: **Ready** (capability + proof in L0), **Credible** (capability, no proof; default), **Aspirational** (no capability).
 
 **Used by:** Hypothesis roadmap, messaging framework, content strategy.
 
@@ -759,9 +816,12 @@ At least 1 white space. Include where the market is over-indexed.
 
 **Used by:** Battle cards (strategic context), sales prep.
 
-#### 13. Post-Research Questionnaire (REQUIRED at deep depth, OPTIONAL at standard)
+#### 13. Post-Research Questionnaire (REQUIRED)
 
-**Always produce this at deep depth.** This is NOT the Pre-Flight questionnaire. This is generated AFTER all research is complete, informed by specific gaps the research uncovered.
+**Always produce this.** This is NOT the Pre-Flight questionnaire. This is generated AFTER all research is complete, informed by specific gaps the research uncovered.
+
+- **Standard depth:** 3-5 questions focused on competitor validation and objection discovery (the highest-value gaps).
+- **Deep depth:** Full questionnaire (5-10 questions) across all categories below.
 
 ```markdown
 ## Post-Research Questionnaire
@@ -811,7 +871,7 @@ A competitive-landscape.md file is **complete** when:
 - [ ] Buyer Scenarios has entries from verified sources (target: 3+; fewer is acceptable with gap marker)
 - [ ] Competitor Confidence Ratings populated for every profiled competitor
 - [ ] `confidence` value equals the lowest section confidence within this file
-- [ ] At deep depth: Post-Research Questionnaire included with specific, research-informed questions (not generic)
+- [ ] Post-Research Questionnaire included (3-5 questions at standard, 5-10 at deep) with specific, research-informed questions (not generic)
 - [ ] At deep depth: Tier 2 automated sources attempted (careers pages, changelogs, Product Hunt, comparison pages, pricing drift)
 - [ ] At deep depth: Tier 3 sources attempted for public competitors (SEC filings, funding/M&A, podcasts)
 - [ ] At deep depth: Target company deep extraction attempted (buyer scenarios, objections, ICP triangulation, glossary)

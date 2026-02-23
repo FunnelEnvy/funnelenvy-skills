@@ -101,12 +101,12 @@ How buyers solve the problem without hiring any vendor. This is often the real c
 ```markdown
 ## Buyer Alternatives
 
-| Alternative Behavior | Why They Do It | What It Costs Them | When They Outgrow It |
-|---------------------|---------------|-------------------|---------------------|
-| | | | |
+| Alternative Behavior | Why They Do It | What It Costs Them | When They Outgrow It | Source |
+|---------------------|---------------|-------------------|---------------------|--------|
+| | | | | |
 ```
 
-Write in buyer language, not analyst language. At least 3 alternatives.
+Write in buyer language, not analyst language. At least 3 alternatives. Each alternative must cite at least one source, or be marked `[INFERRED]`.
 
 **Used by:** Messaging framework (push/pull dynamics), copy briefs (problem-aware content), ad copy (objection handling).
 
@@ -247,8 +247,9 @@ Which company claims are unique vs. shared with competitors.
 **Rules:**
 - Company claims sourced from L0's Stated Differentiators.
 - Mark as unique ONLY if no competitor makes a substantially similar claim.
+- `PARTIAL` is a valid value in the Unique? column: use when a claim overlaps on surface promise but differs on mechanism, audience, or proof. Format: `PARTIAL ([surface claim] overlaps; differs on [mechanism/audience/proof])`.
 - Campaign taglines are NOT claims. Only durable positioning statements.
-- Downstream skills: never lead with a claim marked "NO" in the Unique column. Those are table stakes. Lead with "YES" claims only.
+- Downstream skills: never lead with a claim marked "NO" in the Unique column. Those are table stakes. Lead with "YES" claims only. PARTIAL claims can lead IF the differentiating mechanism is made explicit.
 
 **Used by:** Copy briefs (headline selection), messaging framework (hierarchy), website audit (claim validation).
 
@@ -261,11 +262,13 @@ Unclaimed positioning territory based on the full competitive analysis.
 ```markdown
 ## Competitive White Space
 
-1. **[Territory name]** - [Why it's unclaimed and why it matters to buyers]
-2. **[Territory name]** - [...]
+1. **[Territory name]** [Ready/Credible/Aspirational] - [Why it's unclaimed and why it matters to buyers]
+2. **[Territory name]** [Credible] - [...]
 ```
 
 At least 1 white space identified. Include where the market is over-indexed (everyone claims the same thing).
+
+Addressability ratings: **Ready** = L0 shows existing capability + proof (cite P_ IDs). **Credible** = existing capability, no proof yet (default). **Aspirational** = no existing capability.
 
 **Used by:** Hypothesis roadmap (experiment opportunities), messaging framework (differentiation), content strategy (thought leadership angles).
 
@@ -354,6 +357,7 @@ A competitive-landscape.md file is considered **complete** when:
 - [ ] Buyer Scenarios has entries from verified sources (target: 3+; fewer is acceptable with gap marker)
 - [ ] Competitor Confidence Ratings populated for every profiled competitor
 - [ ] `confidence` value equals the lowest section confidence within this file
+- [ ] Post-Research Questionnaire included (3-5 questions at standard, 5-10 at deep) with specific, research-informed questions
 
 ---
 
