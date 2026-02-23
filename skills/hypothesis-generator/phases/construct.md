@@ -120,4 +120,27 @@ Before passing to Phase 4:
 
 4. **Cap handling.** If more hypotheses survive than `--max`, pass all to Phase 4 for scoring. Cut the lowest-ICE hypotheses after scoring, not before. Don't pre-filter based on gut feel.
 
+---
+
+## Context-Derived Hypothesis Construction
+
+Context-derived opportunities (from Phase 2b) follow the same 7-step process above with these adjustments:
+
+**Step 3 (Proposed Change):** Since there is no pattern template to adapt from, construct the proposed change from:
+- Audience-messaging channel adaptations (if the signal relates to messaging)
+- Competitive landscape white spaces (if the signal relates to positioning gaps)
+- Positioning scorecard gap analysis recommendations (if the signal relates to a scored dimension)
+- First principles UX or behavioral reasoning (if none of the above apply)
+
+The proposed change must still be concrete enough that a developer or copywriter could implement it without clarifying questions.
+
+**Step 4 (Causal Mechanism):** Construct the causal mechanism from first principles. You cannot pull from a pattern template because none exists. The mechanism must:
+- Reference a specific behavioral, psychological, or UX principle by name
+- Connect the proposed change to a measurable outcome through a logical chain
+- Be falsifiable (you can imagine a scenario where the prediction is wrong)
+
+Context-derived mechanisms tend to be more novel than pattern-based ones. This is expected. Novel doesn't mean weaker, but it does mean lower structural certainty, which is reflected in the Confidence penalty during scoring.
+
+**Step 7 (Deduplication):** Context-derived hypotheses that overlap with pattern-matched hypotheses on the same page + mechanism should be merged into the pattern-matched version (the pattern-matched version has a stronger scoring foundation).
+
 **Output to Phase 4:** Filtered hypothesis list with full construction details.

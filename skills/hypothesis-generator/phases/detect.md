@@ -58,6 +58,24 @@ Scan each context file for specific, concrete signals that indicate a testable o
 - Banned terms list: language currently used that should be avoided
 - Message hierarchy: primary, secondary, tertiary messages and where they should appear
 
+### Step 1b: Context Quality Flags
+
+Run in parallel with signal extraction (Step 1). Scan all loaded context files for quality indicators that affect downstream scoring and pattern coverage.
+
+**Flag types:**
+
+1. **Incomplete sections.** Sections marked with `[NEEDS CLIENT INPUT]` or `[NEEDS CONFIRMATION]` in any context file. Record: file, section, marker type.
+
+2. **Low-confidence context.** Context files with overall confidence < 3, or individual sections where the frontmatter flags low confidence. Record: file, confidence score, which sections are affected.
+
+3. **Unverified proof.** Proof points in L0's proof registry with strength "claimed" (not "verified" or "supported"). Record: proof point, current strength, which patterns would benefit from verification.
+
+4. **Missing context files.** Context files that don't exist but would enable additional patterns. Record: file name, which pattern categories are disabled.
+
+These flags are NOT used for filtering in this phase. They feed into the Prerequisites and Data Gaps compilation in Phase 4 (Step 8).
+
+**Output:** Context quality flag list, carried forward alongside opportunity list.
+
 ### Step 2: Match Signals Against Patterns
 
 For each signal extracted in Step 1, check against the trigger conditions ("Applies when") in `modules/experiment-patterns.md`.
@@ -85,7 +103,7 @@ For each pattern match, produce an opportunity record:
 ```
 Opportunity:
   pattern: [pattern ID and name]
-  category: [headline | form | navigation | personalization | layout | pricing]
+  category: [headline | form | navigation | personalization | layout | pricing | social-proof | content | trust]
   trigger_signal: [the specific signal from context that matched]
   signal_source: [which context file and section]
   trigger_strength: [full | partial]
@@ -105,4 +123,28 @@ Remove opportunities where:
 
 Do NOT filter based on ICE scores. That happens in Phase 4.
 
-**Output to Phase 3:** Complete opportunity list, typically 15-25 items. If fewer than 8, note this for the orchestrator's completion summary.
+### Step 6: Unmatched Signal Collection
+
+After Step 5 filtering, collect all signals from Step 1 that did NOT trigger any pattern match (neither full nor partial). These are signals that represent potentially testable conditions but don't map to any pattern in `modules/experiment-patterns.md`.
+
+For each unmatched signal, produce a raw signal record:
+
+```
+Unmatched Signal:
+  source_file: [context file name]
+  source_section: [specific section within the file]
+  signal_text: [the concrete, observable condition]
+  signal_type: [gap | mismatch | opportunity | structural]
+```
+
+**Signal types:**
+- `gap`: Something expected is missing (e.g., no case studies on a page that would benefit from them)
+- `mismatch`: Two pieces of context contradict (e.g., audience-messaging recommends outcome language but a key page uses feature language)
+- `opportunity`: An unused asset or underexploited strength (e.g., verified proof points not displayed)
+- `structural`: A site architecture or UX pattern that could be improved (e.g., navigation doesn't reflect persona segmentation)
+
+Do NOT filter these signals for quality. That happens in Phase 2b. Pass all unmatched signals forward.
+
+**Output to Phase 2b:** Unmatched signal list.
+
+**Output to Phase 3:** Complete opportunity list from Steps 1-5, typically 15-25 items. If fewer than 8, note this for the orchestrator's completion summary.

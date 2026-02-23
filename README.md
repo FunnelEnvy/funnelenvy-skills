@@ -10,7 +10,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 |-------|---------|-------------|
 | positioning-framework | 1.0.0 | Autonomous positioning and messaging framework from web research |
 | render-default-deliverables | 1.0.0 | Generates client-ready deliverables from positioning context |
-| hypothesis-generator | 1.0.0 | CRO experiment engine with 13 patterns, ICE scoring, and causal reasoning |
+| hypothesis-generator | 1.1.0 | CRO experiment engine with 23 patterns, ICE scoring, and causal reasoning |
 
 ## Quick Start
 

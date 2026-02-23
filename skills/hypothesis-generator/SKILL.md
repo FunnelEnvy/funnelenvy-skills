@@ -37,7 +37,7 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--focus` | all | Restrict to one or more pattern categories. Comma-separated. Valid: `headlines`, `forms`, `navigation`, `personalization`, `layout`, `pricing` |
+| `--focus` | all | Restrict to one or more pattern categories. Comma-separated. Valid: `headlines`, `forms`, `navigation`, `personalization`, `layout`, `pricing`, `social-proof`, `content`, `trust` |
 | `--max` | 10 | Maximum number of hypotheses to produce (min 5, max 15) |
 
 ---
@@ -78,7 +78,7 @@ Context available:
   competitive-landscape.md (confidence: 3, depth: standard)
   audience-messaging.md (confidence: 4, depth: standard)
 
-Pattern categories active: all 6 (13 patterns loaded)
+Pattern categories active: all 9 (23 patterns loaded)
 Evidence augmentation: [none | list loaded modules]
 Max hypotheses: 10
 
@@ -92,6 +92,14 @@ Read and follow `phases/detect.md`.
 Scan all loaded context for testable signals. Match signals against the trigger conditions defined in `modules/experiment-patterns.md`. Each match produces a raw opportunity.
 
 Output: Internal opportunity list (not written to disk). Typically 15-25 raw opportunities before filtering.
+
+### Phase 2b: Context-Derived Opportunity Detection
+
+Read and follow `phases/detect-contextual.md`.
+
+Evaluate unmatched signals from Phase 2 (Step 6) for novel testable experiments that don't match any pattern. Apply the six-criterion quality gate. Surviving signals become context-derived opportunities that merge into the Phase 2 opportunity list.
+
+Output: Context-derived opportunities appended to the opportunity list. Tagged `type: "context-derived"` for scoring adjustments.
 
 ### Phase 3: Hypothesis Construction
 
@@ -123,7 +131,8 @@ Display completion summary:
 Experiment roadmap written to .claude/deliverables/experiment-roadmap.md
 
   [X] hypotheses produced ([Y] Quick Wins, [Z] Strategic Bets, [W] Explorations)
-  [N] patterns matched, [M] patterns skipped (insufficient context)
+  [N] patterns matched, [M] context-derived, [P] patterns skipped (insufficient context)
+  [D] data gaps identified (see Prerequisites section)
 
   Top experiment: [name] (ICE: [score])
 
@@ -203,7 +212,24 @@ Experiments are grouped into three tiers:
 
 ## What's Not Here (and Why)
 
-[Patterns evaluated but excluded, with reasons. Example: "Pricing page experiments were considered but [Company] already publishes transparent pricing with clear tier differentiation." Prevents the reader from wondering about obvious omissions.]
+[Patterns evaluated but excluded, with reasons. Example: "Pricing page experiments were considered but [Company] already publishes transparent pricing with clear tier differentiation." Prevents the reader from wondering about obvious omissions.
+
+Also includes patterns that COULD NOT be evaluated due to missing data. Cross-reference the Prerequisites section for what to collect.]
+
+## Prerequisites and Data Gaps
+
+[Grouped into three categories:
+
+### Missing Baseline Data
+[Analytics, form metrics, traffic data not available. Names specific affected experiments and what to measure.]
+
+### Context Verification Needed
+[Claims needing client confirmation. Unverified proof points that affected scoring. Specific verification actions.]
+
+### Infrastructure Prerequisites
+[Personalization tools, CMS capabilities, testing platform requirements. Which experiments need what.]
+
+Each item names specific affected experiments and a concrete collection or verification action.]
 
 ---
 *Analysis produced by FunnelEnvy | [Date]*
@@ -265,10 +291,11 @@ If `.claude/deliverables/experiment-roadmap.md` already exists:
 
 ```
 SKILL.md (this file)
-  ├── phases/detect.md        Phase 2: opportunity detection from context
-  ├── phases/construct.md     Phase 3: hypothesis construction with causal reasoning
-  ├── phases/score.md         Phase 4: ICE scoring and sequencing
-  ├── modules/experiment-patterns.md   CRO pattern library (13 patterns, 6 categories)
+  ├── phases/detect.md              Phase 2: opportunity detection from context
+  ├── phases/detect-contextual.md   Phase 2b: context-derived opportunity detection
+  ├── phases/construct.md           Phase 3: hypothesis construction with causal reasoning
+  ├── phases/score.md               Phase 4: ICE scoring and sequencing
+  ├── modules/experiment-patterns.md   CRO pattern library (23 patterns, 9 categories)
   ├── modules/ice-scoring.md           ICE calibration anchors and scoring rules
   └── modules/evidence-*.md            (optional) additional evidence sources and calibration data
 ```

@@ -1,9 +1,9 @@
 # Experiment Patterns Library
 
-Version: 1.0.0
-Last updated: 2026-02-20
-Pattern count: 13
-Categories: 6
+Version: 1.1.0
+Last updated: 2026-02-22
+Pattern count: 23
+Categories: 9
 
 This module contains the CRO experiment patterns that drive the hypothesis generator. Each pattern encodes a testable opportunity type, its trigger conditions, causal reasoning, ICE baselines, and contextual modifiers.
 
@@ -16,7 +16,7 @@ The hypothesis generator matches signals from context files against the "Applies
 Each pattern follows this structure:
 
 - **Pattern ID:** Category prefix + number (e.g., HM-01). Internal reference only. Never appears in deliverables.
-- **Category:** One of: Headline/Messaging, Form Optimization, Navigation/UX, Personalization, Page Structure/Layout, Pricing
+- **Category:** One of: Headline/Messaging, Form Optimization, Navigation/UX, Personalization, Page Structure/Layout, Pricing, Social Proof, Content/Resource, Trust/Credibility
 - **Applies when:** Trigger conditions matched against context files. All conditions must be true for a full match. Any single condition = partial match.
 - **Typical test:** The default experiment design. Adapted to specific context during hypothesis construction.
 - **Causal mechanism:** The behavioral or psychological principle that makes this test work. Starting point for hypothesis-specific reasoning.
@@ -363,6 +363,60 @@ Each pattern follows this structure:
 
 ---
 
+### PS-03: About Page Proof Hierarchy
+
+**Category:** Page Structure/Layout
+**Applies when:**
+- About page leads with mission, vision, or values statements instead of proof of capability
+- Culture metrics, quality claims, or team credentials are buried below fold or in secondary sections
+- Positioning scorecard rates Proof as "Needs Work" and strongest proof points (from L0 registry) don't appear until deep into the page
+
+**Typical test:** Restructure the About page to lead with the strongest proof: quantified outcomes, named customers, team credentials, industry recognition. Push mission/vision/values to a secondary position below the proof section.
+
+**Causal mechanism:** Visitors reaching the About page are evaluating trust, not seeking inspiration. They want to know "can this company actually deliver?" Mission statements answer a question nobody on the About page is asking. Leading with proof (team expertise, client outcomes, industry recognition) directly addresses the trust evaluation. Culture and mission provide context after trust is established, not before.
+
+**ICE baseline:** Impact 3 | Confidence 3 | Ease 3
+**Modifiers:**
+- Impact +1 if About page is in the top 5 most-visited pages (common for services companies)
+- Confidence +1 if L0 proof registry has 3+ "verified" proof points not currently on the About page
+- Ease +1 if the change is primarily content reordering rather than new content creation
+- Confidence -1 if current About page layout can't be confirmed from context
+
+**Common mistakes:**
+- Removing mission/values entirely instead of repositioning them (some visitors do care, just not first)
+- Leading with logos only instead of substantive proof (logos without context are weak signals)
+
+**Sequencing notes:** Independent of homepage experiments. Can run in parallel with HM-01/HM-02 since it targets a different page. Complements SP-03 (Proof Hierarchy Restructure) if applied to the same page.
+
+---
+
+### PS-04: Service Page Differentiation Injection
+
+**Category:** Page Structure/Layout
+**Applies when:**
+- Service or product pages describe capabilities without differentiating from competitors
+- Competitive landscape shows claim overlap on specific services or feature categories
+- Service page copy reads generically: could belong to any competitor in the space
+
+**Typical test:** Add differentiation-specific content blocks to service pages: unique methodology callouts, comparison data points, specific proof from that service area. Position these where the page currently describes generic capabilities.
+
+**Causal mechanism:** B2B buyers evaluating service pages are in comparison mode. They're looking at 3-5 similar companies and reading through similar service descriptions. When every vendor's service page says "we help you [outcome]," none stands out. Injecting specific differentiators (unique process steps, metrics from that service area, competitive advantages) gives the comparison-mode buyer a reason to remember this vendor. The differentiation breaks pattern and creates a mental anchor.
+
+**ICE baseline:** Impact 3 | Confidence 3 | Ease 4
+**Modifiers:**
+- Impact +1 if competitive landscape identifies high claim overlap in the specific service area
+- Confidence +1 if audience-messaging provides service-specific channel adaptations
+- Confidence -1 if differentiators for this service area are only "claimed" not "verified"
+- Impact -1 if service page traffic is low relative to homepage
+
+**Common mistakes:**
+- Adding differentiation that's actually a commodity feature everyone has (research competitor pages first)
+- Differentiating on process details that buyers don't evaluate at this stage (implementation methodology on an awareness-stage page)
+
+**Sequencing notes:** Run after homepage messaging tests (HM-01/HM-02) establish the positioning direction. Service page differentiation should extend the winning homepage message into specific service contexts.
+
+---
+
 ## Category: Pricing
 
 ### PZ-01: Pricing Transparency Test
@@ -390,6 +444,234 @@ Each pattern follows this structure:
 - Not testing partial transparency (price ranges or "starting at") as a middle ground
 
 **Sequencing notes:** Often politically sensitive internally. May require stakeholder buy-in before testing. Flag this as needing business discussion, not just CRO decision. If approved, run early because results significantly inform competitive positioning.
+
+---
+
+## Category: Social Proof
+
+### SP-01: Testimonial Format Optimization
+
+**Category:** Social Proof
+**Applies when:**
+- Testimonials exist in L0 proof registry but are displayed as text-only blocks without attribution context (no photo, no title, no company, no metric)
+- Testimonial content is generic ("great product") rather than outcome-specific
+- Testimonials are present but don't match the page's target persona or use case
+
+**Typical test:** Upgrade testimonial format to include full attribution (name, title, company, photo), outcome-specific pull quotes, and persona-page matching. If testimonials are outcome-specific, test structured format (metric + quote + attribution) vs. current text block.
+
+**Causal mechanism:** Testimonials work through social proof and identification: "someone like me got results like this." Text-only testimonials without attribution context strip the identification signal. The reader can't evaluate "is this person like me?" without role, company type, and context. Adding attribution context transforms a generic endorsement into a credibility signal the reader can evaluate against their own situation.
+
+**ICE baseline:** Impact 3 | Confidence 4 | Ease 4
+**Modifiers:**
+- Impact +1 if testimonials appear on high-intent pages (pricing, demo request)
+- Confidence +1 if L0 proof registry has testimonials with named customers and metrics available
+- Ease -1 if testimonial content needs to be collected/updated (not just reformatted)
+- Confidence -1 if current testimonial display format can't be confirmed from context
+
+**Common mistakes:**
+- Using stock photos instead of real customer photos (destroys credibility if detected)
+- Placing testimonials from irrelevant industries on segment-specific pages
+
+**Sequencing notes:** Low effort, independent of most other experiments. Can run in parallel with headline or CTA tests on different page sections.
+
+---
+
+### SP-02: Case Study Structure Test
+
+**Category:** Social Proof
+**Applies when:**
+- Case studies exist but use a generic format: no before/after metrics, no timeline, no specific challenge/solution structure
+- Case studies exist but aren't surfaced on high-traffic pages (buried in a resources section)
+- L0 proof registry has "verified" outcomes that could be structured as case studies but aren't
+
+**Typical test:** Two variants. Variant A: restructure case studies into a challenge/approach/results format with quantified before/after metrics and timeline. Variant B: surface case study summaries (metric + company + one-line result) on high-traffic pages as proof strips.
+
+**Causal mechanism:** Case studies serve two distinct functions: deep validation (for champions building internal cases) and social proof signals (for early evaluators scanning the site). Generic case studies fail at both: they don't provide the specific metrics a champion needs, and they don't create scannable proof signals for casual visitors. Structured format with quantified results serves the champion. Surface-level proof strips serve the scanner. Testing both identifies which audience drives more conversion.
+
+**ICE baseline:** Impact 3 | Confidence 3 | Ease 3
+**Modifiers:**
+- Impact +1 if case studies include named enterprise customers (stronger brand association)
+- Confidence +1 if before/after metrics are available in L0 proof registry
+- Ease -1 if case studies need to be rewritten (not just reformatted)
+- Ease +1 if surfacing existing case study data on new pages (no content creation needed)
+
+**Common mistakes:**
+- Publishing case studies with vague results ("significant improvement") instead of waiting for specific metrics
+- Case study subjects that don't match the target persona profile (enterprise case studies for SMB-focused pages)
+
+**Sequencing notes:** Independent of copy experiments. Pairs well with CR-02 (ROI Evidence Integration) if both are identified. Run case study restructuring before evidence strip tests to ensure the underlying content is strong.
+
+---
+
+### SP-03: Proof Hierarchy Restructure
+
+**Category:** Social Proof
+**Applies when:**
+- Proof points of different strengths are mixed together on key pages (verified metrics next to generic logos next to unattributed quotes)
+- Strongest proof (named customer outcomes, quantified metrics) is buried below weaker proof (generic logos, partner badges, certification icons)
+- L0 proof registry shows a range of proof strengths but the site doesn't differentiate between them visually or positionally
+
+**Typical test:** Reorder proof sections on key pages to lead with the strongest evidence first. Structure: quantified outcomes at top, then named customer testimonials, then logos, then certifications/badges. Apply consistent visual treatment that signals proof hierarchy (larger format for stronger proof, smaller for weaker).
+
+**Causal mechanism:** Not all proof is created equal. A case study showing "340% ROI in 6 months" is categorically stronger than a logo wall. But when both are displayed at the same visual weight and the logo wall appears first, the visitor's trust evaluation anchors on the weaker signal. Leading with the strongest proof sets a high trust anchor. Subsequent weaker proof then reinforces rather than dilutes. The hierarchy matches the visitor's need: "show me your best evidence first."
+
+**ICE baseline:** Impact 3 | Confidence 4 | Ease 4
+**Modifiers:**
+- Impact +1 if the page is homepage or pricing page (highest-stakes trust evaluation)
+- Confidence +1 if L0 proof registry has 3+ "verified" proof points with clear strength differentiation
+- Ease +1 if change is primarily reordering existing elements (no new content)
+- Impact -1 if the page already leads with strongest proof (reordering provides minimal lift)
+
+**Common mistakes:**
+- Removing weaker proof entirely instead of repositioning it (quantity of proof still matters, just not as much as quality)
+- Treating all logos as equal (a Fortune 500 logo is stronger proof than an unknown startup logo)
+
+**Sequencing notes:** Low effort, high learning value. Run early. Results inform how to position proof in all future experiments (headline tests, form context, case study placement).
+
+---
+
+## Category: Content/Resource
+
+### CR-01: Competitive Comparison Page
+
+**Category:** Content/Resource
+**Applies when:**
+- Competitive landscape identifies 3+ direct competitors
+- No comparison or "vs." page exists on the company's site
+- White spaces or unique differentiators are identified that could be highlighted in a comparison format
+- Competitors have comparison pages that include the target company (defensive motivation)
+
+**Typical test:** Create a comparison page showing the target company vs. top 2-3 competitors on key evaluation criteria. Lead with dimensions where the company wins. Include honest "where they're stronger" sections (builds credibility). Link from relevant service pages and consider paid search targeting "[Competitor] alternative" keywords.
+
+**Causal mechanism:** B2B buyers actively compare vendors. If the company doesn't provide a comparison, buyers build their own from competitor sites and review platforms, where the company has no control over framing. A comparison page created by the company controls the evaluation criteria: it anchors the comparison on dimensions where the company is strongest. Honest inclusion of competitor advantages paradoxically builds trust (the company is confident enough to show the full picture).
+
+**ICE baseline:** Impact 4 | Confidence 3 | Ease 2
+**Modifiers:**
+- Impact +1 if "[Company] vs [Competitor]" search volume exists or competitors already have comparison pages
+- Confidence +1 if competitive landscape provides clear, verifiable differentiators for the comparison
+- Ease -1 if comparison requires ongoing maintenance as competitors change
+- Confidence -1 if differentiators are mostly "claimed" without verified proof
+
+**Common mistakes:**
+- Making the comparison page obviously biased (green checks for us, red X's for them on every dimension)
+- Including competitors who aren't actual alternatives for the same buyer (creates false competitive frame)
+- Not updating the page when competitors ship new features or change pricing
+
+**Sequencing notes:** Higher effort (new page creation). Run after positioning fundamentals (HM-01, HM-02) establish the value prop direction. The comparison page should extend proven messaging, not test new positioning.
+
+---
+
+### CR-02: ROI Evidence Integration
+
+**Category:** Content/Resource
+**Applies when:**
+- L0 proof registry has verified quantified outcomes (revenue impact, time saved, efficiency gains) not displayed on high-traffic pages
+- Quantified ROI is identified as a top proof gap in positioning scorecard
+- Competitors lead with ROI claims and the target company has evidence but doesn't surface it
+
+**Typical test:** Two variants with different effort levels. Variant A (high ease): Add an evidence strip to high-traffic pages showing 3-4 quantified outcomes in a scannable format (metric + context, e.g., "340% ROI in 6 months - [Customer Name]"). Variant B (low ease): Build an interactive ROI calculator that uses company benchmarks to project value for the visitor's specific situation.
+
+**Causal mechanism:** B2B purchase decisions involve financial justification. The champion needs ammunition to present ROI to decision-makers. If ROI evidence exists but isn't surfaced prominently, the champion has to dig for it or request it from sales. Surfacing quantified outcomes on high-traffic pages serves two purposes: it provides the champion with shareable proof, and it signals to early evaluators that the company can quantify its value (which many competitors can't or won't do).
+
+**ICE baseline (Variant A):** Impact 4 | Confidence 3 | Ease 4
+**ICE baseline (Variant B):** Impact 4 | Confidence 3 | Ease 2
+**Modifiers:**
+- Impact +1 if ROI evidence is available but completely absent from the current site
+- Confidence +1 if proof points include named customers (not anonymized)
+- Ease -1 for Variant B if calculator requires custom engineering
+- Confidence -1 if ROI metrics are from a single customer (not generalizable)
+
+**Common mistakes:**
+- Displaying ROI numbers without customer context (unattributed numbers feel fabricated)
+- ROI calculator that produces implausibly high numbers (destroys credibility)
+- Using averages across very different customer segments (enterprise ROI shown to SMB visitors)
+
+**Sequencing notes:** Variant A (evidence strip) can run early and in parallel with copy experiments. Variant B (calculator) is a Strategic Bet: higher effort, higher payoff. Start with Variant A to validate that ROI evidence resonates before investing in the calculator.
+
+---
+
+### CR-03: Assessment / Diagnostic Tool
+
+**Category:** Content/Resource
+**Applies when:**
+- Company serves multiple segments with different needs and no self-service qualification mechanism exists
+- 2+ personas identified with distinct entry points and evaluation criteria
+- Site lacks interactive content that helps visitors self-identify their situation before engaging sales
+
+**Typical test:** Build a short diagnostic (5-7 questions) that helps visitors identify their situation, maturity level, or fit. Output a personalized recommendation: which service/product tier fits, what outcomes to expect, suggested next step. Gate the detailed results behind email capture.
+
+**Causal mechanism:** Visitors who don't know which product or service fits their situation face a classification problem before they face an evaluation problem. They need to figure out "what do I need?" before "is this company the right choice?" A diagnostic tool solves the classification problem, positioning the company as an expert guide. The email gate on detailed results converts the visitor at a moment of peak engagement (they've invested effort and want their answer). The diagnostic data also enriches the sales team's understanding of the lead.
+
+**ICE baseline:** Impact 3 | Confidence 2 | Ease 2
+**Modifiers:**
+- Impact +1 if the company serves 3+ distinct segments with different product/service fit
+- Confidence +1 if audience-messaging has well-defined personas with distinct challenges
+- Ease -1 if diagnostic requires custom development (no quiz/assessment tool in stack)
+- Ease +1 if the company already uses a quiz or assessment platform
+
+**Common mistakes:**
+- Making the diagnostic too long (>10 questions creates abandonment)
+- Results that are too generic to feel personalized (the whole point is specificity)
+- Not using diagnostic responses to inform sales follow-up (wasted data)
+
+**Sequencing notes:** High effort, exploration-tier. Run after simpler experiments validate messaging direction. The diagnostic content should reflect proven positioning, not untested messaging.
+
+---
+
+## Category: Trust/Credibility
+
+### TC-01: Team Credibility Surface
+
+**Category:** Trust/Credibility
+**Applies when:**
+- Talent quality or team expertise is claimed as a differentiator in L0 but the team page is generic, missing, or lacks credentials
+- Competitive landscape shows competitors with stronger team pages (detailed bios, credentials, thought leadership links)
+- The company sells expertise-dependent services (consulting, professional services, implementation) where buyer confidence in the team matters
+
+**Typical test:** Upgrade team page or create team credibility sections on service pages. Include specific credentials (years of experience, certifications, notable prior work), thought leadership links, and specialization areas. Test full team page redesign vs. team credibility strip on service pages.
+
+**Causal mechanism:** For services companies, the team IS the product. Buyers are purchasing the judgment and expertise of the people who will work on their account. A generic team page ("Meet our passionate team") provides zero signal about capability. Specific credentials (ex-Google, 15 years in fintech, published researcher) activate authority bias: the buyer infers capability from verifiable expertise markers. The stronger the credentials displayed, the lower the perceived risk of engagement.
+
+**ICE baseline:** Impact 3 | Confidence 3 | Ease 3
+**Modifiers:**
+- Impact +1 if the company sells high-ticket services where team quality is the primary differentiator
+- Confidence +1 if L0 explicitly lists team credentials or expertise claims
+- Ease +1 if team information exists internally and just needs to be surfaced on the site
+- Ease -1 if team members need to be photographed, interviewed, or profiled from scratch
+
+**Common mistakes:**
+- Using stock photos or AI-generated headshots (immediately destroys trust if detected)
+- Listing credentials without connecting them to client value (impressive resume that doesn't explain how it helps the buyer)
+
+**Sequencing notes:** Independent of homepage messaging experiments. Can run in parallel on team/about pages. Pairs with PS-03 (About Page Proof Hierarchy) for a combined about page restructure.
+
+---
+
+### TC-02: Objection Preemption Page
+
+**Category:** Trust/Credibility
+**Applies when:**
+- Competitive landscape identifies a structural objection or "when we lose" scenario (e.g., "too expensive," "too small," "no enterprise features") with no rebuttal content on the site
+- Audience-messaging identifies recurring objections in the decision process
+- Company's FAQ or objection handling is buried, generic, or missing from the main navigation flow
+
+**Typical test:** Create dedicated content addressing the top 1-2 structural objections. This could be a standalone page ("Is [Company] right for you?"), an FAQ section on the pricing page addressing cost objections, or a "How we compare" section addressing capability objections. Test placement on high-intent pages where the objection is most likely to block conversion.
+
+**Causal mechanism:** Unanswered objections don't disappear; they become reasons to choose a competitor. When a buyer encounters a structural objection ("this seems expensive for what it is") and finds no counter-narrative on the site, they either leave or carry the objection into the sales process where it's harder to overcome. Proactive objection preemption reframes the concern before it solidifies: "Yes, our price is higher because [specific value justification]." This is loss aversion in reverse: showing what the buyer loses by choosing the cheaper option.
+
+**ICE baseline:** Impact 4 | Confidence 3 | Ease 3
+**Modifiers:**
+- Impact +1 if the objection is identified as the primary "when we lose" reason in competitive landscape
+- Confidence +1 if the company has specific evidence or case studies that directly address the objection
+- Ease +1 if the content can be added to an existing page (FAQ section, pricing page sidebar) rather than a new page
+- Confidence -1 if the objection rebuttal relies on claims without verified proof
+
+**Common mistakes:**
+- Addressing objections defensively ("we're not expensive!") instead of reframing ("here's why the investment pays for itself")
+- Creating an objection page that inadvertently introduces concerns the visitor hadn't considered
+- Addressing too many objections at once (dilutes the rebuttal strength for each)
+
+**Sequencing notes:** Run after competitive analysis is strong enough to identify the real objections. Pairs with PZ-01 (Pricing Transparency) if the primary objection is pricing-related. Content from this experiment can inform sales enablement materials.
 
 ---
 

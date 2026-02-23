@@ -17,7 +17,8 @@ funnelenvy-skills/
 │   ├── reddit-research.md        # Shared Reddit API integration (all skills)
 │   ├── web-extract.md            # curl + python3 HTML extractor (first-pass)
 │   ├── business-brief.md         # Pre-flight intake template + protocol
-│   └── slugify.md                # Deterministic name-to-slug rules for filenames
+│   ├── slugify.md                # Deterministic name-to-slug rules for filenames
+│   └── competitive-assessment.md # Claim assessment, similarity, overlap scoring (Agent 2)
 ├── skills/
 │   ├── positioning-framework/
 │   │   ├── SKILL.md              # Orchestration hub v1 (~840 lines, depth-gated)
@@ -291,7 +292,7 @@ Auto-invoked by positioning-framework at standard/deep depth. Also available sta
 
 ### hypothesis-generator
 Standalone CRO hypothesis engine. Reads positioning context (L0 + L1), applies
-13 experiment patterns across 6 categories, and produces a prioritized experiment
+23 experiment patterns across 9 categories, and produces a prioritized experiment
 roadmap with ICE scoring. Manually invoked: /hypothesis-generator
 
 ## Development

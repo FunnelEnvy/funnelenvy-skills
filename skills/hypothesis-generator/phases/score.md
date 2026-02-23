@@ -31,6 +31,8 @@ Start each hypothesis with the ICE baseline from its matched pattern in `modules
 
 If a hypothesis was triggered by multiple patterns, use the baseline from the pattern with the strongest trigger signal.
 
+**Context-derived hypotheses:** Start at 3/3/3 (neutral midpoint) instead of a pattern baseline. Apply Confidence -1 immediately (no pattern precedent = lower structural certainty). This penalty can be neutralized with an explicit +1 annotation explaining why the evidence is strong enough to override the lack of pattern precedent. The annotation must reference a specific piece of evidence from context, not a general argument.
+
 ### Step 2: Apply Pattern Modifiers
 
 Each pattern in `modules/experiment-patterns.md` defines conditional modifiers. Evaluate each modifier against available context:
@@ -116,4 +118,36 @@ Run the easiest wins first. Build momentum. Get the team comfortable with the te
 - If a Quick Win result would change the design of a Strategic Bet, note this dependency in the Sequencing Rationale section
 - Never delay a Quick Win because of a Strategic Bet dependency (Quick Wins build momentum regardless)
 
-**Output to Phase 5:** Scored, tiered, sequenced hypothesis list ready for rendering.
+### Step 8: Prerequisites and Data Gaps Compilation
+
+After sequencing, compile a structured list of data gaps and prerequisites that affected coverage and scoring. This section appears in the final deliverable and tells the reader what's missing and how to get it.
+
+**Three categories:**
+
+**1. Missing baseline data (analytics, form metrics).**
+For each data gap that prevented higher-confidence scoring:
+- What data is missing (e.g., "baseline form completion rate," "page-level traffic data," "scroll depth metrics")
+- Which experiments are affected (name them)
+- How to collect it (specific analytics setup or measurement action)
+
+**2. Context verification needed (claims needing client confirmation).**
+From the context quality flags (Phase 2, Step 1b):
+- Proof points marked "claimed" that affect specific hypothesis confidence
+- Sections marked `[NEEDS CLIENT INPUT]` or `[NEEDS CONFIRMATION]`
+- Suggested verification action (e.g., "confirm customer count with marketing team")
+
+**3. Infrastructure prerequisites (personalization tools, CMS capabilities).**
+For each experiment that requires specific tooling:
+- What tooling is needed
+- Which experiments depend on it
+- Whether the tooling was detected in context or assumed missing
+
+**Also include:**
+For each pattern that was SKIPPED entirely due to missing data (not just scored lower):
+- Pattern name and category
+- What data would need to exist to evaluate it
+- Which context file or data source would provide it
+
+This gives the reader a clear action list: "collect these 5 things, and your next hypothesis generation run will produce more and better-scored experiments."
+
+**Output to Phase 5:** Prerequisites and data gaps list, alongside the scored hypothesis list.

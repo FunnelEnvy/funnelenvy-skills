@@ -114,3 +114,20 @@ When multiple modifiers apply to the same dimension:
 5. Clamp to 1-5
 
 If calibration overrides exist (step 3), they replace the result of steps 1-2 for the overridden dimension. Steps 4 still applies on top.
+
+---
+
+## Context-Derived Hypothesis Scoring
+
+Context-derived hypotheses (from Phase 2b) lack pattern precedent. They represent novel observations that don't fit any predefined CRO pattern. Score them with these calibration notes:
+
+**Starting point:** 3/3/3 with Confidence -1 penalty applied at Step 1. This means context-derived hypotheses start at 3/2/3 before any adjustments.
+
+**General calibration:**
+- Context-derived hypotheses should generally score LOWER confidence than pattern-matched hypotheses. Patterns encode structural knowledge from repeated CRO observations. Novel hypotheses lack this foundation.
+- If a context-derived hypothesis scores higher total ICE than most pattern-matched hypotheses in the same roadmap, re-examine. It's not impossible, but it's a signal to double-check the scoring.
+- The Confidence -1 penalty can be neutralized (+1) only with a specific evidence citation from context files. "Strong evidence" as a general claim doesn't qualify. Name the context file section and the specific data point.
+
+**Anti-pattern: Context-derived inflation.** If context-derived hypotheses are consistently scoring Confidence 3+ (after the penalty), the penalty isn't doing its job. At least half of context-derived hypotheses should remain at Confidence 2 after all adjustments.
+
+**Skip steps 2-3:** Context-derived hypotheses have no pattern modifiers or calibration overrides. Jump from Step 1 directly to Step 4 (contextual adjustments).

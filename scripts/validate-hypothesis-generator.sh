@@ -93,9 +93,9 @@ check "phases/ has exactly 3 files" \
 echo ""
 
 echo "[4] Pattern count"
-check "experiment-patterns.md has 13 patterns" \
+check "experiment-patterns.md has 23 patterns" \
   "grep -c '^### [A-Z]\{2\}-[0-9]\{2\}:' modules/experiment-patterns.md" \
-  "13"
+  "23"
 echo ""
 
 echo "[5] ICE calibration completeness"
