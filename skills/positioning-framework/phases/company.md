@@ -418,11 +418,14 @@ If a value theme has no proof above strength 2, flag it as vulnerable. Competito
 Before writing `company-identity.md` to disk, execute this procedure. Do not skip it.
 
 1. Scan every section in the file body that has a confidence score (e.g., `**Confidence:** 3`).
-2. Collect all section-level confidence scores into a list.
-3. Set frontmatter `confidence` to the MINIMUM value in that list.
-4. If no sections have confidence scores, set frontmatter `confidence` to 2.
+2. Separate scores into two lists: **REQUIRED sections** and **OPTIONAL sections**.
+   - REQUIRED: Company Overview, Services & Capabilities, Service Exclusions, Target Segments, Anti-Personas, Stated Differentiators, Proof Point Registry, Constraints
+   - OPTIONAL: Company Stats, Pricing Model, Glossary, Buying Triggers, Retired Positioning, Category Gap
+3. Set frontmatter `confidence` to the MINIMUM of the **REQUIRED section scores only**.
+4. If any OPTIONAL section has a confidence score below the file-level confidence, add a note in that section: `<!-- low-confidence optional section: does not affect file-level confidence -->`. This preserves visibility without penalizing the file.
+5. If no sections have confidence scores, set frontmatter `confidence` to 2.
 
-This is not optional. The schema rule is: file-level confidence equals the lowest section confidence. A file with one section at confidence 2 and all others at confidence 4 has file-level confidence 2.
+This is not optional. The schema rule is: file-level confidence equals the lowest REQUIRED section confidence. OPTIONAL sections with thin data (e.g., no public pricing page for a consulting firm) should not drag the entire file to draft status.
 
 Common mistake to avoid: setting frontmatter confidence based on your overall assessment of data quality. Frontmatter confidence is a mechanical calculation, not a judgment call.
 

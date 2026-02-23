@@ -74,7 +74,7 @@ When you are extending an existing context file (prior work detected), execute t
    - You found less data than the prior run: confidence CANNOT decrease (absence is not contradiction).
    - New evidence directly contradicts existing content: confidence CAN decrease (follow "When Decreasing Confidence" above).
 5. **Write the updated section confidence** into the section body (e.g., `**Confidence:** 4`).
-6. **After all sections are updated, run Confidence Reconciliation** (the mandatory final step in your phase file) to set frontmatter confidence = min(all section scores).
+6. **After all sections are updated, run Confidence Reconciliation** (the mandatory final step in your phase file) to set frontmatter confidence = min(REQUIRED section scores only). OPTIONAL sections do not drag down file-level confidence.
 7. **Add an extension comment** at the top of each modified section: `<!-- extended by [skill-name] [date] -->`.
 
 This procedure exists because confidence scores were freezing at their initial values during extension runs. The root cause: agents read existing scores, saw they were "already set," and moved on without re-evaluating against new evidence. This procedure makes re-evaluation explicit.
