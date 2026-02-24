@@ -317,6 +317,7 @@ The orchestrator passes a `depth` parameter (quick, standard, or deep) when laun
 3. **Pricing page** (if it exists) - Capture ALL tiers including free, entry, and top tier. Note feature gates between tiers (what's locked at each level). Capture any add-ons or usage-based pricing separately. Skip if no public pricing.
 4-6. **Three additional pages** - Pick from: integrations, docs landing, changelog, use-cases, solutions, or industry pages. Choose whichever are most likely to reveal capabilities, use cases, or buyer segments not on the homepage. **Never pick /about or /team** -- these are low-signal pages for positioning research.
    - **If the user provided priority pages in the intake:** Fetch ALL of them (no limit) AND still pick your three additional pages. User pages are additive, not a replacement.
+   - **If GA4 Priority Pages data is in the launch prompt:** Use it to select the three additional pages instead of picking from the hardcoded list. See "GA4-Informed Page Selection" section above. User priority pages still come first if both are present.
 
 **Optional fetches (only if the above leaves gaps):**
 7. LinkedIn company page
@@ -362,6 +363,26 @@ The orchestrator passes a `depth` parameter (quick, standard, or deep) when laun
 5. **Additional context:** Thread into relevant L0 sections (Service Exclusions, Retired Positioning, Target Segments, etc.) as applicable.
 
 **If no intake was provided (user said "go"):** Proceed autonomously with web research. Flag gaps with `[NEEDS CONFIRMATION]` in the output. Note in Section Confidence that no client input was available.
+
+---
+
+## GA4-Informed Page Selection
+
+**When GA4 Priority Pages data is present in your launch prompt**, use it to replace heuristic discretionary page picks. This data comes from the orchestrator's Step 5.5 (a single GA4 query run before your launch).
+
+**Rules:**
+
+1. **Required pages stay required.** Homepage, features, and pricing are always fetched regardless of GA4 data. These are non-negotiable.
+2. **Client priority pages still override everything.** If the user specified pages in intake, those come first, then GA4-informed picks, then heuristic fallback for any remaining slots.
+3. **GA4 replaces the heuristic discretionary picks.** Instead of picking from the hardcoded list (integrations, docs landing, changelog, use-cases, solutions, industry pages), pick from GA4 priority pages ranked by signal:
+   - First: `high-traffic-high-conversion` pages not already in the required list (messaging is working here -- study it)
+   - Second: `high-traffic-low-conversion` pages (biggest opportunities -- messaging is failing)
+   - Third: `low-traffic-high-conversion` pages (hidden gems -- potentially underexposed messaging)
+   - Skip: `low-traffic-low-conversion` pages unless they match a required category
+4. **Page budget is unchanged.** Quick: 4-7 fetches. Standard: 15-20. Deep: 25-35. GA4 data changes WHICH pages fill discretionary slots, not how many slots exist.
+5. **GA4 data informs company page selection only.** Competitor pages, Tier 2 sources (LinkedIn, Reddit, reviews), and Tier 3 sources are selected by their own logic. GA4 data does not affect those picks.
+
+**When GA4 Priority Pages data is NOT present** (no `--property` flag was used): Use the existing heuristic page selection. No change to current behavior.
 
 ---
 

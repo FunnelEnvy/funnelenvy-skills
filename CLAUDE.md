@@ -221,6 +221,8 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 5. **`/hypothesis-generator`** (produces experiment roadmap from L0 + L1 context + optional performance data)
 6. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
 
+**Tip:** Add `--property <ga4_property_id>` to any positioning-framework invocation to use GA4 traffic data for page selection (e.g., `/positioning-framework https://example.com --property properties/123456789`). This runs a single lightweight query before research begins. The full ga4-audit still runs separately.
+
 Each depth level builds on prior work. Running quick then standard then deep is incremental, not redundant. The skill detects existing context and extends rather than overwrites. Deliverables can be re-rendered at any time after context files exist.
 
 ### Concurrency rule
@@ -281,6 +283,7 @@ Consolidated positioning, competitive research, and messaging framework. Feed it
 **Additional flags:**
 - `--competitive-depth none|standard|deep`: Override competitive analysis depth independently.
 - `--competitive-focus "Name"`: Deep-dive a single competitor, extending existing analysis.
+- `--property <ga4_property_id>`: Use GA4 traffic data to guide Agent 1's page selection. Single lightweight query. Falls back to heuristic if auth fails.
 
 **Outputs:**
 - L0 context: company-identity.md (facts, differentiators, proof registry, constraints)

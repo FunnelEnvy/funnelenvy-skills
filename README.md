@@ -48,6 +48,7 @@ Examples:
 /positioning-framework https://example.com --depth quick
 /positioning-framework https://example.com --depth deep
 /positioning-framework https://example.com --competitive-focus "Acme Corp"
+/positioning-framework https://example.com --property properties/123456789
 ```
 
 ## Output Files
@@ -89,7 +90,8 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 
 ```
 # 1. Build positioning context (who you are, your market, your competitors)
-/positioning-framework https://example.com
+# Add --property to use GA4 data for page selection (optional)
+/positioning-framework https://example.com --property properties/123456789
 
 # 2. Pull analytics data (what's actually happening on your site)
 /ga4-audit properties/123456789

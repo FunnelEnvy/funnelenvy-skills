@@ -59,7 +59,7 @@ If the user requests **Guided Interview**, **Audit & Update**, or **Reconciliati
 ## Invocation & Flags
 
 ```
-/positioning-framework <url> [--depth quick|standard|deep] [--competitive-depth none|standard|deep] [--competitive-focus "Name"]
+/positioning-framework <url> [--depth quick|standard|deep] [--competitive-depth none|standard|deep] [--competitive-focus "Name"] [--property <ga4_property_id>]
 ```
 
 ### Depth Levels
@@ -80,6 +80,7 @@ Default: `--depth standard`
 - `--competitive-depth none`: Skip Agent 2 entirely. Use when competitive data already exists.
 - `--competitive-depth deep`: Force Agent 2 to deep depth regardless of overall depth. Use for extended competitive analysis within a standard run.
 - `--competitive-focus "Name"`: Run Agent 2 focused on a single competitor at deep depth. Extends existing competitive-landscape.md.
+- `--property <ga4_property_id>`: Run a single GA4 query before Agent 1 launches to identify high-traffic and high-conversion pages. Results guide Agent 1's discretionary page selection. Optional. If omitted, Agent 1 uses its existing heuristic page selection. If auth fails or the property is invalid, logs a warning and falls back to heuristic selection.
 
 ### Flag Validation
 
@@ -433,7 +434,8 @@ Each agent reads `agent-header.md` (shared agent rules) plus its specific phase 
 3. Prior Work Detection (glob .claude/context/, read frontmatter)
 4. Depth Transition Logic (see below)
 5. Pre-Flight Intake (see below)
-6. Launch Agent 1 (pass depth + intake payload) → wait for completion
+5.5. GA4 Priority Pages (if --property provided, see below)
+6. Launch Agent 1 (pass depth + intake payload + GA4 data if available) → wait for completion
      Agent 1 writes fetch registry to .claude/context/_fetch-registry.md (all URLs fetched with extraction quality).
 6.5. Copy Verification Checkpoint (see below) -- standard/deep only
 7. If depth != quick AND competitive-depth != none:
@@ -497,6 +499,62 @@ Pre-Flight intake:
 ```
 
 When no business brief or intake is provided (user said "go"), all data defaults to `research` origin. The `[origin: client]` tags are omitted from the payload in this case.
+
+### Step 5.5: GA4 Priority Pages
+
+**Trigger:** `--property` flag is present. Skip this step entirely if `--property` is not provided.
+
+**Sequence:**
+
+1. Run `get_property_details` with the property ID to validate access and confirm the property name.
+2. Run a single `run_report` query:
+   ```
+   property_id: <from --property flag>
+   date_ranges: [{ startDate: "90daysAgo", endDate: "yesterday" }]
+   dimensions: [{ name: "pagePath" }]
+   metrics: [{ name: "sessions" }, { name: "conversions" }]
+   order_bys: [{ metric: { metricName: "sessions" }, desc: true }]
+   limit: 30
+   ```
+3. Filter rows to sessions >= 10 (ignore noise pages).
+4. Compute derived fields:
+   - **conversion_rate:** `conversions / sessions` as percentage
+   - **signal:** Classify each page:
+     - `high-traffic-high-conversion`: top 20% by sessions AND conversion rate > 2x site average
+     - `high-traffic-low-conversion`: top 20% by sessions AND conversion rate < 0.5x site average
+     - `low-traffic-high-conversion`: bottom 50% by sessions AND conversion rate > 2x site average
+     - `low-traffic-low-conversion`: bottom 50% by sessions AND conversion rate < 0.5x site average
+     - All other combinations: `medium` (not included in priority picks)
+5. Build the GA4 Priority Pages payload (see format below).
+
+**If the query fails** (auth error, invalid property, 0 rows returned): Log a warning and proceed without GA4 data. No hard failure.
+
+```
+Note: Could not access GA4 property {id}. Proceeding with standard page selection.
+```
+
+**If all pages have 0 conversions:** Skip conversion-based signals. Use traffic-only ranking (top pages by sessions become the priority picks).
+
+**GA4 Priority Pages payload format** (injected into Agent 1's launch prompt):
+
+```
+GA4 Priority Pages (property: {property_name}, last 90 days):
+
+| Page | Sessions | Conversions | Conv Rate | Signal |
+|------|----------|-------------|-----------|--------|
+| /pricing | 12,450 | 890 | 7.1% | high-traffic-high-conversion |
+| /solutions/enterprise | 8,200 | 45 | 0.5% | high-traffic-low-conversion |
+| ... | ... | ... | ... | ... |
+
+Site average conversion rate: X.X%
+Total sessions (last 90 days): XX,XXX
+
+Use these pages to guide your research priorities:
+- MUST fetch all high-traffic-high-conversion pages (study what's working)
+- MUST fetch all high-traffic-low-conversion pages (understand what's failing)
+- SHOULD fetch low-traffic-high-conversion pages if within page budget
+- Deprioritize low-traffic-low-conversion pages unless they match a required category (homepage, features, pricing)
+```
 
 ### Step 6.5: Copy Verification Checkpoint
 
@@ -652,6 +710,22 @@ Pre-Flight intake:
 - Existing docs [origin: client]: [summary of docs provided, or "none"]
 - Language constraints [origin: client]: [must-use/must-avoid terms, or "none"]
 - Additional context [origin: client]: [freeform context, or "none"]
+
+[If --property was provided and Step 5.5 succeeded:]
+GA4 Priority Pages (property: {property_name}, last 90 days):
+
+| Page | Sessions | Conversions | Conv Rate | Signal |
+|------|----------|-------------|-----------|--------|
+| [data rows from Step 5.5] |
+
+Site average conversion rate: X.X%
+Total sessions (last 90 days): XX,XXX
+
+Use these pages to guide your research priorities:
+- MUST fetch all high-traffic-high-conversion pages (study what's working)
+- MUST fetch all high-traffic-low-conversion pages (understand what's failing)
+- SHOULD fetch low-traffic-high-conversion pages if within page budget
+- Deprioritize low-traffic-low-conversion pages unless they match a required category (homepage, features, pricing)
 
 Execute the research and build company-identity.md. Thread language constraints into the Glossary and Constraints sections. Named competitors are required competitive research targets. Return a completion summary with:
 - Key findings
