@@ -238,6 +238,18 @@ Probe for:
 
 Write in buyer language, not analyst language. "We just had our controller handle it" not "Internal resource reallocation."
 
+### Discovery Sources
+
+Check these sources in order before inventing alternatives from general knowledge:
+
+1. **L0's Buyer Alternatives** (if populated from pre-flight intake). Client-provided alternatives are highest confidence.
+2. **`_research-extractions.md` case study entries.** Scan for "before" states: what was the customer doing before they hired the company? Case studies often open with the prior approach.
+3. **Review site "switching from" data.** G2/Capterra comparison pages and reviews frequently mention what buyers used previously. Check `_fetch-registry.md` for already-fetched review pages before re-fetching.
+4. **Reddit threads.** Search for "what do you use for [JTBD]" or "how do you handle [problem]" in relevant subreddits. These surface DIY and workaround approaches that vendor-centric research misses.
+5. **Company FAQ pages.** "Do I need [service]?" and "When should I hire [type of provider]?" questions reveal the alternatives buyers are weighing.
+
+Alternatives sourced from steps 1-5 get cited in the Source column. Alternatives that don't trace to any of these sources are `[INFERRED]`.
+
 ### Source Requirements
 
 Use this expanded table format with a Source column:
