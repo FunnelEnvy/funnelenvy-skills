@@ -45,12 +45,15 @@ personas:
   - role: "CFO"
     segment: "PE-backed mid-market"
     primary_challenge: "transaction delays"
+    tier: proven                             # proven | intended | speculative
   - role: "COO"
     segment: "high-growth"
     primary_challenge: "scaling operations"
+    tier: proven
   - role: "CHRO"
     segment: "in transition"
     primary_challenge: "talent retention during change"
+    tier: intended
 
 # Value themes summary
 value_theme_count: 3
@@ -79,6 +82,7 @@ banned_terms_count: 3                           # entries in Banned Terms sectio
 - `positioning_statement`: The one-liner from Section 7 (Positioning Statement). Must pass the competitor test.
 - `personas`: Summary of each persona. Downstream skills check this to know which personas exist without reading the full body.
 - `primary_challenge`: One-line version of core problem. Used for quick persona matching.
+- `tier`: Persona evidence level. `proven` (buyer evidence exists), `intended` (website targets this role, no buyer evidence), `speculative` (client-requested only). Determines what depth fields can be populated.
 - `value_themes`: Summary with proof strength. Downstream skills check before reading full body.
 - `tone`: Derived from content analysis, not aspirational.
 - `voice_consistency`: Categorical rating of cross-channel consistency. Valid values: `high` | `moderate` | `low`. Rating criteria defined in messaging.md Voice Consistency Rating section. `low` = significant inconsistency (a finding that should surface in the scorecard).
@@ -104,9 +108,9 @@ One row per primary persona. Each row must be distinct. If two personas have ide
 ```markdown
 ## Persona Messaging Grid
 
-| Persona + Team | Their Daily Reality | Top 3 Challenges | What Changes With Your Solution | Value They'd Pitch to Their Boss |
-|---------------|--------------------|-----------------|---------------------------------|--------------------------------|
-| [Role, Team] | [What their day looks like] | 1. [Challenge] 2. [Challenge] 3. [Challenge] | [Specific outcome] | [How they'd sell it internally] |
+| Persona + Team | Tier | Their Daily Reality | Top 3 Challenges | What Changes With Your Solution | Value They'd Pitch to Their Boss |
+|---------------|------|--------------------|-----------------|---------------------------------|--------------------------------|
+| [Role, Team] | [tier] | [What their day looks like] | 1. [Challenge] 2. [Challenge] 3. [Challenge] | [Specific outcome] | [How they'd sell it internally] |
 ```
 
 **Depth per persona:**
@@ -120,7 +124,7 @@ One row per primary persona. Each row must be distinct. If two personas have ide
 **Persona validation rules:**
 - Every audience segment with a dedicated page on the company's website MUST have a persona row or an explicit exclusion note
 - Every major service line maps to at least one persona
-- Personas from case study quotes = proven personas. Website navigation = intended personas. Distinguish the two.
+- Proven personas from case study quotes. Intended personas from website navigation/service pages. Speculative personas only from client request. Tag each persona's tier in the grid.
 
 **Used by:** Every content skill. This is the "who am I writing for" reference.
 
@@ -317,13 +321,16 @@ Same message adapted per channel constraints.
 
 | Channel | Constraint | Primary Message Adaptation | Proof to Include |
 |---------|-----------|---------------------------|-----------------|
-| Homepage H1 | 8 words max | [adaptation] | None (subhead carries proof) |
-| Homepage subhead | 15-20 words | [adaptation] | P1 or P2 |
-| LinkedIn ad | 150 chars | [adaptation] | One stat |
-| Google Search ad | 30 char headline + 90 char description | [adaptation] | None |
-| Email subject line | 50 chars, curiosity-driven | [adaptation] | None |
-| Sales one-liner | 15 seconds spoken | [adaptation] | One proof point |
-| Conference intro | 30 seconds spoken | [adaptation] | Name-drop + metric |
+| Homepage H1 | 6-12 words | [adaptation] | None (subhead carries proof) |
+| Homepage subhead | 15-25 words | [adaptation] | P1 or P2 (strongest metric) |
+| LinkedIn ad (single image) | Primary text: 150 chars above fold (600 max). Headline: 70 chars. | [adaptation] | One stat |
+| Google Search (RSA) | 3 headlines x 30 chars each + 2 descriptions x 90 chars each | [adaptation] | H1: brand/category. H2: differentiator. H3: proof or CTA. |
+| Meta ad (Facebook/Instagram) | Primary text: 125 chars above fold. Headline: 40 chars. | [adaptation] | None (visual-first) |
+| Email subject line | 40-50 chars | [adaptation] | None |
+| Sales one-liner | 15 seconds spoken (~30-40 words) | [adaptation] | One proof point |
+| Conference intro | 30 seconds spoken (~75 words) | [adaptation] | Name-drop + metric |
+| Case study headline | 8-15 words | [adaptation] | Format: "[Client type] + [outcome] + [timeframe or metric]" |
+| Webinar/event title | 8-12 words | [adaptation] | Promise a specific takeaway |
 ```
 
 **Used by:** Every channel-specific content skill.
@@ -490,7 +497,7 @@ At least 3 actionable rules.
 - [ ] Messaging hierarchy references proof point IDs (no unsupported claims)
 - [ ] Per-persona lead messages present for each persona in the grid
 - [ ] Seasonal relevance covers at least current and next quarter
-- [ ] Channel adaptations cover at minimum: homepage H1, LinkedIn ad, email subject, sales one-liner
+- [ ] Channel adaptations cover at minimum: homepage H1, LinkedIn ad, Google Search RSA, email subject, sales one-liner, case study headline
 
 **Voice:**
 - [ ] Voice Profile derived from observed content, not aspirational

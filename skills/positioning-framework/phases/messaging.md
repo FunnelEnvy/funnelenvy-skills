@@ -122,7 +122,28 @@ Attributes are what you have. Value is what the customer gets. Every value theme
 5. Team credentials (e.g., "Big 4 alumni")
 6. Anecdotal claims with no attribution (weakest, flag these)
 
-If a value theme has no proof above level 5, flag it as vulnerable. Competitors can make unproven claims too.
+### Value Theme Proof Assessment
+
+For each value theme, assess proof status:
+
+**Proven** (safe to lead with):
+- Level 1-2 proof (specific metrics with attribution, named testimonials)
+- Claim has been validated by someone outside the company
+- Frontmatter mapping: `proof_strength: strong`
+
+**Claimed** (use with caveats):
+- Level 3-5 proof (customer count, certifications, credentials)
+- OR: structural capability exists but no customer has confirmed the specific value claim
+- Downstream: can headline this theme but must pair with a proof point. Cannot use as the primary differentiator without stronger evidence.
+- Frontmatter mapping: `proof_strength: moderate`
+
+**Aspirational** (do not lead with):
+- Level 6 proof only (anecdotal, no attribution)
+- OR: capability exists on paper but no evidence of customer adoption
+- Downstream: body copy only. Never headline. Flag for proof development.
+- Frontmatter mapping: `proof_strength: weak`
+
+Write the assessment in the Value Themes table's "Proof Type" column as: "[Level] ([assessment])" -- e.g., "Metric (Proven)" or "Structural (Claimed)".
 
 ---
 
@@ -166,8 +187,8 @@ Tailor every question to the company's specific services and buyer personas. No 
 
 Build one row per primary persona.
 
-| Persona + Team | Their Daily Reality | Top 3 Challenges | What Changes With Your Solution | Value They'd Pitch to Their Boss |
-|---------------|--------------------|-----------------|---------------------------------|--------------------------------|
+| Persona + Team | Tier | Their Daily Reality | Top 3 Challenges | What Changes With Your Solution | Value They'd Pitch to Their Boss |
+|---------------|------|--------------------|-----------------|---------------------------------|--------------------------------|
 
 **Depth requirements per persona:**
 - Role and who reports to them
@@ -177,26 +198,29 @@ Build one row per primary persona.
 - How they'd describe the problem to a peer (verbatim language, not marketing language)
 - What would make them a champion internally for buying your solution
 
-### Persona Data Availability
+### Persona Tiers
 
-Persona fields have different discoverability from public data:
+**Proven Persona** (confidence 3-5): At least ONE of these exists:
+- Named testimonial from someone in this role
+- Case study featuring this buyer type
+- Review or forum post from this role mentioning the company
+Full narrative allowed. All depth fields populated.
 
-**Usually discoverable:** Job title, reporting structure, KPIs/metrics they care about, challenges (from job postings, reviews, forum posts)
+**Intended Persona** (confidence 2): Company website targets this role (dedicated page, service line, or segment mention) but no direct buyer evidence exists.
+- Grid row: populate Role, Reporting Structure, KPIs, Top 3 Challenges (inferrable from job postings and industry knowledge)
+- Grid row: DO NOT populate "Their Daily Reality" narrative, "Value They'd Pitch to Their Boss" quote, or emotional state. These require real buyer evidence. Write: "[NEEDS CLIENT INPUT -- no buyer evidence for this role]"
+- Depth fields: populate only what's discoverable (role, KPIs, tools). Mark all others as [NEEDS CLIENT INPUT].
 
-**Sometimes discoverable:** Tools/systems (from job postings, integration pages, forum discussions), buying triggers (from case studies, reviews)
+**Speculative Persona** (confidence 1): Neither website targeting nor buyer evidence. Only include if client explicitly requested it.
+- Grid row: single row with role name and "[CLIENT-REQUESTED -- no public evidence this is a buyer]"
+- No depth fields. No narrative.
 
-**Rarely discoverable from public data:** Daily reality narrative, how they'd describe the problem to a peer, what they've tried before and why it failed, emotional state
-
-For rarely-discoverable fields:
-- Mark with `[INFERRED from: source]` when extrapolating from adjacent evidence (e.g., inferring daily reality from job posting responsibilities)
-- Mark with `[NEEDS CLIENT INPUT]` when no public evidence exists
-- Cap persona confidence at 2 when more than half of depth fields are inferred or missing
-- Never write confident narrative prose for fields you're guessing at. A tagged inference is more valuable than a plausible-sounding fabrication.
+Never write confident narrative for a persona you're guessing at. A half-empty row with honest gaps is more valuable than a plausible-sounding fabrication that downstream skills treat as fact.
 
 **Persona validation rules:**
 - Every audience segment with a dedicated page on the company's website MUST have a persona row or an explicit exclusion note
 - Every major service line maps to at least one persona
-- Personas from case study quotes = proven personas. Website navigation = intended personas. Distinguish the two.
+- Proven personas from case study quotes. Intended personas from website navigation/service pages. Speculative personas only from client request. Tag each persona's tier in the grid.
 - Never silently drop a persona. If excluded, note why.
 
 ---
@@ -211,6 +235,22 @@ For rarely-discoverable fields:
 | Q4 | | | | |
 
 **Ongoing trends** (not seasonal but currently relevant): Regulatory changes, technology shifts, market conditions, competitor moves.
+
+### When Seasonality is Weak
+
+If the company's services have no strong quarterly variation:
+
+1. Write: "No strong seasonal patterns detected. Demand is event-driven rather than calendar-driven."
+2. Replace the quarterly table with an **Event-Driven Triggers** table:
+
+   | Trigger Event | Relevant Services | Messaging Angle | Content Opportunity |
+   |--------------|-------------------|-----------------|-------------------|
+   | [e.g., "Series B close"] | | | |
+   | [e.g., "New VP of Marketing hire"] | | | |
+
+3. Still populate the Ongoing Trends section. Trends are always relevant.
+
+The quarterly table is required only when genuine seasonal patterns exist. Filling four rows with marginal distinctions is worse than an honest "event-driven" assessment.
 
 ---
 
@@ -238,6 +278,25 @@ If a force has no supporting evidence from available sources, write: `[Force]: N
 
 Do not write confident psychological narratives without evidence. "Buyers feel anxiety about migration complexity" requires a source. Without one, it's fabrication.
 
+### Switching Dynamics by Depth
+
+**Standard depth:**
+- Four Forces table with evidence column (current behavior above)
+- One "Implications for Messaging" per force
+- Sources: L0 buying triggers, competitive buyer scenarios, testimonials
+
+**Deep depth (all of standard PLUS):**
+- Per-persona force assessment: which forces hit hardest for each persona? A CFO's "anxiety" (fear of switching) differs from a PE partner's.
+
+  | Force | [Persona 1] Impact | [Persona 2] Impact | [Persona 3] Impact |
+  |-------|-------------------|-------------------|-------------------|
+  | Push  | [specific] | [specific] | [specific] |
+  | Pull  | [specific] | [specific] | [specific] |
+  | Habit | [specific] | [specific] | [specific] |
+  | Anxiety | [specific] | [specific] | [specific] |
+
+- Force intensity: rate each force as Strong / Moderate / Weak based on evidence volume and source quality. A "Push" force sourced from 5 reviews and 3 Reddit threads is Strong. One sourced from a single FAQ page inference is Weak.
+
 ---
 
 ## Objection Handling
@@ -246,6 +305,24 @@ Do not write confident psychological narratives without evidence. "Buyers feel a
 |-----------|--------------------|-----------| ------------|
 
 Pull objections from: sales team feedback, negative reviews, competitor comparison pages, FAQ pages, Reddit/forum discussions.
+
+### Objection Categories
+
+Check each category. If no objection is found for a category, write "[No public evidence]" -- don't skip the category.
+
+1. **Structural:** "You're not a [type of firm]" / "You're too small/large"
+   Source: competitive positioning gaps, regulatory constraints
+2. **Competitive:** "Why not [Competitor]?" / "Our existing firm does this"
+   Source: competitive-landscape battle cards, buyer scenarios
+3. **Proof:** "Can you show results?" / "Who else have you done this for?"
+   Source: proof point gaps, value theme vulnerability flags
+4. **Process:** "How does this work?" / "What's the engagement model?"
+   Source: FAQ pages, pricing page language, competitive comparison pages
+5. **Risk:** "What if it doesn't work?" / "What's the switching cost?"
+   Source: switching dynamics (Anxiety force), review complaints
+
+At standard depth: populate at least 3 categories.
+At deep depth: populate all 5 categories.
 
 ---
 
@@ -274,6 +351,30 @@ Be specific. "Startups" is too vague. "Pre-revenue startups with no finance team
 Structured vocabulary reference that ALL downstream skills must respect. **Pre-Flight intake language constraints are authoritative.** Where intake constraints conflict with research-discovered patterns (e.g., intake says "avoid 'consulting'" but the website uses it), the intake constraint wins. Note the conflict in the relevant entry.
 
 **Origin-aware rules:** When reading L0's Glossary and Constraints sections, check the `Origin` column or tag. `client`-origin glossary terms and constraints are **mandatory** -- if the client says "never use 'disruptor,'" that is a hard rule regardless of what the website says. `client`-origin terms go directly into Banned Terms or the relevant Language Bank subsection **without validation**. `research`-origin glossary terms are **recommendations** -- you can override them with justification if messaging analysis suggests a different approach (e.g., the website avoids a term but reviews show customers use it heavily).
+
+### Customer Language Sourcing Priority
+
+1. **_research-extractions.md review site entries:** Read entries tagged as "Review Site" or "Reddit" page types. Extract verbatim buyer phrases describing the problem, solution, or switching experience.
+2. **L0 Proof Point Registry:** Each proof point with a customer quote provides verbatim language. Extract the phrases buyers use to describe value, not just the attribution.
+3. **Competitive landscape buyer scenarios and objections:** The objection language in competitive-landscape.md reflects how buyers talk about the category. Extract phrasing patterns.
+4. **L0 Homepage Messaging (testimonials):** Last resort. These are curated by the company and represent the language the company WANTS buyers to use, not necessarily the language buyers actually use.
+
+### When Customer Language is Thin
+
+If fewer than 3 entries come from sources 1-3 (non-curated):
+
+- Flag explicitly: "Customer language derived primarily from company-curated testimonials. Real buyer language likely differs. **Confidence: 2.**"
+- Add a "Customer Language Collection Brief" appendix (following the ROI Data Collection Brief pattern):
+
+  **Customer Language Collection Brief**
+
+  No unmoderated customer language was found in public sources. To populate the language bank with real buyer phrases:
+
+  1. Search G2/Capterra for "[company] reviews" -- extract how reviewers describe the problem they were solving and why they chose this company
+  2. Search Reddit for "[category]" recommendation threads -- how do buyers describe the need?
+  3. Ask 3-5 recent clients: "How would you describe what we do to a peer who's never heard of us?"
+
+  Target: 5+ verbatim phrases from non-curated sources.
 
 ### Customer Language (use in headlines, ads, email subjects)
 Captured from reviews, forums, testimonials, and Reddit. These are the words buyers actually use.
@@ -322,9 +423,25 @@ Derived from research, not self-reported. Analyze tone patterns across all conte
 Inconsistency is a finding. A company that sounds warm on the homepage but robotic in case studies has a voice problem.
 
 ### Voice Consistency Rating
-- **high:** Tone, vocabulary, and complexity are consistent across 4+ audited channels. Minor variations only.
-- **moderate:** Core voice recognizable but 1-2 channels diverge noticeably (e.g., social media is casual while website is formal, with no apparent strategy behind the shift).
-- **low:** No consistent voice across channels. Each channel reads like a different company.
+**high** (consistent voice):
+- Same person (we/they) across all channels
+- Tone adjectives would be the same if you described any channel independently
+- Vocabulary is consistent (no channel uses jargon while another uses plain language)
+- 0-1 channels marked "Partial" in the Channel Consistency Audit
+
+**moderate** (recognizable but drifting):
+- Person shifts on 1-2 channels (e.g., homepage "we" but case studies "they")
+- Tone adjectives differ by channel (homepage is warm, service pages are corporate)
+- 2-3 channels marked "Partial" in the Channel Consistency Audit
+- OR: core branded pages (homepage, about) are consistent but capability/service pages read like different writers
+
+**low** (no consistent voice):
+- Person shifts across 3+ channels
+- No common tone adjectives across channels
+- 4+ channels marked "Partial" or "No" in the Channel Consistency Audit
+- OR: branded pages contradict each other (homepage casual, about page formal)
+
+The rating is derived from the Channel Consistency Audit table, not from overall impression. Count the "Partial" and "No" entries.
 
 ### Competitor Voice Comparison
 
@@ -394,14 +511,16 @@ Same core message, adapted per channel constraints.
 
 | Channel | Constraint | Primary Message Adaptation | Proof to Include |
 |---------|-----------|---------------------------|-----------------|
-| Homepage H1 | 8 words max | [adaptation] | None (subhead carries proof) |
-| Homepage subhead | 15-20 words | [adaptation] | P1 or P2 (strongest metric) |
-| LinkedIn ad | 150 chars | [adaptation] | One stat |
-| Google Search ad | 30 char headline + 90 char description | [adaptation] | None (landing page carries proof) |
-| Email subject line | 50 chars, curiosity-driven | [adaptation] | None |
-| Sales one-liner | 15 seconds spoken | [adaptation] | One proof point |
-| Conference intro | 30 seconds spoken | [adaptation] | Name-drop + metric |
-| Investor pitch | 1 slide | [adaptation] | Market size + growth metric |
+| Homepage H1 | 6-12 words | [adaptation] | None (subhead carries proof) |
+| Homepage subhead | 15-25 words | [adaptation] | P1 or P2 (strongest metric) |
+| LinkedIn ad (single image) | Primary text: 150 chars above fold (600 max). Headline: 70 chars. | [adaptation] | One stat |
+| Google Search (RSA) | 3 headlines x 30 chars each + 2 descriptions x 90 chars each | [adaptation] | H1: brand/category. H2: differentiator. H3: proof or CTA. |
+| Meta ad (Facebook/Instagram) | Primary text: 125 chars above fold. Headline: 40 chars. | [adaptation] | None (visual-first) |
+| Email subject line | 40-50 chars | [adaptation] | None |
+| Sales one-liner | 15 seconds spoken (~30-40 words) | [adaptation] | One proof point |
+| Conference intro | 30 seconds spoken (~75 words) | [adaptation] | Name-drop + metric |
+| Case study headline | 8-15 words | [adaptation] | Format: "[Client type] + [outcome] + [timeframe or metric]" |
+| Webinar/event title | 8-12 words | [adaptation] | Promise a specific takeaway |
 
 ---
 
@@ -488,12 +607,15 @@ personas:
   - role: "CFO"
     segment: "PE-backed mid-market"
     primary_challenge: "transaction delays"
+    tier: proven                             # proven | intended | speculative
   - role: "COO"
     segment: "high-growth"
     primary_challenge: "scaling operations"
+    tier: proven
   - role: "CHRO"
     segment: "in transition"
     primary_challenge: "talent retention during change"
+    tier: intended
 
 # Value themes summary
 value_theme_count: 3
@@ -529,9 +651,9 @@ banned_terms_count: 3
 
 ### Persona Messaging Grid
 
-| Persona + Team | Their Daily Reality | Top 3 Challenges | What Changes With Your Solution | Value They'd Pitch to Their Boss |
-|---------------|--------------------|-----------------|---------------------------------|--------------------------------|
-| [Role, Team] | [What their day looks like] | 1. [Challenge] 2. [Challenge] 3. [Challenge] | [Specific outcome] | [How they'd sell it internally] |
+| Persona + Team | Tier | Their Daily Reality | Top 3 Challenges | What Changes With Your Solution | Value They'd Pitch to Their Boss |
+|---------------|------|--------------------|-----------------|---------------------------------|--------------------------------|
+| [Role, Team] | [tier] | [What their day looks like] | 1. [Challenge] 2. [Challenge] 3. [Challenge] | [Specific outcome] | [How they'd sell it internally] |
 
 [Depth per persona: role, reports-to, KPIs, tools, prior attempts, peer language, champion criteria]
 
@@ -603,6 +725,16 @@ banned_terms_count: 3
 
 | Channel | Constraint | Primary Message Adaptation | Proof to Include |
 |---------|-----------|---------------------------|-----------------|
+| Homepage H1 | 6-12 words | [adaptation] | None (subhead carries proof) |
+| Homepage subhead | 15-25 words | [adaptation] | P1 or P2 (strongest metric) |
+| LinkedIn ad (single image) | Primary text: 150 chars above fold (600 max). Headline: 70 chars. | [adaptation] | One stat |
+| Google Search (RSA) | 3 headlines x 30 chars each + 2 descriptions x 90 chars each | [adaptation] | H1: brand/category. H2: differentiator. H3: proof or CTA. |
+| Meta ad (Facebook/Instagram) | Primary text: 125 chars above fold. Headline: 40 chars. | [adaptation] | None (visual-first) |
+| Email subject line | 40-50 chars | [adaptation] | None |
+| Sales one-liner | 15 seconds spoken (~30-40 words) | [adaptation] | One proof point |
+| Conference intro | 30 seconds spoken (~75 words) | [adaptation] | Name-drop + metric |
+| Case study headline | 8-15 words | [adaptation] | Format: "[Client type] + [outcome] + [timeframe or metric]" |
+| Webinar/event title | 8-12 words | [adaptation] | Promise a specific takeaway |
 
 ---
 
@@ -674,7 +806,7 @@ Actionable constraints for content production:
 - [ ] Messaging hierarchy references proof point IDs (no unsupported claims)
 - [ ] Per-persona lead messages present for each persona
 - [ ] Seasonal relevance covers at least current and next quarter
-- [ ] Channel adaptations cover at minimum: homepage H1, LinkedIn ad, email subject, sales one-liner
+- [ ] Channel adaptations cover at minimum: homepage H1, LinkedIn ad, Google Search RSA, email subject, sales one-liner, case study headline
 
 **Voice:**
 - [ ] Voice Profile derived from observed content, not aspirational
