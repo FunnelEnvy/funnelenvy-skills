@@ -52,6 +52,14 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 - `competitive-landscape.md`: If missing, competitive pressure patterns (pricing transparency, differentiator crowding triggers) are unavailable. Those patterns are skipped.
 - `audience-messaging.md`: If missing, persona-based patterns (segment hero personalization, industry proof matching, nav intent mismatch) lose specificity. Generic versions are produced with a note.
 - `performance-profile.md`: If missing, all performance-driven hypothesis triggers are skipped. Confidence capped at 4 globally (no baseline data to validate assumptions). ICE scoring uses qualitative estimates only. Add "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses" to Prerequisites.
+  When performance-profile.md schema_version >= "2.0":
+    - Page groups, source mismatches, trends, failure modes, and sized opportunities are available
+    - Additional triggers fire in Phase 2 Step 1c (8 new triggers)
+    - ICE modifiers in Phase 4 use sized opportunities and trend data
+  When performance-profile.md schema_version = "1.0":
+    - Existing v1 triggers still fire
+    - New v2 triggers are skipped (fields won't exist in frontmatter)
+    - Backwards compatible, no breaking changes
 
 **Error states:**
 - No context files found: Exit with "No context files found in .claude/context/. Run /positioning-framework first."

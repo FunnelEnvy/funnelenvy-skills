@@ -62,6 +62,8 @@ These adjustments are based on the overall context quality, not individual patte
 - If performance-profile.md exists and `traffic_adequacy` is "high": Confidence +1
 - If performance-profile.md exists and target page has conversion data: Confidence +1
 - If performance-profile.md exists and `traffic_adequacy` is "low": Confidence -1
+- If target page has `failure_mode` matching the hypothesis mechanism (e.g., messaging hypothesis + `shallow_engagement`): Confidence +1 (data confirms mechanism)
+- If target page has `failure_mode` contradicting the hypothesis mechanism (e.g., messaging hypothesis + `deep_engagement`): Confidence -1 (data suggests different root cause)
 
 **Impact adjustments:**
 - If the targeted page is the homepage: Impact +1 (highest traffic page for most B2B sites)
@@ -71,6 +73,9 @@ These adjustments are based on the overall context quality, not individual patte
 - If performance-profile.md exists and target page has bounce rate >50%: Impact +1
 - If performance-profile.md exists and target page conversion rate <50% of site average: Impact +1
 - If performance-profile.md exists and target page has <100 sessions/mo: Impact -1
+- If `top_opportunities` lists the target page with impact "large": Impact +1
+- If `top_opportunities` lists the target page with impact "small": no modifier (already accounted for)
+- If `trends` shows the target metric worsening (has `[WORSENING]` tag): Impact +1 (urgency)
 
 **Ease adjustments:**
 - If the hypothesis requires only copy changes: Ease +1
