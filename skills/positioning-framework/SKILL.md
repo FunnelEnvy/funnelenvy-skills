@@ -498,6 +498,41 @@ Pre-Flight intake:
 
 When no business brief or intake is provided (user said "go"), all data defaults to `research` origin. The `[origin: client]` tags are omitted from the payload in this case.
 
+### Step 6.5: Copy Verification Checkpoint
+
+**Skip at quick depth.** At standard and deep depth, after Agent 1 completes:
+
+1. Read `.claude/context/company-identity.md` > Homepage Messaging section
+2. Present extracted copy to the user:
+
+```
+Here's the key copy I extracted from your site. Does this match what you see?
+
+**Homepage hero (from main content area):**
+  H1: [extracted or NOT EXTRACTED flag]
+  Format: [Static / Carousel (N slides)]
+  Subhead: [extracted or NOT EXTRACTED flag]
+  CTA(s): [extracted or NOT EXTRACTED flag]
+  Extraction method: [curl | WebFetch fallback]
+
+**Nav taglines found (NOT treated as hero copy):**
+  [list any taglines from navigation dropdowns, or "None"]
+
+**Top 3 landing pages:**
+  [page URL]: [H1 extracted] (via [curl | WebFetch fallback])
+  [page URL]: [H1 extracted] (via [curl | WebFetch fallback])
+  [page URL]: [H1 extracted] (via [curl | WebFetch fallback])
+
+If anything is wrong or missing, paste the correct copy now.
+If it looks right, say "confirmed."
+```
+
+3. If user provides corrections: update company-identity.md Homepage Messaging section directly. Mark corrected content as `source: user-confirmed`. Mark confirmed content as `source: website-confirmed`.
+4. If user says "confirmed" or equivalent: update all `website-extracted` tags to `website-confirmed`.
+5. Proceed to Agent 2.
+
+This catches JS rendering failures, stale CDN content, geo-targeted page variations, A/B test variants, and pages behind auth or gating.
+
 ### Auto-Invoke: render-default-deliverables
 
 At `--depth standard` and `--depth deep`, after all agents complete, automatically invoke the render-default-deliverables skill. This produces human-readable deliverables from the context files just generated.
@@ -695,7 +730,7 @@ Read all 3 prior context files. Execute health check and build positioning-score
 ### Quick Depth: Zero Interactions
 No intake. No verification. No checkpoint. URL in, L0 + inline health check out. The user's next interaction is reading the output.
 
-### Standard/Deep Depth: One Defined Interaction Point
+### Standard/Deep Depth: Two Defined Interaction Points
 
 **Interaction 1: Pre-Flight Intake (before any agent launches)**
 Triggered: always at standard/deep when no `.claude/business-brief.md` exists.
@@ -706,7 +741,17 @@ Contains:
 Duration: user provides answers, skill proceeds. No follow-up questions.
 Skipped when: `.claude/business-brief.md` exists AND user confirms it's current.
 
-**No other interactions.** After Pre-Flight Intake, all agents (1-4) run without interruption. Render-deliverables runs automatically after Agent 4 with no interaction.
+**Interaction 2: Post-Research Checkpoint (after Agent 1 completes, before Agent 2)**
+Triggered: always at standard/deep after L0 is written to disk.
+Purpose: verify extracted content, catch hallucinations early, gather corrections before competitive analysis begins.
+Contains:
+- L0 summary (key facts, category, segments, differentiators)
+- Extracted copy samples for verification (3-5 key statements from website)
+- Confidence assessment
+- "Anything to add or correct before I analyze competitors?"
+Duration: user confirms or provides corrections. Single response.
+
+**No other interactions.** Agents 2, 3, and 4 run without interruption after the post-research checkpoint. Render-deliverables runs automatically after Agent 4 with no interaction.
 
 **If an agent hits a [PRECONDITION FAILED]:** This is an exception, not a planned interaction. Surface the failure and options per Agent Launch Protocol. Aim for this to never happen in a well-functioning run.
 

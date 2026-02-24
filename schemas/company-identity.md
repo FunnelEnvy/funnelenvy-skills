@@ -358,30 +358,32 @@ Exact copy extracted from the homepage hero and top landing pages, with source a
 ```markdown
 ## Homepage Messaging
 
-- H1: "[exact headline text from main content hero]" [source: website-extracted]
+- H1: "[exact headline text from main content hero]" [source: website-confirmed]
 - Additional H1s: "[if carousel/slider]" / "[second slide]" [source: website-extracted]
-- Subhead: "[exact subhead text]" [source: website-extracted]
-- CTA: "[button text]" / "[button text]" [source: website-extracted]
-- Format: [Static / Carousel (N slides) / Video / etc.] [source: website-extracted]
+- Subhead: "[exact subhead text]" [source: website-confirmed]
+- CTA: "[button text]" / "[button text]" [source: website-confirmed]
+- Format: [Static / Carousel (N slides) / Video / etc.] [source: user-confirmed]
 - Nav taglines (reference only): "[any positioning-sounding taglines found in navigation]"
 
 ### Top Landing Pages
 
 | Page URL | H1 | Source |
 |----------|----|--------|
-| [url]    | "[H1 text]" | website-extracted |
-| [url]    | "[H1 text]" | website-extracted |
-| [url]    | "[H1 text]" | website-extracted |
+| [url]    | "[H1 text]" | website-confirmed |
+| [url]    | "[H1 text]" | website-confirmed |
+| [url]    | "[H1 text]" | website-confirmed |
 ```
 
 **Source attribution tags:**
-- `website-extracted`: Content extracted from the page directly
+- `website-extracted`: WebFetch returned this content directly
+- `website-confirmed`: WebFetch extracted it AND user confirmed it matches
+- `user-confirmed`: User provided or corrected this content
 - `meta-derived`: Pulled from meta/og tags, not visible page content
 - `not-extracted`: JS-rendered, content could not be obtained. Treat as a gap -- never quote `not-extracted` copy as a baseline in experiments or recommendations.
 
-**Purpose:** Provides the experiment baseline for any CRO work on hero copy.
+**Purpose:** Consumed by Agent 3 Content Integrity Check and Orchestrator Copy Verification Checkpoint (SKILL.md step 6.5). Provides the experiment baseline for any CRO work on hero copy.
 
-**Used by:** Agent 3 Content Integrity Check, render-default-deliverables (experiment roadmap baseline), website-audit.
+**Used by:** Orchestrator copy verification checkpoint, render-default-deliverables (experiment roadmap baseline), website-audit.
 
 ---
 

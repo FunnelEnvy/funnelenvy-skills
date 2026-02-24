@@ -109,7 +109,7 @@ The Proof Point Registry in company-identity.md is the single source of truth fo
 Before referencing any website copy from L0 (headlines, CTAs, claims):
 - Check the source attribution tag in the Homepage Messaging section of `company-identity.md`
 - If tagged `[NOT EXTRACTED]`, `[not-extracted]`, or `[CAROUSEL - MAY NOT MATCH VISIBLE CONTENT]`: do NOT quote this copy as current baseline
-- When comparing or analyzing against the target company's messaging, use only `website-extracted` or `meta-derived` copy as the baseline (never `not-extracted`)
+- When comparing or analyzing against the target company's messaging, use only `website-confirmed` or `user-confirmed` copy as the baseline
 - If unverified copy is the only baseline available, state explicitly that copy could not be verified and your analysis is based on available page structure and meta content
 
 ---
