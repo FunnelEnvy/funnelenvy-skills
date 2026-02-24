@@ -33,7 +33,7 @@ funnelenvy-skills/
 │   │       ├── messaging.md      # Personas + messaging + voice + inline schema
 │   │       └── scoring.md        # Scorecard + QA + inline schema (depth-gated)
 │   ├── ga4-audit/
-│   │   └── SKILL.md              # GA4 analytics audit v1.0 (~single agent, analytics-mcp)
+│   │   └── SKILL.md              # GA4 analytics audit v2.0 (~single agent, analytics-mcp)
 │   ├── hypothesis-generator/
 │   │   ├── SKILL.md              # CRO hypothesis engine v1.1 (~single agent, reads L0+L1)
 │   │   └── phases/               # Phase-specific instruction modules
@@ -217,7 +217,7 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 1. **`/positioning-framework <url> --depth quick`** (optional fast triage, ~5-8 min, ~70-90K tokens)
 2. **`/positioning-framework <url>`** (standard depth, produces all L0 + L1 context + deliverables, ~450-500K tokens across subagents)
 3. **`/positioning-framework <url> --depth deep`** (extends competitive context to deep, ~550-650K tokens across subagents)
-4. **`/ga4-audit <property_id>`** (optional, produces performance-profile.md for traffic-driven hypotheses, ~3-5 min)
+4. **`/ga4-audit <property_id>`** (optional, produces performance-profile.md for traffic-driven hypotheses, ~5-8 min)
 5. **`/hypothesis-generator`** (produces experiment roadmap from L0 + L1 context + optional performance data)
 6. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
 
@@ -305,15 +305,15 @@ Auto-invoked by positioning-framework at standard/deep depth. Also available sta
 
 **Output:** `.claude/deliverables/` with manifest
 
-### ga4-audit (v1.0.0)
-GA4 analytics audit. Pulls 7 targeted reports from a GA4 property via analytics-mcp, classifies conversion events, and produces a `performance-profile.md` L1 context file. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
+### ga4-audit (v2.0.0)
+GA4 analytics audit. Pulls 10-13 targeted reports from a GA4 property via analytics-mcp, classifies conversion events, and produces a v2 `performance-profile.md` L1 context file with page grouping, opportunity sizing, trend analysis, and optional L0 enrichment. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
 
-**Invocation:** `/ga4-audit <property_id> [--days 30] [--date-range "YYYY-MM-DD:YYYY-MM-DD"]`
+**Invocation:** `/ga4-audit <property_id> [--days 90] [--date-range "YYYY-MM-DD:YYYY-MM-DD"] [--no-compare]`
 
 **Outputs:**
 - L1 context: performance-profile.md (page performance, conversion funnels, channel/device breakdown, data quality assessment)
 
-**Runtime:** ~3-5 minutes. Single interaction point (event classification confirmation).
+**Runtime:** ~5-8 minutes. ~50-75K tokens. Single interaction point (event classification confirmation).
 
 ### hypothesis-generator (v1.1.0)
 Standalone CRO hypothesis engine. Reads positioning context (L0 + L1) plus optional performance data, applies
