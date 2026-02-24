@@ -34,24 +34,25 @@ NEVER invent, guess, or reconstruct page content that you could not directly ext
 
 ### Website Content Extraction Flow
 
-For each URL, follow this sequence:
+For each URL, follow the three-tier extraction pipeline defined in `modules/web-extract.md`. The pipeline is:
 
-1. **Run the curl extractor** using the command template from `modules/web-extract.md`.
-2. **Count words** in the output.
-3. **Assess curl output:**
-   - **500+ words:** Tag `[FULL]`. Use the content. Done.
-   - **100-499 words:** Tag `[PARTIAL]`. Use the content but note for cross-reference. Done.
-   - **<100 words:** Curl failed to extract usable content. Continue to step 4.
-4. **Try WebFetch** on the same URL.
-5. **Filter CSS noise from WebFetch output:** Discard any `<style>` blocks, CSS class definitions, or inline styling rules. Focus on HTML semantic elements: headings, paragraphs, lists, links with visible text, and image alt text. Many CMS platforms embed hundreds of lines of inline CSS that swamp the markdown conversion -- the content is still there, extract it from between the noise. After filtering, assess by word count:
-   - If usable content remains after filtering: tag `[FULL]` or `[PARTIAL]` by word count (same thresholds as step 3). Done.
-   - If no usable content after filtering: continue to step 6.
-6. **Failure triage** (both curl and WebFetch failed):
-   a. **SPA indicators present?** `<div id="root">` or `<div id="app">` as sole body child, `__NEXT_DATA__`, `bundle.js`, `_next/`, React/Vue/Angular boot markers, `<noscript>` fallback content, empty `<body>` with only script tags. If yes: tag `[EMPTY:SPA]`. Write `[NOT EXTRACTED - JS-rendered SPA]` for unpopulated fields. Done.
-   b. **Access blocked?** CAPTCHA/challenge page, 403/429, Cloudflare/WAF token, "Enable JavaScript" message with no body content. If yes: tag `[EMPTY:BLOCKED]`. Write `[NOT EXTRACTED - access blocked]`. Done.
-   c. **Neither?** Content genuinely absent or tool failure. Tag `[PARTIAL:TOOL]` if some content was extracted, `[EMPTY]` if nothing. Write `[NOT EXTRACTED - tool parse failure]`. Done.
+1. **markdown.new (primary).** `curl -s --max-time 10 "https://markdown.new/$URL"`. Returns clean markdown. Handles SPAs natively.
+2. **curl + HTMLParser (Fallback Tier 1).** The Python extractor in `modules/web-extract.md`. Falls through from markdown.new if <100 words or request failed.
+3. **WebFetch (Fallback Tier 2, last resort).** Falls through from curl+HTMLParser if <100 words. Filter CSS noise before assessing word count.
 
-In ALL cases where extraction fails:
+Word count thresholds and quality tags are defined in `modules/web-extract.md`. The tags encode both the quality AND the extraction source:
+
+| Tag | Source | Words |
+|-----|--------|-------|
+| `[FULL]` | markdown.new | 500+ |
+| `[PARTIAL]` | markdown.new | 100-499 |
+| `[FULL:CURL]` | curl + HTMLParser | 500+ |
+| `[PARTIAL:CURL]` | curl + HTMLParser | 100-499 |
+| `[PARTIAL:TOOL]` | WebFetch | 100+ |
+| `[EMPTY:SPA]` | All failed | SPA detected |
+| `[EMPTY:BLOCKED]` | All failed | Bot protection |
+
+In ALL cases where extraction fails across all three tiers:
 1. Note the URL in the Gaps section of company-identity.md
 2. Do NOT fill in plausible-sounding copy as a substitute
 3. Move on to the next page
@@ -124,53 +125,38 @@ Example of a mismatch that signals wrong extraction:
 
 ## Content Extraction Quality Tags
 
-After every page fetch, assess the extraction quality and tag it:
+After every page fetch, tag the extraction using the quality tags defined in `modules/web-extract.md`. The tags encode extraction source and word count. Reference that file for the complete tag vocabulary and thresholds.
 
-### [FULL] - High confidence extraction
-- Page returned 500+ words of body content
-- H1 present and semantically related to page URL/title
-- Multiple content sections visible (not just nav + footer)
+### Quick Reference
 
-### [PARTIAL] - Reduced confidence
-- Page returned 100-500 words of body content
-- OR: Content appears truncated (ends mid-sentence, missing sections visible in navigation but not in body)
-- Treat findings from [PARTIAL] pages as provisional. Cross-reference with other sources before including in L0.
-
-### [PARTIAL:TOOL] - Extraction incomplete
-- Content exists on page but extraction was incomplete after CSS filtering
-- Some usable content extracted, but clearly missing sections that should be present
-- Treat as [PARTIAL]. Note extraction limitation in research notes.
-
-### [EMPTY] - No usable content
-- Page returned <100 words of body content
-- OR: Content is entirely navigation/footer chrome
-- OR: Both curl and WebFetch returned errors or empty responses
-- Cause unknown. Do not use any content from this page.
-
-### [EMPTY:BLOCKED] - Access denied
-- CAPTCHA/challenge page, 403/429, Cloudflare/WAF interception, rate limit
-- Do not use any content from this page. Generate a manual follow-up task.
-
-### [EMPTY:SPA] - JS-rendered SPA
-- Confirmed by framework indicators (React/Vue/Angular boot markers, `<div id="root">` as sole body child, `__NEXT_DATA__`, empty `<body>` with only script tags)
-- Use the appropriate `[NOT EXTRACTED]` tag from the Website Content Extraction Flow above. Do not use any content from this page.
+- `[FULL]` / `[FULL:CURL]` -- 500+ words. High confidence. Use content directly.
+- `[PARTIAL]` / `[PARTIAL:CURL]` -- 100-499 words. Reduced confidence. Cross-reference with other sources.
+- `[PARTIAL:TOOL]` -- 100+ words via WebFetch (last resort). Treat as `[PARTIAL]`.
+- `[EMPTY:SPA]` -- JS-rendered SPA, no content extracted by any method.
+- `[EMPTY:BLOCKED]` -- Bot protection blocked all extraction methods.
+- `[EMPTY]` -- Content genuinely absent or all tools failed.
 
 ### [CACHED] - Possible stale content
+
+This tag is research-specific (not part of the extraction pipeline). Apply it when:
 - Page content contradicts other recent sources about the same company
 - OR: Copyright date or "last updated" timestamp is 2+ years old
 - OR: Content references products/features that other sources indicate have been deprecated
-- Treat as [PARTIAL]. Flag for user verification at checkpoint.
+
+Treat as [PARTIAL]. Flag for user verification at checkpoint.
 
 ### Usage
+
 Tag every page fetch in research notes:
 "Fetched https://example.com/pricing [FULL] - 1,200 words, pricing tiers and feature comparison extracted."
+"Fetched https://example.com/about [PARTIAL:CURL] - 340 words via curl fallback, team overview only."
 
-These tags are internal to research. They do NOT appear in context files or deliverables. They inform how confidently the agent treats each source when building L0 sections.
+Tags are internal to research. They do NOT appear in context files or deliverables. They inform how confidently the agent treats each source when building L0 sections.
 
 ### Impact on Confidence Scores
-- Section built primarily from [FULL] sources: confidence 4-5
-- Section built from mix of [FULL] and [PARTIAL]: confidence 3-4
-- Section built primarily from [PARTIAL] sources: confidence 2-3
+- Section built primarily from [FULL] or [FULL:CURL] sources: confidence 4-5
+- Section built from mix of [FULL]/[FULL:CURL] and [PARTIAL]/[PARTIAL:CURL]: confidence 3-4
+- Section built primarily from [PARTIAL]/[PARTIAL:CURL]/[PARTIAL:TOOL] sources: confidence 2-3
 - Section dependent on [EMPTY] or [CACHED] sources: confidence 1-2, mark section as `[NEEDS CLIENT INPUT]`
 
 ---
@@ -217,7 +203,7 @@ total_fetches: [row count]
 
 **Body:** Markdown table with columns: URL, Agent, Tag, Words, Key Content.
 
-**Tag values:** `[FULL]` (500+ words), `[PARTIAL]` (100-499 words), `[PARTIAL:TOOL]` (WebFetch fallback, 100+ words), `[EMPTY:SPA]` (JS-rendered), `[EMPTY:BLOCKED]` (bot protection).
+**Tag values:** `[FULL]` (markdown.new, 500+ words), `[PARTIAL]` (markdown.new, 100-499 words), `[FULL:CURL]` (curl fallback, 500+ words), `[PARTIAL:CURL]` (curl fallback, 100-499 words), `[PARTIAL:TOOL]` (WebFetch fallback, 100+ words), `[EMPTY:SPA]` (JS-rendered), `[EMPTY:BLOCKED]` (bot protection).
 
 Update `total_fetches` in frontmatter to match the actual row count before writing.
 

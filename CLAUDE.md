@@ -16,10 +16,12 @@ funnelenvy-skills/
 │   └── _research-extractions.md  # Raw page extractions schema (operational)
 ├── modules/
 │   ├── reddit-research.md        # Shared Reddit API integration (all skills)
-│   ├── web-extract.md            # curl + python3 HTML extractor (first-pass)
+│   ├── web-extract.md            # Three-tier web extractor (markdown.new -> curl+HTMLParser -> WebFetch)
 │   ├── business-brief.md         # Pre-flight intake template + protocol
 │   ├── slugify.md                # Deterministic name-to-slug rules for filenames
-│   └── competitive-assessment.md # Claim assessment, similarity, overlap scoring (Agent 2)
+│   ├── competitive-assessment.md # Claim assessment, similarity, overlap scoring (Agent 2)
+│   ├── experiment-patterns.md    # 23 CRO patterns across 9 categories (hypothesis-generator)
+│   └── ice-scoring.md            # ICE calibration anchors and scoring rules (hypothesis-generator)
 ├── skills/
 │   ├── positioning-framework/
 │   │   ├── SKILL.md              # Orchestration hub v1 (~840 lines, depth-gated)
@@ -32,6 +34,13 @@ funnelenvy-skills/
 │   │       └── scoring.md        # Scorecard + QA + inline schema (depth-gated)
 │   ├── ga4-audit/
 │   │   └── SKILL.md              # GA4 analytics audit v1.0 (~single agent, analytics-mcp)
+│   ├── hypothesis-generator/
+│   │   ├── SKILL.md              # CRO hypothesis engine v1.1 (~single agent, reads L0+L1)
+│   │   └── phases/               # Phase-specific instruction modules
+│   │       ├── detect.md         # Pattern-based opportunity detection
+│   │       ├── detect-contextual.md # Context-derived opportunity detection (Phase 2b)
+│   │       ├── construct.md      # Hypothesis construction from matched patterns
+│   │       └── score.md          # ICE scoring and prioritization
 │   └── render-default-deliverables/
 │       └── SKILL.md              # L2 rendering skill v1.0 (~single agent, no research)
 ├── examples/                     # Public examples
@@ -209,7 +218,8 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 2. **`/positioning-framework <url>`** (standard depth, produces all L0 + L1 context + deliverables, ~450-500K tokens across subagents)
 3. **`/positioning-framework <url> --depth deep`** (extends competitive context to deep, ~550-650K tokens across subagents)
 4. **`/ga4-audit <property_id>`** (optional, produces performance-profile.md for traffic-driven hypotheses, ~3-5 min)
-5. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
+5. **`/hypothesis-generator`** (produces experiment roadmap from L0 + L1 context + optional performance data)
+6. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
 
 Each depth level builds on prior work. Running quick then standard then deep is incremental, not redundant. The skill detects existing context and extends rather than overwrites. Deliverables can be re-rendered at any time after context files exist.
 

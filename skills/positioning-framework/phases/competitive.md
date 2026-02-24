@@ -37,6 +37,12 @@ Load before beginning Step 5 (Competitive Attributes Matrix) and Step 7 (Claim O
   Assessment, and Overlap Score Calculation. These are the authoritative analytical
   methods for Steps 5 and 7. Do not improvise alternative assessment approaches.
 
+Load before any web fetch:
+
+- `modules/web-extract.md` -- Three-tier extraction pipeline (markdown.new -> curl+HTMLParser
+  -> WebFetch). Defines quality tags, word count thresholds, and the step-by-step extraction
+  flow. Follow this pipeline for all URL fetches in this phase.
+
 ---
 
 ## Graceful Degradation
@@ -197,6 +203,21 @@ Use the same format as Agent 1's entries: URL, your agent name (Agent 2), extrac
 After appending rows, update frontmatter: set `last_updated_by` to `"positioning-framework/competitive"`, `last_updated` to the current date, and `total_fetches` to the new total row count.
 
 If the registry file does not exist (e.g., Agent 1 did not create one), create it using the standard format, then write your entries.
+
+---
+
+## Web Extraction
+
+For all web fetches in this phase (competitor homepages, pricing pages, review sites, Reddit threads, etc.), follow the three-tier extraction pipeline defined in `modules/web-extract.md`.
+
+**Pipeline summary:**
+1. **markdown.new** (primary) -- `curl -s --max-time 10 "https://markdown.new/$URL"`. Clean markdown output. Handles SPAs.
+2. **curl + HTMLParser** (Fallback Tier 1) -- Python extractor. Falls through if markdown.new returns <100 words.
+3. **WebFetch** (Fallback Tier 2) -- Last resort. Filter CSS noise before counting words.
+
+Tag every fetch with the quality tag from `web-extract.md` (`[FULL]`, `[PARTIAL]`, `[FULL:CURL]`, `[PARTIAL:CURL]`, `[PARTIAL:TOOL]`, `[EMPTY:SPA]`, `[EMPTY:BLOCKED]`). Use these tags in the Fetch Registry Write-Back above.
+
+If all three tiers fail for a URL, note it as a gap and move on. Do not fabricate content.
 
 ---
 

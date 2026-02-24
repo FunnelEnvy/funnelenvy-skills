@@ -1,18 +1,44 @@
 # Web Extract Module
 
-Primary content extractor for positioning research. Uses curl + lightweight HTML parser to extract text content from any URL. Referenced by positioning-framework research phase.
+Three-tier content extractor for positioning research. Primary: markdown.new (Cloudflare service, handles SPAs natively). Fallback Tier 1: curl + python3 HTMLParser. Fallback Tier 2: WebFetch tool. Referenced by positioning-framework research and competitive phases.
 
 ---
 
-## When to Use
+## Pipeline Overview
 
-Run this extractor as the first-pass extraction method for every URL. It runs before WebFetch and handles the majority of pages cleanly without CSS noise or markdown conversion artifacts.
+Three-tier fallback chain for extracting web content from any URL:
 
-If the extractor returns <100 words, fall through to WebFetch as described in the Website Content Extraction Flow (see `phases/research.md`).
+1. **markdown.new (primary).** Cloudflare Workers service that converts any URL to clean markdown. Internally uses content negotiation, Workers AI, and headless browser rendering. Returns `text/markdown; charset=utf-8`. Handles SPAs natively (headless browser tier renders JS). Rate limit: 500 requests/day/IP. HTTP 429 triggers immediate fallback to Tier 1 (no retry).
+2. **curl + HTMLParser (Fallback Tier 1).** Local Python extractor. Strips scripts/styles/SVG and preserves heading hierarchy as markdown. Used when markdown.new fails or returns insufficient content (<100 words).
+3. **WebFetch (Fallback Tier 2, last resort).** Claude Code built-in tool. Used when both markdown.new and curl+HTMLParser fail to extract sufficient content. Filter CSS noise from output before assessing word count.
+
+If markdown.new returns <100 words or the request fails (timeout, HTTP error, empty response), fall through to Tier 1. If Tier 1 returns <100 words, fall through to Tier 2.
 
 ---
 
-## Command Template
+## Tier 0 -- markdown.new (Primary)
+
+Command template:
+
+```bash
+curl -s --max-time 10 "https://markdown.new/$URL"
+```
+
+Replace `$URL` with the full target URL including protocol (e.g., `https://markdown.new/https://example.com/pricing`).
+
+Output is raw markdown. No HTML parsing needed. No CSS noise. No artifact stripping needed (markdown.new strips it server-side).
+
+Word count check: count words in the returned content. Apply thresholds from the Quality Assessment Thresholds section below.
+
+If the curl command fails (non-zero exit, empty stdout, or HTTP 429 status), fall through to Tier 1 immediately. Do NOT retry markdown.new.
+
+To detect 429: use `curl -s -o /dev/null -w "%{http_code}" --max-time 10 "https://markdown.new/$URL"` first if rate limiting is suspected after multiple requests. Otherwise, check if content is empty or contains an error message.
+
+---
+
+## Tier 1 -- curl + HTMLParser (Fallback)
+
+Fallback when markdown.new fails or returns insufficient content (<100 words).
 
 ```bash
 curl -sL -H "User-Agent: funnelenvy-skills/1.0" "URL" | python3 -c "
@@ -98,31 +124,72 @@ Replace `URL` with the target page URL.
 
 ---
 
+## Tier 2 -- WebFetch (Last Resort)
+
+Last resort when both markdown.new and curl+HTMLParser fail to extract sufficient content (<100 words from both).
+
+Use the WebFetch tool on the same URL.
+
+Filter CSS noise from WebFetch output before assessing word count: discard `<style>` blocks, CSS class definitions, and inline styling rules. Focus on HTML semantic elements: headings, paragraphs, lists, links with visible text, and image alt text.
+
+Assess by word count after filtering.
+
+---
+
 ## Quality Assessment Thresholds
 
-After running the extractor, count the words in the extracted output and tag accordingly:
+After running extraction, count the words in the output and tag accordingly:
 
-| Words | Tag | Meaning |
-|-------|-----|---------|
-| 500+ | `[FULL]` | Successful extraction. Usable content recovered. |
-| 100-499 | `[PARTIAL]` | Partial extraction. Some content recovered but likely incomplete. |
-| <100 | Fall through to WebFetch | Curl extraction failed. Try WebFetch per the extraction flow. |
+| Words | Source | Tag | Meaning |
+|-------|--------|-----|---------|
+| 500+ | markdown.new | `[FULL]` | Successful extraction from primary extractor |
+| 100-499 | markdown.new | `[PARTIAL]` | Partial extraction from primary extractor |
+| 500+ | curl + HTMLParser | `[FULL:CURL]` | Successful extraction from Fallback Tier 1 |
+| 100-499 | curl + HTMLParser | `[PARTIAL:CURL]` | Partial extraction from Fallback Tier 1 |
+| 100+ | WebFetch | `[PARTIAL:TOOL]` | Extraction from Fallback Tier 2 (last resort) |
+| <100 | All three failed, SPA indicators | `[EMPTY:SPA]` | JS-heavy site, no content extracted by any method |
+| <100 | All three failed, access blocked | `[EMPTY:BLOCKED]` | Bot protection blocked all extraction methods |
+| <100 | All three failed, other | `[EMPTY]` | Content genuinely absent or all tools failed |
 
-Tag the page fetch in research notes using these tags. These tags are internal to research and do not appear in context files or deliverables.
+Tag the page fetch in research notes using these tags. Tags are internal to research and do not appear in context files or deliverables.
+
+The source suffix (`:CURL`, `:TOOL`) tells downstream consumers which extractor succeeded. Unqualified `[FULL]` and `[PARTIAL]` mean markdown.new (primary) was sufficient.
+
+---
+
+## Extraction Flow (Step-by-Step)
+
+Follow this procedure for each URL:
+
+1. Run markdown.new: `curl -s --max-time 10 "https://markdown.new/$URL"`
+2. Count words in output.
+3. If 500+ words: tag `[FULL]`, use content. Done.
+4. If 100-499 words: tag `[PARTIAL]`, use content. Done.
+5. If <100 words, empty, or request failed: proceed to step 6.
+6. Run curl + HTMLParser using the Tier 1 command template.
+7. Count words in output.
+8. If 500+ words: tag `[FULL:CURL]`, use content. Done.
+9. If 100-499 words: tag `[PARTIAL:CURL]`, use content. Done.
+10. If <100 words: proceed to step 11.
+11. Run WebFetch on the same URL.
+12. Filter CSS noise from WebFetch output.
+13. If 100+ words after filtering: tag `[PARTIAL:TOOL]`, use content. Done.
+14. If <100 words after filtering: triage failure:
+    - SPA indicators present? Tag `[EMPTY:SPA]`. Write `[NOT EXTRACTED - JS-rendered SPA]`.
+    - Access blocked? Tag `[EMPTY:BLOCKED]`. Write `[NOT EXTRACTED - access blocked]`.
+    - Neither? Tag `[EMPTY]`. Write `[NOT EXTRACTED - tool parse failure]`.
 
 ---
 
 ## Limitations
 
-- No link URLs preserved. Anchor text is extracted but `href` targets are discarded.
-- No image alt text extracted.
-- No fine-grained markdown structure beyond headings (no bold, italic, lists, or tables).
-- Heading hierarchy (`#` through `######`) is preserved. All other structure is flattened to plain text lines.
-
-This is sufficient for positioning research where the agent needs headlines, copy, CTAs, and service descriptions. It is NOT sufficient for tasks requiring link mapping, image analysis, or structured content audits.
+- markdown.new output is clean markdown with headings, bold, italic, lists, links, and tables preserved. This is richer than the curl+HTMLParser output.
+- curl+HTMLParser limitations: no link URLs preserved (anchor text extracted but `href` targets discarded), no image alt text extracted, no fine-grained markdown structure beyond headings (no bold, italic, lists, or tables), heading hierarchy (`#` through `######`) preserved but all other structure flattened to plain text lines.
+- WebFetch may include CSS noise that requires filtering.
+- Rate limit: 500 requests/day/IP for markdown.new. A standard-depth run fetches 15-20 pages (well within budget). Deep-depth with competitor research may approach 35+ total fetches across agents. If rate-limited, the fallback chain handles it transparently.
 
 ---
 
 ## Source Attribution
 
-Content extracted via curl uses the same source attribution as WebFetch-extracted content. The extraction method is noted in the Copy Verification checkpoint (see SKILL.md) but does not change how content is cited in context files or deliverables.
+Content extracted via any tier uses the same source attribution rules. The extraction method is noted in research notes (via quality tags) but does not change how content is cited in context files or deliverables.
