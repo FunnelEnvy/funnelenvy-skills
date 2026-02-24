@@ -11,6 +11,7 @@ funnelenvy-skills/
 │   ├── competitive-landscape.md  # L1 schema (merged: market + competitors + battle cards)
 │   ├── audience-messaging.md     # L1 schema (merged: personas + messaging + voice)
 │   ├── positioning-scorecard.md  # L1 schema (includes quick reference)
+│   ├── performance-profile.md    # L1 schema (GA4 analytics snapshot)
 │   ├── _fetch-registry.md        # Operational metadata schema (not L0/L1)
 │   └── _research-extractions.md  # Raw page extractions schema (operational)
 ├── modules/
@@ -29,6 +30,8 @@ funnelenvy-skills/
 │   │       ├── competitive.md    # Competitive analysis + inline schema (depth-gated)
 │   │       ├── messaging.md      # Personas + messaging + voice + inline schema
 │   │       └── scoring.md        # Scorecard + QA + inline schema (depth-gated)
+│   ├── ga4-audit/
+│   │   └── SKILL.md              # GA4 analytics audit v1.0 (~single agent, analytics-mcp)
 │   └── render-default-deliverables/
 │       └── SKILL.md              # L2 rendering skill v1.0 (~single agent, no research)
 ├── examples/                     # Public examples
@@ -49,8 +52,8 @@ L2: RENDERING (human-readable deliverables)
 L1: ANALYSIS (machine-readable context files)
     Consumes L0. Produces structured analytical context.
     competitive-landscape.md | audience-messaging.md |
-    positioning-scorecard.md | performance-profile.md [future]
-    Owned by: positioning-framework (Agents 2-4), ga4-audit (future)
+    positioning-scorecard.md | performance-profile.md
+    Owned by: positioning-framework (Agents 2-4), ga4-audit
     Location: .claude/context/
     ---------------------------------------------------------------
 L0: COMPANY IDENTITY (machine-readable foundation)
@@ -96,6 +99,7 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 | `.claude/context/competitive-landscape.md` | L1 | positioning-framework (standard/deep) | render-default-deliverables, website-audit, content strategy, hypothesis roadmap |
 | `.claude/context/audience-messaging.md` | L1 | positioning-framework (standard/deep) | render-default-deliverables, website-audit, content strategy |
 | `.claude/context/positioning-scorecard.md` | L1 | positioning-framework (all depths, minimal at quick) | render-default-deliverables, website-audit, hypothesis roadmap |
+| `.claude/context/performance-profile.md` | L1 | ga4-audit | hypothesis-generator (ICE calibration + performance-driven hypotheses), render-default-deliverables (opportunity sizing) |
 | `.claude/context/_fetch-registry.md` | Operational | positioning-framework Agent 1 (appended by Agent 2) | Agent 2 (duplicate fetch prevention) |
 | `.claude/context/_research-extractions.md` | Internal/Operational | positioning-framework Agent 1 | Agents 2, 3, 4 (selectively). Ephemeral, overwritten on each run. Not prior work. |
 
@@ -204,7 +208,8 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 1. **`/positioning-framework <url> --depth quick`** (optional fast triage, ~5-8 min, ~70-90K tokens)
 2. **`/positioning-framework <url>`** (standard depth, produces all L0 + L1 context + deliverables, ~450-500K tokens across subagents)
 3. **`/positioning-framework <url> --depth deep`** (extends competitive context to deep, ~550-650K tokens across subagents)
-4. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
+4. **`/ga4-audit <property_id>`** (optional, produces performance-profile.md for traffic-driven hypotheses, ~3-5 min)
+5. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
 
 Each depth level builds on prior work. Running quick then standard then deep is incremental, not redundant. The skill detects existing context and extends rather than overwrites. Deliverables can be re-rendered at any time after context files exist.
 
@@ -290,10 +295,20 @@ Auto-invoked by positioning-framework at standard/deep depth. Also available sta
 
 **Output:** `.claude/deliverables/` with manifest
 
-### hypothesis-generator
-Standalone CRO hypothesis engine. Reads positioning context (L0 + L1), applies
-23 experiment patterns across 9 categories, and produces a prioritized experiment
-roadmap with ICE scoring. Manually invoked: /hypothesis-generator
+### ga4-audit (v1.0.0)
+GA4 analytics audit. Pulls 7 targeted reports from a GA4 property via analytics-mcp, classifies conversion events, and produces a `performance-profile.md` L1 context file. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
+
+**Invocation:** `/ga4-audit <property_id> [--days 30] [--date-range "YYYY-MM-DD:YYYY-MM-DD"]`
+
+**Outputs:**
+- L1 context: performance-profile.md (page performance, conversion funnels, channel/device breakdown, data quality assessment)
+
+**Runtime:** ~3-5 minutes. Single interaction point (event classification confirmation).
+
+### hypothesis-generator (v1.1.0)
+Standalone CRO hypothesis engine. Reads positioning context (L0 + L1) plus optional performance data, applies
+23 experiment patterns across 9 categories plus performance-driven triggers, and produces a prioritized experiment
+roadmap with ICE scoring. When `performance-profile.md` is present, produces data-calibrated scores and traffic-driven hypotheses. Manually invoked: /hypothesis-generator
 
 ## Development
 

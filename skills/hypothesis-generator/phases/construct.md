@@ -14,7 +14,7 @@ This phase does not vary by depth.
 
 | Condition | Impact |
 |-----------|--------|
-| No "before" copy available for a copy experiment | Hypothesis is marked "needs site verification" in the roadmap footnotes. Still included but Confidence is capped at 5. |
+| No "before" copy available for a copy experiment | Hypothesis is marked "needs site verification" in the roadmap footnotes. Still included but Confidence is capped at 3. |
 | No audience-messaging.md for "after" copy | Adapt from L0's stated value propositions and differentiators instead. Note reduced specificity. |
 | Partial trigger (from Phase 2) | Include hypothesis but add footnote recommending manual verification of the trigger condition before testing. |
 
@@ -46,6 +46,12 @@ Document what exists now. This is the control in the experiment.
 
 **For personalization experiments:**
 - Document the current one-size-fits-all experience: what all visitors see regardless of segment
+
+**Baseline data (when performance-profile.md exists):**
+- Look up the target page in performance-profile.md's Page Performance and Conversion Events sections
+- Record: sessions/mo, bounce rate, conversion rate (for primary conversion event), and top traffic source
+- This data populates the `**Baseline:**` line in the deliverable template
+- If the target page doesn't appear in performance-profile.md (low traffic or not tracked), note "No baseline data for this page" and skip the Baseline line
 
 ### Step 3: Proposed Change
 
@@ -92,6 +98,7 @@ Pull the causal mechanism from the matched pattern in `modules/experiment-patter
 - Primary metric: The most direct behavioral indicator of the hypothesis being correct
 - Secondary metric (optional): A leading or lagging indicator that adds context
 - Avoid vanity metrics. "Page views" is almost never the right primary metric.
+- When performance-profile.md exists, reference the current baseline for the target metric. Example: "Primary metric: demo request rate (currently 1.2% on this page, 1.97% site-wide)." This grounds the expected improvement in reality.
 
 **Audience identification:**
 - If the experiment targets a specific persona from audience-messaging.md, name them

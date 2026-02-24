@@ -18,7 +18,7 @@ This phase does not vary by depth.
 | No positioning-scorecard.md | Confidence scores capped at 3 for all hypotheses (less certainty about gap severity). |
 | No competitive-landscape.md | Impact scores for competitive-pressure hypotheses capped at 3. |
 | No audience-messaging.md | Confidence scores for persona-based hypotheses capped at 3 (less certainty about messaging fit). |
-| No baseline traffic/conversion data | Confidence scores capped at 3 globally. Add note to roadmap: "Quantitative confidence improves with analytics data." |
+| No baseline traffic/conversion data (no performance-profile.md) | Confidence scores capped at 4 globally. Add note to roadmap: "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses." |
 | Calibration data from evidence modules | Override pattern baselines with calibrated scores where available. Calibrated scores take precedence. |
 
 ---
@@ -59,11 +59,18 @@ These adjustments are based on the overall context quality, not individual patte
 - If the hypothesis was triggered by a partial trigger: Confidence -1
 - If audience-messaging.md provided the "after" copy: no adjustment
 - If the "after" copy was derived from L0 value props instead: Confidence -1
+- If performance-profile.md exists and `traffic_adequacy` is "high": Confidence +1
+- If performance-profile.md exists and target page has conversion data: Confidence +1
+- If performance-profile.md exists and `traffic_adequacy` is "low": Confidence -1
 
 **Impact adjustments:**
 - If the targeted page is the homepage: Impact +1 (highest traffic page for most B2B sites)
 - If the hypothesis addresses the scorecard's "top gap": Impact +1
 - If the hypothesis targets a page not mentioned in any context file: Impact -1 (uncertain traffic)
+- If performance-profile.md exists and target page has >500 sessions/mo: Impact +1
+- If performance-profile.md exists and target page has bounce rate >50%: Impact +1
+- If performance-profile.md exists and target page conversion rate <50% of site average: Impact +1
+- If performance-profile.md exists and target page has <100 sessions/mo: Impact -1
 
 **Ease adjustments:**
 - If the hypothesis requires only copy changes: Ease +1

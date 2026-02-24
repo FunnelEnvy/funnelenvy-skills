@@ -1,6 +1,6 @@
 ---
 name: hypothesis-generator
-version: 1.0.0
+version: 1.1.0
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
 ---
 
@@ -51,6 +51,7 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 - `positioning-scorecard.md`: If missing, opportunity detection relies on context gap analysis instead of scorecard ratings. Hypotheses will have lower Confidence scores.
 - `competitive-landscape.md`: If missing, competitive pressure patterns (pricing transparency, differentiator crowding triggers) are unavailable. Those patterns are skipped.
 - `audience-messaging.md`: If missing, persona-based patterns (segment hero personalization, industry proof matching, nav intent mismatch) lose specificity. Generic versions are produced with a note.
+- `performance-profile.md`: If missing, all performance-driven hypothesis triggers are skipped. Confidence capped at 4 globally (no baseline data to validate assumptions). ICE scoring uses qualitative estimates only. Add "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses" to Prerequisites.
 
 **Error states:**
 - No context files found: Exit with "No context files found in .claude/context/. Run /positioning-framework first."
@@ -77,8 +78,10 @@ Context available:
   positioning-scorecard.md (confidence: 3, depth: standard)
   competitive-landscape.md (confidence: 3, depth: standard)
   audience-messaging.md (confidence: 4, depth: standard)
+  performance-profile.md (confidence: 3, 30 days, 45.2K sessions)  [or: not found]
 
 Pattern categories active: all 9 (23 patterns loaded)
+Performance-driven triggers: [active | inactive (no performance-profile.md)]
 Evidence augmentation: [none | list loaded modules]
 Max hypotheses: 10
 
@@ -131,8 +134,9 @@ Display completion summary:
 Experiment roadmap written to .claude/deliverables/experiment-roadmap.md
 
   [X] hypotheses produced ([Y] Quick Wins, [Z] Strategic Bets, [W] Explorations)
-  [N] patterns matched, [M] context-derived, [P] patterns skipped (insufficient context)
+  [N] patterns matched, [M] context-derived, [K] performance-driven, [P] patterns skipped (insufficient context)
   [D] data gaps identified (see Prerequisites section)
+  Performance data: [available (N sessions, N days) | not available]
 
   Top experiment: [name] (ICE: [score])
 
@@ -175,6 +179,7 @@ Experiments are grouped into three tiers:
 **What to test:** [concrete, specific change]
 
 **Current state:** [what exists now, with specific copy or structure referenced from the website]
+**Baseline:** [if performance-profile.md exists: sessions/mo, bounce rate, conversion rate for the target page. Omit this line entirely if no performance data.]
 **Proposed change:** [what the variant looks like]
 
 > **Before:** "[current headline or copy]"

@@ -3,7 +3,7 @@
 ## Required Inputs
 
 - Full body of `company-identity.md` (L0)
-- Full body of all available L1 context files
+- Full body of all available L1 context files (including `performance-profile.md` if present)
 - `modules/experiment-patterns.md` (loaded by orchestrator)
 - Any `modules/evidence-*.md` files (optional, loaded by orchestrator if present)
 
@@ -18,6 +18,7 @@ This phase does not vary by depth. All available context is scanned regardless o
 | positioning-scorecard.md | Skip scorecard-triggered patterns. Use gap inference from L0 + other L1 instead. |
 | competitive-landscape.md | Skip competitive-pressure patterns (pricing transparency, differentiator crowding). |
 | audience-messaging.md | Skip persona-dependent patterns (segment hero, industry proof, nav intent mismatch). |
+| performance-profile.md | Skip all performance-driven triggers (Step 1c). Confidence capped at 4 globally. Add "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses" to Prerequisites. |
 | All L1 files | Detect from L0 only. Limited to patterns triggered by website copy, proof points, and structural signals. |
 
 ---
@@ -58,6 +59,16 @@ Scan each context file for specific, concrete signals that indicate a testable o
 - Banned terms list: language currently used that should be avoided
 - Message hierarchy: primary, secondary, tertiary messages and where they should appear
 
+**From performance-profile.md (L1, if present):**
+- Page-level traffic volumes (sessions per page)
+- Bounce rates per page (especially high-bounce pages >50%)
+- Per-page conversion rates and site-wide conversion rate
+- Mobile traffic percentage and mobile vs desktop engagement gap
+- Channel-level bounce rate gaps (e.g., paid vs organic on same pages)
+- Landing page bounce rates (first-impression signals)
+- Conversion event inventory and per-page funnel data
+- Data gaps noted in Key Metrics Summary (what can't be measured)
+
 ### Step 1b: Context Quality Flags
 
 Run in parallel with signal extraction (Step 1). Scan all loaded context files for quality indicators that affect downstream scoring and pattern coverage.
@@ -75,6 +86,32 @@ Run in parallel with signal extraction (Step 1). Scan all loaded context files f
 These flags are NOT used for filtering in this phase. They feed into the Prerequisites and Data Gaps compilation in Phase 4 (Step 8).
 
 **Output:** Context quality flag list, carried forward alongside opportunity list.
+
+### Step 1c: Performance-Driven Triggers
+
+**Skip this step entirely if `performance-profile.md` is not present.**
+
+These triggers fire only when quantitative GA4 data exists. They produce net-new opportunities that positioning analysis alone cannot surface. Each trigger is concrete and data-dependent.
+
+Run these in parallel with pattern matching (Step 2). Performance-driven opportunities join the opportunity list with `signal_source: performance-profile.md`.
+
+| Trigger Condition | Hypothesis Type | Example |
+|---|---|---|
+| Page gets >500 sessions/mo from paid traffic AND bounce >45% | Landing page messaging mismatch for paid visitors | "Paid traffic to /pricing bounces at 51% vs 39% organic. Ad promise doesn't match page reality." |
+| Page has conversion rate <50% of site average AND >200 sessions/mo | Conversion friction on high-traffic page | "/solutions/enterprise gets 890 sessions but converts at 0.5% vs 2.0% site avg. Messaging or layout friction." |
+| Mobile bounce rate >10pp higher than desktop on same page | Mobile UX/messaging friction | "Mobile bounce on homepage is 56% vs 42% desktop. Above-fold content doesn't work on small screens." |
+| Landing page bounce >55% AND page is top-5 entry point | First-impression failure | "/blog/guide-x is 3rd highest entry point but 68% bounce. Content-to-CTA path is broken." |
+| Top conversion page has no positioning-derived hypothesis targeting it | Untested high-value page | "/demo converts at 11.9% but no positioning gap targets it. Test proof placement or form copy." |
+| Channel X has 2x+ bounce rate vs Channel Y on same page | Channel-specific messaging mismatch | "Google Ads traffic bounces at 52% vs organic at 38% on homepage. Paid visitors need different messaging." |
+| Form conversion event exists but page conversion <5% | Form optimization opportunity | "generate_lead fires on /contact but only 3.2% of visitors complete it. Form friction signal." |
+
+**Trigger evaluation rules:**
+- Use the performance-profile.md frontmatter `top_pages` for quick lookups. Read body sections for full data when a trigger condition needs per-page detail.
+- "Sessions/mo" = sessions in the profile's date range, normalized to 30 days if the range differs.
+- Triggers that match a page already targeted by a positioning-derived hypothesis still fire. They produce a separate performance-driven opportunity that will merge with the positioning-derived one in Phase 3 (Step 7), enriching it with baseline data.
+- Each performance-driven opportunity uses ICE baseline 3/3/3 (same as context-derived). The performance data provides evidence for scoring modifiers in Phase 4, not for inflating the baseline.
+
+**Output:** Performance-driven opportunities added to the opportunity list, tagged `type: "performance-driven"`.
 
 ### Step 2: Match Signals Against Patterns
 
