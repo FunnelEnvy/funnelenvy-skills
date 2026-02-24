@@ -68,12 +68,6 @@ Scan each context file for specific, concrete signals that indicate a testable o
 - Landing page bounce rates (first-impression signals)
 - Conversion event inventory and per-page funnel data
 - Data gaps noted in Key Metrics Summary (what can't be measured)
-- Page group performance (group-level bounce, CVR, session volumes)
-- Source x page mismatches (channel-specific performance gaps)
-- New vs returning cohort data (familiarity dependence signal)
-- Period-over-period trends (urgency weighting for worsening metrics)
-- Failure mode per page (shallow vs deep engagement)
-- Pre-sized opportunity list with impact buckets
 
 ### Step 1b: Context Quality Flags
 
@@ -110,14 +104,6 @@ Run these in parallel with pattern matching (Step 2). Performance-driven opportu
 | Top conversion page has no positioning-derived hypothesis targeting it | Untested high-value page | "/demo converts at 11.9% but no positioning gap targets it. Test proof placement or form copy." |
 | Channel X has 2x+ bounce rate vs Channel Y on same page | Channel-specific messaging mismatch | "Google Ads traffic bounces at 52% vs organic at 38% on homepage. Paid visitors need different messaging." |
 | Form conversion event exists but page conversion <5% | Form optimization opportunity | "generate_lead fires on /contact but only 3.2% of visitors complete it. Form friction signal." |
-| `source_page_mismatches` has entries with `gap_type: "bounce"` | Channel-specific landing page mismatch | "Paid search bounces 15pp above organic on /pricing. Channel-specific messaging needed." |
-| `new_vs_returning.signal` = `"familiarity_dependent"` | First-visit conversion failure / nurture gap | "Returning:new ratio is 5.2x. First-visit experience is failing. Nurture or first-impression intervention needed." |
-| `trends.primary_cvr_change_pp` < -0.5 | Worsening conversion trend | "Primary CVR declined 0.8pp vs prior period. Urgent: identify what changed." |
-| `trends.bounce_rate_change_pp` > +5 | Worsening bounce trend | "Bounce rate increased 6.2pp vs prior period. Recent change may have degraded experience." |
-| Page has `failure_mode: "shallow_engagement"` | Messaging mismatch (not layout) | "/blog/guide-x has shallow engagement (1.1 pages/session, 62% bounce). Messaging doesn't match visitor intent." |
-| Page has `failure_mode: "deep_engagement"` | Funnel friction (CTA/pricing/trust, not messaging) | "/pricing has deep engagement (3.8 pages/session) but 0.4% CVR. Visitors explore but don't convert." |
-| `page_groups` group has CVR < 25% of top group | Structural content-to-conversion gap | "Blog group converts at 0.19% vs Product group at 2.0%. Blog-to-conversion path is a structural opportunity." |
-| `top_opportunities` has entries with `estimated_monthly_impact: "large"` | Pre-sized high-impact opportunity | "/pricing has a 'large' sized opportunity (bounce_reduction). Pre-validated by opportunity sizing." |
 
 **Trigger evaluation rules:**
 - Use the performance-profile.md frontmatter `top_pages` for quick lookups. Read body sections for full data when a trigger condition needs per-page detail.
