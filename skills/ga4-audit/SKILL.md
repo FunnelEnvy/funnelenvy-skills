@@ -55,6 +55,10 @@ No depth flag. The same reports run regardless of the lookback window. Data is e
 - When --date-range is explicit: previous period = same duration immediately before the start date
 - When --no-compare is set: skip comparison period entirely
 
+### Comparison Rule (applies to ALL run_report calls)
+
+When comparison is enabled (default), include a second date range for the comparison period. GA4 returns metrics for both periods in one response. When --no-compare is set, use only the primary date range. Do not repeat this logic per step.
+
 ---
 
 ## Preconditions
@@ -123,7 +127,6 @@ Pull all events with their counts for the date range using `run_report`:
 - Metrics: `eventCount`, `conversions`
 - Date range: as specified by flags
 
-When comparison is enabled (default): include a second date range for the comparison period. The GA4 Data API returns metrics for both periods in the same response. When --no-compare is set: use only the primary date range.
 
 Classification (key event, heuristic, L0) is based on the current period only. The comparison period provides event volume trends but does not change classification.
 
@@ -196,7 +199,6 @@ Pull top pages by session volume using `run_report`:
 - Limit: 50 rows
 - Order by: sessions descending
 
-When comparison is enabled (default): include a second date range for the comparison period. The GA4 Data API returns metrics for both periods in the same response. When --no-compare is set: use only the primary date range.
 
 Record all results for the Page Performance section.
 
@@ -261,14 +263,7 @@ When L0 exists (Step 11), its explicit product lines or service categories with 
 
 Compute session-weighted averages for each group.
 
-```markdown
-### Page Group Performance
-
-| Group | URL Pattern | Pages | Sessions | Weighted Bounce | Weighted Engagement | Conversions | Group CVR |
-|-------|------------|-------|----------|----------------|--------------------|----|-----------|
-| Blog | /blog/* | 18 | 12,400 | 61.2% | 38.8% | 24 | 0.19% |
-| Product | /solutions/* | 6 | 8,900 | 41.3% | 58.7% | 178 | 2.0% |
-```
+Columns: Group | URL Pattern | Pages | Sessions | Weighted Bounce | Weighted Engagement | Conversions | Group CVR
 
 Weighted bounce/engagement = session-weighted averages across pages in the group.
 
@@ -283,7 +278,6 @@ For each of the top 3 conversion events (by volume), pull per-page conversion da
 - Limit: 20 rows per event
 - Order by: eventCount descending
 
-When comparison is enabled (default): include a second date range for the comparison period. The GA4 Data API returns metrics for both periods in the same response. When --no-compare is set: use only the primary date range.
 
 Compute per-page conversion rate: `eventCount / sessions * 100`
 
@@ -316,7 +310,6 @@ Pull channel and source breakdown using `run_report`:
 - Metrics: `sessions`, `bounceRate`, `engagementRate`, `eventCount` (filtered to primary conversion event)
 - Date range: as specified
 
-When comparison is enabled (default): include a second date range for the comparison period. The GA4 Data API returns metrics for both periods in the same response. When --no-compare is set: use only the primary date range.
 
 Then pull top sources within key channels (channels with >5% of total sessions):
 - Dimensions: `sessionSource`, `sessionMedium`, `sessionDefaultChannelGroup`
@@ -325,7 +318,6 @@ Then pull top sources within key channels (channels with >5% of total sessions):
 - Limit: 15 rows
 - Order by: sessions descending
 
-When comparison is enabled (default): include a second date range for the comparison period. The GA4 Data API returns metrics for both periods in the same response. When --no-compare is set: use only the primary date range.
 
 ### Step 7: Device & User Segment Report
 
@@ -334,7 +326,6 @@ Pull device breakdown using `run_report`:
 - Metrics: `sessions`, `totalUsers`, `bounceRate`, `engagementRate`, `averageSessionDuration`, `engagedSessions`, `screenPageViewsPerSession`, `eventCount` (filtered to primary conversion event)
 - Date range: as specified
 
-When comparison is enabled (default): include a second date range for the comparison period. The GA4 Data API returns metrics for both periods in the same response. When --no-compare is set: use only the primary date range.
 
 Compute mobile vs desktop gap analysis:
 - Bounce rate gap (pp difference)
@@ -354,7 +345,6 @@ run_report:
 
 Note: `conversions` counts GA4 key events. Only 2-3 rows expected (new, returning, possibly null).
 
-When comparison is enabled (default): include a second date range for the comparison period. The GA4 Data API returns metrics for both periods in the same response. When --no-compare is set: use only the primary date range.
 
 **Conversion enrichment call** (conditional, same pattern as Step 8b):
 Runs ONLY when Step 3 classified heuristic conversion events that are NOT already GA4 key events.
@@ -366,7 +356,6 @@ run_report:
   date_range: as specified
 ```
 
-When comparison is enabled (default): include a second date range for the comparison period. The GA4 Data API returns metrics for both periods in the same response. When --no-compare is set: use only the primary date range.
 
 Post-processing: aggregate into unified conversion counts per segment.
 
@@ -390,7 +379,6 @@ Pull entry pages using `run_report`:
 - Limit: 30 rows
 - Order by: sessions descending
 
-When comparison is enabled (default): include a second date range for the comparison period. The GA4 Data API returns metrics for both periods in the same response. When --no-compare is set: use only the primary date range.
 
 Compute:
 - % of entries for each landing page
@@ -410,7 +398,6 @@ run_report:
 
 Note: `conversions` counts GA4 key events identified in Step 3a. No filtering needed.
 
-When comparison is enabled (default): include a second date range for the comparison period. The GA4 Data API returns metrics for both periods in the same response. When --no-compare is set: use only the primary date range.
 
 **Conversion enrichment call** (conditional):
 Runs ONLY when Step 3 classified heuristic conversion events that are NOT already GA4 key events. If all conversion events are key events, skip this call.
@@ -424,7 +411,6 @@ run_report:
   order_by: eventCount descending
 ```
 
-When comparison is enabled (default): include a second date range for the comparison period. The GA4 Data API returns metrics for both periods in the same response. When --no-compare is set: use only the primary date range.
 
 Post-processing: aggregate `eventCount` per page x channel across matching event names. Merge with key event `conversions` from the primary call into a unified conversion count.
 
@@ -434,13 +420,7 @@ Post-processing: aggregate `eventCount` per page x channel across matching event
 
 **Output:** New subsection under Landing Page Performance:
 
-```markdown
-### Source x Landing Page Mismatches
-
-| Landing Page | Better Channel | Worse Channel | Metric | Better Value | Worse Value | Gap |
-|-------------|---------------|--------------|--------|-------------|------------|-----|
-| /pricing | Organic (39%) | Paid Search (54%) | Bounce Rate | 39% | 54% | 15pp |
-```
+Columns: Landing Page | Better Channel | Worse Channel | Metric | Better Value | Worse Value | Gap
 
 If no mismatches exceed thresholds, output: "No source x landing page mismatches exceeded thresholds (>15pp bounce gap or >50% conversion rate gap)."
 
@@ -506,49 +486,55 @@ These are working estimates, not calibrated against property-specific or FunnelE
 
 **Output:**
 
-```markdown
-## Opportunity Sizing
+Columns: Page | Issue | Formula | Impact Bucket | Action Category | Note
 
-| Page | Issue | Formula | Impact Bucket | Action Category |
-|------|-------|---------|--------------|-----------------|
-| /pricing | Paid search bounce 15pp above organic | bounce_reduction | medium | messaging |
-| /blog | Blog group CVR 90% below Product group | traffic_reallocation | small | structural |
-```
-
-Each row includes a sizing_note: "Estimated using standard CRO conservatism factors (0.4x), not property-specific data"
-
-Action categories: `messaging`, `ux`, `form`, `structural`.
+Each row includes a sizing_note. Action categories: `messaging`, `ux`, `form`, `structural`.
 
 ### Step 10: Write Performance Profile
 
-Construct `.claude/context/performance-profile.md` following the schema in `schemas/performance-profile.md`.
+Construct `.claude/context/performance-profile.md` with the structure below. Do NOT read `schemas/performance-profile.md` -- this section is the authoritative reference at runtime.
 
-**YAML frontmatter:** Populate all fields from the data collected in Steps 1-9.
+#### Frontmatter Fields
 
-**Body sections (all 8 REQUIRED):**
-1. Property Overview (from Steps 1-2, 9)
-2. Page Performance (from Step 4, 4b) (includes trend tags when comparison enabled)
-3. Conversion Events (from Steps 3, 5) (includes trend tags when comparison enabled)
-4. Channel Performance (from Step 6) (includes trend tags when comparison enabled)
-5. Device & User Segment Performance (from Steps 7, 7b) (includes trend tags when comparison enabled)
-6. Landing Page Performance (from Step 8, 8b) (includes trend tags when comparison enabled)
-7. Opportunity Sizing (from Step 9b)
-8. Key Metrics Summary (analyst interpretation of Steps 4-9b) (includes trend tags when comparison enabled)
+All fields required unless noted.
 
-**Key Metrics Summary guidance:**
-- **Strengths:** Identify 2-4 things working well. Cite specific numbers. ("Organic search converts at 2.1%, above site average of 1.97%")
-- **Weaknesses:** Identify 2-4 underperforming areas. Cite thresholds. ("Mobile bounce rate is 52.1% vs 38.0% desktop, a 14.1pp gap")
-- **Experiment Opportunities:** Identify 3-5 specific, testable opportunities from the data. Each must reference a metric gap. ("Paid search traffic bounces at 48.7% vs 39.2% organic on the same pages. Ad-to-page messaging mismatch likely.")
-- **Data Gaps:** List what can't be measured. ("No scroll depth data. No form field-level tracking. Revenue attribution not configured.")
+- Metadata: `schema` ("performance-profile"), `schema_version` ("2.0"), `generated_by` ("ga4-audit"), `last_updated`, `last_updated_by` ("ga4-audit"), `confidence` (1-5), `company`, `property_id`, `property_name`, `date_range`, `days`
+- Traffic: `total_sessions`, `total_users`, `device_mobile_pct` (integer %)
+- Top pages (top 5 only): `top_pages[]` each with `path`, `sessions`, `bounce_rate`, `pages_per_session`, `avg_engagement_sec`, `failure_mode` (null | "shallow_engagement" | "deep_engagement")
+- Conversions (conversion-classified only): `conversion_events[]` each with `name`, `count`, `classification`. Plus `primary_conversion_event`, `primary_conversion_rate` (%)
+- Channels (top 3): `top_channels[]` each with `channel`, `sessions`, `bounce_rate`
+- Mismatches: `source_page_mismatches[]` each with `page`, `better_channel`, `worse_channel`, `gap_type` ("bounce" | "conversion"), `better_value`, `worse_value`. Empty array if none.
+- New/returning: `new_vs_returning` with `new_sessions_pct`, `new_conversion_rate`, `returning_conversion_rate`, `returning_to_new_ratio`, `signal` (familiarity_dependent | normal_b2b | strong_first_visit | acquisition_heavy)
+- Page groups: `page_groups[]` each with `group`, `url_pattern`, `monthly_sessions`, `conversion_rate`, `bounce_rate`, `page_count`
+- Opportunities: `top_opportunities[]` each with `page`, `issue`, `formula_type`, `current_metric`, `target_metric`, `monthly_sessions`, `estimated_monthly_impact` ("small" | "medium" | "large"), `action_category`, `sizing_note`
+- Data quality: `traffic_adequacy` ("high" | "adequate" | "low"), `sampling_applied` (bool)
+- Comparison (omit entirely when --no-compare): `comparison_period` with `start`, `end`. `trends` with `sessions_change_pct`, `primary_cvr_change_pp`, `bounce_rate_change_pp`, `mobile_bounce_change_pp`
+- L0: `l0_available` (bool), `l0_confidence` (int | null)
 
-**Trend tags** (when comparison data is available, i.e. --no-compare not set):
+#### Body Sections (8 REQUIRED, 1 OPTIONAL)
 
-Apply trend tags to findings in Key Metrics Summary and relevant body sections:
-- [WORSENING]: metric degraded >10% or >5pp (for rates)
-- [IMPROVING]: metric improved >10% or >5pp
-- [STABLE]: change within +/-10% or +/-5pp
+All sections include trend tags when comparison is enabled.
 
-Example: "Mobile bounce rate is 52.1% vs 38.0% desktop, a 14.1pp gap [WORSENING: +4.5pp vs prior period]"
+1. **Property Overview** -- Property metadata, date range, data quality notes (prose, no table).
+2. **Page Performance** -- 4 subsections:
+   - Top Pages: Page | Sessions | Users | Bounce Rate | Engagement Rate | Avg Duration | Pages/Session | Avg Engagement (sec) | Failure Mode
+   - High-Bounce Pages (>50% bounce, >100 sessions): Page | Sessions | Bounce Rate | Engagement Rate | Notes
+   - Page Group Performance: Group | URL Pattern | Pages | Sessions | Weighted Bounce | Weighted Engagement | Conversions | Group CVR
+   - Underperforming Pages (<50% group avg CVR, >200 sessions): Page | Group | Sessions | Page CVR | Group Avg CVR | Gap
+3. **Conversion Events** -- Event Inventory: Event | Count | Classification | Notes. Per-page funnels (top 3 events): Page | Sessions | Conversions | Conversion Rate. Missing Tracking Gaps (list).
+4. **Channel Performance** -- By Channel Group: Channel | Sessions | % of Total | Bounce Rate | Engagement Rate | Conversions | Conv Rate. Top Sources: Source/Medium | Channel | Sessions | Bounce Rate | Conv Rate.
+5. **Device & User Segment Performance** -- Device Breakdown: Device | Sessions | % of Total | Bounce Rate | Engagement Rate | Avg Duration | Conv Rate. Mobile vs Desktop Gap: Metric | Desktop | Mobile | Gap | Significance. New vs Returning: Segment | Sessions | % of Total | Bounce Rate | Engagement Rate | Avg Duration | Conv Rate. Include returning:new ratio and signal.
+6. **Landing Page Performance** -- Top Entry Pages (use `landingPage` dimension, not `pagePath`): Landing Page | Sessions | % of Entries | Bounce Rate | Engagement Rate | Conv Rate. High-Bounce Entry Points (>55% bounce, top 20): Landing Page | Sessions | Bounce Rate | Top Source | Notes. Source x Landing Page Mismatches: Landing Page | Better Channel | Worse Channel | Metric | Better Value | Worse Value | Gap.
+7. **Opportunity Sizing** -- Page | Issue | Formula | Impact Bucket | Action Category | Note. Each row includes sizing_note.
+8. **Key Metrics Summary** -- Strengths (2-4, cite numbers), Weaknesses (2-4, cite thresholds), Experiment Opportunities (3-5, cite metric gaps), Data Gaps. Each point cites specific numbers from sections 1-7.
+9. **L0 Enrichment Notes** (OPTIONAL) -- Product-Line Grouping Overrides, Funnel Stage Mapping, Tracking Gaps. Only when L0 consumed.
+
+#### Trend Tags
+
+When comparison data is available (--no-compare not set), apply to Key Metrics Summary and relevant body sections:
+- `[WORSENING]`: degraded >10% or >5pp
+- `[IMPROVING]`: improved >10% or >5pp
+- `[STABLE]`: within +/-10% or +/-5pp
 
 When --no-compare is set: omit all trend tags. Do not reference comparison data.
 
@@ -604,21 +590,11 @@ Step 11 adds a new section to the performance profile body: "L0 Enrichment Notes
 
 ---
 
-## Inline Schema Reference
-
-The authoritative schema is defined in `schemas/performance-profile.md`. Refer to it for:
-- Complete YAML frontmatter field definitions
-- Body section templates and content requirements
-- Completeness checklist
-- Confidence scoring criteria
-
----
-
 ## Quality Checks
 
 Before writing the final file, verify:
 
-1. [ ] All 7 body sections are present (populated or gap-marked)
+1. [ ] All 8 REQUIRED body sections are present (populated or gap-marked)
 2. [ ] YAML frontmatter has all required fields
 3. [ ] Sampling status is reported accurately
 4. [ ] Conversion events are classified and confirmed by user

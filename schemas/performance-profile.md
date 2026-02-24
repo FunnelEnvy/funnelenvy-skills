@@ -1,5 +1,5 @@
-> **Authoritative schema.** ga4-audit is a single-agent skill with no phase files.
-> This schema file is the authoritative definition. `skills/ga4-audit/SKILL.md` references it directly.
+> **Reference copy.** The authoritative schema is inlined in `skills/ga4-audit/SKILL.md` (Step 10).
+> This file is a human-readable reference for contributor orientation. If the two diverge, SKILL.md wins.
 
 ---
 
