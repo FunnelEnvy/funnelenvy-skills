@@ -315,21 +315,6 @@ Apply these rules when writing origin tags in `company-identity.md`.
 
 ---
 
-## Copy Verification (standard and deep only)
-
-**NOTE: Copy verification is handled by the orchestrator (SKILL.md step 6.5), not by this agent.** The orchestrator reads the Homepage Messaging section of company-identity.md after Agent 1 completes and presents it to the user for verification. This agent's job is to extract copy accurately and tag it with source attribution.
-
-**Source attribution values to apply during extraction:**
-- `website-extracted`: WebFetch returned this content directly (default for all extracted copy)
-- `meta-derived`: Pulled from meta/og tags, not visible page content
-- `not-extracted`: JS-rendered, content could not be obtained
-
-The orchestrator may update these tags after user verification:
-- `website-confirmed`: User confirmed the extraction matches what they see
-- `user-confirmed`: User provided or corrected this content
-
----
-
 ## Homepage Messaging (L0 Section)
 
 Add a dedicated section to `company-identity.md` that captures the homepage messaging with source attribution. This section is consumed by downstream agents for experiment baselines and messaging analysis.
@@ -339,20 +324,18 @@ Add a dedicated section to `company-identity.md` that captures the homepage mess
 ```markdown
 ## Homepage Messaging
 
-- H1: "[exact headline text from main content hero]" [source: website-confirmed]
+- H1: "[exact headline text from main content hero]" [source: website-extracted]
 - Additional H1s: "[if carousel/slider]" / "[second slide]" [source: website-extracted]
-- Subhead: "[exact subhead text]" [source: website-confirmed]
-- CTA: "[button text]" / "[button text]" [source: website-confirmed]
-- Format: [Static / Carousel (N slides) / Video / etc.] [source: user-confirmed]
+- Subhead: "[exact subhead text]" [source: website-extracted]
+- CTA: "[button text]" / "[button text]" [source: website-extracted]
+- Format: [Static / Carousel (N slides) / Video / etc.] [source: website-extracted]
 - Nav taglines (reference only): "[any positioning-sounding taglines found in navigation]"
 ```
 
 **Source attribution values:**
-- `website-extracted`: WebFetch returned this content directly
-- `website-confirmed`: WebFetch extracted it AND user confirmed it matches
-- `user-confirmed`: User provided or corrected this content
+- `website-extracted`: Content extracted from the page directly
 - `meta-derived`: Pulled from meta/og tags, not visible page content
-- `not-extracted`: JS-rendered, content could not be obtained
+- `not-extracted`: JS-rendered, content could not be obtained. Treat as a gap -- never quote `not-extracted` copy as a baseline in experiments or recommendations.
 
 Downstream agents and render-default-deliverables should treat `not-extracted` content as a gap, not as something to build on. Never quote `not-extracted` copy as a current baseline in experiments or recommendations.
 
