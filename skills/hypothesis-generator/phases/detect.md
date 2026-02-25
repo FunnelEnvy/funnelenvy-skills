@@ -74,6 +74,8 @@ Scan each context file for specific, concrete signals that indicate a testable o
 - Period-over-period trends (urgency weighting for worsening metrics)
 - Failure mode per page (shallow vs deep engagement)
 - Pre-sized opportunity list with impact buckets
+- Session-depth distribution (pages/session for high-engagement segments)
+- Paid vs organic traffic split per page
 
 ### Step 1b: Context Quality Flags
 
@@ -118,6 +120,7 @@ Run these in parallel with pattern matching (Step 2). Performance-driven opportu
 | Page has `failure_mode: "deep_engagement"` | Funnel friction (CTA/pricing/trust, not messaging) | "/pricing has deep engagement (3.8 pages/session) but 0.4% CVR. Visitors explore but don't convert." |
 | `page_groups` group has CVR < 25% of top group | Structural content-to-conversion gap | "Blog group converts at 0.19% vs Product group at 2.0%. Blog-to-conversion path is a structural opportunity." |
 | `top_opportunities` has entries with `estimated_monthly_impact: "large"` | Pre-sized high-impact opportunity | "/pricing has a 'large' sized opportunity (bounce_reduction). Pre-validated by opportunity sizing." |
+| Paid traffic >200 sessions/mo to a page AND no dedicated landing page variant exists | Ad-message match / paid landing page opportunity | "Google Ads sends 340 sessions/mo to /solutions but page has full site nav and generic headline. No ad-specific landing page." |
 
 **Trigger evaluation rules:**
 - Use the performance-profile.md frontmatter `top_pages` for quick lookups. Read body sections for full data when a trigger condition needs per-page detail.

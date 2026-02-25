@@ -2,7 +2,7 @@
 
 Version: 1.1.0
 Last updated: 2026-02-22
-Pattern count: 23
+Pattern count: 26
 Categories: 9
 
 This module contains the CRO experiment patterns that drive the hypothesis generator. Each pattern encodes a testable opportunity type, its trigger conditions, causal reasoning, ICE baselines, and contextual modifiers.
@@ -250,6 +250,94 @@ Each pattern follows this structure:
 
 ---
 
+### NX-04: Paid Landing Page Optimization
+
+**Category:** Navigation/UX Flow
+**Applies when:**
+- Performance-profile shows significant paid traffic to a page (>200 sessions/mo from paid channels)
+- Channel-specific bounce rate gap exists (paid bounces higher than organic on same page)
+- Page has full site navigation (not a dedicated landing page)
+- No dedicated landing pages exist for paid campaigns (all traffic goes to site pages)
+
+**Typical test:** Create a paid-traffic variant with (a) headline/visual/offer aligned to the ad creative that drives traffic, and (b) navigation stripped to a single conversion path. Test against the current generic page experience for paid visitors only.
+
+**Causal mechanism:** Paid visitors arrive with a specific expectation set by the ad. Two things break that expectation simultaneously: the page headline doesn't echo the ad's promise (cognitive dissonance at arrival), and full site navigation offers escape routes before the value proposition lands. Each nav link is a competing CTA with zero conversion intent. Aligning the message and removing distractions focuses attention on the single conversion path the ad directed them toward.
+
+**ICE baseline:** Impact 4 | Confidence 3 | Ease 3
+**Modifiers:**
+- Impact +1 if paid spend on the page exceeds $5K/mo (high waste on mismatch)
+- Confidence +2 if channel-specific bounce gap is >10pp (paid vs organic on same page)
+- Ease +1 if testing platform supports audience targeting by UTM/traffic source
+- Ease -1 if multiple ad campaigns with different messaging point to the same page (need multiple variants)
+- Confidence +1 if testing both message match AND nav removal together vs. just one
+
+**Common mistakes:**
+- Matching the ad headline verbatim instead of matching the promise (the landing page should deliver on the ad's implied value, not parrot its exact words)
+- Removing navigation on pages that also receive significant organic traffic without using audience targeting to scope the variant to paid only
+- Ignoring that different ad campaigns set different expectations -- one landing page variant won't fix message match if 5 different ads point to it
+
+**Sequencing notes:** Run after baseline CTA experiments (NX-02). Requires audience targeting capability in the testing platform. If platform can't target by traffic source, this test is infeasible.
+
+---
+
+### NX-05: Value-Before-Commitment Sequencing
+
+**Category:** Navigation/UX Flow
+**Applies when:**
+- Primary CTA requires commitment before showing value (demo request, contact sales, signup)
+- Product has demonstrable value that could be previewed (interactive demo, sample output, sandbox)
+- Competitive landscape shows competitors offering self-serve evaluation paths
+
+**Typical test:** Add a value-preview step before the primary conversion action: interactive product demo, sample output generator, sandbox environment, or video walkthrough. The preview replaces or precedes the gate, not supplements it below the fold.
+
+**Causal mechanism:** Commitment before value creates an information asymmetry the buyer resists. They must invest (time, personal info, social commitment of a sales call) without knowing what they'll get. Reversing the sequence (value first, commitment second) reduces perceived risk. The endowment effect then works in your favor: once they've experienced the product, they value it more and the commitment feels smaller relative to what they've already seen.
+
+**ICE baseline:** Impact 5 | Confidence 3 | Ease 2
+**Modifiers:**
+- Impact +1 if competitors already offer self-serve evaluation and company doesn't
+- Confidence +1 if the company has an existing demo environment or sandbox that could be exposed
+- Ease +2 if an interactive demo tool (Navattic, Reprise, Storylane) is already in use
+- Ease -2 if no demo/preview asset exists and one must be built from scratch
+- Confidence -1 if the product is complex enough that unsupported evaluation could confuse buyers
+
+**Common mistakes:**
+- Offering a "preview" that's actually a marketing video, not a hands-on experience (doesn't trigger the endowment effect)
+- Gating the preview itself behind a form, defeating the entire purpose
+- Preview that shows features without connecting to the visitor's specific use case (generic sandbox vs. guided scenario)
+
+**Sequencing notes:** High effort, high reward. Requires a value-preview asset to exist or be buildable. Run after messaging and CTA experiments have established baseline conversion. This is a structural change that's hard to reverse, so validate messaging first.
+
+---
+
+### NX-06: Comparison-Mode Intervention
+
+**Category:** Navigation/UX Flow
+**Applies when:**
+- Performance-profile shows meaningful segment of visitors with 5+ pages/session
+- No comparison or evaluation content is surfaced contextually during browsing
+- Exit-intent or time-based popups are the only current intervention (or none)
+
+**Typical test:** Deploy a session-depth-triggered offer (comparison guide, ROI calculator, analyst report, "been researching?" prompt) that fires after the 5th pageview. Target the offer to the visitor's demonstrated behavior rather than using a generic popup.
+
+**Causal mechanism:** Page-count correlates with evaluation intent. A visitor on their 5th page has demonstrated sustained interest but hasn't converted -- they're likely comparing options or building an internal case. An offer tailored to comparison behavior (side-by-side guide, "still evaluating?" prompt, ROI calculator) meets the visitor's actual mental state. Time-based or exit-intent triggers fire without regard to engagement depth, which means they interrupt casual browsers and miss deep evaluators equally.
+
+**ICE baseline:** Impact 3 | Confidence 3 | Ease 3
+**Modifiers:**
+- Impact +2 if 5+ pages/session segment is >15% of total sessions
+- Confidence +1 if the comparison/evaluation asset already exists (just needs a trigger)
+- Ease +1 if popup/overlay tooling is already deployed on the site
+- Confidence +1 if session-depth segment includes visits to pricing page (strong evaluation signal)
+- Confidence -1 if high pages/session is driven by blog content (reading, not evaluating)
+
+**Common mistakes:**
+- Setting the threshold too low (3 pages) and triggering on casual browsers who just clicked around
+- Using a generic "sign up for newsletter" offer when the visitor is clearly deeper in the funnel
+- Firing the same offer regardless of which pages were visited (someone who read 5 blog posts needs different content than someone who visited pricing + 4 product pages)
+
+**Sequencing notes:** Low effort if popup tooling exists. Run independently of page-level experiments. Does not compete with or depend on NX-03 (exit path optimization) since NX-03 targets on-page secondary CTAs while this targets session-level behavioral triggers.
+
+---
+
 ## Category: Personalization
 
 ### PE-01: Segment-Based Hero Personalization
@@ -437,11 +525,13 @@ Each pattern follows this structure:
 - Impact -1 if deal sizes are highly variable (enterprise custom pricing is legitimately hard to publish)
 - Ease -1 if pricing requires internal stakeholder alignment before publishing
 - Confidence +1 if company has clear tiers or packages that map to published pricing
+- Confidence +1 if testing discount/savings framing and Rule of 100 is applied (percentage for <$100, absolute for >$100)
 
 **Common mistakes:**
 - Publishing pricing without anchoring to value (raw numbers without context invite unfavorable comparison)
 - Pricing page that lists numbers but doesn't explain what each tier includes or who it's for
 - Not testing partial transparency (price ranges or "starting at") as a middle ground
+- Showing percentage savings for high-ticket products (>$100/mo) when absolute savings would feel larger, or vice versa (Rule of 100: percentages feel bigger under $100, absolutes feel bigger over $100)
 
 **Sequencing notes:** Often politically sensitive internally. May require stakeholder buy-in before testing. Flag this as needing business discussion, not just CRO decision. If approved, run early because results significantly inform competitive positioning.
 
