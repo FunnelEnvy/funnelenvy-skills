@@ -221,7 +221,7 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 5. **`/hypothesis-generator`** (produces experiment roadmap from L0 + L1 context + optional performance data)
 6. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
 
-**Tip:** Add `--property <ga4_property_id>` to any positioning-framework invocation to use GA4 traffic data for page selection (e.g., `/positioning-framework https://example.com --property properties/123456789`). This runs a single lightweight query before research begins. The full ga4-audit still runs separately.
+**Tip:** Add `--property <ga4_property_id>` to any positioning-framework invocation to use GA4 traffic data for page selection (e.g., `/positioning-framework https://example.com --property properties/123456789`). This runs a single lightweight query before research begins and saves the property ID to `company-identity.md` so downstream skills like ga4-audit can auto-detect it. The full ga4-audit still runs separately.
 
 Each depth level builds on prior work. Running quick then standard then deep is incremental, not redundant. The skill detects existing context and extends rather than overwrites. Deliverables can be re-rendered at any time after context files exist.
 
@@ -311,7 +311,9 @@ Auto-invoked by positioning-framework at standard/deep depth. Also available sta
 ### ga4-audit (v2.0.0)
 GA4 analytics audit. Pulls 10-13 targeted reports from a GA4 property via analytics-mcp, classifies conversion events, and produces a v2 `performance-profile.md` L1 context file with page grouping, opportunity sizing, trend analysis, and optional L0 enrichment. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
 
-**Invocation:** `/ga4-audit <property_id> [--days 90] [--date-range "YYYY-MM-DD:YYYY-MM-DD"] [--no-compare]`
+**Invocation:** `/ga4-audit [property_id] [--days 90] [--date-range "YYYY-MM-DD:YYYY-MM-DD"] [--no-compare]`
+
+Property ID is optional. If omitted, auto-detects from `company-identity.md` frontmatter (`ga4_property` field, set by positioning-framework `--property` flag). Falls back to account summaries if not found.
 
 **Outputs:**
 - L1 context: performance-profile.md (page performance, conversion funnels, channel/device breakdown, data quality assessment)

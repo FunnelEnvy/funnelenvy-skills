@@ -25,11 +25,14 @@ You are an analytics specialist. Your job is to pull structured performance data
 ## Invocation
 
 ```
+/ga4-audit
 /ga4-audit <property_id>
 /ga4-audit <property_id> --days 30
 /ga4-audit <property_id> --days 90 --no-compare
 /ga4-audit <property_id> --date-range "2025-11-01:2026-01-31"
 ```
+
+When no `<property_id>` is provided, the skill checks `company-identity.md` for a saved `ga4_property` value (see Step 2).
 
 **Flags:**
 
@@ -108,9 +111,12 @@ If successful, display available accounts and properties for confirmation.
 Use `get_property_details` with the provided property ID.
 
 **If no property ID was provided:**
-1. List all properties from the account summaries (Step 1)
-2. Ask the user to select one
-3. Continue with the selected property
+1. Check `.claude/context/company-identity.md` for `ga4_property` in the YAML frontmatter.
+   - If found: use it as the property ID. Display: "Using GA4 property from company context: [property_id]". Proceed to `get_property_details` validation.
+   - If not found: fall through to step 2.
+2. List all properties from the account summaries (Step 1)
+3. Ask the user to select one
+4. Continue with the selected property
 
 **If property ID is valid:**
 Display property name and proceed.

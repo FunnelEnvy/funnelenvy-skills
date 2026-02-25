@@ -63,6 +63,7 @@ company:
   founded: ""          # Year
   hq: ""               # City, State or City, Country
   legal_entity: ""     # Optional. Full legal name if different from brand name
+  ga4_property: ""     # Optional. GA4 property ID (e.g., "properties/342047065"). Set by positioning-framework --property flag.
 
 category:
   primary: ""          # The market category. Use buyer language, not internal jargon.
@@ -81,6 +82,7 @@ target_market:
 - `confidence`: Skills use this to decide whether to trust the data or re-research. Below 3 = treat as draft.
 
 > **Confidence rule:** File-level confidence in frontmatter MUST equal the minimum of all **REQUIRED** section-level confidence scores in the body. OPTIONAL sections (Company Stats, Pricing Model, Glossary, Buying Triggers, Retired Positioning, Category Gap) do not participate in the min() calculation. This is a mechanical calculation, not a judgment.
+- `company.ga4_property`: Set automatically when positioning-framework runs with `--property`. Used by ga4-audit for auto-discovery. Value is the full GA4 property identifier (e.g., "properties/342047065").
 - `category.primary`: This is what buyers search for, not what the company calls itself. If there's a gap, note it in the body under Category Gap.
 - `target_market.segments`: Behavioral segments, not firmographics. "PE-backed" is a segment. "100-500 employees" is a firmographic that goes in `company_size`.
 

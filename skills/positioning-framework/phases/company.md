@@ -457,6 +457,7 @@ company:
   founded: ""          # Year
   hq: ""               # City, State or City, Country
   legal_entity: ""     # Optional. Full legal name if different from brand name
+  ga4_property: ""     # Optional. Managed by orchestrator, not this agent. Do not set or modify.
 
 category:
   primary: ""          # The market category. Use buyer language, not internal jargon.

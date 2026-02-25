@@ -437,6 +437,7 @@ Each agent reads `agent-header.md` (shared agent rules) plus its specific phase 
 5.5. GA4 Priority Pages (if --property provided, see below)
 6. Launch Agent 1 (pass depth + intake payload + GA4 data if available) → wait for completion
      Agent 1 writes fetch registry to .claude/context/_fetch-registry.md (all URLs fetched with extraction quality).
+6a. Persist GA4 property ID to company-identity.md (if --property validated, see below)
 6.5. Copy Verification Checkpoint (see below) -- standard/deep only
 7. If depth != quick AND competitive-depth != none:
      Agent 2 reads _fetch-registry.md before fetching. Skips URLs already fetched by Agent 1 when data is in L0.
@@ -555,6 +556,21 @@ Use these pages to guide your research priorities:
 - SHOULD fetch low-traffic-high-conversion pages if within page budget
 - Deprioritize low-traffic-low-conversion pages unless they match a required category (homepage, features, pricing)
 ```
+
+### Step 6a: Persist GA4 Property ID
+
+**Trigger:** `--property` flag was provided AND Step 5.5 succeeded (property validated).
+
+If both conditions are met:
+1. Read `.claude/context/company-identity.md` YAML frontmatter.
+2. Add or update `ga4_property` under the `company` block:
+   ```yaml
+   company:
+     ga4_property: "<property_id from --property flag>"
+   ```
+3. Write the updated frontmatter back. Do not modify the body.
+
+If `--property` was not provided but existing `company-identity.md` already has `ga4_property` set, preserve it. Do not remove it.
 
 ### Step 6.5: Copy Verification Checkpoint
 
