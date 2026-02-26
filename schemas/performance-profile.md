@@ -8,7 +8,7 @@
 **Version:** 2.0.0
 **Output path:** `.claude/context/performance-profile.md`
 **Produced by:** `ga4-audit`
-**Consumed by:** hypothesis-generator (ICE scoring calibration + performance-driven hypotheses), website-audit (traffic prioritization), render-default-deliverables (Tier 4 opportunity sizing)
+**Consumed by:** hypothesis-generator (ICE scoring calibration + performance-driven hypotheses), website-audit (traffic prioritization), render-default-deliverables (executive summary enrichment)
 
 ---
 
@@ -306,7 +306,7 @@ Events are tagged with their classification source: `[KEY EVENT]` (GA4 property-
 
 Classification is confirmed with user during skill execution. Up to 3 conversion events get per-page funnel tables.
 
-**Used by:** hypothesis-generator (form optimization triggers, untested high-value page triggers, conversion friction triggers), render-default-deliverables (opportunity sizing).
+**Used by:** hypothesis-generator (form optimization triggers, untested high-value page triggers, conversion friction triggers).
 
 ---
 
@@ -428,7 +428,7 @@ Quantified experiment opportunities with impact buckets.
 If no opportunities exceed the "small" threshold, state: "No opportunities met minimum impact threshold."
 ```
 
-**Used by:** hypothesis-generator (pre-sized opportunity list for ICE calibration), render-default-deliverables (Tier 4 opportunity sizing).
+**Used by:** hypothesis-generator (pre-sized opportunity list for ICE calibration).
 
 ---
 

@@ -108,7 +108,7 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 | `.claude/context/competitive-landscape.md` | L1 | positioning-framework (standard/deep) | render-default-deliverables, website-audit, content strategy, hypothesis roadmap |
 | `.claude/context/audience-messaging.md` | L1 | positioning-framework (standard/deep) | render-default-deliverables, website-audit, content strategy |
 | `.claude/context/positioning-scorecard.md` | L1 | positioning-framework (all depths, minimal at quick) | render-default-deliverables, website-audit, hypothesis roadmap |
-| `.claude/context/performance-profile.md` | L1 | ga4-audit | hypothesis-generator (ICE calibration + performance-driven hypotheses), render-default-deliverables (opportunity sizing) |
+| `.claude/context/performance-profile.md` | L1 | ga4-audit | hypothesis-generator (ICE calibration + performance-driven hypotheses), render-default-deliverables (executive summary enrichment) |
 | `.claude/context/_fetch-registry.md` | Operational | positioning-framework Agent 1 (appended by Agent 2) | Agent 2 (duplicate fetch prevention) |
 | `.claude/context/_research-extractions.md` | Internal/Operational | positioning-framework Agent 1 | Agents 2, 3, 4 (selectively). Ephemeral, overwritten on each run. Not prior work. |
 
@@ -304,7 +304,6 @@ Auto-invoked by positioning-framework at standard/deep depth. Also available sta
 - Tier 1: Executive Summary (needs L0 + scorecard)
 - Tier 2: Messaging Guide (needs L0 + audience-messaging)
 - Tier 3: Competitive Comparison Matrix, Battle Cards (needs L0 + competitive-landscape)
-- Tier 4: Opportunity Sizing (deferred, needs performance-profile.md from ga4-audit)
 
 **Output:** `.claude/deliverables/` with manifest
 

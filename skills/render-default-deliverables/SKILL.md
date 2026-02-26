@@ -60,9 +60,6 @@ Will produce:
   - Competitive Comparison Matrix
   - Battle Cards (3 competitors)
 
-Cannot produce (missing context):
-  - Opportunity Sizing Report (needs performance-profile.md)
-
 Proceed? [Y/n]
 ```
 
@@ -146,11 +143,8 @@ If 3+ contradictions found, add a "Positioning Tensions" callout box to the Exec
 | 2 | Messaging Guide | L0 + audience-messaging.md | messaging-guide.md |
 | 3 | Competitive Comparison Matrix | L0 + competitive-landscape.md | competitive-comparison-matrix.md |
 | 3 | Battle Cards | L0 + competitive-landscape.md | battle-cards/[competitor-slug].md |
-| 4 | Opportunity Sizing Report | L0 + all L1 including performance-profile.md | opportunity-sizing.md |
 
 **Enrichment rule:** Deliverables are richer when more context exists. The executive summary includes a competitive section only if `competitive-landscape.md` exists. Missing context degrades gracefully, not catastrophically.
-
-**Tier 4:** Deferred. Include the tiering logic and "cannot produce" messaging now. Actual generation logic will be added when performance-profile.md becomes available (after ga4-audit, Phase 3).
 
 ---
 
@@ -474,8 +468,7 @@ After writing all deliverables, produce `.claude/deliverables/manifest.md`:
 
 | Deliverable | Reason |
 |-------------|--------|
-| Opportunity Sizing | Needs performance-profile.md (run /ga4-audit) |
-| [any other skipped] | [reason] |
+| [any skipped] | [reason] |
 
 ## Context at Time of Rendering
 
@@ -505,7 +498,7 @@ Deliverables written to .claude/deliverables/
   manifest.md
 
 Skipped (missing context):
-  opportunity-sizing.md (needs performance-profile.md from /ga4-audit)
+  [deliverable] ([reason])
 
 Review the deliverables and let me know if any need adjustment.
 ```
