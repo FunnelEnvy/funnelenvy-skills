@@ -95,6 +95,18 @@ Before finalizing, check for scoring anti-patterns:
 
 Read the full calibration anchors in `modules/ice-scoring.md` to ground your scores.
 
+### Step 5b: Infeasible Routing
+
+Before tiering, remove hypotheses marked `feasibility: "infeasible"` from Phase 3 Step 5b. These experiments have insufficient traffic for A/B testing at current levels.
+
+For each infeasible hypothesis:
+1. Remove from the scoring pipeline (do not compute ICE total or assign a tier)
+2. Record for the "What's Not Here" section: hypothesis name, target page, reason for infeasibility (estimated duration or traffic level), and suggested alternative approach (pre/post analysis, proxy metric, qualitative testing)
+
+Infeasible hypotheses are NOT failures. They are real opportunities that require either more traffic, a different measurement approach, or a different test design. The "What's Not Here" section should present them as future opportunities, not rejects.
+
+**Count:** Track the number of infeasible-routed hypotheses for the completion summary.
+
 ### Step 6: Compute ICE Totals and Tier
 
 **ICE Total** = Impact + Confidence + Ease (range: 3-15)

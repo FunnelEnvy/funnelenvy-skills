@@ -1,8 +1,8 @@
 # Experiment Patterns Library
 
-Version: 1.1.0
-Last updated: 2026-02-22
-Pattern count: 26
+Version: 1.2.0
+Last updated: 2026-03-06
+Pattern count: 28
 Categories: 9
 
 This module contains the CRO experiment patterns that drive the hypothesis generator. Each pattern encodes a testable opportunity type, its trigger conditions, causal reasoning, ICE baselines, and contextual modifiers.
@@ -16,7 +16,7 @@ The hypothesis generator matches signals from context files against the "Applies
 Each pattern follows this structure:
 
 - **Pattern ID:** Category prefix + number (e.g., HM-01). Internal reference only. Never appears in deliverables.
-- **Category:** One of: Headline/Messaging, Form Optimization, Navigation/UX, Personalization, Page Structure/Layout, Pricing, Social Proof, Content/Resource, Trust/Credibility
+- **Category:** One of: Headline/Messaging, Form Optimization, Navigation/UX, Personalization, Page Structure/Layout, Pricing, Social Proof, Content/Resource, Trust/Credibility, Element Engagement
 - **Applies when:** Trigger conditions matched against context files. All conditions must be true for a full match. Any single condition = partial match.
 - **Typical test:** The default experiment design. Adapted to specific context during hypothesis construction.
 - **Causal mechanism:** The behavioral or psychological principle that makes this test work. Starting point for hypothesis-specific reasoning.
@@ -762,6 +762,66 @@ Each pattern follows this structure:
 - Addressing too many objections at once (dilutes the rebuttal strength for each)
 
 **Sequencing notes:** Run after competitive analysis is strong enough to identify the real objections. Pairs with PZ-01 (Pricing Transparency) if the primary objection is pricing-related. Content from this experiment can inform sales enablement materials.
+
+---
+
+## Category: Element Engagement
+
+### EE-01: CTA Click-Through Optimization
+
+**Category:** Element Engagement
+**Applies when:**
+- Element interaction data shows primary CTA click rate <3% on a page with >500 sessions/mo
+- The page has a clear intended conversion action (form, demo request, signup)
+- CTA copy, placement, or visual weight may be insufficient based on interaction data
+
+**Typical test:** Modify CTA copy, size, color contrast, or placement to increase click-through rate. Common variants: outcome-oriented CTA copy ("See how it works" vs "Learn more"), increased visual weight (size, contrast), repositioned above the fold, or sticky CTA on scroll.
+
+**Causal mechanism:** CTA click rate is a direct measure of whether the page's persuasion arc is working. A low click rate on a high-traffic page means visitors are reading but not acting. This could be: (1) the CTA doesn't match what the content promised, (2) the CTA is below the attention threshold (too small, wrong color, buried), or (3) the CTA asks for too much commitment too early. Testing CTA variations isolates which friction point dominates.
+
+**ICE baseline:** Impact 4 | Confidence 4 | Ease 5
+**Modifiers:**
+- Confidence +1 if element data shows a secondary CTA getting more clicks than the primary (proves visitors want to act, just not on the primary CTA)
+- Impact +1 if the page is a top-5 landing page (first-impression CTA)
+- Impact -1 if CTA click rate is already >5% (diminishing returns)
+- Confidence +1 if performance-profile.md shows the page has deep engagement but low conversion (failure_mode: deep_engagement confirms the CTA is the bottleneck)
+
+**Common mistakes:**
+- Testing CTA color alone (effect size too small for most sites)
+- Changing CTA copy without aligning the surrounding value proposition
+- Adding multiple CTAs to "increase options" when the real issue is clarity of the single CTA
+- Ignoring mobile vs desktop CTA interaction differences
+
+**Sequencing notes:** Run early if data shows clear CTA underperformance. Results directly inform all other page-level experiments. Pairs with HM-01 (headline clarity): fix the headline message first, then optimize the CTA that captures the intent.
+
+---
+
+### EE-02: Element Engagement Drop-off
+
+**Category:** Element Engagement
+**Applies when:**
+- Element interaction data shows sequential content elements (carousel slides, tabs, accordion panels) where later items get <20% of first item interactions
+- The hidden content contains differentiated value (not just repetition of the first item)
+- Page has >300 sessions/mo
+
+**Typical test:** Restructure multi-element content to surface high-value items. Common variants: replace carousel with static grid, reorder tabs/panels to lead with strongest content, add preview text or thumbnails that reveal hidden content, or reduce total items and promote the best.
+
+**Causal mechanism:** Sequential UI patterns (carousels, tabs, accordions) create an interaction tax: each additional click or swipe to see the next item filters out a large percentage of visitors. When later items contain unique, high-value content (case studies, differentiators, pricing tiers), the sequential pattern buries that content behind a friction wall. Restructuring to surface key content reduces the interaction cost and exposes more visitors to the persuasive content.
+
+**ICE baseline:** Impact 3 | Confidence 3 | Ease 3
+**Modifiers:**
+- Impact +1 if the hidden content includes proof points or case studies (high persuasive value being buried)
+- Impact +1 if the page is a pricing or product page (where multi-item exploration directly affects purchase decisions)
+- Confidence +1 if element data shows a sharp drop-off (item 2 gets <10% of item 1 interactions, confirming the pattern is severe)
+- Ease -1 if the restructure requires significant layout changes (e.g., replacing a carousel with a new page section)
+- Ease +1 if the fix is reordering existing elements (no new design needed)
+
+**Common mistakes:**
+- Replacing a carousel with a wall of text (the structure was there for a reason; replace with a better structure, not no structure)
+- Assuming all sequential content should be flattened (sometimes a tab interface is genuinely the right UX for optional detail)
+- Not measuring which specific items drive conversions (the most-viewed item isn't necessarily the most-converting)
+
+**Sequencing notes:** Run after CTA optimization on the same page (EE-01). If the CTA test wins but conversion lift is modest, element engagement may be the next bottleneck. Pairs with PS-01 (Above-the-Fold Hierarchy Reset) when the carousel is above the fold.
 
 ---
 

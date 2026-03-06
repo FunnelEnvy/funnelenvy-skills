@@ -105,6 +105,48 @@ Pull the causal mechanism from the matched pattern in `modules/experiment-patter
 - If the experiment applies to all visitors, say "all visitors"
 - For personalization experiments, specify both the targeting criteria and the segment
 
+### Step 5b: Test Feasibility Estimation
+
+**Skip this step entirely if `performance-profile.md` is not present.**
+
+For each hypothesis that has a Baseline (from Step 2), estimate whether the target page has enough traffic to run a statistically valid A/B test.
+
+**Formula (standard two-proportion z-test, 80% power, 95% significance):**
+
+```
+n_per_variant = 16 * p * (1 - p) / (p * relative_mde)^2
+duration_weeks = (2 * n_per_variant) / (monthly_sessions / 30) / 7
+```
+
+Where:
+- `p` = current conversion rate for the target page (from Baseline data)
+- `relative_mde` = 0.15 (15% relative minimum detectable effect). Not configurable. Conservative for CRO.
+- `monthly_sessions` = sessions for the target page from performance-profile.md, normalized to 30 days if the profile's date range differs
+
+**Feasibility tiers:**
+
+| Duration | Label | Action |
+|----------|-------|--------|
+| <= 4 weeks | **Feasible** | No annotation needed beyond the Test Feasibility line |
+| 5-12 weeks | **Extended** | Add note: "Consider micro-conversion metric for faster signal" |
+| 13-26 weeks | **Challenging** | Add note: "Consider proxy metric or pre/post analysis" |
+| >26 weeks OR <100 sessions/mo | **Infeasible** | Route to "What's Not Here" with explanation. Do not include in roadmap. |
+
+**Output format (added after the Baseline line in the deliverable):**
+
+```markdown
+**Baseline:** 5,600 sessions/mo, 38.5% bounce, 3.0% CVR
+**Test Feasibility:** ~8 weeks at 15% MDE (2 variants, 5.6K samples/variant). Extended. Consider micro-conversion metric for faster signal.
+```
+
+**Edge cases:**
+- **CVR available:** Compute duration normally using the page's conversion rate for the primary conversion event.
+- **CVR not available but sessions are:** Output: "Cannot estimate (no conversion rate baseline). If testing engagement metric, feasibility depends on effect size."
+- **No performance data at all:** Omit both Baseline and Test Feasibility lines (same as current behavior for Baseline).
+- **Page not in performance-profile.md:** Omit Baseline and Test Feasibility (page has insufficient data).
+
+**Infeasible routing:** Mark infeasible hypotheses with `feasibility: "infeasible"` and the reason. These are passed to Phase 4 for routing to "What's Not Here" instead of ICE scoring.
+
 ### Step 6: Win/Loss Learning
 
 Every experiment must articulate what a positive AND negative result teaches.

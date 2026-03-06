@@ -76,6 +76,11 @@ Scan each context file for specific, concrete signals that indicate a testable o
 - Pre-sized opportunity list with impact buckets
 - Session-depth distribution (pages/session for high-engagement segments)
 - Paid vs organic traffic split per page
+- Element-level interaction data (when `element_interactions_available: true`):
+  - Per-element click rates on key pages (CTA engagement signal)
+  - CTA hierarchy dominance (one element gets disproportionate clicks)
+  - Sequential content drop-off (carousel/tab engagement decay)
+  - Discovered parameter types (what element tracking exists)
 
 ### Step 1b: Context Quality Flags
 
@@ -121,6 +126,10 @@ Run these in parallel with pattern matching (Step 2). Performance-driven opportu
 | `page_groups` group has CVR < 25% of top group | Structural content-to-conversion gap | "Blog group converts at 0.19% vs Product group at 2.0%. Blog-to-conversion path is a structural opportunity." |
 | `top_opportunities` has entries with `estimated_monthly_impact: "large"` | Pre-sized high-impact opportunity | "/pricing has a 'large' sized opportunity (bounce_reduction). Pre-validated by opportunity sizing." |
 | Paid traffic >200 sessions/mo to a page AND no dedicated landing page variant exists | Ad-message match / paid landing page opportunity | "Google Ads sends 340 sessions/mo to /solutions but page has full site nav and generic headline. No ad-specific landing page." |
+| `element_interactions_available: true` AND page >500 sessions/mo AND primary CTA interaction rate <3% | CTA visibility/clarity issue | "/pricing gets 5,600 sessions but 'Request Demo' CTA click rate is 1.8%. CTA underperforming." |
+| `top_interactions` shows one element gets >5x clicks of next element for same event on same page | CTA hierarchy dominance | "On /pricing, 'Request Demo' gets 245 clicks vs 'View Plans' at 42. Secondary CTA nearly invisible." |
+| `top_interactions` shows sequential items (carousel, tabs) where later items get <20% of first item interactions | Content below first view invisible | "Homepage carousel: slide 1 gets 890 interactions, slide 3 gets 67 (7.5%). Content after first slide is effectively hidden." |
+| Element data exists for a page already targeted by a positioning-derived hypothesis | Enrichment: adds interaction baseline | "Element data shows 'Get Started' CTA on / has 1.5% click rate. Adds baseline to existing homepage messaging hypothesis." |
 
 **Trigger evaluation rules:**
 - Use the performance-profile.md frontmatter `top_pages` for quick lookups. Read body sections for full data when a trigger condition needs per-page detail.
@@ -157,7 +166,7 @@ For each pattern match, produce an opportunity record:
 ```
 Opportunity:
   pattern: [pattern ID and name]
-  category: [headline | form | navigation | personalization | layout | pricing | social-proof | content | trust]
+  category: [headline | form | navigation | personalization | layout | pricing | social-proof | content | trust | element-engagement]
   trigger_signal: [the specific signal from context that matched]
   signal_source: [which context file and section]
   trigger_strength: [full | partial]

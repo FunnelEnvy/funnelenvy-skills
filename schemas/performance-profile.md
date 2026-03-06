@@ -5,7 +5,7 @@
 
 # Performance Profile Schema (Layer 1)
 
-**Version:** 2.0.0
+**Version:** 2.1.0
 **Output path:** `.claude/context/performance-profile.md`
 **Produced by:** `ga4-audit`
 **Consumed by:** hypothesis-generator (ICE scoring calibration + performance-driven hypotheses), website-audit (traffic prioritization), render-default-deliverables (executive summary enrichment)
@@ -27,7 +27,7 @@ Time-bounded analytics snapshot from GA4. Contains page-level traffic, engagemen
 ```yaml
 ---
 schema: performance-profile
-schema_version: "2.0"
+schema_version: "2.1"
 generated_by: ga4-audit
 last_updated: 2026-02-23
 last_updated_by: ga4-audit
@@ -150,6 +150,26 @@ top_opportunities:
 traffic_adequacy: "high"             # high | adequate | low
 sampling_applied: false
 
+# Element-level interactions (from Step 5b; omitted when no element data)
+element_interactions_available: true  # bool: whether element interaction data was discovered
+element_interaction_events: 3         # int: number of events with element-level data
+discovered_parameters:                # list of parameter dimensions found
+  - "linkText"
+  - "customEvent:cta_label"
+top_interactions:                     # top 10 by count
+  - page: "/pricing"
+    event: "click"
+    element: "Request Demo"           # parameter value
+    parameter: "linkText"             # dimension name
+    count: 245
+    interaction_rate: 4.4             # percentage of page sessions
+  - page: "/"
+    event: "click"
+    element: "Get Started"
+    parameter: "linkText"
+    count: 189
+    interaction_rate: 1.5
+
 # Period-over-period comparison (from Fix 5; omitted when --no-compare)
 comparison_period:
   start: "2025-10-27"
@@ -183,16 +203,20 @@ l0_confidence: null          # int|null: L0 confidence at consumption time
 - `top_opportunities`: Quantified experiment opportunities. `estimated_monthly_impact` is a bucket (small/medium/large), not a point estimate. `formula_type` is one of: `cvr_improvement`, `bounce_reduction`, `traffic_reallocation`. `action_category` is one of: `messaging`, `ux`, `form`, `structural`.
 - `comparison_period`: The previous period used for trend comparison. Same duration as the primary period, immediately preceding it. Omitted entirely when `--no-compare` is used.
 - `trends`: Period-over-period changes for key metrics. `_pct` fields are percentage changes. `_pp` fields are percentage point changes. Omitted when `--no-compare` is used.
+- `element_interactions_available`: Whether Step 5b discovered custom event parameters or enhanced measurement element dimensions with data. When `false` or omitted, no element-level interaction data exists.
+- `element_interaction_events`: Number of distinct events that have element-level parameter data. Only present when `element_interactions_available` is `true`.
+- `discovered_parameters`: List of parameter dimension names found (e.g., `linkText`, `customEvent:cta_label`). Only present when `element_interactions_available` is `true`.
+- `top_interactions`: Top 10 element interactions by count. Each entry has `page`, `event`, `element` (parameter value), `parameter` (dimension name), `count`, and `interaction_rate` (percentage of page sessions). Only present when `element_interactions_available` is `true`.
 - `l0_available`: Whether `company-identity.md` was found and consumed by Step 11. When `false`, no L0 enrichment was applied.
 - `l0_confidence`: The confidence score of the L0 file at consumption time. `null` when L0 was not available.
 
-**Downstream consumption pattern:** Read frontmatter first. If `top_pages`, `primary_conversion_rate`, `traffic_adequacy`, and `device_mobile_pct` are sufficient for your needs, stop there. Only read the body when you need per-page conversion funnels, channel breakdowns, or the full high-bounce analysis. If `trends` fields exist, the profile includes period-over-period comparison data. If omitted, the profile is a single-period snapshot. If `l0_available` is `true`, enrichment notes are available. If `false`, the profile was produced from GA4 data alone.
+**Downstream consumption pattern:** Read frontmatter first. If `top_pages`, `primary_conversion_rate`, `traffic_adequacy`, and `device_mobile_pct` are sufficient for your needs, stop there. Only read the body when you need per-page conversion funnels, channel breakdowns, element interaction detail, or the full high-bounce analysis. If `element_interactions_available` is `true`, element-level CTA and interaction data exists in both frontmatter (`top_interactions`) and the body section. If `trends` fields exist, the profile includes period-over-period comparison data. If omitted, the profile is a single-period snapshot. If `l0_available` is `true`, enrichment notes are available. If `false`, the profile was produced from GA4 data alone.
 
 ---
 
 ### Markdown Body Sections
 
-8 REQUIRED sections + 1 OPTIONAL (L0 Enrichment Notes).
+8 REQUIRED sections + 2 OPTIONAL (Element-Level Interactions, L0 Enrichment Notes).
 
 #### 1. Property Overview (REQUIRED)
 
@@ -460,7 +484,40 @@ This section is explicitly opinionated. It's the analyst's interpretation of the
 
 ---
 
-#### 9. L0 Enrichment Notes (OPTIONAL)
+#### 9. Element-Level Interactions (OPTIONAL)
+
+Element interaction data from Step 5b. Only present when custom event parameters or enhanced measurement element dimensions were discovered with data.
+
+```markdown
+## Element-Level Interactions
+
+### Discovered Parameters
+
+| Parameter | Scope | Source | Events With Data |
+|-----------|-------|--------|-----------------|
+| linkText | event | Enhanced Measurement | click |
+| customEvent:cta_label | event | Custom | cta_click, form_start |
+
+### Per-Page Interaction Breakdown
+
+| Page | Event | Element | Parameter | Count | Interaction Rate | Notes |
+|------|-------|---------|-----------|-------|-----------------|-------|
+| /pricing | click | Request Demo | linkText | 245 | 4.4% | Primary CTA |
+| /pricing | click | View Plans | linkText | 89 | 1.6% | Secondary CTA |
+| / | click | Get Started | linkText | 189 | 1.5% | Below fold |
+
+### Interaction Gaps
+
+- /pricing: "Request Demo" CTA gets 2.7x more clicks than "View Plans" (CTA hierarchy dominance)
+- /: Primary CTA click rate 1.5% on 12,400 sessions (low CTA engagement, <3% threshold)
+- [Or: "No notable interaction gaps detected."]
+```
+
+**Used by:** hypothesis-generator (CTA engagement triggers, element-level baseline data for experiment targeting), website-audit (element-level UX assessment).
+
+---
+
+#### 10. L0 Enrichment Notes (OPTIONAL)
 
 L0-derived context added by Step 11 post-processing. Only present when `company-identity.md` was available.
 
@@ -513,6 +570,8 @@ A performance-profile.md file is considered **complete** when:
 - [ ] If comparison enabled: trend tags (`[WORSENING]`/`[IMPROVING]`/`[STABLE]`) applied to Key Metrics Summary
 - [ ] `l0_available` and `l0_confidence` frontmatter fields present (even when false/null)
 - [ ] If L0 consumed: L0 Enrichment Notes section present
+- [ ] If element interaction data discovered: `element_interactions_available: true`, Element-Level Interactions body section present with all 3 subsections
+- [ ] If no element interaction data: `element_interactions_available: false` or field omitted, no Element-Level Interactions body section
 - [ ] Every event classified into exactly one tier: `[KEY EVENT]`, `[heuristic]`, or `[L0: ...]`
 - [ ] Opportunity sizing uses impact buckets, not point estimates
 

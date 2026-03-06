@@ -20,7 +20,7 @@ funnelenvy-skills/
 │   ├── business-brief.md         # Pre-flight intake template + protocol
 │   ├── slugify.md                # Deterministic name-to-slug rules for filenames
 │   ├── competitive-assessment.md # Claim assessment, similarity, overlap scoring (Agent 2)
-│   ├── experiment-patterns.md    # 23 CRO patterns across 9 categories (hypothesis-generator)
+│   ├── experiment-patterns.md    # 28 CRO patterns across 10 categories (hypothesis-generator)
 │   └── ice-scoring.md            # ICE calibration anchors and scoring rules (hypothesis-generator)
 ├── skills/
 │   ├── positioning-framework/
@@ -307,22 +307,22 @@ Auto-invoked by positioning-framework at standard/deep depth. Also available sta
 
 **Output:** `.claude/deliverables/` with manifest
 
-### ga4-audit (v2.0.0)
-GA4 analytics audit. Pulls 10-13 targeted reports from a GA4 property via analytics-mcp, classifies conversion events, and produces a v2 `performance-profile.md` L1 context file with page grouping, opportunity sizing, trend analysis, and optional L0 enrichment. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
+### ga4-audit (v2.1.0)
+GA4 analytics audit. Pulls 10-15 targeted reports from a GA4 property via analytics-mcp, classifies conversion events, discovers element-level interactions (CTA clicks, link text, custom parameters), and produces a v2.1 `performance-profile.md` L1 context file with page grouping, opportunity sizing, trend analysis, element interaction data, and optional L0 enrichment. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
 
 **Invocation:** `/ga4-audit [property_id] [--days 90] [--date-range "YYYY-MM-DD:YYYY-MM-DD"] [--no-compare]`
 
 Property ID is optional. If omitted, auto-detects from `company-identity.md` frontmatter (`ga4_property` field, set by positioning-framework `--property` flag). Falls back to account summaries if not found.
 
 **Outputs:**
-- L1 context: performance-profile.md (page performance, conversion funnels, channel/device breakdown, data quality assessment)
+- L1 context: performance-profile.md (page performance, conversion funnels, channel/device breakdown, element interactions, data quality assessment)
 
-**Runtime:** ~5-8 minutes. ~50-75K tokens. Single interaction point (event classification confirmation).
+**Runtime:** ~5-8 minutes. ~50-80K tokens. Single interaction point (event classification confirmation).
 
-### hypothesis-generator (v1.1.0)
+### hypothesis-generator (v1.2.0)
 Standalone CRO hypothesis engine. Reads positioning context (L0 + L1) plus optional performance data, applies
-23 experiment patterns across 9 categories plus performance-driven triggers, and produces a prioritized experiment
-roadmap with ICE scoring. When `performance-profile.md` is present, produces data-calibrated scores and traffic-driven hypotheses. Manually invoked: /hypothesis-generator
+28 experiment patterns across 10 categories plus performance-driven triggers, and produces a prioritized experiment
+roadmap with ICE scoring and test feasibility estimation. When `performance-profile.md` is present, produces data-calibrated scores, traffic-driven hypotheses, and per-experiment feasibility notes. Infeasible experiments (insufficient traffic) are routed to "What's Not Here" with alternative approaches. Manually invoked: /hypothesis-generator
 
 ## Development
 

@@ -9,8 +9,8 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | Skill | Version | Description |
 |-------|---------|-------------|
 | positioning-framework | 1.0.0 | Autonomous positioning and messaging framework from web research |
-| ga4-audit | 2.0.0 | GA4 analytics audit with page grouping, opportunity sizing, and trend analysis |
-| hypothesis-generator | 1.1.0 | CRO experiment engine with 23 patterns, ICE scoring, and causal reasoning |
+| ga4-audit | 2.1.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, and trend analysis |
+| hypothesis-generator | 1.2.0 | CRO experiment engine with 28 patterns, ICE scoring, test feasibility, and causal reasoning |
 | render-default-deliverables | 1.0.0 | Generates client-ready deliverables from positioning context |
 
 ## Quick Start
@@ -80,9 +80,9 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 
 **positioning-framework** researches a company and its competitors, then produces structured context files with evidence-backed analysis. It runs autonomous web research across multiple source tiers (website, reviews, Reddit, SEC filings, job postings) depending on depth level. At standard and deep depth, render-default-deliverables runs automatically after it completes.
 
-**ga4-audit** pulls 10-13 reports from a GA4 property via the analytics-mcp server. Classifies conversion events, groups pages by type, sizes opportunities, and detects failure modes. Produces `performance-profile.md`. Standalone -- works with or without positioning context, though it can optionally enrich its output with product-line mappings from `company-identity.md` if one exists.
+**ga4-audit** pulls 10-15 reports from a GA4 property via the analytics-mcp server. Classifies conversion events, groups pages by type, sizes opportunities, discovers element-level interactions (CTA clicks, link text, custom parameters), and detects failure modes. Produces `performance-profile.md`. Standalone -- works with or without positioning context, though it can optionally enrich its output with product-line mappings from `company-identity.md` if one exists.
 
-**hypothesis-generator** reads everything the other skills produced and generates a prioritized experiment roadmap. Without GA4 data, it works from positioning gaps alone (confidence capped at 4/5). With GA4 data, it unlocks 8 additional performance-driven triggers, calibrates ICE scores using real traffic numbers, and adds baseline metrics to each hypothesis.
+**hypothesis-generator** reads everything the other skills produced and generates a prioritized experiment roadmap. Without GA4 data, it works from positioning gaps alone (confidence capped at 4/5). With GA4 data, it unlocks 19 performance-driven triggers, calibrates ICE scores using real traffic numbers, adds baseline metrics and test feasibility estimates to each hypothesis, and routes infeasible experiments (insufficient traffic) to "What's Not Here" with alternative approaches.
 
 **render-default-deliverables** converts context files into polished, shareable documents. No research, no analysis. Pure synthesis and formatting. Run it manually with `/render-default-deliverables` any time after editing context files.
 

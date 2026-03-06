@@ -1,7 +1,7 @@
 ---
 name: ga4-audit
-version: 2.0.0
-description: "When the user wants to audit GA4 analytics data for a property. Also use when the user mentions 'GA4 audit,' 'analytics audit,' 'traffic analysis,' 'page performance,' 'conversion audit,' 'bounce rate analysis,' or 'performance profile.' Pulls 10-13 targeted reports from GA4 via analytics-mcp, classifies events, and produces a structured performance-profile.md context file (.claude/context/ L1). Single agent, no depth flag. Works with any GA4 property accessible via analytics-mcp."
+version: 2.1.0
+description: "When the user wants to audit GA4 analytics data for a property. Also use when the user mentions 'GA4 audit,' 'analytics audit,' 'traffic analysis,' 'page performance,' 'conversion audit,' 'bounce rate analysis,' or 'performance profile.' Pulls 10-15 targeted reports from GA4 via analytics-mcp (including element-level interaction discovery), classifies events, and produces a structured performance-profile.md context file (.claude/context/ L1). Single agent, no depth flag. Works with any GA4 property accessible via analytics-mcp."
 ---
 
 # GA4 Audit
@@ -15,7 +15,7 @@ You are an analytics specialist. Your job is to pull structured performance data
 - Your output is machine-readable (YAML frontmatter + structured markdown), not a deliverable
 
 **Output location:** `.claude/context/performance-profile.md`
-**Token budget:** ~50-75K
+**Token budget:** ~50-80K
 **Runtime:** ~5-8 minutes
 **Agents:** Single agent. No multi-agent pipeline.
 **Model:** Opus
@@ -309,6 +309,62 @@ Output:
 |------|-------|----------|----------|---------------|-----|
 ```
 
+### Step 5b: Element-Level Interaction Discovery
+
+This step discovers custom event parameters and queries element-level interactions on top pages. It adds specificity to downstream hypotheses by capturing which elements visitors interact with (or don't).
+
+**Skip conditions:** If no custom dimensions/parameters exist AND enhanced measurement dimensions yield no data, skip entirely. Output: "No element-level interaction data available."
+
+#### Step 5b-1: Parameter Discovery
+
+Call `get_custom_dimensions_and_metrics` for the property. Collect:
+- Custom event-scoped dimensions (e.g., `customEvent:form_id`, `customEvent:cta_label`, `customEvent:button_text`)
+- Note which are event-scoped vs user-scoped (only event-scoped are useful here)
+
+Also check for standard enhanced measurement dimensions that carry element context:
+- `linkText` (from enhanced measurement click events)
+- `linkUrl` (from enhanced measurement click events)
+- `fileExtension`, `fileName` (from file_download events)
+- `videoTitle` (from video events)
+
+If no custom event-scoped dimensions exist AND no enhanced measurement element dimensions are available, skip this step entirely.
+
+#### Step 5b-2: Element Interaction Queries (max 5 additional `run_report` calls)
+
+For the top 3-5 non-navigation events by volume (from Step 3), query with page path + discovered parameter dimensions:
+
+```
+run_report:
+  dimensions: [pagePath, eventName, <discovered_parameter>]
+  metrics: [eventCount]
+  dimensionFilter: eventName IN [top non-navigation events]
+  date_range: as specified
+  limit: 100 rows
+  order_by: eventCount descending
+```
+
+Run one query per discovered parameter dimension (up to 5 total). If multiple parameters exist, prioritize:
+1. Custom parameters with "cta," "button," "label," or "form" in the name
+2. `linkText` (most informative standard dimension)
+3. `linkUrl`
+4. Other custom event-scoped dimensions
+5. `videoTitle`, `fileExtension`
+
+#### Step 5b-3: Compute Interaction Metrics
+
+For each page x event x parameter combination:
+- **Interaction rate:** `eventCount / page_sessions * 100` (using page sessions from Step 4)
+- **Relative share:** What percentage of that event type on that page does this element represent
+
+Flag notable findings:
+- Primary CTA click rate <3% on pages with >500 sessions (low CTA engagement)
+- One element gets >5x interactions of the next element for the same event type (CTA hierarchy dominance)
+- Later items in sequential elements (carousel slides, tab panels) get <20% of first item interactions (content below first view invisible)
+
+#### Step 5b-4: Record Results
+
+Store element interaction data for the frontmatter and body section. If no meaningful interactions were discovered, set `element_interactions_available: false` in frontmatter and skip the body section.
+
 ### Step 6: Channel/Source Report
 
 Pull channel and source breakdown using `run_report`:
@@ -504,7 +560,7 @@ Construct `.claude/context/performance-profile.md` with the structure below. Do 
 
 All fields required unless noted.
 
-- Metadata: `schema` ("performance-profile"), `schema_version` ("2.0"), `generated_by` ("ga4-audit"), `last_updated`, `last_updated_by` ("ga4-audit"), `confidence` (1-5), `company`, `property_id`, `property_name`, `date_range`, `days`
+- Metadata: `schema` ("performance-profile"), `schema_version` ("2.1"), `generated_by` ("ga4-audit"), `last_updated`, `last_updated_by` ("ga4-audit"), `confidence` (1-5), `company`, `property_id`, `property_name`, `date_range`, `days`
 - Traffic: `total_sessions`, `total_users`, `device_mobile_pct` (integer %)
 - Top pages (top 5 only): `top_pages[]` each with `path`, `sessions`, `bounce_rate`, `pages_per_session`, `avg_engagement_sec`, `failure_mode` (null | "shallow_engagement" | "deep_engagement")
 - Conversions (conversion-classified only): `conversion_events[]` each with `name`, `count`, `classification`. Plus `primary_conversion_event`, `primary_conversion_rate` (%)
@@ -514,10 +570,11 @@ All fields required unless noted.
 - Page groups: `page_groups[]` each with `group`, `url_pattern`, `monthly_sessions`, `conversion_rate`, `bounce_rate`, `page_count`
 - Opportunities: `top_opportunities[]` each with `page`, `issue`, `formula_type`, `current_metric`, `target_metric`, `monthly_sessions`, `estimated_monthly_impact` ("small" | "medium" | "large"), `action_category`, `sizing_note`
 - Data quality: `traffic_adequacy` ("high" | "adequate" | "low"), `sampling_applied` (bool)
+- Element interactions (from Step 5b, omit entirely when no element data): `element_interactions_available` (bool), `element_interaction_events` (int, number of events with element data), `discovered_parameters` (list of parameter names found), `top_interactions[]` each with `page`, `event`, `element` (parameter value, e.g. "Request Demo"), `parameter` (dimension name, e.g. "linkText"), `count`, `interaction_rate` (%). Top 10 by count.
 - Comparison (omit entirely when --no-compare): `comparison_period` with `start`, `end`. `trends` with `sessions_change_pct`, `primary_cvr_change_pp`, `bounce_rate_change_pp`, `mobile_bounce_change_pp`
 - L0: `l0_available` (bool), `l0_confidence` (int | null)
 
-#### Body Sections (8 REQUIRED, 1 OPTIONAL)
+#### Body Sections (8 REQUIRED, 2 OPTIONAL)
 
 All sections include trend tags when comparison is enabled.
 
@@ -532,8 +589,12 @@ All sections include trend tags when comparison is enabled.
 5. **Device & User Segment Performance** -- Device Breakdown: Device | Sessions | % of Total | Bounce Rate | Engagement Rate | Avg Duration | Conv Rate. Mobile vs Desktop Gap: Metric | Desktop | Mobile | Gap | Significance. New vs Returning: Segment | Sessions | % of Total | Bounce Rate | Engagement Rate | Avg Duration | Conv Rate. Include returning:new ratio and signal.
 6. **Landing Page Performance** -- Top Entry Pages (use `landingPage` dimension, not `pagePath`): Landing Page | Sessions | % of Entries | Bounce Rate | Engagement Rate | Conv Rate. High-Bounce Entry Points (>55% bounce, top 20): Landing Page | Sessions | Bounce Rate | Top Source | Notes. Source x Landing Page Mismatches: Landing Page | Better Channel | Worse Channel | Metric | Better Value | Worse Value | Gap.
 7. **Opportunity Sizing** -- Page | Issue | Formula | Impact Bucket | Action Category | Note. Each row includes sizing_note.
-8. **Key Metrics Summary** -- Strengths (2-4, cite numbers), Weaknesses (2-4, cite thresholds), Experiment Opportunities (3-5, cite metric gaps), Data Gaps. Each point cites specific numbers from sections 1-7.
-9. **L0 Enrichment Notes** (OPTIONAL) -- Product-Line Grouping Overrides, Funnel Stage Mapping, Tracking Gaps. Only when L0 consumed.
+8. **Key Metrics Summary** -- Strengths (2-4, cite numbers), Weaknesses (2-4, cite thresholds), Experiment Opportunities (3-5, cite metric gaps), Data Gaps. Each point cites specific numbers from sections 1-8.
+9. **Element-Level Interactions** (OPTIONAL, from Step 5b) -- Only present when element interaction data was discovered. 3 subsections:
+   - Discovered Parameters: Parameter | Scope | Source | Events With Data
+   - Per-Page Interaction Breakdown (top 10 pages by session volume that have element data): Page | Event | Element (parameter value) | Parameter | Count | Interaction Rate | Notes
+   - Interaction Gaps: pages with >500 sessions and primary CTA click rate <3%, CTA hierarchy dominance (one element >5x clicks of next), sequential content drop-off (<20% of first item). If none, "No notable interaction gaps detected."
+10. **L0 Enrichment Notes** (OPTIONAL) -- Product-Line Grouping Overrides, Funnel Stage Mapping, Tracking Gaps. Only when L0 consumed.
 
 #### Trend Tags
 
@@ -558,6 +619,7 @@ Performance profile written to .claude/context/performance-profile.md
   Traffic adequacy: [high/adequate/low]
   Confidence: [N]
   Comparison: [enabled, vs [start] to [end] | disabled (--no-compare)]
+  Element interactions: [N events with element data | no element data available]
 
   Key findings:
   - [top strength]
@@ -600,7 +662,7 @@ Step 11 adds a new section to the performance profile body: "L0 Enrichment Notes
 
 Before writing the final file, verify:
 
-1. [ ] All 8 REQUIRED body sections are present (populated or gap-marked)
+1. [ ] All 8 REQUIRED body sections are present (populated or gap-marked). OPTIONAL sections (Element-Level Interactions, L0 Enrichment Notes) present when applicable.
 2. [ ] YAML frontmatter has all required fields
 3. [ ] Sampling status is reported accurately
 4. [ ] Conversion events are classified and confirmed by user
@@ -619,6 +681,8 @@ Before writing the final file, verify:
 17. [ ] Underperforming pages use group-relative benchmarks (not site-wide)
 18. [ ] New vs Returning section present with signal classification
 19. [ ] Source x Landing Page Mismatches uses >15pp bounce / <50% CVR thresholds
+20. [ ] If element interaction data discovered: `element_interactions_available: true` in frontmatter, Element-Level Interactions body section present with all 3 subsections
+21. [ ] If no element interaction data: `element_interactions_available: false` in frontmatter (or field omitted entirely), no Element-Level Interactions body section
 
 ---
 
@@ -630,7 +694,8 @@ This skill uses the following analytics-mcp tools:
 |------|---------|---------|
 | `get_account_summaries` | Step 1 | Auth check + property discovery |
 | `get_property_details` | Step 2 | Property validation |
-| `run_report` | Steps 3-8 | All data queries |
+| `get_custom_dimensions_and_metrics` | Step 5b | Element parameter discovery |
+| `run_report` | Steps 3-8 (incl. 5b) | All data queries |
 
 **`run_report` parameters:**
 - `property_id`: GA4 property ID (numeric string)

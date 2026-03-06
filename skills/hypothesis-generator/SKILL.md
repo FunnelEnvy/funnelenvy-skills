@@ -1,6 +1,6 @@
 ---
 name: hypothesis-generator
-version: 1.1.0
+version: 1.2.0
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
 ---
 
@@ -37,7 +37,7 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--focus` | all | Restrict to one or more pattern categories. Comma-separated. Valid: `headlines`, `forms`, `navigation`, `personalization`, `layout`, `pricing`, `social-proof`, `content`, `trust` |
+| `--focus` | all | Restrict to one or more pattern categories. Comma-separated. Valid: `headlines`, `forms`, `navigation`, `personalization`, `layout`, `pricing`, `social-proof`, `content`, `trust`, `element-engagement` |
 | `--max` | 10 | Maximum number of hypotheses to produce (min 5, max 15) |
 
 ---
@@ -52,13 +52,18 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 - `competitive-landscape.md`: If missing, competitive pressure patterns (pricing transparency, differentiator crowding triggers) are unavailable. Those patterns are skipped.
 - `audience-messaging.md`: If missing, persona-based patterns (segment hero personalization, industry proof matching, nav intent mismatch) lose specificity. Generic versions are produced with a note.
 - `performance-profile.md`: If missing, all performance-driven hypothesis triggers are skipped. Confidence capped at 4 globally (no baseline data to validate assumptions). ICE scoring uses qualitative estimates only. Add "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses" to Prerequisites.
+  When performance-profile.md schema_version >= "2.1":
+    - All v2.0 features plus element-level interaction data
+    - 4 additional element interaction triggers fire in Phase 2 Step 1c
+    - Element data enriches hypotheses targeting pages with interaction baselines
+    - New patterns EE-01 (CTA Click-Through) and EE-02 (Element Engagement Drop-off) become available
   When performance-profile.md schema_version >= "2.0":
     - Page groups, source mismatches, trends, failure modes, and sized opportunities are available
     - Additional triggers fire in Phase 2 Step 1c (8 new triggers)
     - ICE modifiers in Phase 4 use sized opportunities and trend data
   When performance-profile.md schema_version = "1.0":
     - Existing v1 triggers still fire
-    - New v2 triggers are skipped (fields won't exist in frontmatter)
+    - New v2/v2.1 triggers are skipped (fields won't exist in frontmatter)
     - Backwards compatible, no breaking changes
 
 **Error states:**
@@ -88,7 +93,7 @@ Context available:
   audience-messaging.md (confidence: 4, depth: standard)
   performance-profile.md (confidence: 3, 30 days, 45.2K sessions)  [or: not found]
 
-Pattern categories active: all 9 (23 patterns loaded)
+Pattern categories active: all 10 (28 patterns loaded)
 Performance-driven triggers: [active | inactive (no performance-profile.md)]
 Evidence augmentation: [none | list loaded modules]
 Max hypotheses: 10
@@ -143,8 +148,10 @@ Experiment roadmap written to .claude/deliverables/experiment-roadmap.md
 
   [X] hypotheses produced ([Y] Quick Wins, [Z] Strategic Bets, [W] Explorations)
   [N] patterns matched, [M] context-derived, [K] performance-driven, [P] patterns skipped (insufficient context)
+  [F] experiments routed to "What's Not Here" (infeasible at current traffic)
   [D] data gaps identified (see Prerequisites section)
   Performance data: [available (N sessions, N days) | not available]
+  Element interaction data: [available (N events) | not available]
 
   Top experiment: [name] (ICE: [score])
 
@@ -188,6 +195,7 @@ Experiments are grouped into three tiers:
 
 **Current state:** [what exists now, with specific copy or structure referenced from the website]
 **Baseline:** [if performance-profile.md exists: sessions/mo, bounce rate, conversion rate for the target page. Omit this line entirely if no performance data.]
+**Test Feasibility:** [if Baseline exists and includes CVR: "~N weeks at 15% MDE (2 variants, N samples/variant). [Tier label]." If Baseline exists but no CVR: "Cannot estimate (no conversion rate baseline)." Omit this line entirely if no performance data.]
 **Proposed change:** [what the variant looks like]
 
 > **Before:** "[current headline or copy]"
@@ -227,7 +235,9 @@ Experiments are grouped into three tiers:
 
 [Patterns evaluated but excluded, with reasons. Example: "Pricing page experiments were considered but [Company] already publishes transparent pricing with clear tier differentiation." Prevents the reader from wondering about obvious omissions.
 
-Also includes patterns that COULD NOT be evaluated due to missing data. Cross-reference the Prerequisites section for what to collect.]
+Also includes:
+- Patterns that COULD NOT be evaluated due to missing data. Cross-reference the Prerequisites section for what to collect.
+- Experiments flagged as infeasible due to insufficient traffic. Include the page, the hypothesis summary, and the reason (e.g., "~45 weeks at 15% MDE, only 120 sessions/mo"). These are real opportunities that can't be validated with A/B testing at current traffic levels. Suggest alternative approaches: pre/post analysis, proxy metrics, or qualitative testing.]
 
 ## Prerequisites and Data Gaps
 
@@ -296,7 +306,9 @@ If `.claude/deliverables/experiment-roadmap.md` already exists:
 
 9. **Proof hierarchy is strict.** Never upgrade "claimed" evidence to "verified."
 
-10. **FunnelEnvy branding in footer.**
+10. **Test feasibility is honest.** When performance data exists, every hypothesis with a Baseline line also gets a Test Feasibility line. Experiments estimated at >26 weeks or with <100 sessions/mo are routed to "What's Not Here" with an explanation, not buried in the roadmap with optimistic scores.
+
+11. **FunnelEnvy branding in footer.**
 
 ---
 
@@ -308,7 +320,7 @@ SKILL.md (this file)
   ├── phases/detect-contextual.md   Phase 2b: context-derived opportunity detection
   ├── phases/construct.md           Phase 3: hypothesis construction with causal reasoning
   ├── phases/score.md               Phase 4: ICE scoring and sequencing
-  ├── modules/experiment-patterns.md   CRO pattern library (23 patterns, 9 categories)
+  ├── modules/experiment-patterns.md   CRO pattern library (28 patterns, 10 categories)
   ├── modules/ice-scoring.md           ICE calibration anchors and scoring rules
   └── modules/evidence-*.md            (optional) additional evidence sources and calibration data
 ```
