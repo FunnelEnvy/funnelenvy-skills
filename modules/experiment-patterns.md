@@ -41,11 +41,12 @@ Each pattern follows this structure:
 
 **Causal mechanism:** B2B buyers scanning above the fold decide in 3-5 seconds whether a page is relevant. Category language ("AI-powered revenue platform") forces cognitive work to translate features into personal value. Outcome language ("Close deals 40% faster") self-qualifies the visitor immediately.
 
-**ICE baseline:** Impact 4 | Confidence 4 | Ease 5
+**ICE baseline:** Impact 3 | Confidence 4 | Ease 5
 **Modifiers:**
 - Confidence +1 if audience-messaging provides specific channel adaptation for homepage
 - Confidence -1 if no exact current headline copy available in context
 - Impact +1 if scorecard rates Clarity as "Missing" (not just "Needs Work")
+- Impact +1 if the page is the top landing page by session volume (traffic justifies the priority)
 
 **Common mistakes:**
 - Testing two vague headlines against each other instead of testing clarity vs. ambiguity
