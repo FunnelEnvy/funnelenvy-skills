@@ -36,6 +36,7 @@ No arguments required. Context is discovered automatically from `.claude/context
 
 - At least one L1 context file must exist in `.claude/context/` (beyond just company-identity.md)
 - No other producing skill should be running concurrently
+- May be auto-invoked by positioning-framework at standard/deep depth after all agents complete
 
 ---
 

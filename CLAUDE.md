@@ -99,6 +99,7 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 - L2 skill NEVER produces files in `.claude/context/`
 - L2 skill NEVER performs web research, API calls, or data collection
 - L2 deliverables include a footer noting which context files were consumed (provenance)
+- **Exception:** hypothesis-generator reads L0 + L1 context and produces new analytical output (experiment hypotheses) in `.claude/deliverables/`. It is not L2 (it produces new analysis, not just synthesis). It does not perform web research or write to `.claude/context/`.
 
 ### Context Files (L0 + L1)
 
@@ -119,7 +120,7 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 | `.claude/deliverables/manifest.md` | Index of all deliverables | render-default-deliverables |
 | `.claude/deliverables/executive-summary.md` | Tier 1 | render-default-deliverables |
 | `.claude/deliverables/messaging-guide.md` | Tier 2 | render-default-deliverables |
-| `.claude/deliverables/experiment-roadmap.md` | Standalone | hypothesis-generator |
+| `.claude/deliverables/experiment-roadmap.md` | Analytical deliverable (see Cross-Layer Contracts exception) | hypothesis-generator |
 | `.claude/deliverables/competitive-comparison-matrix.md` | Tier 3 | render-default-deliverables |
 | `.claude/deliverables/battle-cards/[competitor-slug].md` | Tier 3 | render-default-deliverables |
 
