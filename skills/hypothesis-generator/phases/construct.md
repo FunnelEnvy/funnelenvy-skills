@@ -66,6 +66,7 @@ Document what exists now. This is the control in the experiment.
 **For structural experiments:**
 - Describe the current layout, form structure, navigation pattern, or page architecture based on what context files reveal
 - Flag when your understanding of current state is inferred rather than directly observed
+- **Do not assume a page has no conversion mechanism just because context files don't mention one.** Context files may not document every form, CTA, or interactive element. When claiming "no conversion path exists" for a page, note that this is based on available context and may need verification. If performance-profile.md shows 0 conversions for a page, that could mean no mechanism exists OR that an existing mechanism is not firing/tracked. State the ambiguity rather than asserting absence.
 
 **For personalization experiments:**
 - Document the current one-size-fits-all experience: what all visitors see regardless of segment
@@ -188,7 +189,11 @@ Before passing to Phase 4:
 
 2. **Remove unsubstantiated hypotheses.** If the current state can't be confirmed or reasonably inferred from any context file, remove entirely. Don't guess.
 
-3. **Remove trivially obvious fixes.** "Add a CTA to a page that has no CTA" is implementation, not experimentation. Flag these as "just do it" items in the "What's Not Here" section of the final roadmap.
+3. **Remove trivially obvious fixes.** Flag as "just do it" in the "What's Not Here" section when the action is obvious and the only question is whether to do it. Example: updating a stale metric, adding a generic "Contact us" link to a page that has none.
+
+   **Do NOT apply this filter when the page's conversion role is itself the hypothesis.** A brand page, culture page, content hub, or office locator with no CTA is not automatically a "just do it." The structural fix (add some CTA) may be obvious, but whether the page can function as a conversion asset, and what conversion mechanism fits, is a testable question. In these cases, construct the experiment around the conversion role hypothesis, not the CTA addition.
+
+   When such a hypothesis targets a page with <200 sessions/mo, route it through Step 5b feasibility estimation rather than killing it here. Low-traffic pages with legitimate hypotheses belong in "What's Not Here" under the infeasible framing (with alternative measurement suggestions like pre/post analysis), not in the "just do it" list.
 
 4. **Cap handling.** If more hypotheses survive than `--max`, pass all to Phase 4 for scoring. Cut the lowest-ICE hypotheses after scoring, not before. Don't pre-filter based on gut feel.
 
