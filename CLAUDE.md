@@ -13,7 +13,8 @@ funnelenvy-skills/
 │   ├── positioning-scorecard.md  # L1 schema (includes quick reference)
 │   ├── performance-profile.md    # L1 schema (GA4 analytics snapshot)
 │   ├── _fetch-registry.md        # Operational metadata schema (not L0/L1)
-│   └── _research-extractions.md  # Raw page extractions schema (operational)
+│   ├── _research-extractions.md  # Raw page extractions schema (operational)
+│   └── campaign-brief.md         # Campaign brief + companion schemas (landing-page-generator)
 ├── modules/
 │   ├── reddit-research.md        # Shared Reddit API integration (all skills)
 │   ├── web-extract.md            # Three-tier web extractor (markdown.new -> curl+HTMLParser -> WebFetch)
@@ -21,7 +22,9 @@ funnelenvy-skills/
 │   ├── slugify.md                # Deterministic name-to-slug rules for filenames
 │   ├── competitive-assessment.md # Claim assessment, similarity, overlap scoring (Agent 2)
 │   ├── experiment-patterns.md    # 28 CRO patterns across 10 categories (hypothesis-generator)
-│   └── ice-scoring.md            # ICE calibration anchors and scoring rules (hypothesis-generator)
+│   ├── ice-scoring.md            # ICE calibration anchors and scoring rules (hypothesis-generator)
+│   ├── conversion-playbook.md    # Paid LP structural rules, CTA, form, benchmarks (landing-page-generator)
+│   └── campaign-brief-template.md # Campaign brief template structure (landing-page-generator)
 ├── skills/
 │   ├── positioning-framework/
 │   │   ├── SKILL.md              # Orchestration hub v1 (~840 lines, depth-gated)
@@ -41,6 +44,16 @@ funnelenvy-skills/
 │   │       ├── detect-contextual.md # Context-derived opportunity detection (Phase 2b)
 │   │       ├── construct.md      # Hypothesis construction from matched patterns
 │   │       └── score.md          # ICE scoring and prioritization
+│   ├── landing-page-generator/
+│   │   ├── SKILL.md              # Orchestrator v1.0 (~4 phase agents, review gates)
+│   │   ├── agent-header.md       # Shared agent rules (all phases)
+│   │   ├── phases/               # Phase-specific instruction modules
+│   │   │   ├── brief.md          # Phase 1: campaign brief builder
+│   │   │   ├── copy.md           # Phase 2: landing page copy generation
+│   │   │   ├── design.md         # Phase 3: HTML page builder
+│   │   │   └── qa.md             # Phase 4: QA validation
+│   │   └── templates/
+│   │       └── wireframe.jsx     # React wireframe reference (structural patterns)
 │   └── render-default-deliverables/
 │       └── SKILL.md              # L2 rendering skill v1.0 (~single agent, no research)
 ├── examples/                     # Public examples
@@ -123,6 +136,10 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 | `.claude/deliverables/experiment-roadmap.md` | Analytical deliverable (see Cross-Layer Contracts exception) | hypothesis-generator |
 | `.claude/deliverables/competitive-comparison-matrix.md` | Tier 3 | render-default-deliverables |
 | `.claude/deliverables/battle-cards/[competitor-slug].md` | Tier 3 | render-default-deliverables |
+| `.claude/deliverables/campaigns/[slug]/brief.md` | Campaign brief | landing-page-generator (Phase 1) |
+| `.claude/deliverables/campaigns/[slug]/copy.md` | Landing page copy | landing-page-generator (Phase 2) |
+| `.claude/deliverables/campaigns/[slug]/page.html` | HTML landing page | landing-page-generator (Phase 3) |
+| `.claude/deliverables/campaigns/[slug]/qa-report.md` | QA validation report | landing-page-generator (Phase 4) |
 
 **Note:** The `.claude/deliverables/` directory is empty until render-default-deliverables runs. positioning-framework does not produce deliverables.
 
@@ -221,6 +238,7 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 4. **`/ga4-audit <property_id>`** (optional, produces performance-profile.md for traffic-driven hypotheses, ~5-8 min)
 5. **`/hypothesis-generator`** (produces experiment roadmap from L0 + L1 context + optional performance data)
 6. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
+7. **`/landing-page-generator <company> <slug> --stage all`** (optional, produces campaign landing page from L0 + L1 context, ~260-400K tokens)
 
 **Tip:** Add `--property <ga4_property_id>` to any positioning-framework invocation to use GA4 traffic data for page selection (e.g., `/positioning-framework https://example.com --property properties/123456789`). This runs a single lightweight query before research begins and saves the property ID to `company-identity.md` so downstream skills like ga4-audit can auto-detect it. The full ga4-audit still runs separately.
 
@@ -324,6 +342,25 @@ Property ID is optional. If omitted, auto-detects from `company-identity.md` fro
 Standalone CRO hypothesis engine. Reads positioning context (L0 + L1) plus optional performance data, applies
 28 experiment patterns across 10 categories plus performance-driven triggers, and produces a prioritized experiment
 roadmap with ICE scoring and test feasibility estimation. When `performance-profile.md` is present, produces data-calibrated scores, traffic-driven hypotheses, and per-experiment feasibility notes. Infeasible experiments (insufficient traffic) are routed to "What's Not Here" with alternative approaches. Manually invoked: /hypothesis-generator
+
+### landing-page-generator (v1.0.0)
+B2B paid landing page generator. Four-phase pipeline: Brief Builder, Copy Agent, Design Agent, QA Validator. Consumes L0+L1 context files and produces campaign-specific landing page deliverables. Each phase produces a file consumed by the next phase. Human review gates between phases when running the full pipeline.
+
+**Invocation:** `/landing-page-generator <company> <campaign-slug> [--stage brief|copy|design|qa|all] [--depth standard|deep]`
+
+**Phases:**
+- Phase 1 (Brief): Reads L0+L1 context, extracts into campaign brief template, resolves gaps interactively
+- Phase 2 (Copy): Generates section-by-section landing page copy from brief + conversion playbook
+- Phase 3 (Design): Builds single-file HTML page from copy + wireframe reference (stage isolation: does not read context files)
+- Phase 4 (QA): Validates copy and HTML against playbook checklist (runs inline, no subagent)
+
+**Dependencies:**
+- Hard: `company-identity.md` (confidence >= 3)
+- Soft: `audience-messaging.md`, `competitive-landscape.md`, `positioning-scorecard.md`, `performance-profile.md`, rendered deliverables
+
+**Outputs:** `.claude/deliverables/campaigns/<slug>/` (brief.md, copy.md, page.html, qa-report.md)
+
+**Runtime:** ~260-400K tokens for full pipeline. Individual phases: Brief ~50-80K, Copy ~80-120K, Design ~100-150K, QA ~30-50K.
 
 ## Development
 
