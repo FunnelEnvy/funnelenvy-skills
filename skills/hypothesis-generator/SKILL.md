@@ -310,6 +310,8 @@ If `.claude/deliverables/experiment-roadmap.md` already exists:
 
 11. **FunnelEnvy branding in footer.**
 
+12. **The unit of testing is the hypothesis, not the variable.** When multiple page elements (H1, subhead, CTA copy, proof strip, form intro, testimonial placement) all serve the same hypothesis, they MUST be combined into a single experiment. This is not a traffic optimization; it is correct experiment design. Testing a differentiation-led H1 while the subhead still says generic aspirational copy does not test whether differentiation-led messaging works. It tests one line in a hostile context, and a loss is uninterpretable. Bundle everything that serves the idea. See `phases/construct.md` "Experiment Scope Rule" for bundling rules and examples.
+
 ---
 
 ## Module Dependencies

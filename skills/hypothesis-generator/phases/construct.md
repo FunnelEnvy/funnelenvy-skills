@@ -20,6 +20,29 @@ This phase does not vary by depth.
 
 ---
 
+## Experiment Scope Rule
+
+**The unit of testing is the hypothesis, not the variable.**
+
+This is not a traffic optimization. It is correct experiment design. An experiment tests whether a strategic idea works. Page elements (headline, subhead, proof strip, CTA copy, form structure, testimonial placement) are not independent ideas. They are components of an idea. Testing them separately does not tell you whether the idea works, because the untouched elements may be undermining or distorting the result.
+
+Example: if you test a differentiation-led H1 while the subhead still says "faster, with better results," you have not tested differentiation-led messaging. You have tested one line of differentiation-led copy in a generic context. A loss is uninterpretable: did differentiation fail, or did the generic subhead dilute it?
+
+**Bundling rule:** When multiple page elements all serve the same testable idea, they MUST be combined into a single experiment variant. You are testing whether a messaging strategy, proof approach, or structural pattern works. Not which DOM element contributed most.
+
+**Examples of correct bundling:**
+- Hypothesis: "Differentiation-led messaging outperforms generic category language" -> Change the H1, subhead, and hero CTA copy together. One experiment.
+- Hypothesis: "Customer-attributed proof increases trust on evaluation pages" -> Add proof strip, logo bar, and testimonial quote together. One experiment.
+- Hypothesis: "Reducing form friction increases completion" -> Multi-step form, progress indicator, value reinforcement, and field reduction together. One experiment.
+
+**Examples of incorrect splitting:**
+- "Test H1 first, then test subhead separately, then test CTA" when all three serve the same hypothesis. You have not tested the hypothesis. You have tested fragments of it in hostile contexts.
+- "Test proof strip on /pricing first, then separately on /hire-tech-candidates" when the hypothesis is identical. Run on both pages simultaneously.
+
+This constraint applies throughout the construction process below. When evaluating opportunities from Phase 2, actively look for opportunities targeting the same page with the same underlying hypothesis and merge them before constructing individual experiments.
+
+---
+
 ## Construction Process
 
 ### Step 1: Page and Element Identification
@@ -59,7 +82,7 @@ Document what exists now. This is the control in the experiment.
 Define the specific variant to test.
 
 **Rules:**
-- One variable per experiment. If the hypothesis changes headline AND CTA, split into two experiments or clearly define the primary variable.
+- One hypothesis per experiment. Multiple elements (headline, subhead, CTA, proof strip) can change in a single experiment as long as they all serve the same hypothesis. Don't artificially constrain variants to a single DOM element -- constrain them to a single testable idea. See the **B2B Experiment Design Constraint** section above: the unit of testing is the hypothesis, not the variable.
 - Proposed changes must be grounded in context. For copy changes, adapt from audience-messaging.md channel adaptations, value themes, or persona-specific messaging. For structural changes, apply the pattern's typical test from experiment-patterns.md.
 - Do NOT invent new creative from scratch. The proposed change should be traceable to either the pattern library or the messaging analysis.
 - Be concrete enough that a developer or copywriter could implement the variant without clarifying questions.
