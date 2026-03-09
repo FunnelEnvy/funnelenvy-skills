@@ -41,6 +41,48 @@ Skip this section if copy.md does not exist.
 | C9 | Voice consistency | Spot-check 3 sections against the brief's voice rules. Flag any "Doesn't Sound Like" language. | PASS / FAIL + flagged phrases |
 | C10 | [GAP] markers documented | List all `[GAP]` markers remaining in copy.md. These are known weaknesses, not failures. | INFO |
 
+### ATF Copy Checks (6 checks)
+
+These checks apply to the above-the-fold section of copy.md and/or page.html.
+
+**ATF-1: Header Specificity**
+Does the H1 contain a concrete, specific benefit? Flag if it uses any banned vague patterns: "Transform," "Revolutionize," "Unlock," "Empower," "Streamline," "Next-generation," "World-class," "Cutting-edge," "Best-in-class."
+Run the litmus test: could a competitor use this exact headline? If yes, FAIL.
+- Pass: Specific benefit named
+- Fail: Vague or generic language detected
+
+**ATF-2: Bold Claim Sourced**
+If the H1, hook line, or subheader makes a quantitative claim (percentage, time saved, cost reduction, multiplier), is it traceable to a proof point ID in the brief or L0?
+- Pass: Claim traces to a verified or supported proof point
+- Pass (no claim): No quantitative claim present (not required, just checked when present)
+- Fail: Quantitative claim with no traceable source
+
+**ATF-3: Objection Addressed**
+Does the ATF copy (headline, hook, or subheader) address the target persona's primary challenge or a likely buying objection?
+Cross-reference: brief.md target_persona -> audience-messaging.md persona primary_challenge.
+- Pass: Primary objection addressed in ATF
+- Warn: No objection handling detected (acceptable if bold claim is strong)
+- Fail: ATF copy doesn't connect to persona's challenges at all
+
+**ATF-4: CTA Narrative Test**
+Read the primary CTA button text in isolation. Is it generic?
+Flag any of: "Get Started," "Learn More," "Request Demo," "Contact Us," "Sign Up," "Submit."
+Then read the CTA after the headline. Does it feel like the natural next step?
+- Pass: CTA is specific and continues the headline narrative
+- Fail: CTA is generic or disconnected from headline
+
+**ATF-5: Persona Alignment**
+Does the ATF copy use the target persona's language and reference their world?
+Cross-reference: brief.md target_persona -> audience-messaging.md persona role, segment.
+- Pass: Copy speaks to a specific role/context
+- Fail: Copy addresses "everyone" or uses internal product terminology instead of buyer language
+
+**ATF-6: Subheader Completeness**
+Does the subheader accomplish both jobs: (1) explain what the product is (category) and (2) explain how the headline's claim is achievable (mechanism/features)?
+- Pass: Both jobs covered in 1-2 sentences
+- Warn: Only one job covered
+- Fail: Subheader is missing, vague, or longer than 2 sentences
+
 ### Step 3: Run Design QA (against page.html)
 
 Skip this section if page.html does not exist.

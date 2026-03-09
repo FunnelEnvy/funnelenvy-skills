@@ -57,6 +57,24 @@ Read the full `copy.md` including frontmatter. Extract:
 
 The wireframe is an annotated reference. Use its spatial composition and interaction patterns. Strip all annotation components (AnnotationTag, StrategyNote, SectionLabel, WireframeBox placeholders) and replace with real content and production styling.
 
+### ATF Design Constraints
+
+These constraints apply to the hero/above-the-fold section of the HTML output.
+
+**Negative space:** ATF elements (headline, hook line, subheadline, CTA, hero image) must have generous spacing. Minimum 16px vertical gap between text elements. Minimum 32px gap between the text column and the image/visual column. Background must not compete with text. No busy patterns, no low-contrast overlays. If the background is an image, it must have a solid or gradient overlay ensuring text contrast ratio >= 4.5:1.
+
+**Hero image:** Should show the product in action (screenshot, GIF, or short video). If copy.md does not specify a hero image, use a dashed placeholder box per wireframe.jsx pattern. Do not substitute abstract illustrations or stock photography. A clean placeholder is better than a misleading image.
+
+**Nav bar (paid LP):** Zero navigation links. Logo only. No escape routes. Every element serves the single conversion goal specified in the brief.
+
+**Nav bar (non-paid LP):** Maximum 2-4 navigation links + 1 primary CTA button. The primary CTA gets the greatest visual emphasis (filled button, contrasting color). Other nav links are text-only or outlined. Don't trigger analysis paralysis with excessive options.
+
+**Which nav rule applies:** If the brief specifies `target_keywords` (indicating paid traffic), use the paid LP nav rule. If the brief does not specify keywords or explicitly notes organic/direct traffic, use the non-paid LP rule. When in doubt, default to zero nav (paid LP rule).
+
+**Hook line rendering:** If copy.md includes a hook line (marked `[OPTIONAL]` in copy output), render it as a separate element between the headline and subheadline. Visually: smaller than the headline, larger than the subheadline, same color as headline. See wireframe.jsx hero section for exact sizing. If copy.md does not include a hook line, omit the element entirely. Do not generate a hook line in the design phase.
+
+**CTA button:** Must be the most visually prominent interactive element above the fold. Use the primary button style (filled, high contrast). If the wireframe specifies a lightbox trigger, the CTA onClick opens the lightbox. Do not render the form inline in the hero unless copy.md or the brief explicitly specifies inline form placement.
+
 ### Step 3: Resolve Brand Styling
 
 Check for a brand style guide. If not found, ask the human for:

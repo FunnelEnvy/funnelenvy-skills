@@ -65,15 +65,64 @@ Load the selective context described above. Cross-reference proof points in the 
 Produce copy for every section in the playbook's section order. Each section is a markdown heading in the output file.
 
 **Section 1: Hero**
-- Generate headline options per the brief's headline strategy:
-  - Option A: Pain-forward (lead with buyer's problem)
-  - Option B: Keyword-forward (lead with primary search term)
-  - Option C: Proof-forward (lead with strongest metric)
+
+### Headline Generation Process
+
+Before generating headline variants, complete these steps in order:
+
+**Step 1: Run the Bad Alternative Exercise (conversion-playbook.md Rule 2)**
+Using `company-identity.md` differentiators and category:
+1. Name the specific bad alternative the target persona resorts to without this product
+2. Name how this product is specifically better
+3. Convert step 2 into an action statement
+
+Write the exercise output before proceeding. This is the raw material for all headline variants.
+
+**Step 2: Pull the strongest proof point**
+From `company-identity.md` Proof Point Registry, find the highest-tier proof point relevant to the brief's target persona:
+- Prefer `verified` tier (named customer + specific metric)
+- Fall back to `supported` if no verified proof exists
+- Note the proof point ID (e.g., P3) for traceability
+
+If no proof points exist at verified or supported tier, note this gap and skip the proof-led headline variant.
+
+**Step 3: Identify the #1 buying objection**
+From `audience-messaging.md`, pull the target persona's `primary_challenge`. Infer the most likely buying objection from that challenge. Common B2B objections: implementation time, integration complexity, requires technical skills, cost, requires organizational buy-in.
+
+**Step 4: Generate three headline variants**
+Using the exercise output, proof point, and objection:
+
+- **Headline A (Pain-led):** Built from the Bad Alternative Exercise. Names the specific bad alternative and how the product eliminates it.
+- **Headline B (Proof-led):** Leads with the strongest verified proof point as a bold claim. Skip this variant if only `claimed` tier proof exists.
+- **Headline C (Objection-led):** Leads with the product benefit while preemptively handling the #1 buying objection.
+
+Each variant must pass the Specificity Litmus Test (conversion-playbook.md Rule 1): replace the company name with a competitor's. If the headline still works, rewrite it.
+
+**Step 5: Generate hook line for each variant**
+For each headline, write an optional hook line (1 sentence) that complements the headline:
+- If headline is pain-led (A): hook adds the bold claim
+- If headline is proof-led (B): hook adds objection handling
+- If headline is objection-led (C): hook adds the bold claim
+
+The hook line goes between the headline and subheadline. It's structurally separate (see wireframe.jsx hero section). Mark as `[OPTIONAL]` in copy.md output so the design agent knows it can be omitted.
+
 - Mark which option is recommended and why.
 - Subheadline: 1 sentence explaining HOW the company delivers the outcome.
 - CTA button text: exactly as specified in the brief. Same text every time it appears.
 - Social proof line: "Trusted by [X] companies" or similar, using a metric from the brief.
 - If the brief has a `[GAP]` on ad copy, write headlines that message-match the target keywords directly.
+
+### CTA Text Generation
+
+Apply conversion-playbook.md Rule 6 (CTA Narrative Continuation).
+
+Generate CTA text that continues the recommended headline's narrative. The CTA is the actionable next step to fulfilling the headline's claim.
+
+Run the litmus test: read the CTA in isolation. If it makes sense without the headline, it's too generic. Rewrite.
+
+Generate one primary CTA and one alternate. Both must use the same narrative thread.
+
+Form submission buttons (lightbox or inline) use direct, action-specific text ("Book My Demo," "Download the Guide") and do not need to follow the narrative rule.
 
 **Section 2: Social Proof Bar**
 - Header text: "Trusted by teams at" or equivalent.

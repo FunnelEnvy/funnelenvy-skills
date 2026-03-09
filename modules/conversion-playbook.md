@@ -249,7 +249,91 @@ Full company-identity.md bodies, performance profiles, all-persona audience rese
 
 ---
 
-## 9. QA Checklist
+## 9. ATF Copy Principles
+
+Six rules for above-the-fold copy. These apply to all landing pages (paid and organic). Agents reference these by rule name.
+
+### Rule 1: Header Specificity
+
+The H1 must name a specific benefit. No corporate abstractions.
+
+**Vague (fail):** "Transform your onboarding experience" / "Unlock growth" / "Empower your team" / "Streamline operations"
+**Specific (pass):** "Cut onboarding time from 3 months to 3 weeks" / "Find every compliance gap before your auditor does"
+
+**Litmus test:** Replace the company name with a competitor's. If the headline still works, it's too vague. A specific headline is true for exactly one product.
+
+**Banned patterns:** "Transform," "Revolutionize," "Unlock," "Empower," "Streamline," "Next-generation," "World-class," "Cutting-edge," "Best-in-class." These are filler, not positioning.
+
+### Rule 2: Value Prop Derivation (Bad Alternative Exercise)
+
+The method for generating H1 candidates. Run this exercise before writing any headline:
+
+1. **What bad alternative do people resort to when they lack this product?** (e.g., "manually reconciling spreadsheets," "hiring a consultant for $50K," "waiting 6 weeks for a report")
+2. **How is this product specifically better than that bad alternative?** (e.g., "automated reconciliation in 10 minutes," "self-serve audit at 1/10th the cost," "real-time dashboards")
+3. **Turn step 2 into an action statement.** That is the value prop and the starting point for the H1.
+
+Source data: `company-identity.md` differentiators, category, target_market. If L0 doesn't have clear differentiators, flag as `[NEEDS CLIENT INPUT]` and use the best available data.
+
+This exercise produces the *content* of the headline. Rules 3-5 shape *how* it's delivered.
+
+### Rule 3: Hook -- Bold Claim
+
+The ATF should include a bold, specific claim that triggers curiosity. This can live in the H1 itself, a second headline line, or the first sentence of the subheader.
+
+**Requirements:**
+- Must be specific and quantified when possible ("147% increase in pipeline" not "dramatically better results")
+- Must be believable. If it sounds too good to be true, it is. Cap claims at what evidence supports.
+- Must be traceable to an L0 proof point. Prefer `verified` tier (named customer + specific metric). Fall back to `supported` if no verified proof exists. Never use `claimed` tier for bold claims.
+
+**Source:** `company-identity.md` Proof Point Registry. Pull the strongest verified proof point relevant to the target persona's primary challenge.
+
+**When to use:** Most effective when the product has strong quantitative proof. If proof points are weak or only `claimed` tier, skip the bold claim and use Rule 4 (objection handling) instead.
+
+### Rule 4: Hook -- Objection Preemption
+
+Proactively address the #1 buying objection in the header or subheader. Don't let visitors retain unaddressed concerns that cause them to bounce before scrolling.
+
+**Method:**
+1. Identify the target persona's `primary_challenge` from `audience-messaging.md`
+2. Identify likely objections: "What almost stopped existing customers from buying?" Common B2B objections: implementation time, integration complexity, requires technical skills, too expensive, requires team buy-in.
+3. Address the single biggest objection in the ATF. Don't try to handle all objections here. The rest go in the FAQ/Objection Handling section below the fold.
+
+**Example:** If the product is a website builder, the #1 objection might be "I don't know how to code." The header addresses this: "Build production websites without writing a line of code."
+
+**Balance:** Don't bloat the header with multiple objection responses. One objection, handled cleanly.
+
+**Source:** `audience-messaging.md` personas[].primary_challenge. If audience-messaging.md is unavailable, use `company-identity.md` target_market context to infer likely objections, but cap confidence at 3.
+
+### Rule 5: Persona-Direct Copy
+
+ATF copy must address the primary persona by role and context. Never write to "everyone."
+
+**Requirements:**
+- Use the persona's language, not internal product terminology
+- Reference their world (their problems, their tools, their metrics) not the product's features
+- If the campaign brief specifies a single persona, write exclusively to them
+- If multiple personas are targeted, implement "choose your own adventure" routing: a persona selector above the fold that routes to persona-specific page sections or separate pages
+
+**Source:** The single persona selected in the campaign brief (`brief.md` target_persona field). Cross-reference with `audience-messaging.md` for that persona's role, segment, primary_challenge, and language patterns.
+
+**Litmus test:** Read the ATF copy aloud. Does it sound like you're talking to a specific person in a specific role? Or does it sound like a press release? If the latter, rewrite.
+
+### Rule 6: CTA Narrative Continuation
+
+CTA button text must continue the story the header started. It is the actionable next step to fulfilling the header's claim.
+
+**Generic (fail):** "Get Started" / "Learn More" / "Request Demo" / "Contact Us" / "Sign Up" / "Submit"
+**Narrative (pass):** "See how [outcome] works" / "Start [achieving benefit]" / "Get your [deliverable]" / "Find your [result]"
+
+**Litmus test:** Read the CTA in isolation, without the header. If it makes sense on its own, it's too generic. A good CTA only makes sense as the next step after reading the header.
+
+**Consistency:** All CTAs on the page (hero, mid-page, final) should use the same narrative thread. They can vary in phrasing but should point to the same action and the same promise. Don't introduce new value props in mid-page or final CTAs.
+
+**Exception:** Form submission buttons (inside lightboxes or inline forms) should be direct and action-specific ("Book My Demo," "Download the Guide"). At that point the visitor has committed. The narrative CTA gets them to the form; the form CTA confirms the action.
+
+---
+
+## 10. QA Checklist
 
 ### Copy QA
 - [ ] Headline message-matches target keywords / ad copy
