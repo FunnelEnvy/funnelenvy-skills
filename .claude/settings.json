@@ -1,0 +1,16 @@
+{
+  "extraKnownMarketplaces": {
+    "fe-sys-hq": {
+      "source": {
+        "source": "github",
+        "repo": "FunnelEnvy/fe-sys-hq"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "fe-governance@fe-sys-hq": true,
+    "claude-code-management@fe-sys-hq": true,
+    "fe-knowledge-base@fe-sys-hq": true,
+    "fe-integrations@fe-sys-hq": true
+  }
+}
