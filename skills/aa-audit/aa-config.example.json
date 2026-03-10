@@ -1,0 +1,19 @@
+{
+  "company_id": "your_company_id",
+  "report_suite": "your_report_suite_id",
+  "dimensions": {
+    "page": "variables/evar4",
+    "link_text": "variables/evar200",
+    "region": "variables/clickmapregion"
+  },
+  "conversion_events": [
+    {"id": "metrics/event3", "name": "Form Complete", "classification": "conversion"},
+    {"id": "metrics/event33", "name": "Qualified Messenger", "classification": "conversion"},
+    {"id": "metrics/event34", "name": "Qualified Conversation", "classification": "conversion"},
+    {"id": "metrics/event36", "name": "Qualified Meeting", "classification": "conversion"}
+  ],
+  "engagement_events": [
+    {"id": "metrics/event47", "name": "Click Event", "classification": "engagement"}
+  ],
+  "reusable_segments": {}
+}
