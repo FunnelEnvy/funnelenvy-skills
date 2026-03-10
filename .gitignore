@@ -11,3 +11,6 @@ test-runs/
 # Task tracking (session-specific)
 tasks/
 TODO/
+
+# Python bytecode
+__pycache__/
