@@ -1,7 +1,7 @@
 # Phase 4: QA Validator
 
 > **Reads:** agent-header.md (shared rules) + this file
-> **Depends on:** modules/conversion-playbook.md (Section 9: QA Checklist)
+> **Depends on:** modules/conversion-playbook.md (Section 9: QA Checklist), modules/lp-audit-taxonomy.md (10-dimension scoring framework)
 > **Input:** `.claude/deliverables/campaigns/<slug>/brief.md` + `copy.md` + `page.html` (whichever exist)
 > **Output:** `.claude/deliverables/campaigns/<slug>/qa-report.md`
 
@@ -109,6 +109,27 @@ Skip this section if page.html does not exist.
 | X1 | All copy.md content in HTML | Systematically compare each section's text content. Flag any additions, deletions, or modifications. | PASS / FAIL + diffs |
 | X2 | No copy added by design agent | Search HTML for text content not present in copy.md (excluding structural labels and HTML comments). | PASS / FAIL |
 
+### Step 4b: Taxonomy Dimension Scoring
+
+After completing the Section 9 checklist, run the generated LP artifacts through the 10-dimension audit taxonomy. This is a holistic quality assessment layered on top of the prescriptive checklist.
+
+**Inputs for scoring:**
+- `brief.md` (for D1 awareness stage, D3 message match, D6 form strategy)
+- `copy.md` (for D2 value prop, D4 structure, D5 social proof, D7 persuasion, D8 copy quality, D10 differentiation)
+- `page.html` (for D4 structure, D6 CTA visibility, D9 visual/UX)
+- `.claude/context/` L0 + L1 frontmatter (for context-dependent checks in D5, D7, D10)
+
+**Scoring process:**
+1. Classify page type from the brief (paid search LP, paid social LP, homepage, product page, long-form sales page, pricing page).
+2. Apply context-dependent weighting from the taxonomy's weighting table. Priority dimensions get full assessment. Deprioritized dimensions get a quick pass.
+3. Score each of the 10 dimensions as Strong / Needs Work / Missing.
+4. For each "Needs Work" or "Missing" dimension, write one specific recommendation with a reference to the artifact and line/section where the issue appears.
+5. Any dimension scoring "Missing" is a QA blocker. Set `overall: FAIL` if any dimension is Missing.
+
+**Scoring does NOT re-read context file bodies.** Read frontmatter only (~200 tokens per file) for D5/D7/D10 context checks. The copy and brief artifacts contain enough information for the remaining dimensions.
+
+**Token budget:** The taxonomy module is ~4,800 tokens. QA runs inline (no subagent), so this is absorbed by the orchestrator's context window. Total QA token cost increases from ~15K to ~20K.
+
 ### Step 5: Write Report
 
 Write to `.claude/deliverables/campaigns/<slug>/qa-report.md`:
@@ -116,7 +137,7 @@ Write to `.claude/deliverables/campaigns/<slug>/qa-report.md`:
 ```yaml
 ---
 schema: qa-report
-schema_version: "1.0"
+schema_version: "1.1"
 client: <company-name>
 campaign: <campaign-slug>
 files_checked:
@@ -125,6 +146,21 @@ files_checked:
 copy_checks: <pass-count>/<total>
 design_checks: <pass-count>/<total>
 cross_checks: <pass-count>/<total>
+dimension_ratings:
+  awareness_stage_alignment: <strong|needs_work|missing>
+  value_proposition_clarity: <strong|needs_work|missing>
+  message_match: <strong|needs_work|missing>
+  page_structure: <strong|needs_work|missing>
+  social_proof_strategy: <strong|needs_work|missing>
+  cta_and_form_design: <strong|needs_work|missing>
+  persuasion_psychology: <strong|needs_work|missing>
+  copy_quality_readability: <strong|needs_work|missing>
+  visual_design_ux: <strong|needs_work|missing>
+  competitive_differentiation: <strong|needs_work|missing>
+strong_count: <int>
+needs_work_count: <int>
+missing_count: <int>
+top_issue: <dimension_name>
 overall: <PASS|FAIL>
 generated_by: "landing-page-generator/qa"
 last_updated: <ISO-8601>
@@ -156,6 +192,24 @@ Body format:
 
 | # | Check | Result | Notes |
 |---|-------|--------|-------|
+
+## Taxonomy Dimension Scores
+
+| Dimension | Rating | Recommendation |
+|-----------|--------|---------------|
+| D1: Awareness-Stage Alignment | Strong/Needs Work/Missing | [specific recommendation if not Strong] |
+| D2: Value Proposition Clarity | ... | ... |
+| D3: Message Match | ... | ... |
+| D4: Page Structure | ... | ... |
+| D5: Social Proof Strategy | ... | ... |
+| D6: CTA and Form Design | ... | ... |
+| D7: Persuasion Psychology | ... | ... |
+| D8: Copy Quality / Readability | ... | ... |
+| D9: Visual Design / UX | ... | ... |
+| D10: Competitive Differentiation | ... | ... |
+
+**Dimension summary:** [X] Strong, [Y] Needs Work, [Z] Missing
+**Top issue:** [dimension name and one-line description]
 
 ## Gaps Carried Forward
 

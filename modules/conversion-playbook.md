@@ -333,7 +333,94 @@ CTA button text must continue the story the header started. It is the actionable
 
 ---
 
-## 10. QA Checklist
+## 10. Copy Generation Guardrails
+
+### Headline Approach by Awareness Stage
+
+The brief's `traffic_awareness_stage` field determines which headline approach is primary:
+
+| Stage | Primary approach | Headline leads with... |
+|-------|-----------------|----------------------|
+| Unaware | Story / pattern interrupt | Provocative question or surprising stat, NOT the product |
+| Problem Aware | Pain-led | Name the specific pain, then bridge to solution category |
+| Solution Aware | Keyword-led + differentiation | Mirror search intent, add "the only X that Y" differentiator |
+| Product Aware | Proof-led | Specific result metric from a named customer |
+| Most Aware | Offer-led | The deal, the incentive, the simplified next step |
+
+When `traffic_awareness_stage` is not set in the brief, default to Solution Aware (safest middle ground for B2B).
+
+### Readability Target
+
+Write all LP copy at a 7th-9th grade reading level (Flesch-Kincaid). This is not dumbing down; it is clarity optimization.
+
+Benchmark data (Unbounce, 41K pages, 57M conversions):
+- 5th-7th grade reading level: 11.1% median conversion rate
+- College/university level: 5.3% median conversion rate
+- Difficult vocabulary correlates with 24.3% lower conversions
+
+Rules:
+- Sentences under 20 words average
+- Paragraphs under 4 lines on desktop
+- No jargon unless the brief's `target_keywords` contain it (mirror buyer language, not internal terminology)
+- Active voice default. Passive voice only when the actor is genuinely irrelevant.
+
+### Copy Anti-patterns (Hard Avoid List)
+
+The copy agent must not produce any of the following patterns:
+
+- **Corporate speak.** "Leverage our best-in-class solution to optimize synergies." Rewrite as a specific benefit in plain language.
+- **Self-referential opening.** "Welcome to [Company]" or "We are the leading provider of..." The visitor does not care who you are. Open with what you do for them.
+- **Feature-first framing.** "Our platform has AI-powered analytics." Rewrite as outcome: "See which leads will close this quarter."
+- **Hedging language.** "May help you potentially improve..." Cut qualifiers. State the benefit directly.
+- **Unsubstantiated superlatives.** "The best," "the leading," "world-class" without a proof point ID reference.
+
+If a draft contains any of these, the copy agent must rewrite before outputting.
+
+### Rule of One
+
+Each LP targets:
+- **One reader** (one persona from the brief's `target_persona`)
+- **One big idea** (one core message derived from the brief's positioning)
+- **One promise** (one primary outcome the visitor will achieve)
+- **One offer** (one CTA, one next step from the brief's `offer_type`)
+
+If the brief specifies multiple personas or offers, the copy agent asks the human to pick one or split into separate campaigns. Do not write a single page that serves multiple personas at equal weight.
+
+### Proof Placement: Specificity Gradient
+
+Social proof should increase in specificity as the visitor scrolls deeper:
+
+| Page zone | Proof type | Example |
+|-----------|-----------|---------|
+| ATF (above fold) | Logo bar, aggregate number | "Trusted by 500+ B2B teams" + 5-8 client logos |
+| Mid-page (features) | Named testimonial aligned to nearby feature | "Onboarding took 2 days, not 2 months - VP Ops, Acme Corp" |
+| Pre-CTA (bottom) | Specific metric + named customer (highest-tier proof point) | "Reduced CAC 34% in Q1 - Dir. Marketing, [Client]" |
+
+Pull proof point IDs from the L0 Proof Point Registry. Prefer `verified` tier (named customer + specific metric) near the CTA. Use `supported` tier (named customer + praise, no metric) mid-page. Never use `claimed` tier (unattributed) as standalone social proof.
+
+When fewer than 3 proof points exist in the registry, flag in the brief's `gaps` field and note in copy output. Do not fabricate proof.
+
+### CTA Copy Validation: "I Want To ___" Test
+
+Every CTA button text must complete the sentence: "I want to ___."
+
+- "Start My Free Trial" -> "I want to start my free trial." PASS.
+- "Submit" -> "I want to submit." FAIL. Submit what? To whom?
+- "Learn More" -> "I want to learn more." WEAK. More about what?
+- "Get My Custom Audit" -> "I want to get my custom audit." PASS.
+
+CTA commitment level must match the brief's `traffic_awareness_stage`:
+
+| Stage | CTA commitment | Examples |
+|-------|---------------|---------|
+| Unaware / Problem Aware | Low | "See How It Works," "Get the Guide" |
+| Solution Aware | Medium | "Compare Plans," "Watch Demo" |
+| Product Aware | Medium-high | "Start Free Trial," "Book a Walkthrough" |
+| Most Aware | High | "Buy Now," "Activate My Account," "Get Started" |
+
+---
+
+## 11. QA Checklist
 
 ### Copy QA
 - [ ] Headline message-matches target keywords / ad copy

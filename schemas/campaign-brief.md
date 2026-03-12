@@ -1,7 +1,7 @@
 # Campaign Brief Schema Reference
 
 > **Schema:** campaign-brief
-> **Version:** 1.0
+> **Version:** 1.1
 > **Authoritative source:** Inline schema in `skills/landing-page-generator/phases/brief.md` Step 6
 > **This file:** Human-readable reference copy only. If this file diverges from the phase file, the phase file wins.
 
@@ -11,12 +11,14 @@
 
 ```yaml
 schema: campaign-brief              # Fixed value
-schema_version: "1.0"               # Semver string
+schema_version: "1.1"               # Semver string
 client: str                          # Company name from company-identity.md
 campaign: str                        # Kebab-case campaign slug
 service_line: str                    # Service or offer name
 target_persona: str                  # Persona title + qualifier
 target_keywords: [str]               # Search terms driving traffic
+traffic_awareness_stage: str         # unaware | problem_aware | solution_aware | product_aware | most_aware
+traffic_source: str                  # paid_search | paid_social_cold | paid_social_retargeting | email | organic | referral | direct
 offer_type: str                      # demo | consultation | content | quote
 form_strategy:
   fields: int                        # Number of form fields
@@ -81,4 +83,4 @@ No YAML frontmatter (HTML file). Metadata stored in an HTML comment block at the
 
 ---
 
-*Schema reference v1.0 | Last updated March 2026*
+*Schema reference v1.1 | Last updated March 2026*
