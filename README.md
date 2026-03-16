@@ -8,10 +8,11 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 
 | Skill | Version | Description |
 |-------|---------|-------------|
-| positioning-framework | 1.0.0 | Autonomous positioning and messaging framework from web research |
-| ga4-audit | 2.1.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, and trend analysis |
-| hypothesis-generator | 1.2.0 | CRO experiment engine with 28 patterns, ICE scoring, test feasibility, and causal reasoning |
-| render-default-deliverables | 1.0.0 | Generates client-ready deliverables from positioning context |
+| [positioning-framework](skills/positioning-framework/SKILL.md) | 1.0.0 | Autonomous positioning and messaging framework from web research |
+| [ga4-audit](skills/ga4-audit/SKILL.md) | 2.1.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, and trend analysis |
+| [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.2.0 | CRO experiment engine with 28 patterns, ICE scoring, test feasibility, and causal reasoning |
+| [landing-page-generator](skills/landing-page-generator/SKILL.md) | 1.0.0 | B2B paid landing page generator with brief, copy, design, and QA phases |
+| [render-default-deliverables](skills/render-default-deliverables/SKILL.md) | 1.0.0 | Generates client-ready deliverables from positioning context |
 
 ## Quick Start
 
@@ -28,6 +29,7 @@ Run a skill:
 /positioning-framework https://example.com
 /ga4-audit properties/123456789
 /hypothesis-generator
+/landing-page-generator example-co campaign-slug --stage all
 ```
 
 Research output goes to `.claude/context/`. Deliverables go to `.claude/deliverables/`.

@@ -374,3 +374,11 @@ When creating or editing skills:
 6. Follow the schema definitions in `/schemas/` for any context files produced
 7. Include a Preconditions section stating what must exist before the skill runs
 8. Implement Prior Work Detection: check for existing context files before researching
+
+## README Sync Rule
+
+When a skill is added, removed, or has its version changed in `skills/`, update `README.md` to match:
+
+1. **Skills table:** Add or remove the skill row. Each skill name must link to its `SKILL.md` file using the format `[skill-name](skills/skill-name/SKILL.md)`. Include the version from the skill's YAML frontmatter and a one-line description.
+2. **Skill count:** If the README mentions a skill count anywhere, update it to reflect the current number of skills in `skills/`.
+3. **Invocation examples:** If the new skill has a user-facing invocation (e.g., `/landing-page-generator`), add it to the "Run a skill" examples in the Quick Start section.
