@@ -1,15 +1,6 @@
 ---
-fe-managed: true
-name: intent-routing
-document_type: fe-governance-deploy/rule-document
-preload_instructions: >
-  Before taking further action with this document, you MUST read the document-management skill, the fe-governance-deploy skill and all skills dependent to it, and the rule-document-template.md template file.
-description: >
-  Intent to plugin routing for all managed repos. Maps user intent categories to the appropriate
-  plugin, with skills handling fine-grained matching via trigger descriptions.
-version: "1.0.0"
-created: 2026-03-06
-updated: 2026-03-12
+version: "1.0.1"
+updated: 2026-03-16
 ---
 
 # Intent Routing

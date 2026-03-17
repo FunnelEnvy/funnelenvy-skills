@@ -1,15 +1,6 @@
 ---
-fe-managed: true
-name: repo-conventions
-document_type: fe-governance-deploy/rule-document
-preload_instructions: >
-  Before taking further action with this document, you MUST read the document-management skill, the fe-governance-deploy skill and all skills dependent to it, and the rule-document-template.md template file.
-description: >
-  File/directory naming, git conventions, credentials, .gitignore, and resource naming patterns
-  for all managed repos.
-version: "1.0.0"
-created: 2026-03-06
-updated: 2026-03-12
+version: "1.0.1"
+updated: 2026-03-16
 ---
 
 # Repo Conventions

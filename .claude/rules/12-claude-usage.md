@@ -1,15 +1,6 @@
 ---
-fe-managed: true
-name: claude-usage
-document_type: fe-governance-deploy/rule-document
-preload_instructions: >
-  Before taking further action with this document, you MUST read the document-management skill, the fe-governance-deploy skill and all skills dependent to it, and the rule-document-template.md template file.
-description: >
-  Claude Code agent behavior conventions for all managed repos. Covers skill resolution priority
-  and user-level vs. repo-level context ownership.
-version: "1.0.0"
-created: 2026-03-08
-updated: 2026-03-12
+version: "1.0.1"
+updated: 2026-03-16
 ---
 
 # Claude Usage
