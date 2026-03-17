@@ -1,12 +1,24 @@
+# Environment and credentials
+.env
+.env.*
+
+# Development directories (may contain client references)
+skills/**/_dev/
+
 # Test run outputs (generated, not source)
 test-runs/
 
 # Claude Code context files (generated per-project)
 .claude/context/
 .claude/deliverables/
+.claude/settings.local.json
 
 # Business briefs contain client-specific data
 .claude/business-brief.md
+
+# Internal content and session state
+content-briefs/
+start.md
 
 # Task tracking (session-specific)
 tasks/

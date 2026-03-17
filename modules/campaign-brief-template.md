@@ -149,7 +149,7 @@ If not yet written, describe the ad theme in 1-2 sentences.]
 
 **Post-submit flow**: [e.g., "Redirect to Calendly embed. Prospect books own slot."]
 
-**Regulatory / compliance**: [e.g., "Required disclaimer: 'Acme Corp is not a CPA firm.' Banned terms: see Language Guidance below."]
+**Regulatory / compliance**: [e.g., "Required disclaimer: 'Acme Corp is not a licensed advisory firm.' Banned terms: see Language Guidance below."]
 
 **Language Guidance**:
 
