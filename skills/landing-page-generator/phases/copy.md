@@ -164,7 +164,7 @@ Form submission buttons (lightbox or inline) use direct, action-specific text ("
 - Logo placement
 - Copyright line
 - Legal links: Privacy Policy, Terms
-- Required disclaimers from the brief (e.g., "Acme Corp is not a CPA firm.")
+- Required disclaimers from the brief (e.g., "Acme Corp is not a licensed advisory firm.")
 - Nothing else. No sitemap, no social icons, no blog links.
 
 **Lightbox Form Copy**

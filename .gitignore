@@ -1,3 +1,10 @@
+# Environment and credentials
+.env
+.env.*
+
+# Development directories (may contain client references)
+skills/**/_dev/
+
 # Test run outputs (generated, not source)
 test-runs/
 
