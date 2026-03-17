@@ -12,6 +12,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | ga4-audit | 2.1.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, and trend analysis |
 | hypothesis-generator | 1.2.0 | CRO experiment engine with 28 patterns, ICE scoring, test feasibility, and causal reasoning |
 | render-default-deliverables | 1.0.0 | Generates client-ready deliverables from positioning context |
+| experiment-mockup | 1.0.0 | Visual mockup generator for experiment hypotheses with CRO placement rationale |
 
 ## Quick Start
 
@@ -28,6 +29,7 @@ Run a skill:
 /positioning-framework https://example.com
 /ga4-audit properties/123456789
 /hypothesis-generator
+/experiment-mockup 1
 ```
 
 Research output goes to `.claude/context/`. Deliverables go to `.claude/deliverables/`.
@@ -73,6 +75,8 @@ Examples:
 | experiment-roadmap.md | Prioritized experiment plan (produced by hypothesis-generator) |
 | competitive-comparison-matrix.md | Structured comparison grid across competitors |
 | battle-cards/[competitor].md | One-page competitor reference cards |
+| experiments/[slug]/mockup.html | Standalone HTML mockup of proposed experiment change |
+| experiments/[slug]/placement.md | CRO placement rationale and implementation notes |
 
 ## How It Works
 
@@ -83,6 +87,8 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 **ga4-audit** pulls 10-15 reports from a GA4 property via the analytics-mcp server. Classifies conversion events, groups pages by type, sizes opportunities, discovers element-level interactions (CTA clicks, link text, custom parameters), and detects failure modes. Produces `performance-profile.md`. Standalone -- works with or without positioning context, though it can optionally enrich its output with product-line mappings from `company-identity.md` if one exists.
 
 **hypothesis-generator** reads everything the other skills produced and generates a prioritized experiment roadmap. Without GA4 data, it works from positioning gaps alone (confidence capped at 4/5). With GA4 data, it unlocks 19 performance-driven triggers, calibrates ICE scores using real traffic numbers, adds baseline metrics and test feasibility estimates to each hypothesis, and routes infeasible experiments (insufficient traffic) to "What's Not Here" with alternative approaches.
+
+**experiment-mockup** takes a hypothesis from the experiment roadmap and builds a visual mockup showing the proposed change in the context of the real target page. In live mode (requires Chrome DevTools MCP), it injects the change into the user's browser, matches the site's design system using computed styles, and iterates on placement and styling in real time. In static mode (automatic fallback), it extracts page HTML and builds a standalone mockup file. Both modes produce a CRO placement rationale explaining why the element is positioned where it is, what visual hierarchy strategy it uses, and how the dev team should implement it.
 
 **render-default-deliverables** converts context files into polished, shareable documents. No research, no analysis. Pure synthesis and formatting. Run it manually with `/render-default-deliverables` any time after editing context files.
 
@@ -99,7 +105,10 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 # 3. Generate data-informed experiment ideas
 /hypothesis-generator
 
-# 4. Re-render deliverables any time context changes
+# 4. Visualize specific experiment changes as mockups
+/experiment-mockup 1
+
+# 5. Re-render deliverables any time context changes
 /render-default-deliverables
 ```
 

@@ -9,7 +9,7 @@ description: "When the user wants to generate a B2B paid landing page from exist
 > **Version:** 1.0.0
 > **Type:** Multi-phase pipeline with human review gates
 > **Model:** opus (all phases)
-> **Depends on:** modules/conversion-playbook.md, modules/campaign-brief-template.md
+> **Depends on:** modules/conversion-playbook.md, modules/campaign-brief-template.md, modules/lp-audit-taxonomy.md (construct mode)
 
 Generates B2B paid landing pages from existing positioning context. Four phases: Brief Builder, Copy Agent, Design Agent, QA Validator. Each phase produces a file that the next phase consumes.
 
@@ -154,8 +154,8 @@ After the final phase (or single phase), summarize what was produced:
 | Phase | Estimated Tokens | Notes |
 |-------|-----------------|-------|
 | Brief (Phase 1) | ~50-80K | Reads L0+L1 context, interactive gap filling |
-| Copy (Phase 2) | ~80-120K | Reads brief + playbook module + positioning context |
-| Design (Phase 3) | ~100-150K | Reads copy + structural rules + wireframe reference |
+| Copy (Phase 2) | ~85-125K | Reads brief + playbook module + taxonomy construct mode (D1,D2,D3,D5,D7,D8,D10) + positioning context |
+| Design (Phase 3) | ~105-155K | Reads copy + structural rules + taxonomy construct mode (D4,D6,D9) + wireframe reference + brand design system (if available) |
 | QA (Phase 4) | ~30-50K | Validation pass, no generation |
 | Full pipeline | ~260-400K | All four phases with review gates |
 

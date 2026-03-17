@@ -1,7 +1,7 @@
 # Phase 3: Design Agent
 
 > **Reads:** agent-header.md (shared rules) + this file
-> **Depends on:** modules/conversion-playbook.md (sections 1-6 only), templates/wireframe.jsx (structural reference)
+> **Depends on:** modules/conversion-playbook.md (sections 1-6 only), modules/lp-audit-taxonomy.md (construct mode: D4, D6, D9), templates/wireframe.jsx (structural reference)
 > **Input:** `.claude/deliverables/campaigns/<slug>/copy.md` (Phase 2 output)
 > **Output:** `.claude/deliverables/campaigns/<slug>/page.html`
 
@@ -47,6 +47,18 @@ Read the full `copy.md` including frontmatter. Extract:
 - Section 5: Section order (the 9-section sequence)
 - Section 6: Mobile rules (mobile-first, tap targets, load time)
 
+**From `modules/lp-audit-taxonomy.md` (construct mode: D4, D6, D9):**
+
+Read the Construct Mode section (table at bottom) plus the full dimension text for D4, D6, and D9. These dimensions contain best-practice constraints that apply during page construction:
+
+| Dimension | Construct-mode constraint |
+|-----------|--------------------------|
+| D4: Page Structure | ATF must include all 5 elements: headline, subheader, visual, CTA, social proof micro-signal. BTF follows logical persuasion arc (value -> proof -> objections -> action). Subheadings must tell a coherent story when scanned independently. CTA at every 2-3 scroll heights. No navigation leaks on campaign LPs. |
+| D6: CTA and Form Design | CTA must be the highest-contrast interactive element above the fold. Button text must pass the "I want to ___" test. Form fields: 3-5 ideal for lead gen, 7+ is an abandonment cliff. If brief specifies more fields (client override), implement but note the friction risk. Touch targets >= 44px on mobile. Inline validation preferred. |
+| D9: Visual Design / UX | Clear visual eye path: headline -> visual -> subheader -> CTA. CTA button must be the most visually distinct element on page. Use product screenshots or dashboard visuals, not stock photography. Whitespace between sections prevents cognitive overload. Mobile-first: content adapts (not just reflows). Alt text on images, logical heading hierarchy (H1 > H2 > H3), keyboard navigability. |
+
+These are construction constraints, not just QA checks. Apply them as you build each section.
+
 **From `templates/wireframe.jsx`:**
 - Section layout patterns (grid columns, spacing, alignment)
 - Lightbox modal structure (overlay, blur, close button, form layout)
@@ -77,17 +89,38 @@ These constraints apply to the hero/above-the-fold section of the HTML output.
 
 ### Step 3: Resolve Brand Styling
 
-Check for a brand style guide. If not found, ask the human for:
+Search for a brand style guide or design system. Check these locations in order:
+
+1. **Context directory:** Glob the context directory (`.claude/context/` or the project's context path) for files matching `brand*`, `design-system*`, `style-guide*`, `brand-design*`. This is an **exception to stage isolation** -- brand/design files are visual references, not positioning context.
+2. **Campaign directory:** Check `.claude/deliverables/campaigns/<slug>/` for a brand guide provided alongside other campaign files.
+3. **Human-provided:** If the human mentioned a brand file or design system path, read it.
+
+If a brand file is found, read it in full. Extract and apply:
+- Color palette (primary, secondary, neutral/grey scale, status colors)
+- Typography (font family, size scale, weight rules, line-height, letter-spacing)
+- Button component specs (sizes, padding, border-radius, hover/pressed/disabled states)
+- Form input styles (height, padding, border, focus state, error state)
+- Spacing system (grid base, section padding, content max-width)
+- Border radius tokens
+- Shadow tokens
+- Navigation patterns (if brand has a standard nav structure like a corporate bar)
+- Logo assets (URLs, variants for light/dark backgrounds)
+- Anti-patterns (explicitly prohibited design choices)
+
+If no brand file is found, ask the human for:
 1. Primary brand color (hex)
 2. Secondary/accent color (hex)
 3. Font preference (or use a clean sans-serif default: Inter, DM Sans, or system fonts)
 4. Logo: URL, file path, or "use placeholder"
+5. "Do you have a brand design system or style guide file I should reference?"
 
 Map brand colors to the wireframe's color roles:
 - `#1A1A18` (dark/primary) -> primary brand dark or keep as-is for high contrast
 - `#E85D3A` (accent/CTA) -> primary brand color for CTAs and highlights
 - `#F5F0E8` / `#FFFDF9` (light backgrounds) -> adjust to complement brand palette
 - `#8C8575` (muted text) -> keep neutral or adjust for brand warmth/coolness
+
+If a brand design system specifies exact component specs (button heights, padding, radius, form input styles), use those values exactly. Do not approximate or "modernize" brand specs. The brand system is authoritative for all visual properties it defines.
 
 ### Step 4: Build HTML
 

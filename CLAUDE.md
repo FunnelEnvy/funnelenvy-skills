@@ -54,6 +54,15 @@ funnelenvy-skills/
 │   │   │   └── qa.md             # Phase 4: QA validation
 │   │   └── templates/
 │   │       └── wireframe.jsx     # React wireframe reference (structural patterns)
+│   ├── experiment-mockup/
+│   │   ├── SKILL.md              # Orchestrator v1.0.0 (~parses flags, detects mode, routes phases)
+│   │   ├── agent-header.md       # Shared agent rules (all phases)
+│   │   └── phases/               # Phase-specific instruction modules
+│   │       ├── inspect.md        # Phase 1 (live): navigate, locate section, extract styles
+│   │       ├── inject.md         # Phase 2 (live): build + inject content, iterate with user
+│   │       ├── capture.md        # Phase 3 (live): screenshot, extract HTML, write mockup.html
+│   │       ├── annotate.md       # Phase 4 (both): CRO placement rationale
+│   │       └── static-build.md   # Fallback: combined extract + build (no DevTools)
 │   └── render-default-deliverables/
 │       └── SKILL.md              # L2 rendering skill v1.0 (~single agent, no research)
 ├── examples/                     # Public examples
@@ -113,6 +122,7 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 - L2 skill NEVER performs web research, API calls, or data collection
 - L2 deliverables include a footer noting which context files were consumed (provenance)
 - **Exception:** hypothesis-generator reads L0 + L1 context and produces new analytical output (experiment hypotheses) in `.claude/deliverables/`. It is not L2 (it produces new analysis, not just synthesis). It does not perform web research or write to `.claude/context/`.
+- **Exception:** experiment-mockup reads `experiment-roadmap.md` and makes web requests (DevTools navigation or curl extraction) to build visual mockups in `.claude/deliverables/experiments/`. It is not a pure L2 skill (it makes web requests, violating the "L2 never makes web requests" invariant). The violation is contained and documented, following the same pattern as hypothesis-generator.
 
 ### Context Files (L0 + L1)
 
@@ -140,6 +150,9 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 | `.claude/deliverables/campaigns/[slug]/copy.md` | Landing page copy | landing-page-generator (Phase 2) |
 | `.claude/deliverables/campaigns/[slug]/page.html` | HTML landing page | landing-page-generator (Phase 3) |
 | `.claude/deliverables/campaigns/[slug]/qa-report.md` | QA validation report | landing-page-generator (Phase 4) |
+| `.claude/deliverables/experiments/<slug>/mockup.html` | Standalone HTML mockup of proposed experiment change | experiment-mockup |
+| `.claude/deliverables/experiments/<slug>/placement.md` | CRO placement rationale + implementation notes | experiment-mockup |
+| `.claude/deliverables/experiments/<slug>/mockup-screenshot.png` | Browser screenshot of injected state (live mode only) | experiment-mockup |
 
 **Note:** The `.claude/deliverables/` directory is empty until render-default-deliverables runs. positioning-framework does not produce deliverables.
 
@@ -239,6 +252,7 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 5. **`/hypothesis-generator`** (produces experiment roadmap from L0 + L1 context + optional performance data)
 6. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
 7. **`/landing-page-generator <company> <slug> --stage all`** (optional, produces campaign landing page from L0 + L1 context, ~260-400K tokens)
+8. **`/experiment-mockup <hypothesis-number>`** (optional, produces visual mockup + placement rationale for a specific hypothesis)
 
 **Tip:** Add `--property <ga4_property_id>` to any positioning-framework invocation to use GA4 traffic data for page selection (e.g., `/positioning-framework https://example.com --property properties/123456789`). This runs a single lightweight query before research begins and saves the property ID to `company-identity.md` so downstream skills like ga4-audit can auto-detect it. The full ga4-audit still runs separately.
 
@@ -350,9 +364,9 @@ B2B paid landing page generator. Four-phase pipeline: Brief Builder, Copy Agent,
 
 **Phases:**
 - Phase 1 (Brief): Reads L0+L1 context, extracts into campaign brief template, resolves gaps interactively
-- Phase 2 (Copy): Generates section-by-section landing page copy from brief + conversion playbook
-- Phase 3 (Design): Builds single-file HTML page from copy + wireframe reference (stage isolation: does not read context files)
-- Phase 4 (QA): Validates copy and HTML against playbook checklist (runs inline, no subagent)
+- Phase 2 (Copy): Generates section-by-section landing page copy from brief + conversion playbook + LP audit taxonomy (construct mode: D1,D2,D3,D5,D7,D8,D10)
+- Phase 3 (Design): Builds single-file HTML page from copy + wireframe reference + LP audit taxonomy (construct mode: D4,D6,D9) + brand design system (if available in context directory). Stage isolation exception: brand/design files are read from context directory.
+- Phase 4 (QA): Validates copy and HTML against playbook checklist + LP audit taxonomy (10-dimension scoring). Runs inline, no subagent.
 
 **Dependencies:**
 - Hard: `company-identity.md` (confidence >= 3)
@@ -360,7 +374,28 @@ B2B paid landing page generator. Four-phase pipeline: Brief Builder, Copy Agent,
 
 **Outputs:** `.claude/deliverables/campaigns/<slug>/` (brief.md, copy.md, page.html, qa-report.md)
 
-**Runtime:** ~260-400K tokens for full pipeline. Individual phases: Brief ~50-80K, Copy ~80-120K, Design ~100-150K, QA ~30-50K.
+**Runtime:** ~270-410K tokens for full pipeline. Individual phases: Brief ~50-80K, Copy ~85-125K, Design ~105-155K, QA ~30-50K.
+
+### experiment-mockup (v1.0.0)
+Visual mockup generator for proposed experiment changes. Takes a hypothesis from `experiment-roadmap.md`, navigates to the target page, injects the proposed change styled to match the site's design, iterates with the user in real time, then captures the approved state as a standalone HTML artifact with CRO placement rationale. Two modes: live (Chrome DevTools MCP, interactive, ~90% visual fidelity) and static (HTML extraction fallback, non-interactive, ~70% fidelity).
+
+**Invocation:** `/experiment-mockup <hypothesis-number> [--url <override-url>] [--static]`
+
+**Phases:**
+- Phase 1 (Inspect, live only): Navigate to page, locate target section, extract computed styles via DevTools MCP
+- Phase 2 (Inject, live only): Build content block, inject into live DOM, iterate with user on placement/styling/copy
+- Phase 3 (Capture, live only): Screenshot viewport, extract section HTML, build standalone mockup.html
+- Phase 4 (Annotate, both modes): Write placement.md with CRO rationale, attention strategy, implementation notes
+- Static Build (fallback): Fetch page HTML via web-extract pipeline, parse CSS, build mockup.html
+
+**Dependencies:**
+- Hard: `experiment-roadmap.md` (produced by hypothesis-generator)
+- Soft: Chrome DevTools MCP (degrades to static mode if unavailable)
+- Does NOT read L0/L1 context files (hypothesis is the single source of truth)
+
+**Outputs:** `.claude/deliverables/experiments/<slug>/` (mockup.html, placement.md, mockup-screenshot.png)
+
+**Runtime:** ~40-80K tokens (live, variable with iteration), ~30-50K tokens (static).
 
 ## Development
 

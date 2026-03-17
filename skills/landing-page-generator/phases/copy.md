@@ -1,7 +1,7 @@
 # Phase 2: Copy Agent
 
 > **Reads:** agent-header.md (shared rules) + this file
-> **Depends on:** modules/conversion-playbook.md (structural rules, section order, CTA strategy)
+> **Depends on:** modules/conversion-playbook.md (structural rules, section order, CTA strategy), modules/lp-audit-taxonomy.md (construct mode: D1, D2, D3, D5, D7, D8, D10)
 > **Input:** `.claude/deliverables/campaigns/<slug>/brief.md` (Phase 1 output) + positioning context files (selective)
 > **Output:** `.claude/deliverables/campaigns/<slug>/copy.md`
 
@@ -48,13 +48,27 @@ Read the full `brief.md`. Extract:
 - Language guidance (banned terms, required disclaimers)
 - Any `[GAP]` markers (handle with extra care)
 
-### Step 2: Read Conversion Playbook
+### Step 2: Read Conversion Playbook and Taxonomy
 
 Read `modules/conversion-playbook.md`. Focus on:
 - Section 2: CTA Strategy (placement rules, copy rules, lightbox default)
 - Section 3: Form Strategy (field defaults, multi-step rules, UX)
 - Section 4: Post-Submit Flow (flow options, confirmation page elements)
 - Section 5: Page Section Order (the 9-section sequence + copy guidelines per section)
+
+Read `modules/lp-audit-taxonomy.md` Construct Mode section (table at bottom) plus the full dimension text for D1, D2, D5, D7, D8, and D10. These dimensions contain best-practice constraints that apply during copy generation, not just during QA. Specifically:
+
+| Dimension | Construct-mode constraint |
+|-----------|--------------------------|
+| D1: Awareness-Stage Alignment | Set headline approach based on the brief's `traffic_awareness_stage`. Product-aware traffic gets proof-led or pain-led copy. Problem-aware gets problem agitation. Match CTA commitment level to awareness stage. |
+| D2: Value Proposition Clarity | H1 must pass the caveman test and specificity audit. Subheader covers exactly one of: what the product is, or how the headline claim is achievable. No vague claims ("save time," "grow revenue") without specifics. |
+| D3: Message Match | If ad copy is available in the brief, the H1 must echo the ad's core phrase. If unavailable, flag as `[GAP]` and optimize for target keyword match instead. |
+| D5: Social Proof Strategy | Place proof by specificity gradient: ATF gets aggregate numbers/logos, mid-page gets named testimonials, bottom gets detailed metrics. At least 2 distinct proof types. Align strongest proof to the primary buying objection. |
+| D7: Persuasion Psychology | Apply loss framing in at least one section (what they risk by not acting). Pre-empt top 2-3 objections before the FAQ. Include risk reversal language near the CTA if applicable ("no obligation," "cancel anytime"). Consider a micro-commitment path if the primary CTA is high-commitment. |
+| D8: Copy Quality | Write at 7th-9th grade level. Follow the Rule of One (one persona, one big idea, one promise, one offer). Subheadings must tell a coherent story when read independently. No corporate speak, hedging language, or passive voice. |
+| D10: Competitive Differentiation | Lead with white-space claims (where competitors are weak or absent). Avoid overlap-zone claims unless uniquely provable. If competitive-landscape.md shows high claim_overlap_score, the copy must work harder on differentiation. |
+
+These are generation constraints, not a post-hoc checklist. Apply them as you write each section.
 
 ### Step 3: Load Positioning Context
 
