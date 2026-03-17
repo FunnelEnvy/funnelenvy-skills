@@ -1,6 +1,6 @@
 ---
-version: "1.0.1"
-updated: 2026-03-16
+version: "1.1.0"
+updated: 2026-03-17
 ---
 
 # Intent Routing
@@ -23,9 +23,19 @@ DO NOT skip this gate. Skipping is a rule violation even if the task appears sim
 
 Load the governing skill to ensure relevant standards are in context. All applicable rows MUST be completed — they are not mutually exclusive.
 
+### File Signals
+
 | Signal | Load |
 |---|---|
-| File contains YAML frontmatter (`---` block) | `document-management` skill (which then parses `document_type`, if present, to load the owning skill) |
+| File contains `fe-managed: true` frontmatter field | `document-management` skill (which then parses `document_type`, if present, to load the owning skill) |
+| File contains `managed_by` frontmatter field | The skill named in `managed_by` |
 | File is in a `_dev/` directory or filename starts with `chg_` | `change-management` skill |
-| User intent is to create a new managed resource (plugin, skill, knowledge base, etc.) or plan a change to an existing one | `change-management` skill |
+
+### Intent Signals
+
+| Signal | Load |
+|---|---|
+| User intent is to create a new skill, plugin, or marketplace resource | The resource-specific management skill ("what") and `change-management` skill |
+| User intent is to create a new knowledge base | The KB type skill ("what") and `knowledge-base` skill |
+| User intent is to plan a change to an existing resource | `change-management` skill |
 | Any skill is being invoked | `skill-management` skill (so that skill dependencies resolve correctly) |
