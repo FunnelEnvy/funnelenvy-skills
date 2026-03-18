@@ -12,6 +12,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | ga4-audit | 2.1.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, and trend analysis |
 | hypothesis-generator | 1.2.0 | CRO experiment engine with 28 patterns, ICE scoring, test feasibility, and causal reasoning |
 | render-default-deliverables | 1.0.0 | Generates client-ready deliverables from positioning context |
+| positioning-update | 1.0.0 | Apply client feedback and corrections to positioning context files |
 | experiment-mockup | 1.0.0 | Visual mockup generator for experiment hypotheses with CRO placement rationale |
 
 ## Quick Start
@@ -27,6 +28,7 @@ Run a skill:
 
 ```
 /positioning-framework https://example.com
+/positioning-update
 /ga4-audit properties/123456789
 /hypothesis-generator
 /experiment-mockup 1
@@ -90,6 +92,8 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 
 **experiment-mockup** takes a hypothesis from the experiment roadmap and builds a visual mockup showing the proposed change in the context of the real target page. In live mode (requires Chrome DevTools MCP), it injects the change into the user's browser, matches the site's design system using computed styles, and iterates on placement and styling in real time. In static mode (automatic fallback), it extracts page HTML and builds a standalone mockup file. Both modes produce a CRO placement rationale explaining why the element is positioned where it is, what visual hierarchy strategy it uses, and how the dev team should implement it.
 
+**positioning-update** applies client feedback, stakeholder corrections, and new intelligence to existing context files. Paste an email, Slack thread, or meeting notes and it classifies each piece of information, shows you a structured change plan, and executes surgical edits after approval. No web research. Triggers deliverable re-render automatically.
+
 **render-default-deliverables** converts context files into polished, shareable documents. No research, no analysis. Pure synthesis and formatting. Run it manually with `/render-default-deliverables` any time after editing context files.
 
 ### Recommended Order
@@ -99,16 +103,19 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 # Add --property to use GA4 data for page selection (optional)
 /positioning-framework https://example.com --property properties/123456789
 
-# 2. Pull analytics data (what's actually happening on your site)
+# 2. Apply client feedback to correct and enrich context (optional)
+/positioning-update
+
+# 3. Pull analytics data (what's actually happening on your site)
 /ga4-audit properties/123456789
 
-# 3. Generate data-informed experiment ideas
+# 4. Generate data-informed experiment ideas
 /hypothesis-generator
 
-# 4. Visualize specific experiment changes as mockups
+# 5. Visualize specific experiment changes as mockups
 /experiment-mockup 1
 
-# 5. Re-render deliverables any time context changes
+# 6. Re-render deliverables any time context changes
 /render-default-deliverables
 ```
 

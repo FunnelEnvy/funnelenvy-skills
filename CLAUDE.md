@@ -35,6 +35,8 @@ funnelenvy-skills/
 │   │       ├── competitive.md    # Competitive analysis + inline schema (depth-gated)
 │   │       ├── messaging.md      # Personas + messaging + voice + inline schema
 │   │       └── scoring.md        # Scorecard + QA + inline schema (depth-gated)
+│   ├── positioning-update/
+│   │   └── SKILL.md              # Client feedback amendment skill v1.0 (~single agent)
 │   ├── ga4-audit/
 │   │   └── SKILL.md              # GA4 analytics audit v2.0 (~single agent, analytics-mcp)
 │   ├── hypothesis-generator/
@@ -248,11 +250,12 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 1. **`/positioning-framework <url> --depth quick`** (optional fast triage, ~5-8 min, ~70-90K tokens)
 2. **`/positioning-framework <url>`** (standard depth, produces all L0 + L1 context + deliverables, ~450-500K tokens across subagents)
 3. **`/positioning-framework <url> --depth deep`** (extends competitive context to deep, ~550-650K tokens across subagents)
-4. **`/ga4-audit <property_id>`** (optional, produces performance-profile.md for traffic-driven hypotheses, ~5-8 min)
-5. **`/hypothesis-generator`** (produces experiment roadmap from L0 + L1 context + optional performance data)
-6. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
-7. **`/landing-page-generator <company> <slug> --stage all`** (optional, produces campaign landing page from L0 + L1 context, ~260-400K tokens)
-8. **`/experiment-mockup <hypothesis-number>`** (optional, produces visual mockup + placement rationale for a specific hypothesis)
+4. **`/positioning-update`** (optional, apply client feedback/corrections to context files, ~20-40K tokens)
+5. **`/ga4-audit <property_id>`** (optional, produces performance-profile.md for traffic-driven hypotheses, ~5-8 min)
+6. **`/hypothesis-generator`** (produces experiment roadmap from L0 + L1 context + optional performance data)
+7. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
+8. **`/landing-page-generator <company> <slug> --stage all`** (optional, produces campaign landing page from L0 + L1 context, ~260-400K tokens)
+9. **`/experiment-mockup <hypothesis-number>`** (optional, produces visual mockup + placement rationale for a specific hypothesis)
 
 **Tip:** Add `--property <ga4_property_id>` to any positioning-framework invocation to use GA4 traffic data for page selection (e.g., `/positioning-framework https://example.com --property properties/123456789`). This runs a single lightweight query before research begins and saves the property ID to `company-identity.md` so downstream skills like ga4-audit can auto-detect it. The full ga4-audit still runs separately.
 
@@ -375,6 +378,26 @@ B2B paid landing page generator. Four-phase pipeline: Brief Builder, Copy Agent,
 **Outputs:** `.claude/deliverables/campaigns/<slug>/` (brief.md, copy.md, page.html, qa-report.md)
 
 **Runtime:** ~270-410K tokens for full pipeline. Individual phases: Brief ~50-80K, Copy ~85-125K, Design ~105-155K, QA ~30-50K.
+
+### positioning-update (v1.0.0)
+Client feedback amendment skill. Parses freeform client feedback (emails, Slack messages, meeting notes), classifies each piece of intelligence, presents a structured change plan for approval, and executes surgical updates to L0+L1 context files. No web research. Triggers deliverable re-render after changes.
+
+**Invocation:** `/positioning-update [--file path/to/feedback.md] [--dry-run] [--context-dir path/] [--skip-render]`
+
+**Change classifications:** CORRECT (fix wrong data), ADD (net-new intelligence), REMOVE (no longer true), AMEND (modify nuance), CONSTRAINT (business guardrail), GAP (targets missing file/section).
+
+**Dependencies:**
+- Hard: at least one context file, `company-identity.md` confidence >= 2
+- Soft: L1 files (feedback targeting missing L1 files flagged as research gap)
+
+**Key behaviors:**
+- Client data is highest authority (client > tier-0 > research)
+- Corrections are upgrades (replacing wrong with right does not lower confidence)
+- Proof point IDs are immutable (never reuse, never renumber)
+- Fundamental wrongness detection: warns if 5+ corrections target core identity
+- Surgical edits only (change affected lines, preserve everything else)
+
+**Runtime:** ~20-40K tokens. ~3-8 minutes.
 
 ### experiment-mockup (v1.0.0)
 Visual mockup generator for proposed experiment changes. Takes a hypothesis from `experiment-roadmap.md`, navigates to the target page, injects the proposed change styled to match the site's design, iterates with the user in real time, then captures the approved state as a standalone HTML artifact with CRO placement rationale. Two modes: live (Chrome DevTools MCP, interactive, ~90% visual fidelity) and static (HTML extraction fallback, non-interactive, ~70% fidelity).
