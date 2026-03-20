@@ -40,11 +40,12 @@ Every agent follows this precedence: **accuracy > completeness > format**.
 | Mode | Status |
 |---|---|
 | Autonomous Research | ✅ Implemented (default) |
+| Client Feedback Update | ✅ Separate skill: `/positioning-update` |
 | Guided Interview | 🔜 Planned |
 | Audit & Update | 🔜 Planned |
 | Reconciliation | 🔜 Planned |
 
-> Only Autonomous Research is functional. Attempting other modes will return a message and default to Autonomous Research.
+> Only Autonomous Research is functional in this skill. For applying client feedback to existing context files, use `/positioning-update`. Attempting other modes will return a message and default to Autonomous Research.
 
 ### Mode Validation
 

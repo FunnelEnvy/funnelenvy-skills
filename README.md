@@ -12,6 +12,8 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | [ga4-audit](skills/ga4-audit/SKILL.md) | 2.1.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, and trend analysis |
 | [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.2.0 | CRO experiment engine with 28 patterns, ICE scoring, test feasibility, and causal reasoning |
 | [landing-page-generator](skills/landing-page-generator/SKILL.md) | 1.0.0 | B2B paid landing page generator with brief, copy, design, and QA phases |
+| [positioning-update](skills/positioning-update/SKILL.md) | 1.0.0 | Apply client feedback and corrections to positioning context files |
+| [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.0.0 | Visual mockup generator for experiment hypotheses with CRO placement rationale |
 | [render-default-deliverables](skills/render-default-deliverables/SKILL.md) | 1.0.0 | Generates client-ready deliverables from positioning context |
 
 ## Quick Start
@@ -27,9 +29,11 @@ Run a skill:
 
 ```
 /positioning-framework https://example.com
+/positioning-update
 /ga4-audit properties/123456789
 /hypothesis-generator
 /landing-page-generator example-co campaign-slug --stage all
+/experiment-mockup 1
 ```
 
 Research output goes to `.claude/context/`. Deliverables go to `.claude/deliverables/`.
@@ -75,6 +79,8 @@ Examples:
 | experiment-roadmap.md | Prioritized experiment plan (produced by hypothesis-generator) |
 | competitive-comparison-matrix.md | Structured comparison grid across competitors |
 | battle-cards/[competitor].md | One-page competitor reference cards |
+| experiments/[slug]/mockup.html | Standalone HTML mockup of proposed experiment change |
+| experiments/[slug]/placement.md | CRO placement rationale and implementation notes |
 
 ## How It Works
 
@@ -86,6 +92,10 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 
 **hypothesis-generator** reads everything the other skills produced and generates a prioritized experiment roadmap. Without GA4 data, it works from positioning gaps alone (confidence capped at 4/5). With GA4 data, it unlocks 19 performance-driven triggers, calibrates ICE scores using real traffic numbers, adds baseline metrics and test feasibility estimates to each hypothesis, and routes infeasible experiments (insufficient traffic) to "What's Not Here" with alternative approaches.
 
+**experiment-mockup** takes a hypothesis from the experiment roadmap and builds a visual mockup showing the proposed change in the context of the real target page. In live mode (requires Chrome DevTools MCP), it injects the change into the user's browser, matches the site's design system using computed styles, and iterates on placement and styling in real time. In static mode (automatic fallback), it extracts page HTML and builds a standalone mockup file. Both modes produce a CRO placement rationale explaining why the element is positioned where it is, what visual hierarchy strategy it uses, and how the dev team should implement it.
+
+**positioning-update** applies client feedback, stakeholder corrections, and new intelligence to existing context files. Paste an email, Slack thread, or meeting notes and it classifies each piece of information, shows you a structured change plan, and executes surgical edits after approval. No web research. Triggers deliverable re-render automatically.
+
 **render-default-deliverables** converts context files into polished, shareable documents. No research, no analysis. Pure synthesis and formatting. Run it manually with `/render-default-deliverables` any time after editing context files.
 
 ### Recommended Order
@@ -95,13 +105,19 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 # Add --property to use GA4 data for page selection (optional)
 /positioning-framework https://example.com --property properties/123456789
 
-# 2. Pull analytics data (what's actually happening on your site)
+# 2. Apply client feedback to correct and enrich context (optional)
+/positioning-update
+
+# 3. Pull analytics data (what's actually happening on your site)
 /ga4-audit properties/123456789
 
-# 3. Generate data-informed experiment ideas
+# 4. Generate data-informed experiment ideas
 /hypothesis-generator
 
-# 4. Re-render deliverables any time context changes
+# 5. Visualize specific experiment changes as mockups
+/experiment-mockup 1
+
+# 6. Re-render deliverables any time context changes
 /render-default-deliverables
 ```
 

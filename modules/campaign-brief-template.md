@@ -20,6 +20,8 @@ target_keywords:
   - <keyword-1>
   - <keyword-2>
   - <keyword-3>
+traffic_awareness_stage: <unaware|problem_aware|solution_aware|product_aware|most_aware>
+traffic_source: <paid_search|paid_social_cold|paid_social_retargeting|email|organic|referral|direct>
 offer_type: <demo|consultation|content|quote>
 form_strategy:
   fields: <int>
@@ -49,6 +51,21 @@ last_updated: <ISO-8601>
 - [keyword 1]
 - [keyword 2]
 - [keyword 3]
+
+**Traffic awareness stage**: [Classify from table below]
+
+| Traffic source | Typical stage | Override when... |
+|---------------|--------------|-------------------|
+| Branded search / retargeting / email list | Product Aware or Most Aware | Landing on a new product line they haven't seen = Solution Aware |
+| Non-branded search (solution keywords) | Solution Aware | Very generic terms ("how to fix X") = Problem Aware |
+| Non-branded search (problem keywords) | Problem Aware | Long-tail with product category = Solution Aware |
+| Paid social (cold audience) | Unaware or Problem Aware | Lookalike of customers = Solution Aware |
+| Referral from comparison site (G2, Capterra) | Product Aware | First-time category researcher = Solution Aware |
+| Organic / direct | Mixed | Default to Solution Aware unless analytics show otherwise |
+
+If the campaign targets multiple awareness stages, pick the dominant one. Create separate LPs for materially different stages rather than one page serving all.
+
+**Traffic source**: [Primary channel driving traffic to this LP]
 
 **Ad copy** (paste the actual ad text if available):
 ```

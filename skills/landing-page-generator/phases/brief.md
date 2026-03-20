@@ -43,7 +43,23 @@ If not already provided in the invocation, ask the human for:
 1. **Service line or offer** -- What is this landing page selling? (e.g., "Interim CFO Services")
 2. **Target buyer** -- Who is the primary persona? (title/role, e.g., "CFO at a PE-backed mid-market company")
 3. **Target keywords** -- What search terms or ad themes drive traffic? (e.g., "interim cfo," "outsourced cfo," "cfo transition")
-4. **Offer type** -- What is the CTA goal? (demo, consultation, content download, quote)
+4. **Traffic source** -- What is the primary channel driving traffic to this LP? (paid_search, paid_social_cold, paid_social_retargeting, email, organic, referral, direct)
+5. **Traffic awareness stage** -- How aware is the target audience of your product? Use the classification table below to infer from the traffic source:
+
+   | If traffic source is... | Default to... |
+   |------------------------|---------------|
+   | paid_search (branded) | product_aware |
+   | paid_search (non-branded, solution terms) | solution_aware |
+   | paid_search (non-branded, problem terms) | problem_aware |
+   | paid_social_cold | problem_aware |
+   | paid_social_retargeting | product_aware |
+   | email | product_aware |
+   | organic | solution_aware |
+   | referral (G2, Capterra) | product_aware |
+   | direct | solution_aware |
+
+   If the human is unsure, infer from the traffic source using the defaults above. Write the classification to `traffic_awareness_stage` and `traffic_source` in the brief frontmatter. These fields drive headline approach selection in Phase 2.
+6. **Offer type** -- What is the CTA goal? (demo, consultation, content download, quote)
 
 If the human provides a fuller description, use it. But still validate against the context files.
 
@@ -154,7 +170,7 @@ Write to `.claude/deliverables/campaigns/<slug>/brief.md` with this frontmatter:
 ```yaml
 ---
 schema: campaign-brief
-schema_version: "1.0"
+schema_version: "1.1"
 client: <company-name>
 campaign: <campaign-slug>
 service_line: <service-line>
@@ -162,6 +178,8 @@ target_persona: <persona-title>
 target_keywords:
   - <keyword-1>
   - <keyword-2>
+traffic_awareness_stage: <unaware|problem_aware|solution_aware|product_aware|most_aware>
+traffic_source: <paid_search|paid_social_cold|paid_social_retargeting|email|organic|referral|direct>
 offer_type: <demo|consultation|content|quote>
 form_strategy:
   fields: <int>
