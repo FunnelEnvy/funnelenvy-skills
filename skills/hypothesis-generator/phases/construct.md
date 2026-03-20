@@ -43,6 +43,32 @@ This constraint applies throughout the construction process below. When evaluati
 
 ---
 
+## Pre-Construction Red-Flag Checks
+
+Run these before building any hypothesis. Each check targets a class of errors that produces plausible-looking but invalid experiments.
+
+### Form experiments
+
+**Before proposing any form swap or form variant test:** confirm the two forms are not identical in content, fields, and structure. Forms that share the same fields under different names (e.g., "AI Hub Form" vs "AI Solutions Form" pointing to the same Marketo/HubSpot form ID) cannot be A/B tested against each other - there is no variant. If the forms are identical, discard the form swap hypothesis and redirect to form placement, two-step flow, or CTA label tests instead.
+
+### Mobile bounce rate hypotheses
+
+**Before attributing mobile bounce to a technical or rendering failure:** check traffic source composition for mobile in `performance-profile.md`. If one channel represents more than 60% of mobile traffic and that channel has a high bounce rate across ALL devices (e.g., direct traffic bounces at 60%+ on desktop too), the mobile bounce rate is a messaging problem for that channel, not a rendering problem. The fix is the same messaging intervention as desktop, not a Core Web Vitals or layout audit. A 9x device bounce gap does not by itself indicate a technical problem - it indicates the dominant mobile channel is failing for the same reason it fails on desktop.
+
+### Conversion path selection bias
+
+**Before proposing routing changes based on a higher-converting dedicated page or path:** check absolute volume. A dedicated form page that converts at 5x the rate of the embedded form may simply be receiving self-selected higher-intent visitors who navigated there deliberately. The higher CVR reflects visitor intent, not page quality. The correct experiment is reducing friction on the primary path (two-step form, progressive disclosure), not routing all traffic to the dedicated page. Flag this distinction in the hypothesis: is the mechanism "better page" or "higher-intent visitor"?
+
+### CVR vs completion rate
+
+**Always distinguish:**
+- **Completion rate** = submits / form initiates. Measures how well the form converts visitors who started it.
+- **CVR (conversion rate)** = submits / page visitors. Measures how many visitors the page converts end-to-end.
+
+A 47% completion rate with a 0.076% CVR means the form works once started but almost no one starts it. The bottleneck is initiation, not completion. Optimizing form fields (completion) when the problem is form initiation is solving the wrong problem. Always state both metrics when discussing form performance and specify which one the experiment targets.
+
+---
+
 ## Construction Process
 
 ### Step 1: Page and Element Identification

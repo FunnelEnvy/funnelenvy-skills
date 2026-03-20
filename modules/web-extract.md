@@ -136,6 +136,39 @@ Assess by word count after filtering.
 
 ---
 
+## Tier 3 -- Screenshot / Manual Content (Human Fallback)
+
+When all three automated tiers fail and the page is tagged `[EMPTY:BLOCKED]` or `[EMPTY:SPA]`, request human-provided content before giving up:
+
+```
+The page at [URL] is blocking automated extraction (Akamai CDN / bot protection). To continue with page-specific analysis, please share one of:
+- A full-page screenshot (share it in this conversation and I will read it directly)
+- A browser PDF export (File > Print > Save as PDF)
+- Paste the page copy directly into the chat
+
+Without this, section-level content analysis cannot proceed.
+```
+
+When content is provided, extract it as follows:
+
+- **Screenshot:** Use the Read tool on the image file. Extract all visible headings, body copy, CTAs, navigation tabs, accordion labels, form fields, and any stats or proof points. Structured sections (e.g., "Key Features", "Services and Software", "Valuation Inputs") should be recorded as named sections in research notes.
+- **PDF:** Read with the Read tool (PDF mode). Extract the same elements.
+- **Pasted text:** Accept as-is and parse into named sections where possible.
+
+**Quality tags for human-provided content:**
+
+| Tag | Meaning |
+|-----|---------|
+| `[PARTIAL:SCREENSHOT]` | Content extracted from a user-provided screenshot |
+| `[PARTIAL:PDF]` | Content extracted from a browser PDF export |
+| `[PARTIAL:MANUAL]` | Content pasted directly by the user |
+
+Apply the same word-count thresholds as other tiers when determining completeness. Log the human-provided source in the fetch registry with the appropriate tag.
+
+**Important:** If a spec or brief lists named page sections (e.g., "key features", "services & software", "valuation inputs"), verify that each named section was captured in the extracted content. If a section is missing from the screenshot (cut off, collapsed accordion, or not visible), note it explicitly in research notes and flag it in the fetch registry entry.
+
+---
+
 ## Quality Assessment Thresholds
 
 After running extraction, count the words in the output and tag accordingly:
@@ -147,8 +180,11 @@ After running extraction, count the words in the output and tag accordingly:
 | 500+ | curl + HTMLParser | `[FULL:CURL]` | Successful extraction from Fallback Tier 1 |
 | 100-499 | curl + HTMLParser | `[PARTIAL:CURL]` | Partial extraction from Fallback Tier 1 |
 | 100+ | WebFetch | `[PARTIAL:TOOL]` | Extraction from Fallback Tier 2 (last resort) |
+| 100+ | Screenshot | `[PARTIAL:SCREENSHOT]` | Content extracted from user-provided screenshot |
+| 100+ | PDF export | `[PARTIAL:PDF]` | Content extracted from browser PDF export |
+| 100+ | Pasted manually | `[PARTIAL:MANUAL]` | Content pasted directly by the user |
 | <100 | All three failed, SPA indicators | `[EMPTY:SPA]` | JS-heavy site, no content extracted by any method |
-| <100 | All three failed, access blocked | `[EMPTY:BLOCKED]` | Bot protection blocked all extraction methods |
+| <100 | All three failed, access blocked | `[EMPTY:BLOCKED]` | Bot protection blocked all automated extraction -- request Tier 3 |
 | <100 | All three failed, other | `[EMPTY]` | Content genuinely absent or all tools failed |
 
 Tag the page fetch in research notes using these tags. Tags are internal to research and do not appear in context files or deliverables.
@@ -175,9 +211,10 @@ Follow this procedure for each URL:
 12. Filter CSS noise from WebFetch output.
 13. If 100+ words after filtering: tag `[PARTIAL:TOOL]`, use content. Done.
 14. If <100 words after filtering: triage failure:
-    - SPA indicators present? Tag `[EMPTY:SPA]`. Write `[NOT EXTRACTED - JS-rendered SPA]`.
-    - Access blocked? Tag `[EMPTY:BLOCKED]`. Write `[NOT EXTRACTED - access blocked]`.
-    - Neither? Tag `[EMPTY]`. Write `[NOT EXTRACTED - tool parse failure]`.
+    - SPA indicators present? Tag `[EMPTY:SPA]`. Proceed to step 15 (Tier 3 request).
+    - Access blocked? Tag `[EMPTY:BLOCKED]`. Proceed to step 15 (Tier 3 request).
+    - Neither? Tag `[EMPTY]`. Write `[NOT EXTRACTED - tool parse failure]`. Stop.
+15. **Tier 3 -- Human fallback.** Output the Tier 3 prompt from the Tier 3 section above and wait for the user to provide a screenshot, PDF, or pasted content. When received, extract content using the Read tool or accept pasted text directly. Tag with `[PARTIAL:SCREENSHOT]`, `[PARTIAL:PDF]`, or `[PARTIAL:MANUAL]` as appropriate. If no content is provided, write `[NOT EXTRACTED - access blocked, no human fallback provided]` and continue with remaining URLs.
 
 ---
 

@@ -39,6 +39,7 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 |------|---------|-------------|
 | `--focus` | all | Restrict to one or more pattern categories. Comma-separated. Valid: `headlines`, `forms`, `navigation`, `personalization`, `layout`, `pricing`, `social-proof`, `content`, `trust`, `element-engagement` |
 | `--max` | 10 | Maximum number of hypotheses to produce (min 5, max 15) |
+| `--spec` | none | Path to a spec/brief file OR inline text of client-requested items. When provided, every spec item must either map to a hypothesis or be explicitly addressed in "What's Not Here." Out-of-scope items (SEO/GEO, interlinking, content audit) are flagged with routing guidance. |
 
 ---
 
@@ -75,6 +76,51 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 
 ## Execution Pipeline
 
+### Phase 0: Spec Intake (when --spec is provided)
+
+**Skip this phase entirely if `--spec` was not passed.**
+
+Parse the spec before loading context. Build a coverage checklist that Phase 5 will check against.
+
+1. If `--spec` is a file path, read the file. If it is inline text, parse it directly.
+
+2. Extract discrete spec items. Each bullet point, numbered item, or sentence describing a requested action or analysis area is one item.
+
+3. Categorize each item:
+
+| Category | Definition | Handling |
+|----------|-----------|---------|
+| **CRO/on-page** | Layout changes, messaging, CTAs, forms, personalization, hero content, scroll depth | Must map to at least one hypothesis. If it doesn't, goes to "What's Not Here" with reason. |
+| **Content audit** | Review of named page sections (e.g., "key features", "services & software", "valuation inputs") | Requires actual page content. If page was EMPTY:BLOCKED and no screenshot is available, flag as blocked and tell the user to share a screenshot or manual content before this spec item can be addressed. |
+| **SEO/organic** | Keyword strategy, GEO/AEO/LLM optimization, ranking, search intent, meta tags | Out of scope for this skill. Route to `/marketing-skills:seo-audit` or `/marketing-skills:ai-seo`. |
+| **Interlinking/architecture** | Internal link structure, page placement, site taxonomy, cross-linking strategy | Out of scope for this skill. Requires site architecture analysis. Note in "What's Not Here" and recommend a manual audit or a future interlinking skill. |
+| **Analytics/tracking** | Metrics setup, data gaps, instrumentation | Handled via Prerequisites section if performance-profile.md data is available. Otherwise note in "What's Not Here". |
+
+4. Build the checklist (internal, not written to disk):
+
+```
+Spec checklist:
+  [ ] [item text] -- category: CRO/on-page
+  [ ] [item text] -- category: content audit -- BLOCKED: no page content available
+  [ ] [item text] -- category: SEO/organic -- OUT OF SCOPE: route to /marketing-skills:seo-audit
+  [ ] [item text] -- category: interlinking -- OUT OF SCOPE: route to /marketing-skills:ai-seo or manual audit
+```
+
+5. If any content audit items are present and page content is not in context files, output a single prompt before proceeding:
+
+```
+The spec requests a content audit of [section names]. The page was not extracted automatically (access blocked).
+
+To cover this spec item, share one of:
+- A full-page screenshot
+- A browser PDF export
+- Paste the page copy directly
+
+Reply with the content or "skip" to proceed without it.
+```
+
+Wait for response. If content is provided, treat it as supplementary page context for Phase 2 opportunity detection. If "skip" or no content, mark the item as blocked in the checklist and continue.
+
 ### Phase 1: Context Discovery and Loading
 
 1. Glob `.claude/context/*.md`
@@ -83,7 +129,15 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 4. Check preconditions (see above)
 5. Load full body of all available context files
 6. Check for evidence augmentation modules (glob `modules/evidence-*.md`). If any exist, load them. These modules provide additional pattern-matching data and scoring calibration beyond what context files contain. The skill works without them; they enrich when present.
-7. Present plan to user:
+7. Check for missing handoff items and present the pre-flight summary.
+
+**Handoff check -- run before displaying the summary.** Look for the following and flag each gap:
+
+- **No spec provided** (`--spec` was not passed): Flag. The skill can run without a spec, but spec items are frequently missed without one. Prompt for it.
+- **Page blocked** (check `.claude/context/_fetch-registry.md` if it exists -- look for `[EMPTY:BLOCKED]` or `[EMPTY:SPA]` entries for the target page): Flag. Section-level content analysis requires a screenshot.
+- **External deliverables** (check `.claude/deliverables/` -- if files exist, a prior ideation deck or external doc may be relevant): Flag only if no spec was provided and deliverables are present. Ask if there is an external deck or document to reference.
+
+Consolidate all flags into a single pre-flight prompt. Do not issue separate prompts for each gap:
 
 ```
 Context available:
@@ -98,8 +152,17 @@ Performance-driven triggers: [active | inactive (no performance-profile.md)]
 Evidence augmentation: [none | list loaded modules]
 Max hypotheses: 10
 
-Proceed? [Y/n]
+--- Handoff items needed ---
+[Only include lines that apply. Omit this section entirely if nothing is missing.]
+
+  Spec not provided. Paste the client's brief or requested items, or pass --spec.
+  Target page was blocked (Akamai CDN). Share a screenshot to enable section-level content analysis.
+  Existing deliverables found. Is there an external deck or document (e.g., a Google Slides link) to reference?
+
+Reply with any handoff items above, or "skip" to proceed without them.
 ```
+
+If nothing is missing (spec provided, no blocked pages, no deliverables without a deck reference), omit the "Handoff items needed" block and show only "Proceed? [Y/n]".
 
 ### Phase 2: Opportunity Detection
 
@@ -138,6 +201,27 @@ Sequence hypotheses into Quick Wins, Strategic Bets, and Explorations.
 Output: Scored, sequenced, tiered hypothesis list.
 
 ### Phase 5: Render
+
+#### Step 5a: Spec Coverage Check (when --spec was provided)
+
+Before writing the file, check every CRO/on-page spec item from the Phase 0 checklist against the generated hypothesis list.
+
+For each CRO/on-page item:
+- If at least one hypothesis targets it: mark covered. Note the hypothesis number in the checklist.
+- If no hypothesis targets it: add an entry to the "What's Not Here" section explaining why it wasn't converted into a testable experiment (e.g., "this is a 'just do it' fix, not a hypothesis" or "insufficient page content to scope the experiment").
+
+For each content audit item:
+- If page content was provided and the section was analyzed: note what was found and whether it produced a hypothesis.
+- If blocked: add to "What's Not Here" with the instruction to share page content.
+
+For each out-of-scope item (SEO/organic, interlinking):
+- Add to "What's Not Here" with explicit routing:
+  - SEO/GEO/organic: "This requires keyword and search intent analysis outside the scope of hypothesis-generator. Run `/marketing-skills:seo-audit` for technical SEO or `/marketing-skills:ai-seo` for GEO/LLM optimization opportunities."
+  - Interlinking/architecture: "Internal link structure and strategic page placement require site architecture analysis outside the scope of this skill. Conduct a manual audit of the site's navigation and cross-linking patterns, or raise as a separate work item."
+
+The "What's Not Here" section must be non-empty when a spec is provided. A roadmap that silently ignores spec items is a failure.
+
+#### Step 5b: Write deliverable
 
 Write `.claude/deliverables/experiment-roadmap.md` following the Output Format specification below.
 
@@ -288,29 +372,31 @@ If `.claude/deliverables/experiment-roadmap.md` already exists:
 
 ## Quality Rules
 
-1. **Every hypothesis names a specific page and specific change.** "Improve homepage messaging" is a failure. "Replace the homepage H1 from '[current copy]' to '[proposed copy]'" is correct.
+1. **When a spec is provided, every spec item is accounted for.** CRO/on-page items map to a hypothesis or appear in "What's Not Here" with a reason. Out-of-scope items (SEO/GEO, interlinking, content audit without page content) appear in "What's Not Here" with routing guidance. A roadmap that silently skips spec items is a failure.
 
-2. **Every hypothesis has a causal mechanism.** "This should increase conversions" is a failure. "Outcome-oriented headlines reduce cognitive load for first-time visitors evaluating relevance, which should decrease bounce rate" is correct.
+2. **Every hypothesis names a specific page and specific change.** "Improve homepage messaging" is a failure. "Replace the homepage H1 from '[current copy]' to '[proposed copy]'" is correct.
 
-3. **ICE scores vary.** If every hypothesis scores 7+ on all three dimensions, the scoring is broken. Real portfolios have range. Some high-impact bets have low confidence. Some easy wins have moderate impact.
+3. **Every hypothesis has a causal mechanism.** "This should increase conversions" is a failure. "Outcome-oriented headlines reduce cognitive load for first-time visitors evaluating relevance, which should decrease bounce rate" is correct.
 
-4. **Before/after examples for copy experiments are mandatory.** The "before" must come from context files (what the site actually says). The "after" must be adapted from audience-messaging channel adaptations or value themes. Do not invent copy from scratch.
+4. **ICE scores vary.** If every hypothesis scores 7+ on all three dimensions, the scoring is broken. Real portfolios have range. Some high-impact bets have low confidence. Some easy wins have moderate impact.
 
-5. **"What a loss teaches" is mandatory.** Every experiment should have value even if it loses. If you can't articulate what a negative result teaches, the hypothesis isn't well-formed.
+5. **Before/after examples for copy experiments are mandatory.** The "before" must come from context files (what the site actually says). The "after" must be adapted from audience-messaging channel adaptations or value themes. Do not invent copy from scratch.
 
-6. **No padding.** If only 6 strong hypotheses exist, produce 6. A tight roadmap beats a bloated one.
+6. **"What a loss teaches" is mandatory.** Every experiment should have value even if it loses. If you can't articulate what a negative result teaches, the hypothesis isn't well-formed.
 
-7. **No em dashes.** Use commas, periods, or colons instead.
+7. **No padding.** If only 6 strong hypotheses exist, produce 6. A tight roadmap beats a bloated one.
 
-8. **No hedge words.** "Potentially," "it seems," "perhaps," "might possibly" are banned.
+8. **No em dashes.** Use commas, periods, or colons instead.
 
-9. **Proof hierarchy is strict.** Never upgrade "claimed" evidence to "verified."
+9. **No hedge words.** "Potentially," "it seems," "perhaps," "might possibly" are banned.
 
 10. **Test feasibility is honest.** When performance data exists, every hypothesis with a Baseline line also gets a Test Feasibility line. Experiments estimated at >26 weeks or with <100 sessions/mo are routed to "What's Not Here" with an explanation, not buried in the roadmap with optimistic scores.
 
-11. **FunnelEnvy branding in footer.**
+11. **Proof hierarchy is strict.** Never upgrade "claimed" evidence to "verified."
 
-12. **The unit of testing is the hypothesis, not the variable.** When multiple page elements (H1, subhead, CTA copy, proof strip, form intro, testimonial placement) all serve the same hypothesis, they MUST be combined into a single experiment. This is not a traffic optimization; it is correct experiment design. Testing a differentiation-led H1 while the subhead still says generic aspirational copy does not test whether differentiation-led messaging works. It tests one line in a hostile context, and a loss is uninterpretable. Bundle everything that serves the idea. See `phases/construct.md` "Experiment Scope Rule" for bundling rules and examples.
+12. **FunnelEnvy branding in footer.**
+
+13. **The unit of testing is the hypothesis, not the variable.** When multiple page elements (H1, subhead, CTA copy, proof strip, form intro, testimonial placement) all serve the same hypothesis, they MUST be combined into a single experiment. This is not a traffic optimization; it is correct experiment design. Testing a differentiation-led H1 while the subhead still says generic aspirational copy does not test whether differentiation-led messaging works. It tests one line in a hostile context, and a loss is uninterpretable. Bundle everything that serves the idea. See `phases/construct.md` "Experiment Scope Rule" for bundling rules and examples.
 
 ---
 
