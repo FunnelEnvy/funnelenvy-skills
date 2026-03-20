@@ -124,23 +124,35 @@ If `--max` cap is hit after tiering, cut from the bottom of Explorations first, 
 
 ### Step 7: Sequencing
 
-Within each tier, sequence based on:
+Sequencing uses three layers, applied in priority order:
+
+**Layer 1: Interaction dependencies (from Phase 3 Step 9)**
+Multiplicative dependencies are hard constraints. If hypothesis A has `interaction_dependency.depends_on = B`, then B runs before A regardless of tier or LIFT category. Render these dependencies explicitly in the Sequencing Rationale.
+
+**Layer 2: LIFT-model ordering (from Phase 3 Step 4)**
+Within each tier, after satisfying interaction dependencies, sort by `lift_category` priority: Relevance (1) > Clarity (2) > Anxiety (3) > Distraction (4) > Urgency (5). This ensures upstream conversion barriers are addressed before downstream ones.
+
+**LIFT violation flag:** If a hypothesis addressing Distraction or Urgency would run before a hypothesis addressing Relevance or Clarity on the same page, flag this in the Sequencing Rationale: "Note: [Experiment X] addresses [downstream barrier] on [page] while [Experiment Y] addresses [upstream barrier] on the same page. Recommend running [Y] first. If [Y] wins, re-evaluate whether [X] is still needed."
+
+**Layer 3: Within-LIFT-category tiebreaking**
 
 **Quick Wins: Ease-first ordering.**
-Run the easiest wins first. Build momentum. Get the team comfortable with the testing process. If two Quick Wins have similar Ease, prioritize the one with higher Impact.
+Run the easiest wins first. Build momentum. Get the team comfortable with the testing process. If two Quick Wins have similar Ease and LIFT category, prioritize the one with higher Impact.
 
-**Strategic Bets: Dependency-aware ordering.**
+**Strategic Bets: Learning-chain ordering.**
 - If experiment A's result changes how you'd design experiment B, A goes first
 - If two experiments target the same page, group them (reduces implementation overhead) but run them sequentially (don't confound variables)
 - If a Strategic Bet validates a positioning assumption that other experiments depend on, it moves up
+- Cross-page learning dependencies (from Phase 3 `informs` annotations) are soft constraints: note the relationship in Sequencing Rationale but don't enforce ordering unless the dependency is strong
 
 **Explorations: Learning-first ordering.**
 - Explorations that test fundamental assumptions (e.g., "does this audience prefer outcome language or proof language?") go before explorations that test tactical variations
 - Explorations that could become Quick Wins if they succeed go early
 
 **Cross-tier dependencies:**
-- If a Quick Win result would change the design of a Strategic Bet, note this dependency in the Sequencing Rationale section
-- Never delay a Quick Win because of a Strategic Bet dependency (Quick Wins build momentum regardless)
+- Interaction dependencies can cross tiers. If a Quick Win has a multiplicative dependency on a Strategic Bet (unusual but possible), note the dependency but do not delay the Quick Win. Instead, note in Sequencing Rationale: "Quick Win [X] will produce a cleaner result if Strategic Bet [Y] runs first, but the momentum value of running [X] early outweighs the measurement risk."
+- LIFT ordering does not cross tiers. A Relevance-category Strategic Bet does not jump ahead of a Distraction-category Quick Win.
+- Never delay a Quick Win because of a Strategic Bet dependency (Quick Wins build organizational confidence in testing).
 
 ### Step 8: Prerequisites and Data Gaps Compilation
 

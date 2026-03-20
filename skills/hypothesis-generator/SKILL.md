@@ -1,6 +1,6 @@
 ---
 name: hypothesis-generator
-version: 1.2.0
+version: 1.3.0
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
 ---
 
@@ -323,6 +323,35 @@ Also includes:
 - Patterns that COULD NOT be evaluated due to missing data. Cross-reference the Prerequisites section for what to collect.
 - Experiments flagged as infeasible due to insufficient traffic. Include the page, the hypothesis summary, and the reason (e.g., "~45 weeks at 15% MDE, only 120 sessions/mo"). These are real opportunities that can't be validated with A/B testing at current traffic levels. Suggest alternative approaches: pre/post analysis, proxy metrics, or qualitative testing.]
 
+## If Tests Are Inconclusive
+
+A/B tests produce inconclusive results 41-50% of the time. This is normal, not a failure. Each experiment below has a predefined response for a flat result.
+
+**General protocol for any inconclusive test:**
+1. Verify test integrity: check for tracking errors, bot traffic, external events (holidays, PR incidents, product changes) that may have contaminated results.
+2. Run the segment analysis specified below. If any segment shows statistical significance, consider deploying the variant as a personalization for that segment only.
+3. Check the micro-conversion specified below. If the leading indicator improved but the macro conversion didn't, downstream friction exists. The "next test" recommendation addresses it.
+4. If no signal in segments or micro-conversions: follow the "if flat" action below.
+
+### Quick Wins
+
+**[Experiment Name]**
+- **Check first:** [segment dimension and what to look for]
+- **Micro-conversion:** [leading indicator that should move even if macro is flat]
+- **If segment shows signal:** Deploy as personalization for [segment]. Run next experiment on remaining traffic.
+- **If flat across segments:** [iterate bolder description OR "Move on to [next experiment]. This hypothesis lacked strong enough context support to justify a second iteration."]
+- **Leads to:** [next experiment in the sequence if this line is abandoned]
+
+### Strategic Bets
+
+**[Experiment Name]**
+[Same structure, with more emphasis on the "iterate bolder" path since Strategic Bets have stronger causal backing]
+
+### Explorations
+
+**[Experiment Name]**
+[Same structure, with more emphasis on "move on" since Explorations have lower confidence by definition]
+
 ## Prerequisites and Data Gaps
 
 [Grouped into three categories:
@@ -356,6 +385,7 @@ The experiment roadmap must contain ZERO references to internal system concepts.
 - Pattern references: "pattern ID," "HM-01," "FO-02," "experiment-patterns.md," "pattern matching"
 - Process references: "from L0," "per the context file," "the scoring phase determined," "opportunity detection found"
 - Markup artifacts: YAML frontmatter blocks, HTML comments, confidence scores
+- Decision framework references: "LIFT model," "LIFT category," "contrarian trigger," "CTR-01," "interaction matrix," "AND-gate," "OR-gate," "multiplicative," "additive"
 
 **Attribution:** Use natural source references. "Based on [Company]'s website," "According to G2 reviews," "Competitive analysis shows..."
 
@@ -410,5 +440,7 @@ SKILL.md (this file)
   ├── phases/score.md               Phase 4: ICE scoring and sequencing
   ├── modules/experiment-patterns.md   CRO pattern library (28 patterns, 10 categories)
   ├── modules/ice-scoring.md           ICE calibration anchors and scoring rules
+  ├── modules/contrarian-triggers.md   Contrarian filter: context conditions where standard CRO advice backfires (7 triggers)
+  ├── modules/hypothesis-interactions.md  Interaction-effect model: AND/OR gates between hypothesis pairs
   └── modules/evidence-*.md            (optional) additional evidence sources and calibration data
 ```

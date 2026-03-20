@@ -5,6 +5,9 @@
 # Development directories (may contain client references)
 skills/**/_dev/
 
+# Execution plans (development artifacts, not source)
+execution-plan/
+
 # Test run outputs (generated, not source)
 test-runs/
 

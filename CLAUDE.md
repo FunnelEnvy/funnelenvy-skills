@@ -355,10 +355,10 @@ Property ID is optional. If omitted, auto-detects from `company-identity.md` fro
 
 **Runtime:** ~5-8 minutes. ~50-80K tokens. Single interaction point (event classification confirmation).
 
-### hypothesis-generator (v1.2.0)
+### hypothesis-generator (v1.3.0)
 Standalone CRO hypothesis engine. Reads positioning context (L0 + L1) plus optional performance data, applies
 28 experiment patterns across 10 categories plus performance-driven triggers, and produces a prioritized experiment
-roadmap with ICE scoring and test feasibility estimation. When `performance-profile.md` is present, produces data-calibrated scores, traffic-driven hypotheses, and per-experiment feasibility notes. Infeasible experiments (insufficient traffic) are routed to "What's Not Here" with alternative approaches. Manually invoked: /hypothesis-generator
+roadmap with ICE scoring, test feasibility estimation, contrarian filtering (7 B2B-specific triggers that reframe or suppress standard CRO advice), interaction-effect modeling (AND/OR gates between same-page hypotheses), LIFT-model sequencing (Relevance > Clarity > Anxiety > Distraction > Urgency within tiers), and inconclusive test guidance per experiment. When `performance-profile.md` is present, produces data-calibrated scores, traffic-driven hypotheses, and per-experiment feasibility notes. Infeasible experiments (insufficient traffic) are routed to "What's Not Here" with alternative approaches. Manually invoked: /hypothesis-generator
 
 ### landing-page-generator (v1.0.0)
 B2B paid landing page generator. Four-phase pipeline: Brief Builder, Copy Agent, Design Agent, QA Validator. Consumes L0+L1 context files and produces campaign-specific landing page deliverables. Each phase produces a file consumed by the next phase. Human review gates between phases when running the full pipeline.
