@@ -214,6 +214,11 @@ Where:
 - **No performance data at all:** Omit both Baseline and Test Feasibility lines (same as current behavior for Baseline).
 - **Page not in performance-profile.md:** Omit Baseline and Test Feasibility (page has insufficient data).
 
+**Hard gates (check before finalizing any hypothesis):**
+- **100 conversions per variant minimum.** Below this threshold, effect sizes are unreliable regardless of statistical significance. If the page cannot produce 100 conversions per variant within the feasibility tier's time window, route to the next longer tier or to "What's Not Here" with a traffic requirement note.
+- **7 days minimum test duration.** One full business cycle to capture day-of-week variation. Never declare a result before 7 days regardless of sample size.
+- **Low-traffic page prioritization conflict.** If 3+ hypotheses in the roadmap target the same page with <500 sessions/mo, flag as a prioritization conflict. Only the highest-ICE hypothesis should run; others queue behind it. Note in sequencing: "Page [X] supports only one concurrent test at current traffic levels. [Hypothesis A] runs first; [B] and [C] queue."
+
 **Infeasible routing:** Mark infeasible hypotheses with `feasibility: "infeasible"` and the reason. These are passed to Phase 4 for routing to "What's Not Here" instead of ICE scoring.
 
 ### Step 6: Win/Loss Learning
@@ -257,6 +262,10 @@ if_inconclusive:
 
 This data populates the "If Tests Are Inconclusive" section in the final deliverable.
 
+5. **Post-Deployment Causal Impact Validation.** For hypotheses targeting pages with variable external traffic sources (seasonal campaigns, PR spikes, affiliate bursts), define a 30-day post-deployment monitoring strategy. After deploying a winning variant, compare a 30-day pre/post time series to confirm the observed lift holds outside the test environment. If the page receives >30% of traffic from a single volatile source (paid campaigns with variable spend, PR-driven spikes), flag the hypothesis with: "Winner requires causal impact validation. Run 30-day pre/post time-series comparison after deployment. Monitor traffic source composition weekly during the validation period. If the dominant traffic source shifts >20% in volume or composition during validation, extend the window or re-run the test." This catches false positives where the winning variant coincided with favorable traffic mix rather than genuine behavioral change.
+
+6. **Directional Significance Soft-Coding.** When a test reaches p < 0.15 but not p < 0.05, and the pattern has prior validation in the experiment-patterns library or a high-confidence match from a calibrated evidence module: recommend conditional deployment with continued monitoring. Output: "Directionally significant (p < [value]). Pattern has prior validation via [pattern ID or evidence source]. Recommend soft-coding (deploy with monitoring) and re-evaluating at 2x the original sample size. If the effect holds at 2x sample, hard-code. If it reverses, revert." This strategy applies ONLY when: (a) the pattern has prior empirical validation (not context-derived hypotheses), AND (b) the directional result aligns with the predicted direction from the causal mechanism. Do not soft-code counter-directional results or results from novel hypotheses.
+
 ### Step 7: Contrarian Filter
 
 Before deduplication, run every constructed hypothesis through the contrarian trigger matrix.
@@ -264,7 +273,7 @@ Before deduplication, run every constructed hypothesis through the contrarian tr
 **Process:**
 
 1. Load `modules/contrarian-triggers.md`
-2. For each hypothesis, check all seven trigger conditions (CTR-01 through CTR-07) against loaded context files
+2. For each hypothesis, check all thirteen trigger conditions (CTR-01 through CTR-13) against loaded context files
 3. Apply the specified action for each match:
    - **Reframe:** Replace the hypothesis's proposed change, causal mechanism, and before/after examples with the alternative from the trigger matrix. Preserve the original trigger signal (the original pattern match is still valid, just the recommendation changes). Update the "Why this should work" section to reflect the reframed mechanism.
    - **Suppress:** Remove the hypothesis from the active list. Add to an internal "suppressed" list with the trigger ID and explanation. These are rendered in the "What's Not Here" section during Phase 5.

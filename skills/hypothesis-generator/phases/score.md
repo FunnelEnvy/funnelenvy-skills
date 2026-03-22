@@ -149,6 +149,26 @@ Run the easiest wins first. Build momentum. Get the team comfortable with the te
 - Explorations that test fundamental assumptions (e.g., "does this audience prefer outcome language or proof language?") go before explorations that test tactical variations
 - Explorations that could become Quick Wins if they succeed go early
 
+**Layer 4: Empirical tiebreakers (within same LIFT category and tier)**
+
+When two or more hypotheses share the same tier, LIFT category, and have similar ICE scores, apply these tiebreakers in order:
+
+1. **Winner Replication Priority.** When experiment-history data is available (future: experiment-history context layer) and a pattern has produced a statistically significant win on one page, queue a replication test of the same pattern on adjacent pages ahead of untested patterns. Replication tests have structurally higher Confidence (validated mechanism) and lower implementation cost (proven variant). This tiebreaker fires ONLY when experiment-history data exists. Without it, all hypotheses are treated as untested.
+
+2. **Proximity-to-Conversion Ordering.** Within the same LIFT category and ICE tier, pages closer to the conversion event run first. Priority order: checkout/booking > pricing > demo request/signup > product pages > homepage > category/solutions pages > content/blog pages. Rationale: conversion-adjacent pages have tighter feedback loops (shorter path from test to measurable outcome) and changes compound less with upstream variables. **Override:** If two hypotheses differ by >= 3 ICE points, the higher-ICE hypothesis takes precedence regardless of page proximity. Proximity is a tiebreaker, not a trump card.
+
+3. **Cross-Channel Insight Propagation.** After the main sequenced roadmap, add a separate "Cross-Channel Propagation Candidates" subsection. This subsection lists hypotheses whose winning patterns could be tested in other channels (email, paid ads, in-app messaging) but are NOT scored or sequenced within the main roadmap. Format:
+   ```
+   ## Cross-Channel Propagation Candidates
+
+   These are not scored experiments. They are contingent suggestions that become actionable
+   only if the source experiment wins.
+
+   - If [Experiment X] wins: test the same [pattern] in [channel]. Rationale: [why the mechanism transfers].
+   - If [Experiment Y] wins: test [adaptation] in [channel]. Rationale: [why].
+   ```
+   This subsection is informational. It does not affect the main roadmap's scoring, tiering, or sequencing.
+
 **Cross-tier dependencies:**
 - Interaction dependencies can cross tiers. If a Quick Win has a multiplicative dependency on a Strategic Bet (unusual but possible), note the dependency but do not delay the Quick Win. Instead, note in Sequencing Rationale: "Quick Win [X] will produce a cleaner result if Strategic Bet [Y] runs first, but the momentum value of running [X] early outweighs the measurement risk."
 - LIFT ordering does not cross tiers. A Relevance-category Strategic Bet does not jump ahead of a Distraction-category Quick Win.

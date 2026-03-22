@@ -21,7 +21,7 @@ funnelenvy-skills/
 │   ├── business-brief.md         # Pre-flight intake template + protocol
 │   ├── slugify.md                # Deterministic name-to-slug rules for filenames
 │   ├── competitive-assessment.md # Claim assessment, similarity, overlap scoring (Agent 2)
-│   ├── experiment-patterns.md    # 28 CRO patterns across 10 categories (hypothesis-generator)
+│   ├── experiment-patterns.md    # 32 CRO patterns across 10 categories (hypothesis-generator)
 │   ├── ice-scoring.md            # ICE calibration anchors and scoring rules (hypothesis-generator)
 │   ├── conversion-playbook.md    # Paid LP structural rules, CTA, form, benchmarks (landing-page-generator)
 │   └── campaign-brief-template.md # Campaign brief template structure (landing-page-generator)
@@ -355,10 +355,10 @@ Property ID is optional. If omitted, auto-detects from `company-identity.md` fro
 
 **Runtime:** ~5-8 minutes. ~50-80K tokens. Single interaction point (event classification confirmation).
 
-### hypothesis-generator (v1.3.0)
+### hypothesis-generator (v1.4.0)
 Standalone CRO hypothesis engine. Reads positioning context (L0 + L1) plus optional performance data, applies
-28 experiment patterns across 10 categories plus performance-driven triggers, and produces a prioritized experiment
-roadmap with ICE scoring, test feasibility estimation, contrarian filtering (7 B2B-specific triggers that reframe or suppress standard CRO advice), interaction-effect modeling (AND/OR gates between same-page hypotheses), LIFT-model sequencing (Relevance > Clarity > Anxiety > Distraction > Urgency within tiers), and inconclusive test guidance per experiment. When `performance-profile.md` is present, produces data-calibrated scores, traffic-driven hypotheses, and per-experiment feasibility notes. Infeasible experiments (insufficient traffic) are routed to "What's Not Here" with alternative approaches. Manually invoked: /hypothesis-generator
+32 experiment patterns across 10 categories plus performance-driven triggers, and produces a prioritized experiment
+roadmap with ICE scoring, test feasibility estimation, contrarian filtering (13 triggers that reframe or suppress standard CRO advice in B2B and context-specific scenarios), interaction-effect modeling (AND/OR/XOR gates between same-page hypotheses, 7 empirical interaction effects), LIFT-model sequencing (Relevance > Clarity > Anxiety > Distraction > Urgency within tiers), empirical tiebreakers (winner replication, proximity-to-conversion ordering), and inconclusive test guidance per experiment including post-deployment causal impact validation and directional significance soft-coding. When `performance-profile.md` is present, produces data-calibrated scores with empirical benchmarks and B2B SaaS calibration anchors, traffic-driven hypotheses, and per-experiment feasibility notes. Infeasible experiments (insufficient traffic) are routed to "What's Not Here" with alternative approaches. Manually invoked: /hypothesis-generator
 
 ### landing-page-generator (v1.0.0)
 B2B paid landing page generator. Four-phase pipeline: Brief Builder, Copy Agent, Design Agent, QA Validator. Consumes L0+L1 context files and produces campaign-specific landing page deliverables. Each phase produces a file consumed by the next phase. Human review gates between phases when running the full pipeline.

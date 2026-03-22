@@ -1,6 +1,6 @@
 ---
 name: hypothesis-generator
-version: 1.3.0
+version: 1.4.0
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
 ---
 
@@ -147,7 +147,7 @@ Context available:
   audience-messaging.md (confidence: 4, depth: standard)
   performance-profile.md (confidence: 3, 30 days, 45.2K sessions)  [or: not found]
 
-Pattern categories active: all 10 (28 patterns loaded)
+Pattern categories active: all 10 (32 patterns loaded)
 Performance-driven triggers: [active | inactive (no performance-profile.md)]
 Evidence augmentation: [none | list loaded modules]
 Max hypotheses: 10
@@ -438,9 +438,9 @@ SKILL.md (this file)
   ├── phases/detect-contextual.md   Phase 2b: context-derived opportunity detection
   ├── phases/construct.md           Phase 3: hypothesis construction with causal reasoning
   ├── phases/score.md               Phase 4: ICE scoring and sequencing
-  ├── modules/experiment-patterns.md   CRO pattern library (28 patterns, 10 categories)
-  ├── modules/ice-scoring.md           ICE calibration anchors and scoring rules
-  ├── modules/contrarian-triggers.md   Contrarian filter: context conditions where standard CRO advice backfires (7 triggers)
-  ├── modules/hypothesis-interactions.md  Interaction-effect model: AND/OR gates between hypothesis pairs
+  ├── modules/experiment-patterns.md   CRO pattern library (32 patterns, 10 categories)
+  ├── modules/ice-scoring.md           ICE calibration anchors, empirical benchmarks, B2B SaaS calibration, and predictive scoring reference
+  ├── modules/contrarian-triggers.md   Contrarian filter: context conditions where standard CRO advice backfires (13 triggers)
+  ├── modules/hypothesis-interactions.md  Interaction-effect model: AND/OR/XOR gates between hypothesis pairs, empirical interaction effects
   └── modules/evidence-*.md            (optional) additional evidence sources and calibration data
 ```

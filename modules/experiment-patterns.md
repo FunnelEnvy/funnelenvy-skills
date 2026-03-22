@@ -1,9 +1,9 @@
 # Experiment Patterns Library
 
-Version: 1.2.0
-Last updated: 2026-03-06
-Pattern count: 28
-Categories: 9
+Version: 1.3.0
+Last updated: 2026-03-20
+Pattern count: 32
+Categories: 10
 
 This module contains the CRO experiment patterns that drive the hypothesis generator. Each pattern encodes a testable opportunity type, its trigger conditions, causal reasoning, ICE baselines, and contextual modifiers.
 
@@ -131,11 +131,13 @@ Each pattern follows this structure:
 - Ease -2 if form is embedded third-party with limited step/flow customization
 - Confidence +1 if baseline form abandonment data is available
 - Impact +1 if current single-page form has a measurably low completion rate
+- Confidence +1 if conversational/chat-like form variant is feasible (consistently +6-12% lift across verticals on mobile in multiple studies)
 
 **Common mistakes:**
 - Putting the highest-friction question (budget, phone number) in Step 1
 - Not tracking step-level abandonment, which makes the test unreadable
 - Too many steps (4+ steps for 7 fields is worse than a single page)
+- Using dropdowns where yes/no buttons or selection tiles would reduce interaction cost (yes/no buttons beat dropdowns by +8% in payment completion studies)
 
 **Sequencing notes:** Choose either FO-01 or FO-02 for a given form, not both. FO-01 reduces fields, FO-02 restructures them. Decide based on whether field count can actually be reduced.
 
@@ -164,6 +166,37 @@ Each pattern follows this structure:
 - Omitting the "what happens next" expectation (leads to post-submission anxiety and lower follow-through)
 
 **Sequencing notes:** Complements FO-01 and FO-02. Can be combined with either. Adding context around a reduced-field form is an especially strong combination.
+
+---
+
+### FO-04: Form Field Micro-Copy Optimization
+
+**Category:** Form Optimization
+**Applies when:**
+- Lead gen or signup form uses generic field labels ("Full Name," "Company," "Phone Number") without helper text, examples, or contextual cues
+- Form abandonment or low completion rate observed in performance data
+- Form fields use ambiguous labels that could be interpreted multiple ways (e.g., "Name" without specifying first/last)
+
+**Typical test:** Revise field labels for clarity and add example placeholder text. Specific variants: split ambiguous fields ("Full Name" becomes "First and Last Name"), add example placeholder values ("e.g., Jane Smith"), add micro-copy below fields explaining format expectations or why the field is needed.
+
+**Causal mechanism:** Form fields create micro-decisions. Each ambiguous label forces the visitor to interpret what's being asked, adding cognitive friction that compounds across fields. "Full Name" triggers a pause: first name only? First and last? Include middle? Example placeholder text eliminates interpretation entirely by showing the expected format. The effort reduction is tiny per field but compounds across the form. This is distinct from field count (FO-01) or field structure (FO-02): the number and arrangement of fields stay the same. Only the labeling and helper content change.
+
+**ICE baseline:** Impact 3 | Confidence 4 | Ease 5
+**Modifiers:**
+- Ease +1 if form fields are editable without developer involvement (marketing-owned form builder)
+- Impact +1 if form is deep-funnel (referral, application, consultation request) where each abandoned submission has high value
+- Confidence +1 if form abandonment data shows drop-off at specific fields (localizes the friction)
+- Confidence -1 if form already uses clear labels and placeholder examples (low headroom)
+- Impact +1 if the form targets new visitors specifically (new visitors show 5-7x higher sensitivity to field friction than returning visitors)
+
+**Common mistakes:**
+- Adding placeholder text that disappears on focus without any persistent label, creating a different usability problem (the visitor forgets what field they're filling in)
+- Over-explaining simple fields (micro-copy under "Email" that says "Please enter your email address" adds noise, not clarity)
+- Changing labels without testing: "Work Email" may outperform "Email" for B2B (signals that personal addresses won't work), but "Business Email" may feel more formal than the brand warrants
+
+**Sequencing notes:** Extremely low effort (hours, not days). Run before or in parallel with structural form changes (FO-01, FO-02). Micro-copy improvements are non-destructive and can be maintained regardless of whether you later reduce fields or restructure into multi-step. Results from micro-copy tests also reveal which specific fields cause friction, informing which fields to cut in FO-01.
+
+**Calibration reference:** Senior care site: "Full Name" changed to "First and Last Name" with example placeholder text produced +7.3% referred leads (deep-funnel metric) in 3 hours of implementation. Same site, different section: adding example placeholder text to form fields produced +19% leads (directional significance, consistent with the validated pattern from the first test).
 
 ---
 
@@ -260,9 +293,9 @@ Each pattern follows this structure:
 - Page has full site navigation (not a dedicated landing page)
 - No dedicated landing pages exist for paid campaigns (all traffic goes to site pages)
 
-**Typical test:** Create a paid-traffic variant with (a) headline/visual/offer aligned to the ad creative that drives traffic, and (b) navigation stripped to a single conversion path. Test against the current generic page experience for paid visitors only.
+**Typical test:** Create a paid-traffic variant with (a) headline and visual/offer aligned to the specific ad creative that drives traffic, (b) navigation stripped to a single conversion path, and (c) hero content that echoes the ad's promise rather than the site's generic value prop. Test against the current generic page experience for paid visitors only.
 
-**Causal mechanism:** Paid visitors arrive with a specific expectation set by the ad. Two things break that expectation simultaneously: the page headline doesn't echo the ad's promise (cognitive dissonance at arrival), and full site navigation offers escape routes before the value proposition lands. Each nav link is a competing CTA with zero conversion intent. Aligning the message and removing distractions focuses attention on the single conversion path the ad directed them toward.
+**Causal mechanism:** Paid visitors arrive with a specific expectation set by the ad. Two things break that expectation simultaneously: the page headline doesn't echo the ad's promise (cognitive dissonance at arrival), and full site navigation offers escape routes before the value proposition lands. Each nav link is a competing CTA with zero conversion intent. Aligning the message and removing distractions focuses attention on the single conversion path the ad directed them toward. The match between ad creative and landing page (information scent) is itself a high-leverage variable: when visitors see visual and verbal continuity between the ad they clicked and the page they land on, it confirms they're in the right place and reduces the "did I click the wrong thing?" evaluation that drives early bounces.
 
 **ICE baseline:** Impact 4 | Confidence 3 | Ease 3
 **Modifiers:**
@@ -271,13 +304,17 @@ Each pattern follows this structure:
 - Ease +1 if testing platform supports audience targeting by UTM/traffic source
 - Ease -1 if multiple ad campaigns with different messaging point to the same page (need multiple variants)
 - Confidence +1 if testing both message match AND nav removal together vs. just one
+- Impact +1 if ad creative uses specific visual elements (countdown, imagery, offer framing) that can be mirrored on the landing page (visual parity compounds with copy parity)
 
 **Common mistakes:**
 - Matching the ad headline verbatim instead of matching the promise (the landing page should deliver on the ad's implied value, not parrot its exact words)
 - Removing navigation on pages that also receive significant organic traffic without using audience targeting to scope the variant to paid only
-- Ignoring that different ad campaigns set different expectations -- one landing page variant won't fix message match if 5 different ads point to it
+- Ignoring that different ad campaigns set different expectations: one landing page variant won't fix message match if 5 different ads point to it
+- Treating message match as copy-only: visual parity (hero image, color scheme, offer presentation matching the ad creative) carries equal or greater weight than headline match
 
 **Sequencing notes:** Run after baseline CTA experiments (NX-02). Requires audience targeting capability in the testing platform. If platform can't target by traffic source, this test is infeasible.
+
+**Calibration reference:** A streaming service that shrank its hero section and added a countdown calendar matching its paid ad creative saw +45% subscriptions (growing to +65% over time). Note: this test combined three changes (hero shrink, countdown urgency, ad parity), so the lift is attributable to the combination, not any single variable. An insurance company testing ad-aligned conversational forms saw +12% conversions and 17% CAC reduction.
 
 ---
 
@@ -320,7 +357,7 @@ Each pattern follows this structure:
 
 **Typical test:** Deploy a session-depth-triggered offer (comparison guide, ROI calculator, analyst report, "been researching?" prompt) that fires after the 5th pageview. Target the offer to the visitor's demonstrated behavior rather than using a generic popup.
 
-**Causal mechanism:** Page-count correlates with evaluation intent. A visitor on their 5th page has demonstrated sustained interest but hasn't converted -- they're likely comparing options or building an internal case. An offer tailored to comparison behavior (side-by-side guide, "still evaluating?" prompt, ROI calculator) meets the visitor's actual mental state. Time-based or exit-intent triggers fire without regard to engagement depth, which means they interrupt casual browsers and miss deep evaluators equally.
+**Causal mechanism:** Page-count correlates with evaluation intent. A visitor on their 5th page has demonstrated sustained interest but hasn't converted: they're likely comparing options or building an internal case. An offer tailored to comparison behavior (side-by-side guide, "still evaluating?" prompt, ROI calculator) meets the visitor's actual mental state. Time-based or exit-intent triggers fire without regard to engagement depth, which means they interrupt casual browsers and miss deep evaluators equally.
 
 **ICE baseline:** Impact 3 | Confidence 3 | Ease 3
 **Modifiers:**
@@ -336,6 +373,37 @@ Each pattern follows this structure:
 - Firing the same offer regardless of which pages were visited (someone who read 5 blog posts needs different content than someone who visited pricing + 4 product pages)
 
 **Sequencing notes:** Low effort if popup tooling exists. Run independently of page-level experiments. Does not compete with or depend on NX-03 (exit path optimization) since NX-03 targets on-page secondary CTAs while this targets session-level behavioral triggers.
+
+---
+
+### NX-07: Return Visitor Intent Optimization
+
+**Category:** Navigation/UX Flow
+**Applies when:**
+- Performance-profile shows high percentage of returning visitors (>30% return rate) on acquisition pages (homepage, signup, pricing)
+- Analytics indicate returning visitors exhibit different behavior than new visitors on the same page (higher bounce, shorter time, different click patterns)
+- Login or account access is available but not prominently surfaced on acquisition-focused pages (login link buried in nav, icon-only with no text label, or absent entirely)
+
+**Typical test:** Add a prominent, clearly labeled login path on acquisition pages where return visitor traffic is significant. Specific variants: replace ambiguous icon with text label ("Log In"), add a "Welcome back" banner for returning visitors with a direct login CTA, or test a conditional experience that surfaces account access for return visitors while preserving the acquisition flow for new visitors.
+
+**Causal mechanism:** Acquisition pages are designed for new visitors: they lead with value props, social proof, and signup CTAs. But a significant portion of traffic to these pages is existing users trying to access their account. When login access is buried or icon-only, these users waste time hunting for the entry point, inflate bounce metrics (they leave to find the login elsewhere), and in the worst case abandon entirely. The friction is asymmetric: making login prominent costs new visitors nothing (they ignore it) but removes a significant barrier for returning users. The reverse test (auto-redirecting returning users past marketing pages) consistently backfires because returning users who haven't fully converted still benefit from exposure to upgrade messaging and value reinforcement on the marketing site.
+
+**ICE baseline:** Impact 4 | Confidence 4 | Ease 5
+**Modifiers:**
+- Impact +1 if returning visitors represent >40% of acquisition page traffic (larger affected population)
+- Impact +1 if the product has a freemium tier or free trial where users log in frequently (high login-seeking behavior)
+- Confidence +1 if analytics segment data shows returning visitors bouncing at significantly higher rates than new visitors on the same page
+- Ease -1 if conditional content display (different experience for new vs. returning) requires personalization infrastructure not currently deployed
+- Confidence -1 if the logged-in account experience has minimal value (no saved state, no streamlined workflow): making login prominent will increase logins but won't improve downstream conversion if the account itself isn't valuable
+
+**Common mistakes:**
+- Auto-redirecting returning users past the marketing site entirely: this suppresses exposure to upgrade messaging and value reinforcement that drives conversions from freemium to paid. A SaaS scheduling tool that auto-redirected logged-in users straight to the product saw -4% subscriptions.
+- Assuming the login prominence pattern transfers across all contexts: it produces strong lifts when the logged-in experience has genuine value (saved payment info, streamlined checkout, personalized dashboard) but falls flat when the account offers minimal benefit (just order history). Validate that the account experience justifies the login before making it prominent.
+- Testing login prominence without measuring downstream revenue impact: increased logins are a vanity metric if those logins don't translate to higher-value actions (purchases, upgrades, retention)
+
+**Sequencing notes:** Very low implementation effort (text label change, banner addition). Run independently of other page-level experiments since the change targets a distinct visitor segment. If the returning visitor segment is large, this can run concurrently with new-visitor-focused tests (HM-01, NX-02) on the same page using audience targeting. Pairs with PE-01 (Segment-Based Hero Personalization) if the personalization infrastructure supports new-vs-returning segmentation.
+
+**Calibration reference:** Apparel retailer: changing a person icon to the text "Log In" produced +4.1% completed orders and +5.3% RPV, described as the biggest client win in two years. Senior living site: adding a prominent login button produced +118% login CTA clicks and +58% total logins. Same pattern tested on a social impact fundraising site (Shopify) completely failed because the account had minimal value (just order history). Context validation is essential.
 
 ---
 
@@ -709,6 +777,38 @@ Each pattern follows this structure:
 
 ---
 
+### CR-04: Content Page Conversion Injection
+
+**Category:** Content/Resource
+**Applies when:**
+- Performance-profile shows high-traffic content or SEO pages (blog posts, resource pages, guides) with no conversion path beyond site navigation
+- Pages rank well organically and drive significant sessions but have zero CTAs, forms, or conversion-oriented elements
+- The content topic aligns with a monetizable service or product (the visitor's intent is adjacent to a purchase decision, even if not transactional)
+
+**Typical test:** Add a contextually relevant conversion element below the fold on high-traffic content pages. Variants: a product/service widget related to the content topic, an inline CTA for a relevant resource or consultation, or a contextual banner linking to a related solution page. The element should feel like a natural extension of the content, not an interstitial ad.
+
+**Causal mechanism:** High-traffic content pages attract visitors with informational intent. These visitors are not actively shopping, but their topic interest signals adjacency to a purchase need. A visitor reading "how to evaluate interim CFO services" has a latent need that a well-placed "Get matched with an interim CFO" widget can convert. The content page itself does the persuasion work (educating, building trust); the conversion element simply offers the next logical step. Without it, the visitor reads, learns, and leaves. The content page becomes a cul-de-sac instead of a funnel entry point.
+
+**ICE baseline:** Impact 3 | Confidence 3 | Ease 4
+**Modifiers:**
+- Impact +1 if the content page is in the top 10 by organic sessions (large affected population)
+- Impact +1 if the content topic directly maps to a revenue-generating service or product (not tangential content like company culture posts)
+- Confidence +1 if similar conversion injection has been tested elsewhere on the site (pattern validated internally)
+- Ease +1 if the conversion element already exists on other pages and just needs placement (no new content or design)
+- Ease -1 if the content pages are managed in a CMS template that doesn't support per-page or per-category widget insertion
+- Confidence -1 if the content audience is primarily top-of-funnel researchers with low purchase intent (conversion injection may feel intrusive and drive negative engagement)
+
+**Common mistakes:**
+- Placing a hard-sell CTA ("Book a demo now!") on an educational blog post where the visitor is in research mode. The conversion element must match the visitor's awareness stage. Content readers are typically problem-aware or solution-aware, not product-aware.
+- Ignoring secondary behavioral effects: a conversion widget doesn't just add a new action. It redistributes behavior. Expect some cannibalization of lower-value engagement (clicks to related articles, time on page) in exchange for higher-value conversion. Measure total funnel impact, not just widget clicks.
+- Using the same generic widget across all content pages regardless of topic. A post about pricing strategy needs a different conversion path than a post about implementation best practices. Match the widget to the content's topic.
+
+**Sequencing notes:** Low effort if a reusable widget or CTA component exists. Run independently of homepage and product page experiments since content pages are a distinct surface. Pairs well with NX-06 (Comparison-Mode Intervention) if the same visitor reads multiple content pages before the conversion element fires. Validate on the highest-traffic content page first, then replicate across similar pages if the pattern wins.
+
+**Calibration reference:** A travel content site added a below-fold lodging widget on an SEO content page about a destination. Total site-wide purchases increased +3%. The widget simultaneously decreased clicks to other content categories (camping content), indicating behavioral redistribution from lower-value to higher-value actions.
+
+---
+
 ## Category: Trust/Credibility
 
 ### TC-01: Team Credibility Surface
@@ -823,6 +923,37 @@ Each pattern follows this structure:
 - Not measuring which specific items drive conversions (the most-viewed item isn't necessarily the most-converting)
 
 **Sequencing notes:** Run after CTA optimization on the same page (EE-01). If the CTA test wins but conversion lift is modest, element engagement may be the next bottleneck. Pairs with PS-01 (Above-the-Fold Hierarchy Reset) when the carousel is above the fold.
+
+---
+
+### EE-03: CTA Commitment Language Calibration
+
+**Category:** Element Engagement
+**Applies when:**
+- Primary CTA uses high-commitment language ("Subscribe," "Sign Up," "Buy Now," "Request Demo") for visitors who are not yet product-aware or most-aware
+- Audience-messaging indicates the target persona's awareness stage is problem-aware or solution-aware (not ready for commitment-level CTAs)
+- CTA click rate is low despite strong page engagement (visitors are interested but the CTA asks for too much)
+
+**Typical test:** Replace the primary CTA with lower-commitment language that matches the visitor's awareness stage. Test a spectrum: "Subscribe" (highest commitment) vs. "Start Free Trial" (medium) vs. "View Demo" (low) vs. "See How It Works" (lowest). The winning variant should match the awareness level where the majority of the page's traffic sits.
+
+**Causal mechanism:** CTA language signals the size of the commitment being asked. "Subscribe" implies an ongoing financial obligation. "View Demo" implies a few minutes of passive observation. For B2B buyers who are still evaluating (problem-aware or solution-aware), high-commitment CTAs create a premature ask that triggers loss aversion: the perceived cost of clicking exceeds the perceived value of what's behind it. Lower-commitment language reduces the perceived ask, increasing the percentage of visitors willing to take the next step. Once in the demo/trial/walkthrough, the product does the selling. This is distinct from NX-02 (CTA Clarity and Hierarchy), which addresses vague vs. specific CTA copy and competing CTAs. EE-03 addresses commitment level: the CTA may be perfectly clear and singular but still asks for too much given the visitor's readiness.
+
+**ICE baseline:** Impact 4 | Confidence 4 | Ease 5
+**Modifiers:**
+- Impact +1 if the current CTA uses purchase-intent language ("Subscribe," "Buy," "Purchase") for a page that primarily receives non-purchase-intent traffic
+- Impact +1 for B2B SaaS where the gap between "Subscribe" and "View Demo" is largest (commitment reduction has the most room to operate)
+- Confidence +1 if the page's traffic source data confirms the majority of visitors are not product-aware (paid search for category terms, organic from educational content, social from awareness campaigns)
+- Confidence -1 if the page primarily receives bottom-funnel traffic (retargeting, branded search) where high-commitment CTAs are appropriate
+- Ease -1 if the CTA text change also requires changing the post-click flow (e.g., changing from "Subscribe" to "View Demo" means you need a demo to show)
+
+**Common mistakes:**
+- Reducing commitment language so far that the CTA becomes vague ("Learn More" is low commitment but also low specificity, violating NX-02 principles). The CTA must remain specific even as commitment decreases: "See How [Product] Works" is both low-commitment and specific.
+- Assuming one commitment level fits all traffic sources. Paid search visitors on branded terms are more purchase-ready than visitors from an educational blog post. If the page serves mixed traffic, consider audience-targeted CTA variants rather than a single change.
+- Changing only the CTA button text without adjusting the surrounding micro-copy. If the button says "View Demo" but the section copy says "Ready to buy?", the mismatch creates dissonance.
+
+**Sequencing notes:** Run after NX-02 (CTA Clarity and Hierarchy) has established a clear, singular CTA. EE-03 then calibrates the commitment level of that CTA. Pairs with HM-01 (headline clarity): the headline should set the awareness-stage tone that the CTA continues. If the headline is problem-aware ("Still reconciling spreadsheets manually?") and the CTA is most-aware ("Subscribe Now"), there's a stage mismatch.
+
+**Calibration reference:** SaaS company CTA tests: changing "Subscribe" to "Free Trial" produced +68% CTA clicks. Changing "Subscribe" to "View Demo" produced +249% CTA clicks. The mechanism is commitment reduction, and the magnitude scales with the size of the commitment gap between the original and replacement language. SaaS form field reduction (8 to 6 fields): +8% overall, but +15.31% for new visitors vs. +2.42% for returning visitors, confirming that commitment sensitivity is highest for first-time visitors.
 
 ---
 
