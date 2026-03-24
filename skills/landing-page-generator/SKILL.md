@@ -29,11 +29,11 @@ Generates B2B paid landing pages from existing positioning context. Four phases:
 
 **Examples:**
 ```
-/landing-page-generator Acme Corp interim-cfo --stage brief
-/landing-page-generator Acme Corp interim-cfo --stage copy
-/landing-page-generator Acme Corp interim-cfo --stage design
-/landing-page-generator Acme Corp interim-cfo --stage qa
-/landing-page-generator Acme Corp interim-cfo --stage all
+/landing-page-generator acme interim-cfo --stage brief
+/landing-page-generator acme interim-cfo --stage copy
+/landing-page-generator acme interim-cfo --stage design
+/landing-page-generator acme interim-cfo --stage qa
+/landing-page-generator acme interim-cfo --stage all
 ```
 
 ---
