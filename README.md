@@ -9,7 +9,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | Skill | Version | Description |
 |-------|---------|-------------|
 | [positioning-framework](skills/positioning-framework/SKILL.md) | 1.0.0 | Autonomous positioning and messaging framework from web research |
-| [ga4-audit](skills/ga4-audit/SKILL.md) | 2.1.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, and trend analysis |
+| [ga4-audit](skills/ga4-audit/SKILL.md) | 2.2.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, and trend analysis |
 | [aa-audit](skills/aa-audit/SKILL.md) | 1.0.0 | Adobe Analytics audit with the same output schema as ga4-audit |
 | [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.4.0 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing |
 | [landing-page-generator](skills/landing-page-generator/SKILL.md) | 1.0.0 | B2B paid landing page generator with brief, copy, design, and QA phases |
@@ -101,7 +101,7 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 
 **positioning-framework** researches a company and its competitors, then produces structured context files with evidence-backed analysis. It runs autonomous web research across multiple source tiers (website, reviews, Reddit, SEC filings, job postings) depending on depth level. At standard and deep depth, render-default-deliverables runs automatically after it completes.
 
-**ga4-audit** pulls 10-15 reports from a GA4 property via the analytics-mcp server. Classifies conversion events, groups pages by type, sizes opportunities, discovers element-level interactions (CTA clicks, link text, custom parameters), and detects failure modes. Produces `performance-profile.md`. Standalone -- works with or without positioning context, though it can optionally enrich its output with product-line mappings from `company-identity.md` if one exists. Requires [analytics-mcp](https://github.com/nicholasgriffintn/analytics-mcp) configured and authenticated.
+**ga4-audit** pulls 10-15 reports from a GA4 property via direct API (preferred) or analytics-mcp fallback. Classifies conversion events, groups pages by type, sizes opportunities, discovers element-level interactions (CTA clicks, link text, custom parameters), and detects failure modes. Produces `performance-profile.md`. Standalone -- works with or without positioning context, though it can optionally enrich its output with product-line mappings from `company-identity.md` if one exists. Requires GA4 credentials (see `skills/ga4-audit/.env.example`) or [analytics-mcp](https://github.com/nicholasgriffintn/analytics-mcp) as fallback.
 
 **aa-audit** is the Adobe Analytics equivalent of ga4-audit. Runs a Python script against the AA 2.0 Reporting API and produces the same `performance-profile.md` schema, so all downstream skills (hypothesis-generator, render-default-deliverables) work identically regardless of analytics platform. Requires Python 3 with `requests`, Adobe Analytics API credentials (env vars), and a client config JSON file.
 
@@ -149,7 +149,7 @@ Most skills are pure markdown with no external dependencies. These are the excep
 
 | Skill | Requirement | Why |
 |-------|-------------|-----|
-| ga4-audit | [analytics-mcp](https://github.com/nicholasgriffintn/analytics-mcp) configured and authenticated | Queries GA4 via MCP tools |
+| ga4-audit | GA4 credentials (see `.env.example`) OR [analytics-mcp](https://github.com/nicholasgriffintn/analytics-mcp) | Queries GA4 via direct API (preferred) or MCP fallback. Python 3 + `requests` for direct API. |
 | aa-audit | Python 3 + `requests` package, Adobe Analytics API credentials (env vars), client config JSON | Runs a Python script against the AA 2.0 Reporting API |
 | experiment-mockup (live mode) | Chrome DevTools MCP | Injects changes into live browser DOM. Falls back to static mode without it. |
 
