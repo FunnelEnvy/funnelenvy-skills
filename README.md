@@ -10,10 +10,11 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 |-------|---------|-------------|
 | [positioning-framework](skills/positioning-framework/SKILL.md) | 1.0.0 | Autonomous positioning and messaging framework from web research |
 | [ga4-audit](skills/ga4-audit/SKILL.md) | 2.1.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, and trend analysis |
+| [aa-audit](skills/aa-audit/SKILL.md) | 1.0.0 | Adobe Analytics audit with the same output schema as ga4-audit |
 | [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.4.0 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing |
 | [landing-page-generator](skills/landing-page-generator/SKILL.md) | 1.0.0 | B2B paid landing page generator with brief, copy, design, and QA phases |
 | [positioning-update](skills/positioning-update/SKILL.md) | 1.0.0 | Apply client feedback and corrections to positioning context files |
-| [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.0.0 | Visual mockup generator for experiment hypotheses with CRO placement rationale |
+| [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.0.0 | Visual mockup generator for experiment hypotheses (in active development) |
 | [render-default-deliverables](skills/render-default-deliverables/SKILL.md) | 1.0.0 | Generates client-ready deliverables from positioning context |
 
 ## Quick Start
@@ -31,14 +32,20 @@ Run a skill:
 /positioning-framework https://example.com
 /positioning-update
 /ga4-audit properties/123456789
+/aa-audit --config path/to/config.json
 /hypothesis-generator
 /landing-page-generator example-co campaign-slug --stage all
+/landing-page-generator example-co campaign-slug --stage brief
 /experiment-mockup 1
 ```
 
+The `--stage` flag on landing-page-generator controls which phases run: `brief`, `copy`, `design`, `qa`, or `all` (default).
+
 Research output goes to `.claude/context/`. Deliverables go to `.claude/deliverables/`.
 
-## Depth Levels
+## Positioning Framework Depth Levels
+
+The `positioning-framework` skill supports three depth levels. Other skills do not use the `--depth` flag.
 
 | Depth | What It Does | Time | Tokens |
 |-------|-------------|------|--------|
@@ -47,8 +54,6 @@ Research output goes to `.claude/context/`. Deliverables go to `.claude/delivera
 | `--depth deep` | Extended competitive. 6+ competitors, deeper sources, deliverables. | ~40-50 min | ~550-650K |
 
 Each depth builds on prior work. Running quick then standard then deep is incremental, not redundant.
-
-Examples:
 
 ```
 /positioning-framework https://example.com --depth quick
@@ -79,6 +84,10 @@ Examples:
 | experiment-roadmap.md | Prioritized experiment plan (produced by hypothesis-generator) |
 | competitive-comparison-matrix.md | Structured comparison grid across competitors |
 | battle-cards/[competitor].md | One-page competitor reference cards |
+| campaigns/[slug]/brief.md | Campaign brief for a landing page |
+| campaigns/[slug]/copy.md | Section-by-section landing page copy |
+| campaigns/[slug]/page.html | Single-file HTML landing page |
+| campaigns/[slug]/qa-report.md | QA validation report |
 | experiments/[slug]/mockup.html | Standalone HTML mockup of proposed experiment change |
 | experiments/[slug]/placement.md | CRO placement rationale and implementation notes |
 
@@ -88,11 +97,13 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 
 **positioning-framework** researches a company and its competitors, then produces structured context files with evidence-backed analysis. It runs autonomous web research across multiple source tiers (website, reviews, Reddit, SEC filings, job postings) depending on depth level. At standard and deep depth, render-default-deliverables runs automatically after it completes.
 
-**ga4-audit** pulls 10-15 reports from a GA4 property via the analytics-mcp server. Classifies conversion events, groups pages by type, sizes opportunities, discovers element-level interactions (CTA clicks, link text, custom parameters), and detects failure modes. Produces `performance-profile.md`. Standalone -- works with or without positioning context, though it can optionally enrich its output with product-line mappings from `company-identity.md` if one exists.
+**ga4-audit** pulls 10-15 reports from a GA4 property via the analytics-mcp server. Classifies conversion events, groups pages by type, sizes opportunities, discovers element-level interactions (CTA clicks, link text, custom parameters), and detects failure modes. Produces `performance-profile.md`. Standalone -- works with or without positioning context, though it can optionally enrich its output with product-line mappings from `company-identity.md` if one exists. Requires [analytics-mcp](https://github.com/nicholasgriffintn/analytics-mcp) configured and authenticated.
+
+**aa-audit** is the Adobe Analytics equivalent of ga4-audit. Runs a Python script against the AA 2.0 Reporting API and produces the same `performance-profile.md` schema, so all downstream skills (hypothesis-generator, render-default-deliverables) work identically regardless of analytics platform. Requires Python 3 with `requests`, Adobe Analytics API credentials (env vars), and a client config JSON file.
 
 **hypothesis-generator** reads everything the other skills produced and generates a prioritized experiment roadmap. Without GA4 data, it works from positioning gaps alone (confidence capped at 4/5). With GA4 data, it unlocks 19 performance-driven triggers, calibrates ICE scores using real traffic numbers, adds baseline metrics and test feasibility estimates to each hypothesis, and routes infeasible experiments (insufficient traffic) to "What's Not Here" with alternative approaches.
 
-**experiment-mockup** takes a hypothesis from the experiment roadmap and builds a visual mockup showing the proposed change in the context of the real target page. In live mode (requires Chrome DevTools MCP), it injects the change into the user's browser, matches the site's design system using computed styles, and iterates on placement and styling in real time. In static mode (automatic fallback), it extracts page HTML and builds a standalone mockup file. Both modes produce a CRO placement rationale explaining why the element is positioned where it is, what visual hierarchy strategy it uses, and how the dev team should implement it.
+**experiment-mockup** (in active development) takes a hypothesis from the experiment roadmap and builds a visual mockup showing the proposed change in the context of the real target page. In live mode (requires Chrome DevTools MCP), it injects the change into the user's browser, matches the site's design system using computed styles, and iterates on placement and styling in real time. In static mode (automatic fallback), it extracts page HTML and builds a standalone mockup file. Both modes produce a CRO placement rationale explaining why the element is positioned where it is, what visual hierarchy strategy it uses, and how the dev team should implement it.
 
 **positioning-update** applies client feedback, stakeholder corrections, and new intelligence to existing context files. Paste an email, Slack thread, or meeting notes and it classifies each piece of information, shows you a structured change plan, and executes surgical edits after approval. No web research. Triggers deliverable re-render automatically.
 
@@ -121,17 +132,17 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 /render-default-deliverables
 ```
 
-Each step is optional and independent, but they compound. Positioning context makes GA4 audit smarter (product-line page grouping). GA4 data makes hypothesis-generator smarter (traffic-calibrated scores, performance-driven triggers). Run what you have access to.
+Each step is optional and independent, but they compound. Positioning context makes the analytics audit smarter (product-line page grouping). Analytics data makes hypothesis-generator smarter (traffic-calibrated scores, performance-driven triggers). Run what you have access to.
 
-## Vision
+## Prerequisites
 
-The research layer (L0 company identity + L1 analysis) is the foundation. Once those context files exist, any number of skills can consume them to produce different outputs.
+Most skills are pure markdown with no external dependencies. These are the exceptions:
 
-Today the pipeline covers positioning research, GA4 analytics, experiment planning, and polished deliverables. That's the starting point, not the ceiling.
-
-The goal is a library of composable skills that read from the same structured context: website audits that score pages against the messaging framework, content strategies built on proven value themes, ad copy generators that pull from the language bank. Each skill does one thing well, and none of them need to re-run the research.
-
-Build the context once. Run whatever analysis or deliverable you need on top of it.
+| Skill | Requirement | Why |
+|-------|-------------|-----|
+| ga4-audit | [analytics-mcp](https://github.com/nicholasgriffintn/analytics-mcp) configured and authenticated | Queries GA4 via MCP tools |
+| aa-audit | Python 3 + `requests` package, Adobe Analytics API credentials (env vars), client config JSON | Runs a Python script against the AA 2.0 Reporting API |
+| experiment-mockup (live mode) | Chrome DevTools MCP | Injects changes into live browser DOM. Falls back to static mode without it. |
 
 ## License
 
