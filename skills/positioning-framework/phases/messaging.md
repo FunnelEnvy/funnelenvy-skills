@@ -400,6 +400,31 @@ Validated search terms buyers actually use to find solutions in this space.
 
 ## Brand Voice & Tone
 
+### Brand Voice Detection
+
+Before building the Voice sections below, check for `.claude/context/brand-voice.md`:
+
+1. **If `brand-voice.md` exists with `voice_confidence >= 3`:**
+   - **Do NOT perform independent voice analysis.** The standalone voice-inference skill has already produced a deep voice profile.
+   - Read `brand-voice.md` frontmatter for: `primary_tone`, `person`, `consistency_rating`, `rhetorical_mode`, `sentence_length_avg`, `jargon_tolerance`.
+   - Copy frontmatter voice fields into `audience-messaging.md` frontmatter: `tone` = join(primary_tone), `person` = person, `complexity` = map jargon_tolerance to complexity, `voice_consistency` = consistency_rating.
+   - Set `voice_source: "brand-voice.md"` in audience-messaging.md frontmatter.
+   - Write an **abbreviated Voice Profile** (Section 12): "Full voice analysis in brand-voice.md (confidence: [N], [N] pages analyzed, [N] rules). Key dimensions: Formality [N]/10, Confidence [N]/10, Warmth [N]/10, Complexity [N]/10, Energy [N]/10."
+   - **Copy Voice Rules** (Section 18) verbatim from brand-voice.md. These are the actionable constraints downstream skills need.
+   - Build **Language Bank** (Section 15) using brand-voice.md Vocabulary Fingerprint:
+     - High-Frequency Terms -> Company Language subsection
+     - Avoided Vocabulary -> Competitor-Owned Terms subsection
+     - Customer Language still comes from this agent's own analysis of review site data in `_research-extractions.md`
+   - **Skip** Channel Consistency Audit (Section 13) and Competitor Voice Comparison (Section 14). These are covered more deeply in brand-voice.md.
+   - Set voice section confidence = brand-voice.md `voice_confidence` (inherit, don't re-derive).
+   - **Then proceed to the remaining sections** (Do/Don't Examples, Brand Narrative Tensions) using brand-voice.md as the source.
+
+2. **If `brand-voice.md` does NOT exist or `voice_confidence < 3`:**
+   - Proceed with the full voice analysis below (current behavior, no change).
+   - At completion, add a note in the Voice Profile section: "For deeper voice analysis with scored tone dimensions, vocabulary fingerprints, and 33+ categorized examples, run `/voice-inference <url>`."
+
+---
+
 Derived from research, not self-reported. Analyze tone patterns across all content collected in Phase 1. Document how the company actually sounds, flag inconsistencies, compare against competitor voice.
 
 ### Voice Profile

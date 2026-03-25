@@ -9,7 +9,7 @@
 **Output path:** `.claude/context/audience-messaging.md`
 **Produced by:** `positioning-framework`
 **Consumed by:** website-audit, ad copy, email sequences, copy briefs, content strategy, social content
-**Replaces:** `audience-personas.md` + `messaging-framework.md` + `brand-voice.md` (merged pre-release)
+**Replaces:** `audience-personas.md` + `messaging-framework.md` + `brand-voice.md` (merged pre-release; `brand-voice.md` is now also a standalone L1 file produced by the voice-inference skill; when it exists with confidence >= 3, this file defers to it for voice sections)
 
 ---
 
@@ -70,6 +70,7 @@ tone: "professional, authoritative, direct"    # 3-5 adjectives from Voice Profi
 person: "first plural"                          # "first plural" | "third person" | "mixed"
 complexity: "accessible"                        # "jargon-heavy" | "accessible" | "mixed"
 voice_consistency: "moderate"                   # high | moderate | low - see Voice Consistency Rating definition in messaging.md
+voice_source: null                               # null if voice derived in-house, "brand-voice.md" if deferred to voice-inference skill
 
 # Content counts
 customer_language_count: 5                      # entries in Customer Language section

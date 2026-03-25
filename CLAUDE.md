@@ -13,6 +13,7 @@ funnelenvy-skills/
 │   ├── positioning-scorecard.md  # L1 schema (includes quick reference)
 │   ├── performance-profile.md    # L1 schema (GA4 analytics snapshot)
 │   ├── _fetch-registry.md        # Operational metadata schema (not L0/L1)
+│   ├── brand-voice.md            # L1 schema (voice analysis: tone, vocabulary, examples, rules)
 │   ├── _research-extractions.md  # Raw page extractions schema (operational)
 │   └── campaign-brief.md         # Campaign brief + companion schemas (landing-page-generator)
 ├── modules/
@@ -56,6 +57,12 @@ funnelenvy-skills/
 │   │   │   └── qa.md             # Phase 4: QA validation
 │   │   └── templates/
 │   │       └── wireframe.jsx     # React wireframe reference (structural patterns)
+│   ├── voice-inference/
+│   │   ├── SKILL.md              # Orchestrator v1.0 (~2 sequential agents, observe/compare modes)
+│   │   ├── agent-header.md       # Shared agent rules (both agents)
+│   │   └── phases/               # Phase-specific instruction modules
+│   │       ├── extract.md        # Phase 1: page discovery + extraction
+│   │       └── analyze.md        # Phase 2: voice analysis + rule derivation
 │   ├── experiment-mockup/
 │   │   ├── SKILL.md              # Orchestrator v1.0.0 (~parses flags, detects mode, routes phases)
 │   │   ├── agent-header.md       # Shared agent rules (all phases)
@@ -85,8 +92,9 @@ L2: RENDERING (human-readable deliverables)
 L1: ANALYSIS (machine-readable context files)
     Consumes L0. Produces structured analytical context.
     competitive-landscape.md | audience-messaging.md |
-    positioning-scorecard.md | performance-profile.md
-    Owned by: positioning-framework (Agents 2-4), ga4-audit
+    positioning-scorecard.md | performance-profile.md |
+    brand-voice.md
+    Owned by: positioning-framework (Agents 2-4), ga4-audit, voice-inference
     Location: .claude/context/
     ---------------------------------------------------------------
 L0: COMPANY IDENTITY (machine-readable foundation)
