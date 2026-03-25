@@ -2,7 +2,6 @@
 version: "1.0.1"
 updated: 2026-03-17
 ---
-
 # Repo Conventions
 
 Shared file, directory, git, credential, and resource naming conventions for all managed repos.

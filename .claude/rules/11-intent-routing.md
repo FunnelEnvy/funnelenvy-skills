@@ -1,8 +1,7 @@
 ---
-version: "1.2.0"
-updated: 2026-03-19
+version: "1.3.0"
+updated: 2026-03-25
 ---
-
 # Intent Routing
 
 Route skill loading based on file signals. Skills within each plugin handle fine-grained intent matching via their trigger descriptions.
@@ -27,9 +26,8 @@ Load the governing skill to ensure relevant standards are in context. All applic
 
 | Signal                                                        | Load                                                                                                  |
 | ------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| File contains `fe-managed: true` frontmatter field            | `document-management` skill (which then parses `document_type`, if present, to load the owning skill) |
-| File contains `managed_by` frontmatter field                  | The skill named in `managed_by`                                                                       |
-| File is in a `_dev/` directory or filename starts with `chg_` | `change-management` skill                                                                             |
+| File contains `fe-managed: true` frontmatter field            | `document-management` skill (which then parses `governed_by`, if present, to load the owning skill) |
+| File is in a `_dev/` directory or filename starts with `chg_` | `change-management` skill                                                                           |
 
 ### Intent Signals
 
@@ -37,5 +35,5 @@ Load the governing skill to ensure relevant standards are in context. All applic
 | ---------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
 | User intent is to create, rename, or edit a skill, plugin, or marketplace resource | The resource-specific management skill ("what") and `change-management` skill |
 | User intent is to create or edit a knowledge base                                  | The KB type skill ("what") and `knowledge-base` skill                         |
-| User intent is to plan a change to a managed resource                              | `change-management` skill                                                     |
+| User intent is to plan a change to a managed resource  | `change-management` skill                                                     |
 | Any skill is being invoked                                                         | `skill-management` skill (so that skill dependencies resolve correctly)       |

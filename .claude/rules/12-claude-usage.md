@@ -2,7 +2,6 @@
 version: "1.0.1"
 updated: 2026-03-17
 ---
-
 # Claude Usage
 
 Claude Code agent behavior conventions for all managed repos. Covers skill resolution and context ownership.
