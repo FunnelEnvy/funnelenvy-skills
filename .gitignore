@@ -1,6 +1,7 @@
 # Environment and credentials
 .env
 .env.*
+!.env.example
 
 # Development directories (may contain client references)
 skills/**/_dev/

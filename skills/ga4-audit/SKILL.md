@@ -1,15 +1,15 @@
 ---
 name: ga4-audit
-version: 2.1.0
-description: "When the user wants to audit GA4 analytics data for a property. Also use when the user mentions 'GA4 audit,' 'analytics audit,' 'traffic analysis,' 'page performance,' 'conversion audit,' 'bounce rate analysis,' or 'performance profile.' Pulls 10-15 targeted reports from GA4 via analytics-mcp (including element-level interaction discovery), classifies events, and produces a structured performance-profile.md context file (.claude/context/ L1). Single agent, no depth flag. Works with any GA4 property accessible via analytics-mcp."
+version: 2.2.0
+description: "When the user wants to audit GA4 analytics data for a property. Also use when the user mentions 'GA4 audit,' 'analytics audit,' 'traffic analysis,' 'page performance,' 'conversion audit,' 'bounce rate analysis,' or 'performance profile.' Pulls 10-15 targeted reports from GA4 via direct API or analytics-mcp fallback (including element-level interaction discovery), classifies events, and produces a structured performance-profile.md context file (.claude/context/ L1). Single agent, no depth flag. Works with any GA4 property."
 ---
 
 # GA4 Audit
 
 You are an analytics specialist. Your job is to pull structured performance data from GA4, classify conversion events, assess data quality, and produce a performance profile that powers downstream experiment planning and ICE scoring calibration.
 
-**You are an L1 skill.** You query GA4 via analytics-mcp, analyze the data, and produce a structured context file. This means:
-- You perform API calls via analytics-mcp MCP tools (not web research)
+**You are an L1 skill.** You query GA4 via direct API (preferred) or analytics-mcp fallback, analyze the data, and produce a structured context file. This means:
+- You perform API calls via `ga4_client.py` (direct GA4 API) or analytics-mcp MCP tools as fallback (not web research)
 - You classify and analyze the data you pull
 - You produce one context file: `.claude/context/performance-profile.md`
 - Your output is machine-readable (YAML frontmatter + structured markdown), not a deliverable
@@ -67,7 +67,9 @@ When comparison is enabled (default), include a second date range for the compar
 ## Preconditions
 
 **Hard requirements:**
-- analytics-mcp must be configured and authenticated
+- GA4 API access via ONE of these (checked in order during Step 1):
+  1. **Direct API (preferred):** `ga4_client.py` + credentials configured (see `.env.example`)
+  2. **MCP fallback:** analytics-mcp configured and authenticated
 - A valid GA4 property ID must be provided (or discoverable via account summaries)
 
 **Soft requirements:**
@@ -76,7 +78,7 @@ When comparison is enabled (default), include a second date range for the compar
   and tracking gap flags. If missing, Steps 1-10 produce complete output without it.
 
 **Error states:**
-- analytics-mcp not authenticated: Exit with "Analytics MCP authentication failed. Restart your session and authenticate with Google Analytics."
+- Neither API nor MCP available: Exit with "No GA4 access available. Configure credentials (see .env.example) or set up analytics-mcp."
 - Property ID not found: List available properties and ask user to select.
 - Property has zero data in date range: Exit with "No data found for property [ID] in the specified date range. Check the property ID and date range."
 
@@ -90,25 +92,47 @@ When comparison is enabled (default), include a second date range for the compar
 
 ## Execution Pipeline
 
-### Step 1: Authentication Check
+### Step 1: Authentication Check and Data Source Selection
 
-Use `get_account_summaries` to verify analytics-mcp is authenticated and working.
+Determine the data source for this session. Try direct API first, fall back to MCP.
 
-If the call fails with an auth error:
+**Step 1a: Try direct API**
+
+Run `ga4_client.py` from the skill directory:
 ```
-Analytics MCP authentication failed.
-
-Restart your Claude Code session, then re-run this skill. The OAuth flow
-will prompt you to authenticate with Google Analytics.
+python ga4_client.py account-summaries 2>/dev/null || python3 ga4_client.py account-summaries
 ```
 
-Exit immediately. Do not retry.
+- **Exit code 0:** Set `data_source = "api"`. Display: `"Using GA4 Data API (direct)"`. Parse the JSON output for account summaries.
+- **Exit code 2 (no credentials):** Proceed to Step 1b (MCP fallback).
+- **Exit code 3 (auth failed):** Display the stderr message. Exit immediately. Do not fall back to MCP (credentials exist but are broken -- user needs to fix them).
+- **Exit code 1 or other:** Proceed to Step 1b (MCP fallback).
 
-If successful, display available accounts and properties for confirmation.
+**Step 1b: Try MCP fallback**
+
+Only reached when Step 1a exits with code 2 (no credentials) or code 1 (general error).
+
+Use `get_account_summaries` via analytics-mcp.
+
+- If successful: Set `data_source = "mcp"`. Display: `"Using analytics-mcp (fallback). For better performance, configure direct API credentials (see .env.example in ga4-audit skill)."`.
+- If MCP fails with auth error:
+  ```
+  No GA4 access available.
+
+  Option 1 (recommended): Configure direct API credentials.
+  See .env.example in the ga4-audit skill directory.
+
+  Option 2: Set up analytics-mcp and restart your session.
+  ```
+  Exit immediately. Do not retry.
+
+**Step 1c: Confirm**
+
+Display available accounts and properties for confirmation. The remaining steps use `data_source` to route all queries.
 
 ### Step 2: Property Validation
 
-Use `get_property_details` with the provided property ID.
+Query property details with the provided property ID (see Data Source Routing table).
 
 **If no property ID was provided:**
 1. Check `.claude/context/company-identity.md` for `ga4_property` in the YAML frontmatter.
@@ -128,7 +152,7 @@ Display available properties and ask the user to select.
 
 #### Step 3a: Key Event Query
 
-Pull all events with their counts for the date range using `run_report`:
+Pull all events with their counts for the date range using a report query:
 - Dimensions: `eventName`
 - Metrics: `eventCount`, `conversions`
 - Date range: as specified by flags
@@ -198,7 +222,7 @@ Wait for user confirmation. Reclassify any events the user corrects.
 
 ### Step 4: Page Performance Report
 
-Pull top pages by session volume using `run_report`:
+Pull top pages by session volume using a report query:
 - Dimensions: `pagePath`
 - Metrics: `sessions`, `totalUsers`, `bounceRate`, `engagementRate`, `averageSessionDuration`, `engagedSessions`, `screenPageViewsPerSession`
 - Date range: as specified
@@ -277,7 +301,7 @@ When comparison data is present, compute group metrics for both periods. This en
 
 ### Step 5: Conversion Funnel Report
 
-For each of the top 3 conversion events (by volume), pull per-page conversion data using `run_report`:
+For each of the top 3 conversion events (by volume), pull per-page conversion data using a report query:
 - Dimensions: `pagePath`
 - Metrics: `sessions`, `eventCount` (filtered to the specific conversion event)
 - Date range: as specified
@@ -317,7 +341,7 @@ This step discovers custom event parameters and queries element-level interactio
 
 #### Step 5b-1: Parameter Discovery
 
-Call `get_custom_dimensions_and_metrics` for the property. Collect:
+Query custom dimensions and metrics for the property (see Data Source Routing table). Collect:
 - Custom event-scoped dimensions (e.g., `customEvent:form_id`, `customEvent:cta_label`, `customEvent:button_text`)
 - Note which are event-scoped vs user-scoped (only event-scoped are useful here)
 
@@ -367,7 +391,7 @@ Store element interaction data for the frontmatter and body section. If no meani
 
 ### Step 6: Channel/Source Report
 
-Pull channel and source breakdown using `run_report`:
+Pull channel and source breakdown using a report query:
 - Dimensions: `sessionDefaultChannelGroup`
 - Metrics: `sessions`, `bounceRate`, `engagementRate`, `eventCount` (filtered to primary conversion event)
 - Date range: as specified
@@ -383,7 +407,7 @@ Then pull top sources within key channels (channels with >5% of total sessions):
 
 ### Step 7: Device & User Segment Report
 
-Pull device breakdown using `run_report`:
+Pull device breakdown using a report query:
 - Dimensions: `deviceCategory`
 - Metrics: `sessions`, `totalUsers`, `bounceRate`, `engagementRate`, `averageSessionDuration`, `engagedSessions`, `screenPageViewsPerSession`, `eventCount` (filtered to primary conversion event)
 - Date range: as specified
@@ -434,7 +458,7 @@ Post-processing: aggregate into unified conversion counts per segment.
 
 ### Step 8: Landing Page Report
 
-Pull entry pages using `run_report`:
+Pull entry pages using a report query:
 - Dimensions: `landingPage`
 - Metrics: `sessions`, `bounceRate`, `engagementRate`, `engagedSessions`, `screenPageViewsPerSession`, `eventCount` (filtered to primary conversion event)
 - Date range: as specified
@@ -686,25 +710,33 @@ Before writing the final file, verify:
 
 ---
 
-## Analytics MCP Tool Reference
+## Data Source Routing
 
-This skill uses the following analytics-mcp tools:
+Step 1 sets `data_source` to either `"api"` or `"mcp"`. Use this table for ALL queries in Steps 2-8:
 
-| Tool | Used In | Purpose |
-|------|---------|---------|
-| `get_account_summaries` | Step 1 | Auth check + property discovery |
-| `get_property_details` | Step 2 | Property validation |
-| `get_custom_dimensions_and_metrics` | Step 5b | Element parameter discovery |
-| `run_report` | Steps 3-8 (incl. 5b) | All data queries |
+| Operation | API (`data_source = "api"`) | MCP (`data_source = "mcp"`) | Used In |
+|-----------|----------------------------|----------------------------|---------|
+| Account summaries | `ga4_client.py account-summaries` | `get_account_summaries` | Step 1 |
+| Property details | `ga4_client.py property-details --property-id {id}` | `get_property_details` | Step 2 |
+| Custom dimensions | `ga4_client.py custom-dimensions --property-id {id}` | `get_custom_dimensions_and_metrics` | Step 5b |
+| Run report | `ga4_client.py run-report --property-id {id} --request '{json}'` | `run_report` | Steps 3-8 |
 
-**`run_report` parameters:**
-- `property_id`: GA4 property ID (numeric string)
-- `date_ranges`: Array of `{ startDate, endDate }`. Use "NdaysAgo" format or "YYYY-MM-DD".
-- `dimensions`: Array of `{ name }` objects
-- `metrics`: Array of `{ name }` objects
-- `dimension_filter`: Optional filter expression
-- `metric_filter`: Optional filter expression
-- `order_bys`: Array of ordering specs
+**API mode:** Run `ga4_client.py` from the ga4-audit skill directory. All output is JSON on stdout. Parse the JSON response to extract data.
+
+**MCP mode:** Use analytics-mcp MCP tools directly. Response format matches standard MCP tool output.
+
+Both modes return equivalent data structures. The GA4 API JSON response format is the same regardless of access method.
+
+### Report Request Format
+
+When using `ga4_client.py run-report`, pass the request body as a JSON string via `--request` or save to a file and use `--request-file`. The request body follows the [GA4 Data API RunReportRequest](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/properties/runReport) format:
+
+- `dateRanges`: Array of `{ "startDate", "endDate" }`. Use "NdaysAgo" format or "YYYY-MM-DD".
+- `dimensions`: Array of `{ "name" }` objects
+- `metrics`: Array of `{ "name" }` objects
+- `dimensionFilter`: Optional filter expression
+- `metricFilter`: Optional filter expression
+- `orderBys`: Array of ordering specs
 - `limit`: Row limit (default 10000)
 
 **Common GA4 dimensions:**
@@ -716,5 +748,5 @@ This skill uses the following analytics-mcp tools:
 - `sessions`, `totalUsers`, `bounceRate`, `engagementRate`
 - `averageSessionDuration`, `eventCount`, `conversions`
 
-**Filtering for specific events:** Use `dimension_filter` on `eventName` dimension to isolate specific conversion events when pulling per-page conversion data.
+**Filtering for specific events:** Use `dimensionFilter` on `eventName` dimension to isolate specific conversion events when pulling per-page conversion data.
 
