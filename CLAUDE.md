@@ -143,7 +143,9 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 | `.claude/context/audience-messaging.md` | L1 | positioning-framework (standard/deep) | render-default-deliverables, website-audit, content strategy |
 | `.claude/context/positioning-scorecard.md` | L1 | positioning-framework (all depths, minimal at quick) | render-default-deliverables, website-audit, hypothesis roadmap |
 | `.claude/context/performance-profile.md` | L1 | ga4-audit | hypothesis-generator (ICE calibration + performance-driven hypotheses), render-default-deliverables (executive summary enrichment) |
+| `.claude/context/brand-voice.md` | L1 | voice-inference | positioning-framework Agent 3 (voice baseline), landing-page-generator (voice calibration), render-default-deliverables (messaging guide enrichment), hypothesis-generator (voice-aware hypothesis framing) |
 | `.claude/context/_fetch-registry.md` | Operational | positioning-framework Agent 1 (appended by Agent 2) | Agent 2 (duplicate fetch prevention) |
+| `.claude/context/_voice-extractions.md` | Internal/Operational | voice-inference Agent 1 | Agent 2. Ephemeral, overwritten on each run. Not prior work. |
 | `.claude/context/_research-extractions.md` | Internal/Operational | positioning-framework Agent 1 | Agents 2, 3, 4 (selectively). Ephemeral, overwritten on each run. Not prior work. |
 
 ### Deliverable Files (L2)
@@ -263,7 +265,8 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 6. **`/hypothesis-generator`** (produces experiment roadmap from L0 + L1 context + optional performance data)
 7. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
 8. **`/landing-page-generator <company> <slug> --stage all`** (optional, produces campaign landing page from L0 + L1 context, ~260-400K tokens)
-9. **`/experiment-mockup <hypothesis-number>`** (optional, produces visual mockup + placement rationale for a specific hypothesis)
+9. **`/voice-inference <url>`** (optional, standalone brand voice analysis, ~80-120K tokens, ~10-15 min)
+10. **`/experiment-mockup <hypothesis-number>`** (optional, produces visual mockup + placement rationale for a specific hypothesis)
 
 **Tip:** Add `--property <ga4_property_id>` to any positioning-framework invocation to use GA4 traffic data for page selection (e.g., `/positioning-framework https://example.com --property properties/123456789`). This runs a single lightweight query before research begins and saves the property ID to `company-identity.md` so downstream skills like ga4-audit can auto-detect it. The full ga4-audit still runs separately.
 
@@ -305,7 +308,7 @@ Positioning dimensions use categorical ratings (Strong / Needs Work / Missing) i
 ## Conventions
 
 - L0 + L1 context files output to `.claude/context/`
-- **Operational files** use underscore prefix: `_fetch-registry.md`, `_research-extractions.md`. These are internal coordination artifacts. They are NOT considered "prior work" for depth evaluation and are overwritten (not extended) on each run.
+- **Operational files** use underscore prefix: `_fetch-registry.md`, `_research-extractions.md`, `_voice-extractions.md`. These are internal coordination artifacts. They are NOT considered "prior work" for depth evaluation and are overwritten (not extended) on each run.
 - L2 deliverables output to `.claude/deliverables/`
 - L1 skills never produce deliverables. L2 skill never performs research. All human-facing output goes through render-default-deliverables.
 - Skills are standalone. No external dependencies required.
@@ -406,6 +409,23 @@ Client feedback amendment skill. Parses freeform client feedback (emails, Slack 
 - Surgical edits only (change affected lines, preserve everything else)
 
 **Runtime:** ~20-40K tokens. ~3-8 minutes.
+
+### voice-inference (v1.0.0)
+Brand voice analysis from website content. Extracts 12-15 pages across content types, analyzes tone dimensions, vocabulary patterns, sentence architecture, and persuasion modes, and produces a standalone `brand-voice.md` L1 context file. Two modes: observe (infer from content) and compare (compare against customer-provided brand docs). Does not require positioning-framework to have been run first.
+
+**Invocation:** `/voice-inference <url> [--mode observe|compare] [--docs <path-or-url>...] [--guide <path-or-url>]`
+
+**Agents:** 2 sequential (Extract + Analyze). Both Opus.
+
+**Dependencies:**
+- Hard: URL provided
+- Soft: `competitive-landscape.md` (enriches Avoided Vocabulary), `company-identity.md` (enriches page discovery)
+
+**Outputs:**
+- L1 context: brand-voice.md (tone spectrum, vocabulary fingerprint, example library, consistency map, voice rules)
+- Operational: _voice-extractions.md (raw page extractions)
+
+**Runtime:** ~80-120K tokens. ~10-15 minutes.
 
 ### experiment-mockup (v1.0.0)
 Visual mockup generator for proposed experiment changes. Takes a hypothesis from `experiment-roadmap.md`, navigates to the target page, injects the proposed change styled to match the site's design, iterates with the user in real time, then captures the approved state as a standalone HTML artifact with CRO placement rationale. Two modes: live (Chrome DevTools MCP, interactive, ~90% visual fidelity) and static (HTML extraction fallback, non-interactive, ~70% fidelity).

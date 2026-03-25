@@ -14,6 +14,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.4.0 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing |
 | [landing-page-generator](skills/landing-page-generator/SKILL.md) | 1.0.0 | B2B paid landing page generator with brief, copy, design, and QA phases |
 | [positioning-update](skills/positioning-update/SKILL.md) | 1.0.0 | Apply client feedback and corrections to positioning context files |
+| [voice-inference](skills/voice-inference/SKILL.md) | 1.0.0 | Brand voice analysis from website content with scored tone spectrum, vocabulary fingerprint, and actionable voice rules |
 | [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.0.0 | Visual mockup generator for experiment hypotheses (in active development) |
 | [render-default-deliverables](skills/render-default-deliverables/SKILL.md) | 1.0.0 | Generates client-ready deliverables from positioning context |
 
@@ -36,6 +37,8 @@ Run a skill:
 /hypothesis-generator
 /landing-page-generator example-co campaign-slug --stage all
 /landing-page-generator example-co campaign-slug --stage brief
+/voice-inference https://example.com
+/voice-inference https://example.com --mode compare
 /experiment-mockup 1
 ```
 
@@ -73,6 +76,7 @@ Each depth builds on prior work. Running quick then standard then deep is increm
 | audience-messaging.md | Personas, messaging hierarchy, language bank, voice rules |
 | positioning-scorecard.md | Positioning health check, messaging gaps, confidence scores |
 | performance-profile.md | Page performance, conversion funnels, channel/device breakdown, data quality |
+| brand-voice.md | Scored tone spectrum, vocabulary fingerprint, categorized examples, voice rules |
 | _fetch-registry.md | Internal coordination file logging all URLs fetched by each agent |
 
 ### Deliverables (`.claude/deliverables/`)
@@ -103,6 +107,8 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 
 **hypothesis-generator** reads everything the other skills produced and generates a prioritized experiment roadmap. Without GA4 data, it works from positioning gaps alone (confidence capped at 4/5). With GA4 data, it unlocks 19 performance-driven triggers, calibrates ICE scores using real traffic numbers, adds baseline metrics and test feasibility estimates to each hypothesis, and routes infeasible experiments (insufficient traffic) to "What's Not Here" with alternative approaches.
 
+**voice-inference** analyzes how a company communicates by extracting 12-15 pages across content types (homepage, product, blog, case studies, about) and building an evidence-backed voice profile. Scores tone dimensions, identifies vocabulary patterns and sentence architecture, catalogs 33+ categorized examples, and derives actionable voice rules. Two modes: observe (infer from content alone) and compare (compare inferred voice against customer-provided brand docs). Does not require positioning-framework to have been run first. Produces `brand-voice.md`.
+
 **experiment-mockup** (in active development) takes a hypothesis from the experiment roadmap and builds a visual mockup showing the proposed change in the context of the real target page. In live mode (requires Chrome DevTools MCP), it injects the change into the user's browser, matches the site's design system using computed styles, and iterates on placement and styling in real time. In static mode (automatic fallback), it extracts page HTML and builds a standalone mockup file. Both modes produce a CRO placement rationale explaining why the element is positioned where it is, what visual hierarchy strategy it uses, and how the dev team should implement it.
 
 **positioning-update** applies client feedback, stakeholder corrections, and new intelligence to existing context files. Paste an email, Slack thread, or meeting notes and it classifies each piece of information, shows you a structured change plan, and executes surgical edits after approval. No web research. Triggers deliverable re-render automatically.
@@ -125,10 +131,13 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 # 4. Generate data-informed experiment ideas
 /hypothesis-generator
 
-# 5. Visualize specific experiment changes as mockups
+# 5. Analyze brand voice (standalone, works without positioning context)
+/voice-inference https://example.com
+
+# 6. Visualize specific experiment changes as mockups
 /experiment-mockup 1
 
-# 6. Re-render deliverables any time context changes
+# 7. Re-render deliverables any time context changes
 /render-default-deliverables
 ```
 
