@@ -1,0 +1,29 @@
+{
+  "name": "funnelenvy-skills",
+  "owner": {
+    "name": "FunnelEnvy",
+    "url": "https://funnelenvy.com"
+  },
+  "metadata": {
+    "description": "AI-powered positioning, competitive research, and CRO skills for Claude Code",
+    "version": "1.0.0",
+    "repository": "https://github.com/FunnelEnvy/funnelenvy-skills"
+  },
+  "plugins": [
+    {
+      "name": "funnelenvy-skills",
+      "description": "8 skills for positioning research, GA4 auditing, hypothesis generation, landing page creation, and experiment mockups",
+      "source": "./",
+      "skills": [
+        "./skills/positioning-framework",
+        "./skills/positioning-update",
+        "./skills/render-default-deliverables",
+        "./skills/ga4-audit",
+        "./skills/aa-audit",
+        "./skills/hypothesis-generator",
+        "./skills/landing-page-generator",
+        "./skills/experiment-mockup"
+      ]
+    }
+  ]
+}
