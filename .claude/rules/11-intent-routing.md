@@ -1,5 +1,5 @@
 ---
-version: "1.3.2"
+version: "1.3.3"
 updated: 2026-03-25
 ---
 # Intent Routing
@@ -10,7 +10,7 @@ Route skill loading based on file signals. Skills within each plugin handle fine
 
 Skipping this gate means the governing skill context is missing — edits will miss required standards, searches will miss relevant files, reviews will apply the wrong criteria, and informational answers will miss architectural context that only the governing skill provides.
 
-When the user message references a managed markdown file path or directory that contains markdown files — for reading, editing, deleting, moving, searching, or searching *for references to it* — complete this gate before any next step, including responding to the user:
+When the user message references a managed markdown file path or directory that contains markdown files — whether for reading, editing, deleting, moving, searching, answering questions, or searching *for references to it* — complete this gate before any next step, including responding to the user. Read-only operations (overviews, summaries, exploratory reads) are not exempt.
 
 1. Read the file — for `fe-managed: true` documents, the managed-document hook injects preload instructions as a system reminder after the Read
 2. Follow the injected preload instructions — these load the governing skill, its dependencies, and any lifecycle skill. The hook output is not advisory; treat it as a blocking prerequisite
