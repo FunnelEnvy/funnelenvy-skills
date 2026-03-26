@@ -1,5 +1,5 @@
 ---
-version: "1.3.1"
+version: "1.3.2"
 updated: 2026-03-25
 ---
 # Intent Routing
@@ -8,7 +8,7 @@ Route skill loading based on file signals. Skills within each plugin handle fine
 
 ## Managed Document Gate
 
-Skipping this gate means the governing skill context is missing — edits will miss required standards, searches will miss relevant files, and reviews will apply the wrong criteria.
+Skipping this gate means the governing skill context is missing — edits will miss required standards, searches will miss relevant files, reviews will apply the wrong criteria, and informational answers will miss architectural context that only the governing skill provides.
 
 When the user message references a managed markdown file path or directory that contains markdown files — for reading, editing, deleting, moving, searching, or searching *for references to it* — complete this gate before any next step, including responding to the user:
 
