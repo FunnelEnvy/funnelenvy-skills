@@ -1,26 +1,12 @@
 ---
-version: "1.0.1"
-updated: 2026-03-17
+version: "1.1.0"
+updated: 2026-03-26
 ---
 # Claude Usage
 
 Claude Code agent behavior conventions for all managed repos. Covers skill resolution and context ownership.
 
-## Skill Preference Priority (MANDATORY)
-
-Skipping this priority order causes inconsistent behavior across conversations — the agent picks whichever skill loads fastest instead of the correct one.
-
-When multiple skills or plugins could handle an intent, you MUST resolve in this order. Do not skip to a lower-priority source because it is faster or already loaded.
-
-1. Repo-specific skills (`skills/` directory in the current repo)
-2. fe-sys-hq marketplace plugins (distributed governance and integrations)
-3. Other marketplace plugins
-4. Device-level configuration (user-level `~/.claude/CLAUDE.md`)
-
-If a repo-specific skill exists for the intent, you MUST use it even if a marketplace plugin also matches.
-
-## User-Level vs. Repo-Level Context
-
-- You MUST use repo-managed files (CLAUDE.md, rules, knowledge base, skills, change documents) for project context. You MUST NOT store project context in a user-level location without first alerting the user and explaining why a repo file may be more appropriate.
-- You MUST use repo files over auto memory (`~/.claude/projects/*/memory/`) for project information. You MUST NOT write auto memory for something that could live in a repo file without flagging it to the user first.
-- User-level features are appropriate ONLY for truly device-specific config (OS, shell, paths, runtimes) and personal preferences (editor, keybindings).
+- If multiple skills or plugins could handle an intent, you MUST resolve in this priority order: (1) repo-specific skills, (2) fe-sys-hq marketplace plugins, (3) other marketplace plugins, (4) device-level configuration. If a repo-specific skill exists, you MUST use it even if a marketplace plugin also matches.
+- If you are about to write auto memory (`~/.claude/projects/*/memory/`), stop and ask: does this belong in a repo-managed document instead? If the information is project context, architectural decisions, resource state, or workflow knowledge, you MUST use a repo file. Auto memory is ONLY for truly personal user preferences that have no repo-level home.
+- If you are about to store project context in a user-level location (`~/.claude/CLAUDE.md`, user settings), you MUST alert the user and explain why a repo file may be more appropriate.
+- If governance rules, skill instructions, or hook-injected instructions require loading context before proceeding, you MUST complete those steps before responding — even if the user's question appears simple. Skipping governance steps to answer faster degrades output quality.
