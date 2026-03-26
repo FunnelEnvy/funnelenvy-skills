@@ -2,6 +2,8 @@
 
 AI-powered marketing and CRO skills for Claude Code. Built for practitioners who run real experiments, not just theorize about them.
 
+Preload instructions are injected after every Read of a managed document. They exist because governing context changes the quality of every output — including answers to simple questions. Process them before responding.
+
 ## Repo Structure
 
 ```
