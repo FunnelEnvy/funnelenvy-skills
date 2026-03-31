@@ -1,15 +1,15 @@
 ---
 name: landing-page-generator
-version: 1.0.0
-description: "When the user wants to generate a B2B paid landing page from existing positioning context. Also use when the user mentions 'landing page,' 'LP generator,' 'campaign page,' 'paid landing page,' 'landing page copy,' 'hero section,' or 'conversion page.' Four-phase pipeline: brief builder, copy agent, design agent, QA validator. Consumes L0+L1 context files from .claude/context/ and produces campaign deliverables in .claude/deliverables/campaigns/."
+version: 2.0.0
+description: "When the user wants to generate a B2B paid landing page from existing positioning context. Also use when the user mentions 'landing page,' 'LP generator,' 'campaign page,' 'paid landing page,' 'landing page copy,' 'hero section,' or 'conversion page.' Four-phase pipeline with signal-driven section assembly: brief builder, copy agent (composable section selection), design agent, QA validator. Consumes L0+L1 context files from .claude/context/ and produces campaign deliverables in .claude/deliverables/campaigns/."
 ---
 
 # Landing Page Generator
 
-> **Version:** 1.0.0
+> **Version:** 2.0.0
 > **Type:** Multi-phase pipeline with human review gates
 > **Model:** opus (all phases)
-> **Depends on:** modules/conversion-playbook.md, modules/campaign-brief-template.md, modules/lp-audit-taxonomy.md (construct mode)
+> **Depends on:** modules/conversion-playbook.md, modules/campaign-brief-template.md, modules/lp-audit-taxonomy.md (construct mode), modules/section-taxonomy.md, templates/section-catalog.html
 
 Generates B2B paid landing pages from existing positioning context. Four phases: Brief Builder, Copy Agent, Design Agent, QA Validator. Each phase produces a file that the next phase consumes.
 
@@ -123,9 +123,9 @@ Each phase runs as a subagent. Load:
 | Stage | Agent loads | Preconditions |
 |-------|-----------|---------------|
 | brief | agent-header.md + phases/brief.md | company-identity.md confidence >= 3 |
-| copy | agent-header.md + phases/copy.md | brief.md must exist in campaign directory |
-| design | agent-header.md + phases/design.md | copy.md must exist in campaign directory |
-| qa | agent-header.md + phases/qa.md | At least one of copy.md or page.html must exist |
+| copy | agent-header.md + phases/copy.md + modules/section-taxonomy.md | brief.md must exist in campaign directory |
+| design | agent-header.md + phases/design.md + templates/section-catalog.html | copy.md must exist in campaign directory |
+| qa | agent-header.md + phases/qa.md + modules/section-taxonomy.md | At least one of copy.md or page.html must exist |
 
 ### Step 6: Review Gate (--stage all only)
 
@@ -154,10 +154,10 @@ After the final phase (or single phase), summarize what was produced:
 | Phase | Estimated Tokens | Notes |
 |-------|-----------------|-------|
 | Brief (Phase 1) | ~50-80K | Reads L0+L1 context, interactive gap filling |
-| Copy (Phase 2) | ~85-125K | Reads brief + playbook module + taxonomy construct mode (D1,D2,D3,D5,D7,D8,D10) + positioning context |
-| Design (Phase 3) | ~105-155K | Reads copy + structural rules + taxonomy construct mode (D4,D6,D9) + wireframe reference + brand design system (if available) |
-| QA (Phase 4) | ~30-50K | Validation pass, no generation |
-| Full pipeline | ~260-400K | All four phases with review gates |
+| Copy (Phase 2) | ~90-135K | Reads brief + playbook module + taxonomy construct mode (D1,D2,D3,D5,D7,D8,D10) + section-taxonomy.md (section selection logic) + positioning context |
+| Design (Phase 3) | ~105-155K | Reads copy + structural rules + taxonomy construct mode (D4,D6,D9) + section-catalog.html (visual reference) + brand design system (if available) |
+| QA (Phase 4) | ~35-55K | Validation pass (includes composable section checks) + section-taxonomy.md (ordering constraint validation) |
+| Full pipeline | ~280-425K | All four phases with review gates |
 
 ---
 
@@ -172,5 +172,8 @@ The positioning-framework skill produces structured context files with frontmatt
 **Why outputs in .claude/deliverables/campaigns/?**
 Campaign briefs and copy are deliverables, not reusable analysis context. They are campaign-specific and consumed by exactly one downstream phase. Putting them in `.claude/context/` would be a layer violation. The `campaigns/` subdirectory keeps multiple campaigns organized under one client's deliverables.
 
-**Why the wireframe is a template, not a module?**
-Modules are shared markdown instructions read by agents. The wireframe is a React component used as a structural reference by exactly one phase (design). It lives in `templates/` within the skill directory because it is skill-specific, not cross-skill.
+**Why composable sections instead of a fixed wireframe?**
+The fixed wireframe produced identical page structure for every campaign regardless of context. The composable section system selects and sequences sections based on campaign brief signals and L0/L1 context, producing different page compositions for different campaigns. The section taxonomy is the shared reference; the section catalog is the visual reference for the design agent.
+
+**Why templates/ for the section catalog?**
+The section catalog is an HTML visual reference used by exactly one phase (design). It lives in `templates/` within the skill directory because it is skill-specific, not cross-skill. The legacy wireframe (`wireframe-demo-legacy.jsx`) is retained in the same directory for reference only.

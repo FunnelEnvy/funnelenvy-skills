@@ -1,0 +1,2797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Section Catalog -- Design Agent Reference</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       BASE RESET AND SHARED STYLES
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      /* Brand-overridable tokens -- design agent replaces these per campaign */
+      --color-primary: #1A1A18;
+      --color-accent: #E85D3A;
+      --color-background: #F5F0E8;
+      --color-text: #1A1A18;
+      --color-muted: #8C8575;
+      --color-border: #C4BEB2;
+      --color-surface: #FFFDF9;
+      --color-surface-alt: #FAF8F4;
+      --font-heading: 'DM Sans', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'IBM Plex Mono', monospace;
+
+      /* Spacing scale */
+      --space-xs: 4px;
+      --space-sm: 8px;
+      --space-md: 16px;
+      --space-lg: 24px;
+      --space-xl: 32px;
+      --space-2xl: 48px;
+      --space-3xl: 64px;
+
+      /* Typography scale */
+      --text-xs: 11px;
+      --text-sm: 13px;
+      --text-base: 14px;
+      --text-lg: 18px;
+      --text-xl: 22px;
+      --text-2xl: 28px;
+      --text-3xl: 36px;
+      --text-stat: 48px;
+
+      /* Container */
+      --container-width: 780px;
+    }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--color-text);
+      background: var(--color-background);
+      line-height: 1.5;
+    }
+
+    .catalog-container {
+      max-width: var(--container-width);
+      margin: 0 auto;
+      padding: var(--space-xl);
+    }
+
+    .catalog-title {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--color-accent);
+      margin-bottom: var(--space-xs);
+    }
+
+    .catalog-heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-2xl);
+      font-weight: 800;
+      margin-bottom: var(--space-2xl);
+    }
+
+    /* Shared button styles */
+    .cta-button {
+      display: inline-block;
+      background: var(--color-primary);
+      color: var(--color-surface);
+      border: none;
+      border-radius: 6px;
+      padding: 12px 28px;
+      font-size: var(--text-sm);
+      font-weight: 700;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      text-align: center;
+    }
+
+    .cta-button--accent {
+      background: var(--color-accent);
+      color: #fff;
+    }
+
+    .cta-button--outline {
+      background: transparent;
+      color: var(--color-primary);
+      border: 2px solid var(--color-primary);
+    }
+
+    .cta-button--light {
+      background: var(--color-surface);
+      color: var(--color-primary);
+    }
+
+    /* Shared card styles */
+    .card {
+      background: var(--color-surface-alt);
+      border: 1.5px solid var(--color-background);
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    .card__title {
+      font-size: var(--text-base);
+      font-weight: 700;
+      color: var(--color-text);
+      margin-bottom: var(--space-sm);
+    }
+
+    .card__body {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      line-height: 1.5;
+    }
+
+    /* Placeholder box */
+    .placeholder {
+      border: 1.5px dashed var(--color-border);
+      border-radius: 6px;
+      padding: var(--space-md);
+      background: transparent;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-muted);
+      font-size: 12px;
+      font-family: var(--font-mono);
+      text-align: center;
+    }
+
+    /* Visible variant label -- shown above each section in catalog view */
+    .variant-label {
+      max-width: var(--container-width);
+      margin: 0 auto;
+      padding: var(--space-sm) var(--space-xl) 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: var(--space-md);
+    }
+    .variant-label__number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      color: var(--color-surface);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: var(--text-sm);
+      font-weight: 700;
+      font-family: var(--font-mono);
+      flex-shrink: 0;
+    }
+    .variant-label__title {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-primary);
+      font-family: var(--font-mono);
+    }
+    .variant-label__slug {
+      font-size: var(--text-xs);
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      background: rgba(232, 93, 58, 0.1);
+      padding: 2px 8px;
+      border-radius: 3px;
+    }
+    .variant-label__type {
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 2px 7px;
+      border-radius: 3px;
+      color: #fff;
+    }
+    .variant-label__type--required { background: var(--color-primary); }
+    .variant-label__type--contextual { background: var(--color-muted); }
+
+    /* Section divider for catalog display */
+    .catalog-divider {
+      border: none;
+      border-top: 2px dashed var(--color-border);
+      margin: var(--space-3xl) 0;
+    }
+
+    /* ============================================================
+       VARIANT-SPECIFIC STYLES
+       Desktop patterns only. Mobile responsive is a Phase 3 concern.
+       ============================================================ */
+
+    /* --- Hero: pain-lead --- */
+    .hero--pain-lead {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .hero--pain-lead .hero__grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: var(--space-xl);
+      align-items: center;
+    }
+    .hero--pain-lead .hero__headline {
+      font-family: var(--font-heading);
+      font-size: var(--text-2xl);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: var(--space-md);
+    }
+    .hero--pain-lead .hero__subheadline {
+      font-size: var(--text-base);
+      color: var(--color-muted);
+      line-height: 1.6;
+      margin-bottom: var(--space-lg);
+    }
+    .hero--pain-lead .hero__visual {
+      min-height: 200px;
+    }
+
+    /* --- Hero: keyword-match --- */
+    .hero--keyword-match {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .hero--keyword-match .hero__grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: var(--space-xl);
+      align-items: center;
+    }
+    .hero--keyword-match .hero__headline {
+      font-family: var(--font-heading);
+      font-size: var(--text-2xl);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: var(--space-md);
+    }
+    .hero--keyword-match .hero__keyword-echo {
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      color: var(--color-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: var(--space-sm);
+    }
+    .hero--keyword-match .hero__subheadline {
+      font-size: var(--text-base);
+      color: var(--color-muted);
+      line-height: 1.6;
+      margin-bottom: var(--space-lg);
+    }
+    .hero--keyword-match .hero__visual {
+      min-height: 200px;
+    }
+
+    /* --- Hero: proof-lead --- */
+    .hero--proof-lead {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .hero--proof-lead .hero__stat {
+      font-size: var(--text-stat);
+      font-weight: 800;
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-sm);
+    }
+    .hero--proof-lead .hero__headline {
+      font-family: var(--font-heading);
+      font-size: var(--text-2xl);
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: var(--space-md);
+    }
+    .hero--proof-lead .hero__subheadline {
+      font-size: var(--text-base);
+      color: var(--color-muted);
+      line-height: 1.6;
+      margin-bottom: var(--space-lg);
+      max-width: 560px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* --- Primary CTA: inline-form --- */
+    .primary-cta--inline-form {
+      padding: var(--space-lg) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .primary-cta--inline-form .form__wrapper {
+      max-width: 400px;
+    }
+    .primary-cta--inline-form .form__field {
+      margin-bottom: var(--space-md);
+    }
+    .primary-cta--inline-form .form__label {
+      display: block;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+      margin-bottom: 6px;
+    }
+    .primary-cta--inline-form .form__input {
+      width: 100%;
+      border: 1.5px solid var(--color-border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: var(--text-sm);
+      font-family: var(--font-mono);
+      color: var(--color-muted);
+      background: var(--color-surface);
+    }
+
+    /* --- Primary CTA: modal-trigger --- */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(26, 26, 24, 0.6);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+    .modal-backdrop.is-open {
+      display: flex;
+    }
+    .primary-cta--modal-trigger .modal__card {
+      background: var(--color-surface);
+      border-radius: 12px;
+      max-width: 440px;
+      width: 100%;
+      padding: 36px 32px;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+      position: relative;
+    }
+    .primary-cta--modal-trigger .modal__close {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--color-muted);
+      background: none;
+      border: none;
+    }
+    .primary-cta--modal-trigger .modal__heading {
+      font-family: var(--font-heading);
+      font-size: 20px;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: var(--space-sm);
+    }
+    .primary-cta--modal-trigger .modal__subheading {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+      text-align: center;
+      margin-bottom: var(--space-lg);
+    }
+    .primary-cta--modal-trigger .modal__field {
+      margin-bottom: var(--space-md);
+    }
+    .primary-cta--modal-trigger .modal__label {
+      display: block;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+      margin-bottom: 6px;
+    }
+    .primary-cta--modal-trigger .modal__input {
+      width: 100%;
+      border: 1.5px solid var(--color-border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: var(--text-sm);
+      font-family: var(--font-mono);
+      color: var(--color-muted);
+    }
+
+    /* --- Primary CTA: multi-step --- */
+    .primary-cta--multi-step {
+      padding: var(--space-lg) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .primary-cta--multi-step .form__wrapper {
+      max-width: 400px;
+    }
+    .primary-cta--multi-step .form__progress {
+      display: flex;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-lg);
+    }
+    .primary-cta--multi-step .form__progress-step {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--color-border);
+    }
+    .primary-cta--multi-step .form__progress-step.is-active {
+      background: var(--color-accent);
+    }
+    .primary-cta--multi-step .form__step {
+      display: none;
+    }
+    .primary-cta--multi-step .form__step.is-visible {
+      display: block;
+    }
+    .primary-cta--multi-step .form__field {
+      margin-bottom: var(--space-md);
+    }
+    .primary-cta--multi-step .form__label {
+      display: block;
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+      margin-bottom: 6px;
+    }
+    .primary-cta--multi-step .form__input {
+      width: 100%;
+      border: 1.5px solid var(--color-border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: var(--text-sm);
+      font-family: var(--font-mono);
+      color: var(--color-muted);
+      background: var(--color-surface);
+    }
+
+    /* --- Final CTA: mirror --- */
+    .final-cta--mirror {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-primary);
+      border-radius: 10px;
+      text-align: center;
+    }
+    .final-cta--mirror .final-cta__headline {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      color: var(--color-surface);
+      margin-bottom: var(--space-sm);
+    }
+    .final-cta--mirror .final-cta__subtext {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-lg);
+    }
+
+    /* --- Final CTA: urgency --- */
+    .final-cta--urgency {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-primary);
+      border-radius: 10px;
+      text-align: center;
+    }
+    .final-cta--urgency .final-cta__headline {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      color: var(--color-surface);
+      margin-bottom: var(--space-sm);
+    }
+    .final-cta--urgency .final-cta__urgency-line {
+      font-size: var(--text-sm);
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      margin-bottom: var(--space-md);
+    }
+    .final-cta--urgency .final-cta__subtext {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-lg);
+    }
+
+    /* --- Final CTA: summary --- */
+    .final-cta--summary {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-primary);
+      border-radius: 10px;
+      text-align: center;
+    }
+    .final-cta--summary .final-cta__headline {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      color: var(--color-surface);
+      margin-bottom: var(--space-lg);
+    }
+    .final-cta--summary .final-cta__recap {
+      list-style: none;
+      padding: 0;
+      margin: 0 auto var(--space-lg);
+      max-width: 480px;
+      text-align: left;
+    }
+    .final-cta--summary .final-cta__recap-item {
+      font-size: var(--text-sm);
+      color: var(--color-surface-alt);
+      padding: var(--space-xs) 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      font-family: var(--font-mono);
+    }
+    .final-cta--summary .final-cta__recap-item::before {
+      content: "\2713  ";
+      color: var(--color-accent);
+    }
+
+    /* --- Footer: default --- */
+    .footer--default {
+      padding: var(--space-md) var(--space-xl);
+      border-top: 1.5px solid var(--color-background);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .footer--default .footer__legal {
+      font-size: var(--text-xs);
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+    }
+    .footer--default .footer__legal a {
+      color: var(--color-muted);
+      text-decoration: underline;
+    }
+
+    /* --- Social Proof Bar: logo-row --- */
+    .social-proof--logo-row {
+      padding: var(--space-lg) var(--space-xl);
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .social-proof--logo-row .social-proof__label {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-md);
+    }
+    .social-proof--logo-row .social-proof__logos {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-xl);
+      flex-wrap: wrap;
+    }
+    .social-proof--logo-row .social-proof__logo {
+      width: 80px;
+      height: 36px;
+      min-width: 80px;
+      min-height: 36px;
+      filter: grayscale(100%);
+      opacity: 0.6;
+    }
+
+    /* --- Social Proof Bar: stat-bar --- */
+    .social-proof--stat-bar {
+      padding: var(--space-lg) var(--space-xl);
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .social-proof--stat-bar .social-proof__stats {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-2xl);
+    }
+    .social-proof--stat-bar .social-proof__stat-item {
+      text-align: center;
+    }
+    .social-proof--stat-bar .social-proof__stat-number {
+      font-size: var(--text-xl);
+      font-weight: 800;
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+    }
+    .social-proof--stat-bar .social-proof__stat-label {
+      font-size: var(--text-xs);
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+    }
+
+    /* --- Social Proof Bar: endorsement-bar --- */
+    .social-proof--endorsement-bar {
+      padding: var(--space-lg) var(--space-xl);
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .social-proof--endorsement-bar .social-proof__label {
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-md);
+    }
+    .social-proof--endorsement-bar .social-proof__endorsements {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-xl);
+      flex-wrap: wrap;
+    }
+    .social-proof--endorsement-bar .social-proof__endorsement {
+      width: 100px;
+      height: 36px;
+      min-width: 100px;
+      min-height: 36px;
+      filter: grayscale(100%);
+      opacity: 0.6;
+    }
+
+    /* --- Problem Framing: pain-cards --- */
+    .problem--pain-cards {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .problem--pain-cards .problem__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+    }
+    .problem--pain-cards .problem__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: var(--space-md);
+    }
+
+    /* --- Problem Framing: narrative --- */
+    .problem--narrative {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .problem--narrative .problem__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+    }
+    .problem--narrative .problem__text {
+      font-size: var(--text-base);
+      color: var(--color-muted);
+      line-height: 1.8;
+      max-width: 600px;
+    }
+
+    /* --- Problem Framing: contrast --- */
+    .problem--contrast {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .problem--contrast .problem__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+    }
+    .problem--contrast .problem__columns {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-lg);
+    }
+    .problem--contrast .problem__col-without {
+      background: var(--color-background);
+      border-radius: 8px;
+      padding: var(--space-lg);
+    }
+    .problem--contrast .problem__col-with {
+      background: var(--color-surface-alt);
+      border: 1.5px solid var(--color-accent);
+      border-radius: 8px;
+      padding: var(--space-lg);
+    }
+    .problem--contrast .problem__col-label {
+      font-size: var(--text-xs);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-md);
+    }
+    .problem--contrast .problem__col-without .problem__col-label {
+      color: var(--color-muted);
+    }
+    .problem--contrast .problem__col-with .problem__col-label {
+      color: var(--color-accent);
+    }
+    .problem--contrast .problem__col-item {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      padding: var(--space-xs) 0;
+      line-height: 1.6;
+    }
+
+    /* --- Solution Overview: feature-grid --- */
+    .solution--feature-grid {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .solution--feature-grid .solution__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+    }
+    .solution--feature-grid .solution__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-md);
+    }
+
+    /* --- Solution Overview: outcome-grid --- */
+    .solution--outcome-grid {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .solution--outcome-grid .solution__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+    }
+    .solution--outcome-grid .solution__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: var(--space-md);
+    }
+
+    /* --- Solution Overview: process-steps --- */
+    .solution--process-steps {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .solution--process-steps .solution__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+    }
+    .solution--process-steps .solution__steps {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: var(--space-lg);
+    }
+    .solution--process-steps .solution__step-number {
+      font-size: var(--text-2xl);
+      font-weight: 800;
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-sm);
+    }
+    .solution--process-steps .solution__step-title {
+      font-size: var(--text-base);
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+    }
+    .solution--process-steps .solution__step-desc {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      line-height: 1.6;
+    }
+
+    /* --- Quantified Proof: single-stat --- */
+    .proof--single-stat {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .proof--single-stat .proof__stat {
+      font-size: var(--text-stat);
+      font-weight: 800;
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-sm);
+    }
+    .proof--single-stat .proof__context {
+      font-size: var(--text-base);
+      color: var(--color-muted);
+      max-width: 480px;
+      margin: 0 auto var(--space-md);
+      line-height: 1.6;
+    }
+    .proof--single-stat .proof__attribution {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      font-style: italic;
+    }
+
+    /* --- Quantified Proof: stat-trio --- */
+    .proof--stat-trio {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .proof--stat-trio .proof__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+      text-align: center;
+    }
+    .proof--stat-trio .proof__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: var(--space-lg);
+      text-align: center;
+    }
+    .proof--stat-trio .proof__stat {
+      font-size: var(--text-3xl);
+      font-weight: 800;
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-xs);
+    }
+    .proof--stat-trio .proof__metric {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      margin-bottom: var(--space-xs);
+    }
+    .proof--stat-trio .proof__attribution {
+      font-size: var(--text-xs);
+      color: var(--color-muted);
+      font-style: italic;
+    }
+
+    /* --- Quantified Proof: mini-case --- */
+    .proof--mini-case {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .proof--mini-case .proof__layout {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: var(--space-xl);
+      align-items: start;
+    }
+    .proof--mini-case .proof__stat {
+      font-size: var(--text-stat);
+      font-weight: 800;
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+    }
+    .proof--mini-case .proof__story {
+      font-size: var(--text-base);
+      color: var(--color-muted);
+      line-height: 1.8;
+      margin-bottom: var(--space-md);
+    }
+    .proof--mini-case .proof__attribution {
+      font-size: var(--text-sm);
+      font-weight: 700;
+    }
+
+    /* --- Testimonial: single-quote --- */
+    .testimonial--single-quote {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .testimonial--single-quote .testimonial__mark {
+      font-size: 48px;
+      color: var(--color-accent);
+      line-height: 1;
+      margin-bottom: var(--space-sm);
+    }
+    .testimonial--single-quote .testimonial__quote {
+      font-size: var(--text-lg);
+      font-style: italic;
+      color: var(--color-text);
+      max-width: 560px;
+      margin: 0 auto var(--space-lg);
+      line-height: 1.6;
+    }
+    .testimonial--single-quote .testimonial__attribution {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-md);
+    }
+    .testimonial--single-quote .testimonial__headshot {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--color-background);
+      border: 1.5px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--color-muted);
+    }
+    .testimonial--single-quote .testimonial__name {
+      font-size: var(--text-sm);
+      font-weight: 700;
+    }
+    .testimonial--single-quote .testimonial__title {
+      font-size: var(--text-xs);
+      color: var(--color-muted);
+    }
+
+    /* --- Testimonial: quote-pair --- */
+    .testimonial--quote-pair {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .testimonial--quote-pair .testimonial__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-xl);
+    }
+    .testimonial--quote-pair .testimonial__card {
+      padding: var(--space-lg);
+      background: var(--color-surface-alt);
+      border-radius: 8px;
+      border: 1.5px solid var(--color-background);
+    }
+    .testimonial--quote-pair .testimonial__mark {
+      font-size: 36px;
+      color: var(--color-accent);
+      line-height: 1;
+      margin-bottom: var(--space-sm);
+    }
+    .testimonial--quote-pair .testimonial__quote {
+      font-size: var(--text-base);
+      font-style: italic;
+      color: var(--color-text);
+      line-height: 1.6;
+      margin-bottom: var(--space-md);
+    }
+    .testimonial--quote-pair .testimonial__name {
+      font-size: var(--text-sm);
+      font-weight: 700;
+    }
+    .testimonial--quote-pair .testimonial__title {
+      font-size: var(--text-xs);
+      color: var(--color-muted);
+    }
+
+    /* --- Testimonial: video-testimonial --- */
+    .testimonial--video-testimonial {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .testimonial--video-testimonial .testimonial__video-wrapper {
+      max-width: 560px;
+      margin: 0 auto var(--space-lg);
+      position: relative;
+    }
+    .testimonial--video-testimonial .testimonial__video-thumb {
+      width: 100%;
+      min-height: 300px;
+      border-radius: 8px;
+      background: var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .testimonial--video-testimonial .testimonial__play-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--color-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 24px;
+    }
+    .testimonial--video-testimonial .testimonial__quote {
+      font-size: var(--text-lg);
+      font-style: italic;
+      color: var(--color-text);
+      max-width: 560px;
+      margin: 0 auto var(--space-md);
+      line-height: 1.6;
+    }
+    .testimonial--video-testimonial .testimonial__name {
+      font-size: var(--text-sm);
+      font-weight: 700;
+    }
+    .testimonial--video-testimonial .testimonial__title {
+      font-size: var(--text-xs);
+      color: var(--color-muted);
+    }
+
+    /* --- Comparison Table: vs-table --- */
+    .comparison--vs-table {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .comparison--vs-table .comparison__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+    }
+    .comparison--vs-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .comparison--vs-table th {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: var(--space-md);
+      text-align: left;
+      border-bottom: 2px solid var(--color-border);
+    }
+    .comparison--vs-table td {
+      font-size: var(--text-sm);
+      padding: var(--space-md);
+      border-bottom: 1px solid var(--color-background);
+      color: var(--color-muted);
+    }
+    .comparison--vs-table .comparison__check {
+      color: var(--color-accent);
+      font-weight: 700;
+    }
+    .comparison--vs-table .comparison__x {
+      color: var(--color-border);
+    }
+
+    /* --- Comparison Table: category-table --- */
+    .comparison--category-table {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .comparison--category-table .comparison__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+    }
+    .comparison--category-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .comparison--category-table th {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: var(--space-md);
+      text-align: left;
+      border-bottom: 2px solid var(--color-border);
+    }
+    .comparison--category-table td {
+      font-size: var(--text-sm);
+      padding: var(--space-md);
+      border-bottom: 1px solid var(--color-background);
+      color: var(--color-muted);
+    }
+    .comparison--category-table .comparison__highlight {
+      background: rgba(232, 93, 58, 0.05);
+    }
+
+    /* --- Comparison Table: differentiator-list --- */
+    .comparison--differentiator-list {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .comparison--differentiator-list .comparison__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+    }
+    .comparison--differentiator-list .comparison__list {
+      list-style: none;
+      padding: 0;
+    }
+    .comparison--differentiator-list .comparison__item {
+      padding: var(--space-md) 0;
+      border-bottom: 1px solid var(--color-background);
+    }
+    .comparison--differentiator-list .comparison__item-label {
+      font-size: var(--text-xs);
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: var(--space-xs);
+    }
+    .comparison--differentiator-list .comparison__item-title {
+      font-size: var(--text-base);
+      font-weight: 700;
+      margin-bottom: var(--space-xs);
+    }
+    .comparison--differentiator-list .comparison__item-desc {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      line-height: 1.6;
+    }
+
+    /* --- Objection Handling: accordion --- */
+    .objections--accordion {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .objections--accordion .objections__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+    }
+    .objections--accordion .accordion__item {
+      border-bottom: 1px solid var(--color-background);
+    }
+    .objections--accordion .accordion__trigger {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-md) 0;
+      cursor: pointer;
+      background: none;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-size: var(--text-base);
+      font-weight: 600;
+      font-family: var(--font-body);
+      color: var(--color-text);
+    }
+    .objections--accordion .accordion__icon {
+      font-size: var(--text-lg);
+      color: var(--color-muted);
+      transition: transform 0.2s;
+    }
+    .objections--accordion .accordion__item.is-open .accordion__icon {
+      transform: rotate(45deg);
+    }
+    .objections--accordion .accordion__content {
+      display: none;
+      padding: 0 0 var(--space-md) 0;
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      line-height: 1.6;
+    }
+    .objections--accordion .accordion__item.is-open .accordion__content {
+      display: block;
+    }
+
+    /* --- Objection Handling: inline-list --- */
+    .objections--inline-list {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .objections--inline-list .objections__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+    }
+    .objections--inline-list .objections__item {
+      margin-bottom: var(--space-lg);
+    }
+    .objections--inline-list .objections__question {
+      font-size: var(--text-base);
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+    }
+    .objections--inline-list .objections__answer {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      line-height: 1.6;
+    }
+
+    /* --- Mid-Page CTA: simple-bar --- */
+    .mid-cta--simple-bar {
+      padding: var(--space-xl) var(--space-xl);
+      background: var(--color-surface-alt);
+      border: 1.5px solid var(--color-border);
+      text-align: center;
+      border-radius: 8px;
+    }
+    .mid-cta--simple-bar .mid-cta__text {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+    }
+    .mid-cta--simple-bar .mid-cta__subtext {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-md);
+    }
+
+    /* --- Mid-Page CTA: value-recap --- */
+    .mid-cta--value-recap {
+      padding: var(--space-xl) var(--space-xl);
+      background: var(--color-surface-alt);
+      border: 1.5px solid var(--color-border);
+      text-align: center;
+      border-radius: 8px;
+    }
+    .mid-cta--value-recap .mid-cta__text {
+      font-size: var(--text-lg);
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+    }
+    .mid-cta--value-recap .mid-cta__recap {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-md);
+      line-height: 1.6;
+    }
+
+    /* --- Mid-Page CTA: sticky-bar --- */
+    .mid-cta--sticky-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: var(--space-md) var(--space-xl);
+      background: var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-lg);
+      z-index: 900;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.15);
+    }
+    .mid-cta--sticky-bar .mid-cta__text {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--color-surface);
+    }
+    /* For catalog display, render a demo version inline */
+    .mid-cta--sticky-bar-demo {
+      padding: var(--space-md) var(--space-xl);
+      background: var(--color-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-lg);
+      border-radius: 8px;
+    }
+    .mid-cta--sticky-bar-demo .mid-cta__text {
+      font-size: var(--text-sm);
+      font-weight: 700;
+      color: var(--color-surface);
+    }
+
+    /* --- Trust / Security: badge-row --- */
+    .trust--badge-row {
+      padding: var(--space-lg) var(--space-xl);
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .trust--badge-row .trust__badges {
+      display: flex;
+      justify-content: center;
+      gap: var(--space-xl);
+    }
+    .trust--badge-row .trust__badge {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+    }
+
+    /* --- Trust / Security: reassurance-text --- */
+    .trust--reassurance-text {
+      padding: var(--space-md) var(--space-xl);
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .trust--reassurance-text .trust__text {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      font-family: var(--font-mono);
+    }
+    .trust--reassurance-text .trust__text a {
+      color: var(--color-muted);
+      text-decoration: underline;
+    }
+
+    /* --- Pricing Preview: tier-cards --- */
+    .pricing--tier-cards {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .pricing--tier-cards .pricing__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+      text-align: center;
+    }
+    .pricing--tier-cards .pricing__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: var(--space-md);
+    }
+    .pricing--tier-cards .pricing__card {
+      border: 1.5px solid var(--color-border);
+      border-radius: 8px;
+      padding: var(--space-lg);
+      text-align: center;
+      background: var(--color-surface);
+    }
+    .pricing--tier-cards .pricing__card--recommended {
+      border-color: var(--color-accent);
+      position: relative;
+    }
+    .pricing--tier-cards .pricing__recommended-badge {
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--color-accent);
+      color: #fff;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 3px 10px;
+      border-radius: 3px;
+      font-family: var(--font-mono);
+    }
+    .pricing--tier-cards .pricing__tier-name {
+      font-size: var(--text-base);
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+    }
+    .pricing--tier-cards .pricing__tier-price {
+      font-size: var(--text-2xl);
+      font-weight: 800;
+      color: var(--color-accent);
+      margin-bottom: var(--space-md);
+    }
+    .pricing--tier-cards .pricing__features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 var(--space-lg) 0;
+      text-align: left;
+    }
+    .pricing--tier-cards .pricing__feature {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      padding: var(--space-xs) 0;
+      border-bottom: 1px solid var(--color-background);
+    }
+
+    /* --- Pricing Preview: starting-at --- */
+    .pricing--starting-at {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .pricing--starting-at .pricing__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-md);
+    }
+    .pricing--starting-at .pricing__price {
+      font-size: var(--text-3xl);
+      font-weight: 800;
+      color: var(--color-accent);
+      margin-bottom: var(--space-md);
+    }
+    .pricing--starting-at .pricing__features {
+      list-style: none;
+      padding: 0;
+      margin: 0 auto var(--space-lg);
+      max-width: 320px;
+      text-align: left;
+    }
+    .pricing--starting-at .pricing__feature {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      padding: var(--space-xs) 0;
+      border-bottom: 1px solid var(--color-background);
+    }
+
+    /* --- Pricing Preview: model-explainer --- */
+    .pricing--model-explainer {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+    }
+    .pricing--model-explainer .pricing__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-lg);
+      text-align: center;
+    }
+    .pricing--model-explainer .pricing__model {
+      max-width: 560px;
+      margin: 0 auto;
+    }
+    .pricing--model-explainer .pricing__model-title {
+      font-size: var(--text-base);
+      font-weight: 700;
+      margin-bottom: var(--space-sm);
+    }
+    .pricing--model-explainer .pricing__model-text {
+      font-size: var(--text-sm);
+      color: var(--color-muted);
+      line-height: 1.8;
+      margin-bottom: var(--space-lg);
+    }
+
+    /* --- Pricing Preview: roi-frame --- */
+    .pricing--roi-frame {
+      padding: var(--space-2xl) var(--space-xl);
+      background: var(--color-surface);
+      text-align: center;
+    }
+    .pricing--roi-frame .pricing__heading {
+      font-family: var(--font-heading);
+      font-size: var(--text-xl);
+      font-weight: 800;
+      margin-bottom: var(--space-md);
+    }
+    .pricing--roi-frame .pricing__roi-stat {
+      font-size: var(--text-3xl);
+      font-weight: 800;
+      color: var(--color-accent);
+      font-family: var(--font-mono);
+      margin-bottom: var(--space-sm);
+    }
+    .pricing--roi-frame .pricing__roi-context {
+      font-size: var(--text-base);
+      color: var(--color-muted);
+      max-width: 480px;
+      margin: 0 auto var(--space-lg);
+      line-height: 1.6;
+    }
+    .pricing--roi-frame .pricing__calculator {
+      max-width: 400px;
+      margin: 0 auto;
+      border-radius: 8px;
+      min-height: 120px;
+    }
+  </style>
+</head>
+<body>
+  <div class="catalog-container">
+    <div class="catalog-title">Section Catalog</div>
+    <h1 class="catalog-heading">Design Agent Reference</h1>
+  </div>
+
+  <!-- ============================================================
+       SECTION: Hero
+       Required. Always Section 1. No exceptions.
+       ============================================================ -->
+
+  <!-- VARIANT: pain-lead
+       USE WHEN: traffic_awareness_stage = unaware OR problem_aware
+       NOTES: Lead with the problem. Headline names the pain. Subheadline bridges to solution. CTA is low-commitment. 2-column desktop layout: copy left, product visual right.
+       TRANSITION: Social Proof Bar or Problem Framing typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">1</div>
+    <span class="variant-label__title">Hero</span>
+    <span class="variant-label__slug">pain-lead</span>
+    <span class="variant-label__type variant-label__type--required">Required</span>
+  </div>
+  <section class="hero--pain-lead" data-variant="pain-lead">
+    <div class="catalog-container">
+      <div class="hero__grid">
+        <div>
+          <h1 class="hero__headline">[Pain-focused headline]</h1>
+          <p class="hero__subheadline">[Bridge to solution subheadline -- one sentence explaining how the product addresses the pain above]</p>
+          <button class="cta-button" data-modal-open>[Low-commitment CTA text]</button>
+        </div>
+        <div class="hero__visual placeholder" style="min-height: 200px;">
+          [Product visual placeholder]
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: keyword-match
+       USE WHEN: traffic_source = paid_search AND traffic_awareness_stage = solution_aware. Also for competitive campaigns where target_keywords contain competitor name, "vs", or "alternative".
+       NOTES: Headline echoes search intent. Subheadline differentiates. CTA matches offer type directly. 2-column desktop layout. Keyword echo label above headline.
+       TRANSITION: Social Proof Bar or Solution Overview typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">1</div>
+    <span class="variant-label__title">Hero</span>
+    <span class="variant-label__slug">keyword-match</span>
+    <span class="variant-label__type variant-label__type--required">Required</span>
+  </div>
+  <section class="hero--keyword-match" data-variant="keyword-match">
+    <div class="catalog-container">
+      <div class="hero__grid">
+        <div>
+          <div class="hero__keyword-echo">[Target keyword echo]</div>
+          <h1 class="hero__headline">[Headline mirroring search intent]</h1>
+          <p class="hero__subheadline">[Differentiating subheadline -- why this solution over others]</p>
+          <button class="cta-button" data-modal-open>[Direct CTA matching offer type]</button>
+        </div>
+        <div class="hero__visual placeholder" style="min-height: 200px;">
+          [Product visual placeholder]
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: proof-lead
+       USE WHEN: proof_points verified >= 2 AND (traffic_source = retargeting OR traffic_awareness_stage = product_aware OR most_aware)
+       NOTES: Lead with strongest quantified result. Headline is the metric. Subheadline contextualizes. CTA is direct. Centered layout.
+       TRANSITION: Social Proof Bar or Solution Overview typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">1</div>
+    <span class="variant-label__title">Hero</span>
+    <span class="variant-label__slug">proof-lead</span>
+    <span class="variant-label__type variant-label__type--required">Required</span>
+  </div>
+  <section class="hero--proof-lead" data-variant="proof-lead">
+    <div class="catalog-container">
+      <div class="hero__stat">[347% increase in pipeline]</div>
+      <h1 class="hero__headline">[Outcome headline contextualizing the stat]</h1>
+      <p class="hero__subheadline">[Contextualizing subheadline -- what makes this result possible]</p>
+      <button class="cta-button" data-modal-open>[Direct CTA: Book / Start / Get]</button>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Primary CTA
+       Required. CTA mechanism lives within or immediately after Hero.
+       ============================================================ -->
+
+  <!-- VARIANT: inline-form
+       USE WHEN: form_strategy.type = inline AND form_strategy.fields <= 4
+       NOTES: Form fields visible on page, embedded in or below hero. Reduces friction for short forms. 2-3 stacked fields.
+       TRANSITION: N/A (form mechanism, not standalone section) -->
+  <div class="variant-label">
+    <div class="variant-label__number">2</div>
+    <span class="variant-label__title">Primary CTA</span>
+    <span class="variant-label__slug">inline-form</span>
+    <span class="variant-label__type variant-label__type--required">Required</span>
+  </div>
+  <section class="primary-cta--inline-form" data-variant="inline-form">
+    <div class="catalog-container">
+      <div class="form__wrapper">
+        <div class="form__field">
+          <label class="form__label">[Field 1 Label]</label>
+          <div class="form__input">[Field 1 placeholder]</div>
+        </div>
+        <div class="form__field">
+          <label class="form__label">[Field 2 Label]</label>
+          <div class="form__input">[Field 2 placeholder]</div>
+        </div>
+        <div class="form__field">
+          <label class="form__label">[Field 3 Label]</label>
+          <div class="form__input">[Field 3 placeholder]</div>
+        </div>
+        <div style="margin-top:var(--space-md);">
+          <button class="cta-button">[Submit CTA]</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: modal-trigger
+       USE WHEN: form_strategy.type = modal OR form_strategy.fields > 4
+       NOTES: Button triggers lightbox overlay. Lightbox: form heading, stacked fields, submit button, close via button/backdrop/escape. Keeps hero clean when form is complex. This is a CTA mechanism, not a standalone page section.
+       TRANSITION: N/A (overlay, not a page section) -->
+  <div class="variant-label">
+    <div class="variant-label__number">2</div>
+    <span class="variant-label__title">Primary CTA</span>
+    <span class="variant-label__slug">modal-trigger</span>
+    <span class="variant-label__type variant-label__type--required">Required</span>
+  </div>
+  <section class="primary-cta--modal-trigger" data-variant="modal-trigger">
+    <div class="catalog-container" style="text-align:center;padding:var(--space-2xl) var(--space-xl);background:var(--color-surface-alt);border-radius:8px;">
+      <p style="font-size:var(--text-sm);color:var(--color-muted);font-family:var(--font-mono);margin-bottom:var(--space-md);">Click to preview modal behavior:</p>
+      <button class="cta-button" data-modal-open>[CTA Button text]</button>
+    </div>
+
+    <div class="modal-backdrop" id="modal">
+      <div class="modal__card">
+        <button class="modal__close" id="modal-close">&times;</button>
+        <div class="modal__heading">[Form heading]</div>
+        <div class="modal__subheading">[Supporting micro-copy]</div>
+        <div class="modal__field">
+          <label class="modal__label">First Name</label>
+          <div class="modal__input">[Field 1: First Name]</div>
+        </div>
+        <div class="modal__field">
+          <label class="modal__label">Work Email</label>
+          <div class="modal__input">[Field 2: Work Email]</div>
+        </div>
+        <div style="margin-top:var(--space-lg);">
+          <button class="cta-button" style="width:100%;">[Submit button]</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: multi-step
+       USE WHEN: form_strategy.type = multi_step
+       NOTES: Step 1 visible (1-2 low-threat fields). Step 2 hidden, revealed on "Next". Progress indicator. For high-field-count forms that need to feel simple.
+       TRANSITION: N/A (form mechanism, not standalone section) -->
+  <div class="variant-label">
+    <div class="variant-label__number">2</div>
+    <span class="variant-label__title">Primary CTA</span>
+    <span class="variant-label__slug">multi-step</span>
+    <span class="variant-label__type variant-label__type--required">Required</span>
+  </div>
+  <section class="primary-cta--multi-step" data-variant="multi-step">
+    <div class="catalog-container">
+      <div class="form__wrapper">
+        <div class="form__progress">
+          <div class="form__progress-step is-active" data-step-indicator="1"></div>
+          <div class="form__progress-step" data-step-indicator="2"></div>
+        </div>
+
+        <div class="form__step is-visible" data-form-step="1">
+          <div class="form__field">
+            <label class="form__label">[Field 1: Low-threat, e.g. Work Email]</label>
+            <div class="form__input">[Field 1 placeholder]</div>
+          </div>
+          <div style="margin-top:var(--space-md);">
+            <button class="cta-button" data-next-step>[Next]</button>
+          </div>
+        </div>
+
+        <div class="form__step" data-form-step="2">
+          <div class="form__field">
+            <label class="form__label">[Field 2: Company]</label>
+            <div class="form__input">[Field 2 placeholder]</div>
+          </div>
+          <div class="form__field">
+            <label class="form__label">[Field 3: Role]</label>
+            <div class="form__input">[Field 3 placeholder]</div>
+          </div>
+          <div style="margin-top:var(--space-md);">
+            <button class="cta-button">[Submit CTA]</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Final CTA
+       Required. Always the last content section. Only Footer follows.
+       ============================================================ -->
+
+  <!-- VARIANT: mirror
+       USE WHEN: Default. Repeats hero headline + same CTA.
+       NOTES: Full-width, visual contrast from hero (dark bg if hero is light). Shortened headline. Same CTA button. Minimal -- no extra content.
+       TRANSITION: Footer follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">3</div>
+    <span class="variant-label__title">Final CTA</span>
+    <span class="variant-label__slug">mirror</span>
+    <span class="variant-label__type variant-label__type--required">Required</span>
+  </div>
+  <section class="final-cta--mirror" data-variant="mirror">
+    <div class="catalog-container">
+      <div class="final-cta__headline">[Shortened hero headline]</div>
+      <div class="final-cta__subtext">[Reinforcing micro-copy]</div>
+      <button class="cta-button cta-button--accent" data-modal-open>[Same CTA Button]</button>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: urgency
+       USE WHEN: offer_type = content AND asset is time-sensitive, OR brief contains deadline/scarcity signal
+       NOTES: Dark bg like mirror, but adds urgency element (deadline, limited availability, cohort size). Same CTA mechanism.
+       TRANSITION: Footer follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">3</div>
+    <span class="variant-label__title">Final CTA</span>
+    <span class="variant-label__slug">urgency</span>
+    <span class="variant-label__type variant-label__type--required">Required</span>
+  </div>
+  <section class="final-cta--urgency" data-variant="urgency">
+    <div class="catalog-container">
+      <div class="final-cta__headline">[Shortened hero headline]</div>
+      <div class="final-cta__urgency-line">[Urgency element: deadline, limited spots, cohort closing date]</div>
+      <div class="final-cta__subtext">[Reinforcing micro-copy]</div>
+      <button class="cta-button cta-button--accent" data-modal-open>[Same CTA Button]</button>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: summary
+       USE WHEN: page has 6+ sections above
+       NOTES: Dark bg, 3-4 bullet value recap, then CTA button. Helps visitors who scrolled through a long page remember why they should act.
+       TRANSITION: Footer follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">3</div>
+    <span class="variant-label__title">Final CTA</span>
+    <span class="variant-label__slug">summary</span>
+    <span class="variant-label__type variant-label__type--required">Required</span>
+  </div>
+  <section class="final-cta--summary" data-variant="summary">
+    <div class="catalog-container">
+      <div class="final-cta__headline">[Summary headline]</div>
+      <ul class="final-cta__recap">
+        <li class="final-cta__recap-item">[Value point 1]</li>
+        <li class="final-cta__recap-item">[Value point 2]</li>
+        <li class="final-cta__recap-item">[Value point 3]</li>
+        <li class="final-cta__recap-item">[Value point 4]</li>
+      </ul>
+      <button class="cta-button cta-button--accent" data-modal-open>[Same CTA Button]</button>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Footer
+       Required. Always last. Minimal.
+       ============================================================ -->
+
+  <!-- VARIANT: default
+       USE WHEN: Always. Every LP.
+       NOTES: Logo, copyright, privacy link, terms link. No social links, no sitemap, no blog links, no navigation.
+       TRANSITION: None. End of page. -->
+  <div class="variant-label">
+    <div class="variant-label__number">4</div>
+    <span class="variant-label__title">Footer</span>
+    <span class="variant-label__slug">default</span>
+    <span class="variant-label__type variant-label__type--required">Required</span>
+  </div>
+  <section class="footer--default" data-variant="default">
+    <div class="catalog-container" style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="placeholder" style="width:100px;height:28px;padding:4px;">[Logo]</div>
+      <div class="footer__legal">
+        &copy; 2026 [Company] &middot; <a href="#">Privacy Policy</a> &middot; <a href="#">Terms of Service</a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Social Proof Bar
+       Contextual. If present, Section 2 or 3. Never below the fold.
+       ============================================================ -->
+
+  <!-- VARIANT: logo-row
+       USE WHEN: 4+ audience-recognizable logos available
+       NOTES: Horizontal row, grayscale/muted. No text besides optional label. Must not visually compete with adjacent CTA.
+       TRANSITION: Problem Framing or Solution Overview typically follows -->
+  <!-- ANTI-PATTERN: Colorful logos. Logos that visually compete with CTA. Unknown logos padded to hit count. Fortune 500 logos shown to SMB audience. -->
+  <div class="variant-label">
+    <div class="variant-label__number">5</div>
+    <span class="variant-label__title">Social Proof Bar</span>
+    <span class="variant-label__slug">logo-row</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="social-proof--logo-row" data-variant="logo-row">
+    <div class="catalog-container">
+      <div class="social-proof__label">Trusted by</div>
+      <div class="social-proof__logos">
+        <div class="social-proof__logo placeholder">[Logo 1]</div>
+        <div class="social-proof__logo placeholder">[Logo 2]</div>
+        <div class="social-proof__logo placeholder">[Logo 3]</div>
+        <div class="social-proof__logo placeholder">[Logo 4]</div>
+        <div class="social-proof__logo placeholder">[Logo 5]</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: stat-bar
+       USE WHEN: verified proof_points >= 3 AND recognizable logos unavailable. Numbers over logos when logos are weak.
+       NOTES: 3-4 key metrics in horizontal bar. Each metric: number + label. No deep narrative, just impact density.
+       TRANSITION: Problem Framing or Solution Overview typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">5</div>
+    <span class="variant-label__title">Social Proof Bar</span>
+    <span class="variant-label__slug">stat-bar</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="social-proof--stat-bar" data-variant="stat-bar">
+    <div class="catalog-container">
+      <div class="social-proof__stats">
+        <div class="social-proof__stat-item">
+          <div class="social-proof__stat-number">[500+]</div>
+          <div class="social-proof__stat-label">[Customers]</div>
+        </div>
+        <div class="social-proof__stat-item">
+          <div class="social-proof__stat-number">[99.9%]</div>
+          <div class="social-proof__stat-label">[Uptime]</div>
+        </div>
+        <div class="social-proof__stat-item">
+          <div class="social-proof__stat-number">[$2B]</div>
+          <div class="social-proof__stat-label">[Revenue managed]</div>
+        </div>
+        <div class="social-proof__stat-item">
+          <div class="social-proof__stat-number">[4.8/5]</div>
+          <div class="social-proof__stat-label">[G2 rating]</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: endorsement-bar
+       USE WHEN: Notable industry analyst, publication, or award mentioned in L0
+       NOTES: "Featured in..." or "Recognized by..." with publication/award logo placeholders. Grayscale.
+       TRANSITION: Problem Framing or Solution Overview typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">5</div>
+    <span class="variant-label__title">Social Proof Bar</span>
+    <span class="variant-label__slug">endorsement-bar</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="social-proof--endorsement-bar" data-variant="endorsement-bar">
+    <div class="catalog-container">
+      <div class="social-proof__label">Featured in</div>
+      <div class="social-proof__endorsements">
+        <div class="social-proof__endorsement placeholder">[Publication 1]</div>
+        <div class="social-proof__endorsement placeholder">[Publication 2]</div>
+        <div class="social-proof__endorsement placeholder">[Award 1]</div>
+        <div class="social-proof__endorsement placeholder">[Analyst badge]</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Problem Framing
+       Contextual. Must precede Solution Overview if both present.
+       ============================================================ -->
+
+  <!-- VARIANT: pain-cards
+       USE WHEN: Primary challenge has 3+ distinct symptoms or consequences. traffic_awareness_stage = unaware OR problem_aware.
+       NOTES: 3-card grid, equal width. Each card: icon placeholder, symptom name, business impact (2-3 sentences). Buyer perspective, not seller.
+       TRANSITION: Solution Overview typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">6</div>
+    <span class="variant-label__title">Problem Framing</span>
+    <span class="variant-label__slug">pain-cards</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="problem--pain-cards" data-variant="pain-cards">
+    <div class="catalog-container">
+      <h2 class="problem__heading">[Problem framing headline]</h2>
+      <div class="problem__grid">
+        <div class="card">
+          <div class="placeholder" style="width:40px;height:40px;margin-bottom:12px;border-radius:8px;">[Icon]</div>
+          <div class="card__title">[Symptom 1]</div>
+          <div class="card__body">[Business impact -- 2-3 sentences describing the consequence of this problem]</div>
+        </div>
+        <div class="card">
+          <div class="placeholder" style="width:40px;height:40px;margin-bottom:12px;border-radius:8px;">[Icon]</div>
+          <div class="card__title">[Symptom 2]</div>
+          <div class="card__body">[Business impact -- 2-3 sentences describing the consequence of this problem]</div>
+        </div>
+        <div class="card">
+          <div class="placeholder" style="width:40px;height:40px;margin-bottom:12px;border-radius:8px;">[Icon]</div>
+          <div class="card__title">[Symptom 3]</div>
+          <div class="card__body">[Business impact -- 2-3 sentences describing the consequence of this problem]</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: narrative
+       USE WHEN: Primary challenge is a single coherent story (process breakdown, status quo failure)
+       NOTES: Short paragraph or 2-3 sentences describing the current state. More editorial, less modular. Single content block.
+       TRANSITION: Solution Overview typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">6</div>
+    <span class="variant-label__title">Problem Framing</span>
+    <span class="variant-label__slug">narrative</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="problem--narrative" data-variant="narrative">
+    <div class="catalog-container">
+      <h2 class="problem__heading">[Problem framing headline]</h2>
+      <p class="problem__text">[2-3 sentence narrative describing the current state: what the buyer is dealing with, why it persists, and what it costs them. Editorial tone, not bullet points.]</p>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: contrast
+       USE WHEN: Strong before/after data available (from proof points or performance profile)
+       NOTES: Two-column layout: "Without [solution]" left, "With [solution]" right. Left is the problem, right is the outcome. Visual contrast between columns.
+       TRANSITION: Solution Overview or Quantified Proof typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">6</div>
+    <span class="variant-label__title">Problem Framing</span>
+    <span class="variant-label__slug">contrast</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="problem--contrast" data-variant="contrast">
+    <div class="catalog-container">
+      <h2 class="problem__heading">[Problem framing headline]</h2>
+      <div class="problem__columns">
+        <div class="problem__col-without">
+          <div class="problem__col-label">Without [Solution]</div>
+          <div class="problem__col-item">[Pain point 1]</div>
+          <div class="problem__col-item">[Pain point 2]</div>
+          <div class="problem__col-item">[Pain point 3]</div>
+        </div>
+        <div class="problem__col-with">
+          <div class="problem__col-label">With [Solution]</div>
+          <div class="problem__col-item">[Outcome 1]</div>
+          <div class="problem__col-item">[Outcome 2]</div>
+          <div class="problem__col-item">[Outcome 3]</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Solution Overview
+       Contextual. Almost always included. Bridges from pain to proof.
+       ============================================================ -->
+
+  <!-- VARIANT: feature-grid
+       USE WHEN: target_persona is technical buyer OR target_keywords contain product/feature terms
+       NOTES: 3-4 feature cards with icon, name, short description. Technical framing. Emphasizes capabilities. 2-column grid.
+       TRANSITION: Quantified Proof Block or Mid-Page CTA typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">7</div>
+    <span class="variant-label__title">Solution Overview</span>
+    <span class="variant-label__slug">feature-grid</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="solution--feature-grid" data-variant="feature-grid">
+    <div class="catalog-container">
+      <h2 class="solution__heading">[Solution overview headline]</h2>
+      <div class="solution__grid">
+        <div class="card">
+          <div class="placeholder" style="width:40px;height:40px;margin-bottom:12px;border-radius:8px;">[Icon]</div>
+          <div class="card__title">[Feature 1 name]</div>
+          <div class="card__body">[Technical description -- what this feature does and why it matters]</div>
+        </div>
+        <div class="card">
+          <div class="placeholder" style="width:40px;height:40px;margin-bottom:12px;border-radius:8px;">[Icon]</div>
+          <div class="card__title">[Feature 2 name]</div>
+          <div class="card__body">[Technical description -- what this feature does and why it matters]</div>
+        </div>
+        <div class="card">
+          <div class="placeholder" style="width:40px;height:40px;margin-bottom:12px;border-radius:8px;">[Icon]</div>
+          <div class="card__title">[Feature 3 name]</div>
+          <div class="card__body">[Technical description -- what this feature does and why it matters]</div>
+        </div>
+        <div class="card">
+          <div class="placeholder" style="width:40px;height:40px;margin-bottom:12px;border-radius:8px;">[Icon]</div>
+          <div class="card__title">[Feature 4 name]</div>
+          <div class="card__body">[Technical description -- what this feature does and why it matters]</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: outcome-grid
+       USE WHEN: target_persona is executive/business buyer
+       NOTES: 3-4 outcome cards framed as results, not features. "Reduce X by Y%" not "Automated X engine." No feature names.
+       TRANSITION: Quantified Proof Block or Mid-Page CTA typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">7</div>
+    <span class="variant-label__title">Solution Overview</span>
+    <span class="variant-label__slug">outcome-grid</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="solution--outcome-grid" data-variant="outcome-grid">
+    <div class="catalog-container">
+      <h2 class="solution__heading">[Solution overview headline]</h2>
+      <div class="solution__grid">
+        <div class="card">
+          <div class="card__title">[Outcome 1: Result framing]</div>
+          <div class="card__body">[Description -- what this outcome means for the buyer, 2-3 sentences]</div>
+        </div>
+        <div class="card">
+          <div class="card__title">[Outcome 2: Result framing]</div>
+          <div class="card__body">[Description -- what this outcome means for the buyer, 2-3 sentences]</div>
+        </div>
+        <div class="card">
+          <div class="card__title">[Outcome 3: Result framing]</div>
+          <div class="card__body">[Description -- what this outcome means for the buyer, 2-3 sentences]</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: process-steps
+       USE WHEN: Service is complex, multi-step, or unfamiliar (consulting, advisory, implementation)
+       NOTES: 3-4 numbered steps showing the engagement or product workflow. Demystifies the "how." Step number, title, description.
+       TRANSITION: Quantified Proof Block or Mid-Page CTA typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">7</div>
+    <span class="variant-label__title">Solution Overview</span>
+    <span class="variant-label__slug">process-steps</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="solution--process-steps" data-variant="process-steps">
+    <div class="catalog-container">
+      <h2 class="solution__heading">[Solution overview headline]</h2>
+      <div class="solution__steps">
+        <div>
+          <div class="solution__step-number">01</div>
+          <div class="solution__step-title">[Step 1 title]</div>
+          <div class="solution__step-desc">[Step 1 description -- what happens in this phase]</div>
+        </div>
+        <div>
+          <div class="solution__step-number">02</div>
+          <div class="solution__step-title">[Step 2 title]</div>
+          <div class="solution__step-desc">[Step 2 description -- what happens in this phase]</div>
+        </div>
+        <div>
+          <div class="solution__step-number">03</div>
+          <div class="solution__step-title">[Step 3 title]</div>
+          <div class="solution__step-desc">[Step 3 description -- what happens in this phase]</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Quantified Proof Block
+       Contextual. Proof sections appear in the middle third.
+       ============================================================ -->
+
+  <!-- VARIANT: single-stat
+       USE WHEN: 1 standout verified proof point significantly stronger than others
+       NOTES: Large stat visually dominant (oversized font). 1-2 sentence context below. Customer attribution required (name, title, company). Centered layout.
+       TRANSITION: Mid-Page CTA or Testimonial Block typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">8</div>
+    <span class="variant-label__title">Quantified Proof</span>
+    <span class="variant-label__slug">single-stat</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="proof--single-stat" data-variant="single-stat">
+    <div class="catalog-container">
+      <div class="proof__stat">[347% increase in pipeline]</div>
+      <div class="proof__context">[Context sentence -- what the customer was doing before and what changed after adopting the product]</div>
+      <div class="proof__attribution">[Customer Name, Title, Company]</div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: stat-trio
+       USE WHEN: 3+ verified proof points of comparable strength
+       NOTES: Three stats side by side, each with customer name and metric. No deep narrative, just impact density. Centered layout.
+       TRANSITION: Mid-Page CTA or Testimonial Block typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">8</div>
+    <span class="variant-label__title">Quantified Proof</span>
+    <span class="variant-label__slug">stat-trio</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="proof--stat-trio" data-variant="stat-trio">
+    <div class="catalog-container">
+      <h2 class="proof__heading">[Proof section headline]</h2>
+      <div class="proof__grid">
+        <div>
+          <div class="proof__stat">[147%]</div>
+          <div class="proof__metric">[Metric 1 description]</div>
+          <div class="proof__attribution">[Customer 1, Company]</div>
+        </div>
+        <div>
+          <div class="proof__stat">[3.2x]</div>
+          <div class="proof__metric">[Metric 2 description]</div>
+          <div class="proof__attribution">[Customer 2, Company]</div>
+        </div>
+        <div>
+          <div class="proof__stat">[60%]</div>
+          <div class="proof__metric">[Metric 3 description]</div>
+          <div class="proof__attribution">[Customer 3, Company]</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: mini-case
+       USE WHEN: 1 verified proof point with enough narrative context for a story
+       NOTES: Stat + 3-4 sentence narrative: who the customer is, what they were doing before, what changed, the result. Not a full case study, but more context than a bare stat.
+       TRANSITION: Mid-Page CTA or Testimonial Block typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">8</div>
+    <span class="variant-label__title">Quantified Proof</span>
+    <span class="variant-label__slug">mini-case</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="proof--mini-case" data-variant="mini-case">
+    <div class="catalog-container">
+      <div class="proof__layout">
+        <div class="proof__stat">[347%]</div>
+        <div>
+          <p class="proof__story">[3-4 sentence customer story: who they are, the problem they faced, what changed after adopting the product, and the quantified result. Not a full case study, but enough context to be credible and relatable.]</p>
+          <div class="proof__attribution">[Customer Name, Title, Company]</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Testimonial Block
+       Contextual. Proof section, appears in the middle third.
+       ============================================================ -->
+
+  <!-- VARIANT: single-quote
+       USE WHEN: 1 strong testimonial, clear and specific. proof_points with tier = supported >= 1.
+       NOTES: Large decorative quotation marks. Quote text (large, slightly italic). Full attribution: name, title, company. Optional headshot placeholder (circle).
+       TRANSITION: Comparison Table, Pricing, or Objection Handling typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">9</div>
+    <span class="variant-label__title">Testimonial</span>
+    <span class="variant-label__slug">single-quote</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="testimonial--single-quote" data-variant="single-quote">
+    <div class="catalog-container">
+      <div class="testimonial__mark">&ldquo;</div>
+      <div class="testimonial__quote">[Customer quote text -- specific, attributable, not fabricated]</div>
+      <div class="testimonial__attribution">
+        <div class="testimonial__headshot">[Headshot]</div>
+        <div>
+          <div class="testimonial__name">[Name, Title]</div>
+          <div class="testimonial__title">[Company]</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: quote-pair
+       USE WHEN: 2 testimonials from different personas or segments
+       NOTES: Two quotes side by side in 2-column grid. Different personas. Each with full attribution.
+       TRANSITION: Comparison Table, Pricing, or Objection Handling typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">9</div>
+    <span class="variant-label__title">Testimonial</span>
+    <span class="variant-label__slug">quote-pair</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="testimonial--quote-pair" data-variant="quote-pair">
+    <div class="catalog-container">
+      <div class="testimonial__grid">
+        <div class="testimonial__card">
+          <div class="testimonial__mark">&ldquo;</div>
+          <div class="testimonial__quote">[Quote 1 -- from persona A, specific and attributable]</div>
+          <div class="testimonial__name">[Name 1, Title]</div>
+          <div class="testimonial__title">[Company 1]</div>
+        </div>
+        <div class="testimonial__card">
+          <div class="testimonial__mark">&ldquo;</div>
+          <div class="testimonial__quote">[Quote 2 -- from persona B, different role or segment]</div>
+          <div class="testimonial__name">[Name 2, Title]</div>
+          <div class="testimonial__title">[Company 2]</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: video-testimonial
+       USE WHEN: Video testimonial URL available in L0 or brief
+       NOTES: Video thumbnail placeholder with play button overlay + pull quote below. Full attribution.
+       TRANSITION: Comparison Table, Pricing, or Objection Handling typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">9</div>
+    <span class="variant-label__title">Testimonial</span>
+    <span class="variant-label__slug">video-testimonial</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="testimonial--video-testimonial" data-variant="video-testimonial">
+    <div class="catalog-container">
+      <div class="testimonial__video-wrapper">
+        <div class="testimonial__video-thumb">
+          <div class="testimonial__play-btn">&#9654;</div>
+        </div>
+      </div>
+      <div class="testimonial__quote">[Pull quote from the video testimonial]</div>
+      <div class="testimonial__name">[Customer Name, Title]</div>
+      <div class="testimonial__title">[Company]</div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Comparison Table
+       Contextual. Appears after at least one proof section.
+       ============================================================ -->
+
+  <!-- VARIANT: vs-table
+       USE WHEN: 1 primary competitor (threat_level = high). target_keywords contain competitor name, "vs", "alternative", "compare".
+       NOTES: Two-column comparison: "Us vs. Them." Feature/capability rows with check/x. Name the competitor only if brief allows. Factual comparisons only.
+       TRANSITION: Pricing Preview or Objection Handling typically follows -->
+  <!-- ANTI-PATTERN: Disparaging language. Unverifiable claims about competitor. -->
+  <div class="variant-label">
+    <div class="variant-label__number">10</div>
+    <span class="variant-label__title">Comparison Table</span>
+    <span class="variant-label__slug">vs-table</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="comparison--vs-table" data-variant="vs-table">
+    <div class="catalog-container">
+      <h2 class="comparison__heading">[Comparison headline: Company vs. Competitor]</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th>[Company]</th>
+            <th>[Competitor]</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>[Feature/capability 1]</td>
+            <td class="comparison__check">&#10003;</td>
+            <td class="comparison__x">&#10005;</td>
+          </tr>
+          <tr>
+            <td>[Feature/capability 2]</td>
+            <td class="comparison__check">&#10003;</td>
+            <td class="comparison__check">&#10003;</td>
+          </tr>
+          <tr>
+            <td>[Feature/capability 3]</td>
+            <td class="comparison__check">&#10003;</td>
+            <td class="comparison__x">&#10005;</td>
+          </tr>
+          <tr>
+            <td>[Feature/capability 4]</td>
+            <td class="comparison__check">&#10003;</td>
+            <td class="comparison__x">&#10005;</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: category-table
+       USE WHEN: 2+ competitors OR positioning against a category
+       NOTES: Multi-column table showing differentiation across the category, not against one rival. Highlight own column.
+       TRANSITION: Pricing Preview or Objection Handling typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">10</div>
+    <span class="variant-label__title">Comparison Table</span>
+    <span class="variant-label__slug">category-table</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="comparison--category-table" data-variant="category-table">
+    <div class="catalog-container">
+      <h2 class="comparison__heading">[Why Company? Category comparison headline]</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th class="comparison__highlight">[Company]</th>
+            <th>[Competitor A]</th>
+            <th>[Competitor B]</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>[Capability 1]</td>
+            <td class="comparison__highlight">[Company value]</td>
+            <td>[Competitor A value]</td>
+            <td>[Competitor B value]</td>
+          </tr>
+          <tr>
+            <td>[Capability 2]</td>
+            <td class="comparison__highlight">[Company value]</td>
+            <td>[Competitor A value]</td>
+            <td>[Competitor B value]</td>
+          </tr>
+          <tr>
+            <td>[Capability 3]</td>
+            <td class="comparison__highlight">[Company value]</td>
+            <td>[Competitor A value]</td>
+            <td>[Competitor B value]</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: differentiator-list
+       USE WHEN: white_spaces from competitive-landscape.md has 3+ entries
+       NOTES: Not a table. Vertical list of "Only with [Company]" differentiators. Each names a capability competitors lack. Drawn from white_spaces.
+       TRANSITION: Pricing Preview or Objection Handling typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">10</div>
+    <span class="variant-label__title">Comparison Table</span>
+    <span class="variant-label__slug">differentiator-list</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="comparison--differentiator-list" data-variant="differentiator-list">
+    <div class="catalog-container">
+      <h2 class="comparison__heading">[Differentiator headline]</h2>
+      <ul class="comparison__list">
+        <li class="comparison__item">
+          <div class="comparison__item-label">Only with [Company]</div>
+          <div class="comparison__item-title">[Differentiator 1]</div>
+          <div class="comparison__item-desc">[Description -- what this capability does and why competitors lack it]</div>
+        </li>
+        <li class="comparison__item">
+          <div class="comparison__item-label">Only with [Company]</div>
+          <div class="comparison__item-title">[Differentiator 2]</div>
+          <div class="comparison__item-desc">[Description -- what this capability does and why competitors lack it]</div>
+        </li>
+        <li class="comparison__item">
+          <div class="comparison__item-label">Only with [Company]</div>
+          <div class="comparison__item-title">[Differentiator 3]</div>
+          <div class="comparison__item-desc">[Description -- what this capability does and why competitors lack it]</div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Objection Handling
+       Contextual. Pattern B consolidated FAQ appears in bottom third.
+       ============================================================ -->
+
+  <!-- VARIANT: accordion
+       USE WHEN: audience-messaging.md objection inventory contains 4+ objections that don't naturally attach to other sections. Also for consultation offers or novel products.
+       NOTES: Expandable accordion. Question as trigger, answer as hidden content. Keep as content section, not near the form. Source from actual customer objections only.
+       TRANSITION: Final CTA typically follows -->
+  <!-- ANTI-PATTERN: Hypothetical/generated questions that plant doubts the visitor hadn't considered. -->
+  <div class="variant-label">
+    <div class="variant-label__number">11</div>
+    <span class="variant-label__title">Objection Handling</span>
+    <span class="variant-label__slug">accordion</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="objections--accordion" data-variant="accordion">
+    <div class="catalog-container">
+      <h2 class="objections__heading">[Objection handling headline]</h2>
+
+      <div class="accordion__item">
+        <button class="accordion__trigger">
+          <span>[Question 1]</span>
+          <span class="accordion__icon">+</span>
+        </button>
+        <div class="accordion__content">[Answer 1 -- sourced from actual customer objections, includes proof point or data reference]</div>
+      </div>
+
+      <div class="accordion__item">
+        <button class="accordion__trigger">
+          <span>[Question 2]</span>
+          <span class="accordion__icon">+</span>
+        </button>
+        <div class="accordion__content">[Answer 2 -- sourced from actual customer objections, includes proof point or data reference]</div>
+      </div>
+
+      <div class="accordion__item">
+        <button class="accordion__trigger">
+          <span>[Question 3]</span>
+          <span class="accordion__icon">+</span>
+        </button>
+        <div class="accordion__content">[Answer 3 -- sourced from actual customer objections, includes proof point or data reference]</div>
+      </div>
+
+      <div class="accordion__item">
+        <button class="accordion__trigger">
+          <span>[Question 4]</span>
+          <span class="accordion__icon">+</span>
+        </button>
+        <div class="accordion__content">[Answer 4 -- sourced from actual customer objections, includes proof point or data reference]</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: inline-list
+       USE WHEN: 2-3 objections only. No accordion needed.
+       NOTES: Simple Q&A pairs displayed vertically. No expand/collapse. Less visual overhead.
+       TRANSITION: Final CTA typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">11</div>
+    <span class="variant-label__title">Objection Handling</span>
+    <span class="variant-label__slug">inline-list</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="objections--inline-list" data-variant="inline-list">
+    <div class="catalog-container">
+      <h2 class="objections__heading">[Objection handling headline]</h2>
+
+      <div class="objections__item">
+        <div class="objections__question">[Question 1]</div>
+        <div class="objections__answer">[Answer 1 -- sourced from actual customer objections]</div>
+      </div>
+
+      <div class="objections__item">
+        <div class="objections__question">[Question 2]</div>
+        <div class="objections__answer">[Answer 2 -- sourced from actual customer objections]</div>
+      </div>
+
+      <div class="objections__item">
+        <div class="objections__question">[Question 3]</div>
+        <div class="objections__answer">[Answer 3 -- sourced from actual customer objections]</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Mid-Page CTA
+       Contextual. Goes after first major proof block. Not on pages with 4 or fewer sections.
+       ============================================================ -->
+
+  <!-- VARIANT: simple-bar
+       USE WHEN: Default mid-page CTA variant. Page contains a proof section with additional content below it.
+       NOTES: Full-width bar, visually differentiated background. Repeats primary CTA text exactly. Single button. Same action as hero CTA.
+       TRANSITION: Testimonial, Comparison, or Pricing section typically follows -->
+  <!-- ANTI-PATTERN: Different CTA text than hero. Multiple buttons. Competing actions. -->
+  <div class="variant-label">
+    <div class="variant-label__number">12</div>
+    <span class="variant-label__title">Mid-Page CTA</span>
+    <span class="variant-label__slug">simple-bar</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="mid-cta--simple-bar" data-variant="simple-bar">
+    <div class="catalog-container">
+      <div class="mid-cta__text">[Repeat primary CTA text]</div>
+      <div class="mid-cta__subtext">[Supporting micro-copy -- one line]</div>
+      <button class="cta-button" data-modal-open>[CTA Button]</button>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: value-recap
+       USE WHEN: Page is proof-heavy (2+ proof sections above this point)
+       NOTES: One sentence summarizing the case so far + CTA button. Proof-heavy pages.
+       TRANSITION: Testimonial, Comparison, or Pricing section typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">12</div>
+    <span class="variant-label__title">Mid-Page CTA</span>
+    <span class="variant-label__slug">value-recap</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="mid-cta--value-recap" data-variant="value-recap">
+    <div class="catalog-container">
+      <div class="mid-cta__text">[Value recap headline]</div>
+      <div class="mid-cta__recap">[One sentence case summary referencing proof shown above]</div>
+      <button class="cta-button" data-modal-open>[CTA Button]</button>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: sticky-bar
+       USE WHEN: device_split.mobile_pct > 40% OR page has 8+ sections
+       NOTES: Fixed-position bottom bar. CTA text + button. Stays visible during scroll. Shown here as inline demo (actual implementation is position:fixed).
+       TRANSITION: N/A (persistent overlay) -->
+  <div class="variant-label">
+    <div class="variant-label__number">12</div>
+    <span class="variant-label__title">Mid-Page CTA</span>
+    <span class="variant-label__slug">sticky-bar</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="mid-cta--sticky-bar-demo" data-variant="sticky-bar">
+    <div class="mid-cta__text">[Sticky CTA text]</div>
+    <button class="cta-button cta-button--accent" data-modal-open>[CTA Button]</button>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Trust / Security Signals
+       Contextual. Must be visually proximate to form fields.
+       ============================================================ -->
+
+  <!-- VARIANT: badge-row
+       USE WHEN: Compliance certifications exist (SOC 2, GDPR, HIPAA, ISO). Max 3 badges.
+       NOTES: 2-3 certification badge/icon placeholders near form area. Unfamiliar badges decrease trust. 6+ seals create skepticism.
+       TRANSITION: Final CTA or form area -->
+  <!-- ANTI-PATTERN: More than 3 badges. Unfamiliar certification logos. Badges far from the form. -->
+  <div class="variant-label">
+    <div class="variant-label__number">13</div>
+    <span class="variant-label__title">Trust / Security</span>
+    <span class="variant-label__slug">badge-row</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="trust--badge-row" data-variant="badge-row">
+    <div class="catalog-container">
+      <div class="trust__badges">
+        <div class="trust__badge placeholder">[SOC 2]</div>
+        <div class="trust__badge placeholder">[GDPR]</div>
+        <div class="trust__badge placeholder">[ISO 27001]</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: reassurance-text
+       USE WHEN: No formal certifications but privacy is a concern. Near or below the form.
+       NOTES: Short text line + privacy link. Placed near or below the form. Single line.
+       TRANSITION: Final CTA or form area -->
+  <div class="variant-label">
+    <div class="variant-label__number">13</div>
+    <span class="variant-label__title">Trust / Security</span>
+    <span class="variant-label__slug">reassurance-text</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="trust--reassurance-text" data-variant="reassurance-text">
+    <div class="catalog-container">
+      <div class="trust__text">[Your data is secure. We never share your information.] <a href="#">Privacy Policy</a></div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- ============================================================
+       SECTION: Pricing Preview
+       Contextual. Precedes Final CTA but follows proof sections.
+       ============================================================ -->
+
+  <!-- VARIANT: tier-cards
+       USE WHEN: 2-3 pricing tiers available from company-identity.md
+       NOTES: Standard pricing card layout (tier name, price, features, CTA per tier). Highlight recommended tier with accent border + badge.
+       TRANSITION: Final CTA or Objection Handling typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">14</div>
+    <span class="variant-label__title">Pricing Preview</span>
+    <span class="variant-label__slug">tier-cards</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="pricing--tier-cards" data-variant="tier-cards">
+    <div class="catalog-container">
+      <h2 class="pricing__heading">[Pricing section headline]</h2>
+      <div class="pricing__grid">
+        <div class="pricing__card">
+          <div class="pricing__tier-name">[Tier 1 name]</div>
+          <div class="pricing__tier-price">[$X/mo]</div>
+          <ul class="pricing__features">
+            <li class="pricing__feature">[Feature 1]</li>
+            <li class="pricing__feature">[Feature 2]</li>
+            <li class="pricing__feature">[Feature 3]</li>
+          </ul>
+          <button class="cta-button cta-button--outline" data-modal-open>[Tier 1 CTA]</button>
+        </div>
+        <div class="pricing__card pricing__card--recommended">
+          <div class="pricing__recommended-badge">Recommended</div>
+          <div class="pricing__tier-name">[Tier 2 name]</div>
+          <div class="pricing__tier-price">[$Y/mo]</div>
+          <ul class="pricing__features">
+            <li class="pricing__feature">[Feature 1]</li>
+            <li class="pricing__feature">[Feature 2]</li>
+            <li class="pricing__feature">[Feature 3]</li>
+            <li class="pricing__feature">[Feature 4]</li>
+          </ul>
+          <button class="cta-button" data-modal-open>[Tier 2 CTA]</button>
+        </div>
+        <div class="pricing__card">
+          <div class="pricing__tier-name">[Tier 3 name]</div>
+          <div class="pricing__tier-price">[$Z/mo]</div>
+          <ul class="pricing__features">
+            <li class="pricing__feature">[Feature 1]</li>
+            <li class="pricing__feature">[Feature 2]</li>
+            <li class="pricing__feature">[Feature 3]</li>
+            <li class="pricing__feature">[Feature 4]</li>
+            <li class="pricing__feature">[Feature 5]</li>
+          </ul>
+          <button class="cta-button cta-button--outline" data-modal-open>[Tier 3 CTA]</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: starting-at
+       USE WHEN: Single starting price or price range available
+       NOTES: Price anchor prominent. Brief feature summary (3-4 bullets). CTA button. Minimum viable transparency.
+       TRANSITION: Final CTA or Objection Handling typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">14</div>
+    <span class="variant-label__title">Pricing Preview</span>
+    <span class="variant-label__slug">starting-at</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="pricing--starting-at" data-variant="starting-at">
+    <div class="catalog-container">
+      <h2 class="pricing__heading">[Pricing section headline]</h2>
+      <div class="pricing__price">[Starting at $X/mo]</div>
+      <ul class="pricing__features">
+        <li class="pricing__feature">[Feature 1]</li>
+        <li class="pricing__feature">[Feature 2]</li>
+        <li class="pricing__feature">[Feature 3]</li>
+        <li class="pricing__feature">[Feature 4]</li>
+      </ul>
+      <button class="cta-button" data-modal-open>[CTA Button]</button>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: model-explainer
+       USE WHEN: Pricing model is known but exact numbers vary (usage-based, per-seat, custom scoping)
+       NOTES: Text explanation of pricing model without exact numbers. Explains how pricing works (per seat, per transaction, tiered by usage). No specific prices.
+       TRANSITION: Final CTA or Objection Handling typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">14</div>
+    <span class="variant-label__title">Pricing Preview</span>
+    <span class="variant-label__slug">model-explainer</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="pricing--model-explainer" data-variant="model-explainer">
+    <div class="catalog-container">
+      <h2 class="pricing__heading">[How pricing works]</h2>
+      <div class="pricing__model">
+        <div class="pricing__model-title">[Pricing model name, e.g. "Usage-based pricing"]</div>
+        <p class="pricing__model-text">[2-3 sentence explanation of how the pricing model works. What drives cost, how it scales, what's included in the base. No specific numbers.]</p>
+        <button class="cta-button" data-modal-open>[Get a Custom Quote]</button>
+      </div>
+    </div>
+  </section>
+
+  <hr class="catalog-divider">
+
+  <!-- VARIANT: roi-frame
+       USE WHEN: No public pricing AND genuinely custom enterprise deals with variable scope. Fallback, not default.
+       NOTES: ROI framing ("Companies see X% ROI"). Pair with calculator placeholder. Investment framed in terms of return.
+       TRANSITION: Final CTA typically follows -->
+  <div class="variant-label">
+    <div class="variant-label__number">14</div>
+    <span class="variant-label__title">Pricing Preview</span>
+    <span class="variant-label__slug">roi-frame</span>
+    <span class="variant-label__type variant-label__type--contextual">Contextual</span>
+  </div>
+  <section class="pricing--roi-frame" data-variant="roi-frame">
+    <div class="catalog-container">
+      <h2 class="pricing__heading">[ROI headline]</h2>
+      <div class="pricing__roi-stat">[X% average ROI]</div>
+      <div class="pricing__roi-context">[Context: what this ROI looks like in practice, how customers measure it, time to value]</div>
+      <div class="pricing__calculator placeholder" style="min-height:120px;">[ROI Calculator placeholder]</div>
+      <div style="margin-top:var(--space-lg);">
+        <button class="cta-button" data-modal-open>[Get a Custom Assessment]</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================================
+       JAVASCRIPT: Minimal interactivity for modal + accordion + multi-step
+       No external dependencies. Vanilla JS.
+       ============================================================ -->
+  <script>
+    // Modal open/close
+    (function() {
+      var modal = document.getElementById('modal');
+      var closeBtn = document.getElementById('modal-close');
+
+      // All buttons with data-modal-open trigger the modal
+      document.querySelectorAll('[data-modal-open]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          if (modal) modal.classList.add('is-open');
+        });
+      });
+
+      // Close on button click
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+          modal.classList.remove('is-open');
+        });
+      }
+
+      // Close on backdrop click
+      if (modal) {
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) {
+            modal.classList.remove('is-open');
+          }
+        });
+      }
+
+      // Close on escape key
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal && modal.classList.contains('is-open')) {
+          modal.classList.remove('is-open');
+        }
+      });
+    })();
+
+    // Accordion expand/collapse
+    (function() {
+      document.querySelectorAll('.accordion__trigger').forEach(function(trigger) {
+        trigger.addEventListener('click', function() {
+          var item = this.closest('.accordion__item');
+          item.classList.toggle('is-open');
+        });
+      });
+    })();
+
+    // Multi-step form progression
+    (function() {
+      document.querySelectorAll('[data-next-step]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          var wrapper = this.closest('.form__wrapper');
+          if (!wrapper) return;
+
+          var currentStep = wrapper.querySelector('.form__step.is-visible');
+          if (!currentStep) return;
+
+          var currentNum = parseInt(currentStep.getAttribute('data-form-step'), 10);
+          var nextStep = wrapper.querySelector('[data-form-step="' + (currentNum + 1) + '"]');
+          if (!nextStep) return;
+
+          currentStep.classList.remove('is-visible');
+          nextStep.classList.add('is-visible');
+
+          // Update progress indicators
+          var indicators = wrapper.querySelectorAll('[data-step-indicator]');
+          indicators.forEach(function(ind) {
+            var indNum = parseInt(ind.getAttribute('data-step-indicator'), 10);
+            if (indNum <= currentNum + 1) {
+              ind.classList.add('is-active');
+            }
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

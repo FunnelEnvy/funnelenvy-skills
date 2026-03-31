@@ -38,10 +38,11 @@ last_updated: str                    # ISO-8601 date
 
 ```yaml
 schema: campaign-copy
-schema_version: "1.0"
+schema_version: "2.0"
 client: str
 campaign: str
-headline_approach: str               # pain | keyword | proof | all-three
+headline_approach: str               # was: pain | keyword | proof | all-three
+                                     # v2.0: matches hero variant slug: pain-lead | keyword-match | proof-lead
 recommended_headline: str            # A | B | C
 cta_text: str                        # Exact CTA button text
 sections_with_proof: int             # Count of sections containing proof points
@@ -49,6 +50,12 @@ gaps_carried_forward: [str]
 word_count: int
 generated_by: str                    # "landing-page-generator/copy"
 last_updated: str
+# NEW in v2.0
+sections: [{type: str, variant: str}]    # ordered section manifest
+section_count: int                        # count of sections in manifest
+objections_distributed_inline: int        # Pattern A objection count
+objections_in_faq_block: int             # Pattern B objection count (0 if no FAQ section)
+proof_points_used: [str]                 # P-IDs referenced in copy
 ```
 
 ### qa-report (Phase 4 output)
