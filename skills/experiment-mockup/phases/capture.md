@@ -24,7 +24,10 @@
 
 ### Step 1: Capture Screenshot
 
-Use Chrome DevTools MCP to capture a screenshot of the current viewport showing the injected change.
+Use the browser MCP to capture a screenshot of the current viewport showing the injected change.
+
+- Chrome DevTools mode: use DevTools screenshot tool
+- Playwright mode: use browser_take_screenshot (scroll to center the injected element if needed)
 
 Requirements:
 - The injected element must be visible in the viewport. If needed, scroll to center it.
@@ -35,7 +38,10 @@ Write the screenshot to the output directory as `mockup-screenshot.png`.
 
 ### Step 2: Extract Modified Section HTML
 
-Use Chrome DevTools MCP to read the `outerHTML` of the section containing the injection. This should be the parent section identified in Phase 1, not the entire page.
+Use the browser MCP to read the outerHTML of the section containing the injection. This should be the parent section identified in Phase 1, not the entire page.
+
+- Chrome DevTools mode: use DevTools DOM inspection tools
+- Playwright mode: `browser_evaluate('document.querySelector("[section-selector]").outerHTML')`
 
 Also extract:
 - The section immediately ABOVE the target section (for surrounding context)

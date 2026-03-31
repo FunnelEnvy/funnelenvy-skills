@@ -100,7 +100,17 @@ Using the design tokens from Phase 1 (brand tokens take precedence over computed
 
 ### Step 2: Inject into Live DOM
 
-Use Chrome DevTools MCP to insert the element:
+Use the browser MCP to insert the element:
+
+- Chrome DevTools mode: use Puppeteer DOM manipulation tools
+- Playwright mode: use browser_evaluate() with insertAdjacentHTML:
+
+  ```javascript
+  browser_evaluate(`
+    document.querySelector('[target-selector]')
+      .insertAdjacentHTML('beforebegin', \`[injection HTML]\`)
+  `)
+  ```
 
 1. Locate the insertion point identified in Phase 1 (DOM selector)
 2. Insert the element using `insertAdjacentHTML` or equivalent DOM manipulation:
@@ -112,11 +122,21 @@ Use Chrome DevTools MCP to insert the element:
 
 ### Step 3: Present to User
 
+Present the change to the user.
+
+**Chrome DevTools mode:**
 Tell the user to look at their browser. Be specific about what was added and where:
 
 "I've injected a [description of content block] [position relative to landmark element] on [page path]. Check your browser."
 
-Then ask for feedback:
+**Playwright mode:**
+Take a screenshot of the current viewport (scroll to center the injected element if needed). Present the screenshot to the user:
+
+"I've injected a [description of content block] [position relative to landmark element] on [page path]. Here's how it looks:"
+
+[present screenshot]
+
+Then ask for feedback (same in both modes):
 "Does this placement work? I can:"
 "- Move it (above/below/beside different elements)"
 "- Restyle it (different size, color, spacing, pattern)"
@@ -127,13 +147,17 @@ Then ask for feedback:
 
 Based on user feedback, modify the injection. Each iteration:
 
-1. **Remove the previous injection.** Use DevTools to find and remove the `proposed-change-block` element (or whatever class name was used).
+1. **Remove the previous injection.** Use the browser MCP to find and remove the `proposed-change-block` element (or whatever class name was used).
+   - Chrome DevTools: use Puppeteer DOM removal
+   - Playwright: `browser_evaluate('document.querySelector(".proposed-change-block").remove()')`
 2. **Apply the requested change:**
    - Reposition: change the insertion point, re-inject
    - Restyle: modify CSS properties, re-inject
    - Revise copy: update the headline or body text, re-inject
    - Change pattern: rebuild using a different content block structure, re-inject
-3. **Present again.** Describe what changed and ask for feedback.
+3. **Present again.**
+   - Chrome DevTools: describe what changed and ask for feedback.
+   - Playwright: take a new screenshot, present it, describe what changed, ask for feedback.
 
 Continue until the user:
 - Approves: "Looks good," "That works," "Lock it," or similar affirmation
