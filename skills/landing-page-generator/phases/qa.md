@@ -184,6 +184,26 @@ After completing the Section 9 checklist, run the generated LP artifacts through
 
 **Token budget:** The taxonomy module is ~4,800 tokens plus ~3K for section-taxonomy.md. QA runs inline (no subagent), so this is absorbed by the orchestrator's context window. Total QA token cost: ~25K with composable section checks.
 
+### Step 4d: Brand Component Validation (conditional)
+
+**Gate:** Read copy.md frontmatter. If `brand_design_system` field is present, run this step. If absent, skip entirely -- no brand constraints apply.
+
+When running, also read:
+- The `brand-design-system.md` file named in copy.md frontmatter `brand_design_system` field (from `.claude/context/` or client context directory)
+- The `brand-components.html` file named in copy.md frontmatter `brand_components_html` field
+
+| Check | What | How | Pass/Fail |
+|-------|------|-----|-----------|
+| BC-1 | CSS class compliance | Every `<section>` in page.html that has a corresponding `<!-- BRAND COMPONENT: ... -->` comment in copy.md uses CSS classes from `brand-components.html`. Grep page.html for brand component class names. | FAIL if any section uses generic/invented classes when a brand component was matched |
+| BC-2 | No generic fallback when brand exists | No section in page.html uses generic styles from `templates/section-catalog.html` when a brand component match exists for that section in copy.md | FAIL if design agent mixed catalogs |
+| BC-3 | Constraint compliance | For each section with constraints noted in the `<!-- BRAND COMPONENT: ... | CONSTRAINTS: ... -->` comment: verify page.html respects the constraint (item counts, approximate character limits reflected in rendered content) | FAIL if a card grid exceeds max items, if text visibly overflows component boundaries |
+| BC-4 | Design token compliance | Compare CSS custom properties and inline styles in page.html against `brand-design-system.md` frontmatter tokens: colors (primary, secondary, neutral), font families, font sizes, border-radius values, spacing units | FAIL if page.html uses colors, fonts, or radii not in the brand design system |
+| BC-5 | Anti-pattern compliance | Read `brand-design-system.md` for any `anti_patterns` or `prohibited` section. Check page.html does not violate listed prohibitions (e.g., no red background fills, no casual language in CTAs, specific radius values) | FAIL if any anti-pattern present in page.html |
+| BC-6 | Degradation rationale | Read `component_degradations` from copy.md frontmatter. Each entry must have a non-empty `reason` field that explains why the degradation occurred. Cross-reference: if a degradation says `level: variant_degradation`, verify page.html uses the `resolved_variant`, not the `original_variant` | FAIL if any degradation lacks rationale or if page.html contradicts the resolution |
+| BC-7 | Inferred value flagging | If `brand-design-system.md` contains any values marked `[INFERRED]` or with confidence qualifiers, check that the corresponding page.html usage is flagged in the QA report for client verification | WARN (not FAIL) -- these are flagged, not blocked |
+
+**Scoring:** BC-1 through BC-6 are pass/fail. BC-7 is warn-only. Record results in the QA report alongside existing check groups.
+
 ### Step 5: Write Report
 
 Write to `.claude/deliverables/campaigns/<slug>/qa-report.md`:
@@ -223,6 +243,10 @@ needs_work_count: <int>
 missing_count: <int>
 top_issue: <dimension_name>
 overall: <PASS|FAIL>
+# Brand component fields (present only when brand design system detected)
+brand_component_checks: str   # "X/Y" pass count, omit if no brand files
+brand_component_violations: int  # count of BC- check failures, omit if no brand files
+brand_component_warnings: int    # count of BC-7 warnings, omit if no brand files
 generated_by: "landing-page-generator/qa"
 last_updated: <ISO-8601>
 ---
@@ -264,6 +288,12 @@ Body format:
 | CS-4 | Objection Coverage | X/Y addressed | [unaddressed list] |
 | CS-5 | CTA Consistency | PASS/FAIL | [mismatches] |
 | CS-6 | Proof Adjacency | PASS/FLAG | [visual notes] |
+
+## Brand Component Validation
+
+| # | Check | Result | Notes |
+|---|-------|--------|-------|
+| Brand Component | BC-1 through BC-7 | X/Y pass + Z warnings | (conditional: only when brand files detected) |
 
 ## Taxonomy Dimension Scores
 

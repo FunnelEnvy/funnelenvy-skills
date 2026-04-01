@@ -123,8 +123,8 @@ Each phase runs as a subagent. Load:
 | Stage | Agent loads | Preconditions |
 |-------|-----------|---------------|
 | brief | agent-header.md + phases/brief.md | company-identity.md confidence >= 3 |
-| copy | agent-header.md + phases/copy.md + modules/section-taxonomy.md | brief.md must exist in campaign directory |
-| design | agent-header.md + phases/design.md + templates/section-catalog.html | copy.md must exist in campaign directory |
+| copy | agent-header.md + phases/copy.md + modules/section-taxonomy.md | brief.md must exist in campaign directory. Optionally reads brand-design-system.md from context directory (Step 3.5 component matching). |
+| design | agent-header.md + phases/design.md + templates/section-catalog.html OR brand-components.html | copy.md must exist in campaign directory. When brand-components.html exists in context directory, it replaces section-catalog.html as the section catalog. |
 | qa | agent-header.md + phases/qa.md + modules/section-taxonomy.md | At least one of copy.md or page.html must exist |
 
 ### Step 6: Review Gate (--stage all only)
@@ -154,10 +154,10 @@ After the final phase (or single phase), summarize what was produced:
 | Phase | Estimated Tokens | Notes |
 |-------|-----------------|-------|
 | Brief (Phase 1) | ~50-80K | Reads L0+L1 context, interactive gap filling |
-| Copy (Phase 2) | ~90-135K | Reads brief + playbook module + taxonomy construct mode (D1,D2,D3,D5,D7,D8,D10) + section-taxonomy.md (section selection logic) + positioning context |
-| Design (Phase 3) | ~105-155K | Reads copy + structural rules + taxonomy construct mode (D4,D6,D9) + section-catalog.html (visual reference) + brand design system (if available) |
+| Copy (Phase 2) | ~90-145K | Reads brief + playbook module + taxonomy construct mode (D1,D2,D3,D5,D7,D8,D10) + section-taxonomy.md (section selection logic) + positioning context. +10-15K when brand design system detected (Step 3.5 component matching). |
+| Design (Phase 3) | ~105-165K | Reads copy + structural rules + taxonomy construct mode (D4,D6,D9) + section catalog (brand-components.html when present, otherwise section-catalog.html) + brand design system tokens |
 | QA (Phase 4) | ~35-55K | Validation pass (includes composable section checks) + section-taxonomy.md (ordering constraint validation) |
-| Full pipeline | ~280-425K | All four phases with review gates |
+| Full pipeline | ~280-455K | All four phases with review gates. Upper bound includes brand component overhead. |
 
 ---
 
@@ -177,3 +177,9 @@ The fixed wireframe produced identical page structure for every campaign regardl
 
 **Why templates/ for the section catalog?**
 The section catalog is an HTML visual reference used by exactly one phase (design). It lives in `templates/` within the skill directory because it is skill-specific, not cross-skill. The legacy wireframe (`wireframe-demo-legacy.jsx`) is retained in the same directory for reference only.
+
+**Why does brand-components.html replace section-catalog.html, not supplement it?**
+The brand component library contains client-specific HTML/CSS patterns that must be used as-is for brand compliance. Using the generic catalog alongside it would give the design agent two competing pattern sources. The brand library is authoritative when present. The generic catalog exists for clients without brand context.
+
+**Why is component matching semantic rather than explicit mapping fields?**
+Brand design system files are produced by a separate skill that extracts from Figma, Brandfetch, and other sources. Adding taxonomy mapping fields would couple that skill's output format to the LP generator's section taxonomy. Semantic matching (the copy agent reads component names, capabilities, and constraints, then infers which taxonomy sections each serves) is more resilient and doesn't require cross-skill coordination.

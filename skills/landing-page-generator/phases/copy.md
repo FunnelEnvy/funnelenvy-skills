@@ -79,6 +79,81 @@ Read `modules/section-taxonomy.md`. For each of the 14 section types, evaluate t
 
 Build the section manifest as a list of `{type, variant}` pairs.
 
+### Step 3.5: Brand Component Matching (conditional)
+
+Glob `.claude/context/` (and any client-specific context directories referenced in the brief) for:
+- A file with `brand-design-system` in the filename or with `schema: brand-design-system` in frontmatter
+- A companion `.html` file with `brand-components` in the filename (e.g., `brand-components.html`)
+
+**If neither file is found:** Skip this step entirely. Proceed to Step 4. The pipeline runs with the generic section catalog. No component constraints apply.
+
+**If a brand design system file is found:** Read its component inventory (YAML `components:` block). For each section in the manifest from Step 3, match it to an available brand component:
+
+1. **Semantic matching.** Read component names, capabilities, and constraints from the YAML inventory. Infer which taxonomy sections each component can serve based on component semantics -- not explicit mapping fields. For example, a component named `hero` or `hero--split` with capabilities like "full-width, dark overlay, headline + subheadline" maps to Hero section types.
+
+2. **Record match quality** per section:
+   - **Exact:** One component directly serves this section type and variant
+   - **Composition:** Two or more components combine to serve this section (e.g., hero-split + form-container for Hero with inline form)
+   - **Close fit:** A component serves the section type but not the exact variant (e.g., a generic content section serving a specific narrative variant)
+   - **Variant degradation:** No component serves the requested variant; degrade to the closest available variant that a component supports
+   - **No match:** No component serves this section type at all
+
+3. **Handle degradations and gaps:**
+   - **Variant degradation:** Switch to the closest variant that has component support. Log in degradation list.
+   - **No match (non-required section):** Remove the section from the manifest. Log as degradation with `level: section_removed`.
+   - **No match (required section: Hero, Primary CTA, Final CTA, Footer):** Keep the section. Flag that the design agent will need to build it from scratch using design tokens only (no component snippet available). Log as degradation with `level: missing_component`.
+
+4. **Extract and enforce component constraints.** For each matched component, read constraint fields from the YAML inventory (e.g., `max_items`, `max_chars`, character limits per sub-element). These constraints apply during Step 7 (Write Copy). Record constraints in memory for application during copy writing.
+
+**Output annotations.** When writing each section in Step 7, include an HTML comment at the top of each section recording the brand component match:
+
+```markdown
+## Problem Framing: pain-cards
+<!-- BRAND COMPONENT: spg-card-grid--3 + spg-card | MATCH: exact | CONSTRAINTS: max 4 cards, body max ~150 chars per card -->
+```
+
+For compositions:
+```markdown
+## Hero: pain-lead with Primary CTA: inline-form
+<!-- BRAND COMPONENT: spg-hero--split + spg-form-container | MATCH: composition | CONSTRAINTS: headline max 80 chars, form max 5 fields -->
+```
+
+If no brand component exists for a section (missing_component level):
+```markdown
+## Mid-Page CTA: sticky-bar
+<!-- BRAND COMPONENT: none (design agent builds from tokens) | MATCH: none -->
+```
+
+**Constraint enforcement during Step 7.** When writing copy for sections with component constraints:
+- Respect character limits per element (headline, body, card excerpt, etc.)
+- Respect item count limits (max cards, max stats, max logos)
+- If a constraint would force cutting substantive content, note the trade-off in the section's HTML comment but still respect the constraint. The brand component's physical layout is not negotiable.
+
+**Degradation logging.** After completing all section matching, add a `component_degradations` block to the frontmatter written in Step 8:
+
+```yaml
+component_degradations:
+  - section: <section-type>
+    original_variant: <original-variant-slug>
+    resolved_variant: <resolved-variant-slug>
+    component: <component-class-name>
+    reason: "<why the degradation occurred>"
+    level: variant_degradation | section_removed | missing_component
+component_degradation_count: <int, total degradation entries>
+brand_design_system: <filename of the brand design system file read>
+brand_components_html: <filename of the brand components HTML file detected>
+```
+
+If no degradations occurred, still include the fields:
+```yaml
+component_degradations: []
+component_degradation_count: 0
+brand_design_system: <filename>
+brand_components_html: <filename>
+```
+
+If no brand files were detected (Step 3.5 was skipped), omit all four fields entirely.
+
 ### Step 4: Variant Selection
 
 For each included section, determine the specific variant using the variant selection signal from the taxonomy:
@@ -210,6 +285,17 @@ proof_points_used: <P1, P3, P7, etc.>
 gaps_carried_forward:
   - <any unresolved gaps from brief>
 word_count: <int>
+# Brand component fields (present only when brand design system detected in Step 3.5)
+component_degradations:       # [] if no degradations, omit block if no brand files
+  - section: str
+    original_variant: str
+    resolved_variant: str
+    component: str
+    reason: str
+    level: str                # variant_degradation | section_removed | missing_component
+component_degradation_count: int  # 0 if no degradations, omit if no brand files
+brand_design_system: str      # filename, omit if no brand files
+brand_components_html: str    # filename, omit if no brand files
 generated_by: "landing-page-generator/copy v2.0"
 last_updated: <ISO-8601>
 ---
@@ -262,6 +348,10 @@ Before writing the file, verify:
 - [ ] Copy at 7th grade reading level or below (simple sentences, short paragraphs, no jargon unless it's buyer vocabulary)
 - [ ] No competing secondary CTAs (one action, repeated)
 - [ ] `[GAP]` markers preserved from brief and handled appropriately
+- [ ] If brand design system detected: every section has a `<!-- BRAND COMPONENT: ... -->` HTML comment
+- [ ] If brand design system detected: component constraints are respected in copy (char limits, item counts)
+- [ ] If brand design system detected: all degradations logged in frontmatter with valid rationale
+- [ ] If no brand files: no brand component comments or frontmatter fields present
 
 If any check fails, fix it before writing. If it can't be fixed (e.g., no named testimonial exists), preserve the `[GAP]` marker.
 

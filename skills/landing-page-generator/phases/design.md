@@ -94,7 +94,7 @@ These constraints apply to the hero/above-the-fold section of the HTML output.
 
 Search for a brand style guide or design system. Check these locations in order:
 
-1. **Context directory:** Glob the context directory (`.claude/context/` or the project's context path) for files matching `brand*`, `design-system*`, `style-guide*`, `brand-design*`. This is an **exception to stage isolation** -- brand/design files are visual references, not positioning context.
+1. **Context directory:** Glob the context directory (`.claude/context/` or the project's context path) for files matching `brand*`, `design-system*`, `style-guide*`, `brand-design*`. Also check for a companion `brand-components.html` file (exact name or matching `brand-components*`). This is an **exception to stage isolation** -- brand/design files are visual references, not positioning context.
 2. **Campaign directory:** Check `.claude/deliverables/campaigns/<slug>/` for a brand guide provided alongside other campaign files.
 3. **Human-provided:** If the human mentioned a brand file or design system path, read it.
 
@@ -125,6 +125,17 @@ Map brand colors to the section catalog's color roles:
 
 If a brand design system specifies exact component specs (button heights, padding, radius, form input styles), use those values exactly. Do not approximate or "modernize" brand specs. The brand system is authoritative for all visual properties it defines.
 
+**Brand component catalog detection:**
+
+If a `brand-components.html` file was found during the glob above:
+- This file IS the section catalog for this build. It replaces `templates/section-catalog.html` entirely.
+- Read `brand-components.html` in full. It contains ready-to-use HTML/CSS snippets for the client's design system.
+- Do NOT also read `templates/section-catalog.html`. The brand component library is authoritative. Using both would create competing pattern sources.
+- The design agent assembles pages by selecting and adapting snippets from `brand-components.html`, following the component's CSS classes and structural patterns.
+
+If no `brand-components.html` file was found:
+- Use `templates/section-catalog.html` as the section catalog (default behavior, no change).
+
 ### Step 4: Build HTML
 
 Produce a single HTML file with all CSS and JS inline. No external dependencies except Google Fonts (if a specific font is requested).
@@ -141,15 +152,19 @@ Produce a single HTML file with all CSS and JS inline. No external dependencies 
 
 For each entry in copy.md frontmatter `sections` array:
 
-1. Look up `{type}:{variant}` in `templates/section-catalog.html` (match via `data-variant` attribute or section comment block)
-2. Read the catalog's HTML pattern for that variant
+1. Look up `{type}:{variant}` in the active section catalog:
+      - If `brand-components.html` was detected in Step 3: match against brand component snippets using the `<!-- BRAND COMPONENT: ... -->` HTML comments from copy.md to identify the target component class(es). For compositions (multiple components), combine the relevant snippets.
+      - If no brand component library: look up in `templates/section-catalog.html` (match via `data-variant` attribute or section comment block)
+2. Read the catalog's HTML pattern for that variant. When using brand components, preserve the component's CSS classes exactly (e.g., `spg-hero`, `spg-card-grid--3`, `spg-btn--primary`). Do not rename or abstract brand classes.
 3. Populate with copy content from the matching `## SectionName: variant-slug` heading in copy.md body
 4. Apply brand colors, fonts, spacing from brand files in context directory
 5. Apply responsive rules from conversion-playbook.md Section 6 (mobile)
 6. Validate against ordering constraints in conversion-playbook.md Section 5 (flag violations but do NOT reorder -- reordering requires re-running Phase 2)
 7. Write section HTML to page output
 
-If a section `type:variant` combination does not exist in section-catalog.html, build a reasonable HTML pattern following the catalog's annotation convention and CSS architecture. Flag the gap for catalog update.
+If a section `type:variant` combination does not exist in the active catalog:
+- **Brand catalog active:** Check copy.md for a `<!-- BRAND COMPONENT: none ... -->` comment on this section. If present, build the section using only design tokens from `brand-design-system.md` (colors, typography, spacing, radii). Do not invent brand component classes. Flag the gap for brand system update.
+- **Generic catalog active:** Build a reasonable HTML pattern following the catalog's annotation convention and CSS architecture. Flag the gap for catalog update.
 
 The design agent validates that the section order in the final page.html matches copy.md's `sections` array exactly. If the design agent detects an ordering constraint violation, it flags the violation but does NOT reorder. Reordering is a Phase 2 (copy) concern.
 
