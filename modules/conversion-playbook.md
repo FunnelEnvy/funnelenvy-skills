@@ -133,45 +133,65 @@ Option C is the weakest. Use only when no calendar tool or instant-delivery asse
 
 ---
 
-## 5. Page Section Order
+## 5. Page Structure and Ordering
 
-**Rule: Follow this sequence unless the Campaign Brief specifies a deviation.**
+Section selection and variant choice are defined in `modules/section-taxonomy.md`. This section defines ordering constraints that apply after sections are selected. The design agent validates these constraints when rendering. QA validates them during review.
 
-Built around the buyer's decision arc: arrive -> trust -> understand -> believe -> act.
+### Hard Rules (violating any of these is a QA failure)
 
-| # | Section | Required? | Purpose |
-|---|---------|-----------|---------|
-| 1 | Hero | REQUIRED | Headline + subheadline + CTA button + optional visual. No form visible (form lives in lightbox). |
-| 2 | Social proof bar | REQUIRED | "Trusted by" + max 5 client logos. Fastest trust signal available. |
-| 3 | Problem / Solution | REQUIRED | Max 3 cards. Buyer's pain as card headline, your fix as card body. |
-| 4 | Quantified proof | REQUIRED | 2-3 stats (large typography) + 1 named testimonial (name, title, company). |
-| 5 | Mid-page CTA | REQUIRED | Same CTA button + 1-line supporting micro-copy. |
-| 6 | How it works | OPTIONAL | 3-step process. Only if buyer needs clarity on next steps. |
-| 7 | FAQ / Objections | RECOMMENDED | Top 3-5 objections as accordion. Framed as buyer questions. |
-| 8 | Final CTA block | REQUIRED | Dark/high-contrast background. Headline + CTA + micro-copy. |
-| 9 | Footer | REQUIRED | Logo + copyright + legal + disclaimers only. |
+1. **Hero is always Section 1.** No exceptions.
+2. **Primary CTA placement is within or immediately after Hero.** The CTA mechanism (inline form, modal trigger, multi-step) is part of the hero block, not a separate section below it.
+3. **Social Proof Bar, if present, is Section 2 or 3.** It appears immediately after hero/CTA. Never below the fold on desktop.
+4. **Final CTA is always the last content section.** Only Footer follows it.
+5. **Footer is always last.**
+6. **No two CTA sections adjacent.** Mid-Page CTA cannot be directly above Final CTA. At least one content section must separate any two CTA blocks.
+7. **Problem Framing precedes Solution Overview.** If both are present, problem comes first. You don't explain the fix before establishing the pain.
+8. **At least one proof section (Quantified Proof, Testimonial, or Comparison) precedes the Final CTA.** Never ask for the conversion without having made the case.
+9. **Proof elements adjacent to CTA must not visually compete with it.** Grayscale logos, subdued testimonial styling.
+10. **All CTA instances on a page must be the same action.** Never mix "Book a Demo" with "Download Whitepaper" on a single LP.
 
-### Section Copy Guidelines
+### Soft Rules (prefer these; deviate only with clear rationale)
 
-**Hero:**
-- Headline must message-match the ad/keyword. If the ad says "interim CFO," the page says "interim CFO."
-- Average high-performing H1 is under 8 words / 44 characters.
-- Copy at 5th-7th grade reading level more than doubles conversion rates vs. college-level writing (11.1% vs 5.3%).
-- Value proposition must be clear within 5 seconds. Attention spans are now 47 seconds on average; the headline gets a fraction of that.
+11. **Proof sections appear in the middle third of the page.** After problem/solution framing, before objection handling and final CTA.
+12. **Comparison Table appears after at least one proof section.** Show your own results before positioning against competitors.
+13. **Objection Handling (Pattern B consolidated FAQ) appears in the bottom third.** It's a pre-conversion cleanup, not a storytelling device. Pattern A inline objections appear wherever the friction arises.
+14. **Trust / Security Signals appear near the form.** Whether the form is inline in the hero or in a modal, trust signals should be visually proximate to the input fields.
+15. **Mid-Page CTA goes after the first major proof block,** not at a fixed halfway point. Once the strongest evidence has been presented, offer the action.
+16. **Pricing Preview precedes Final CTA but follows proof sections.** Show value, then show price, then ask for conversion.
 
-**Problem / Solution:**
-- Buyer's perspective, not seller's. "Your close cycle stalls" not "We provide close cycle support."
-- Each card should connect to a proof point. Unproven claims go in body copy only, not headlines.
-- 2-3 sentences per card max. Paid traffic visitors are scanners.
+### Default Section Sequence
 
-**Quantified Proof:**
-- Numbers outperform adjectives in every test. "96% reduction in time" beats "dramatically faster."
-- Testimonials must be fully attributed: name, title, company. Unattributed quotes have minimal credibility.
-- 77% of marketers fail to include social proof on landing pages. This is one of the easiest wins.
+Fallback when signals are ambiguous. Only include sections whose selection signals are met:
 
-**FAQ / Objections:**
-- Reframe seller objection-handling language as questions the buyer would naturally ask.
-- Every answer must include at least one proof point or data reference.
+```
+Hero (with Primary CTA)
+Social Proof Bar
+Problem Framing
+Solution Overview
+Quantified Proof Block
+Mid-Page CTA (after first proof block, if page is long enough)
+Testimonial Block
+Comparison Table
+Pricing Preview
+Objection Handling (Pattern B, if needed)
+Trust / Security Signals (near form, wherever form appears)
+Final CTA
+Footer
+```
+
+This is NOT a template. It's a tiebreaker. If context provides a reason to reorder, deviate.
+
+### Section Count Guidance
+
+The governing principle is from MECLABS: **match page length to the visitor's perceived cost/risk and their current awareness level.** High-commitment decisions warrant longer pages. Low-risk actions warrant shorter pages. Section count is a consequence of this principle, not a target.
+
+- **Short page (4-5 sections):** Hero + Primary CTA, one content/proof section, Final CTA, Footer. Appropriate for `traffic_awareness_stage` = most_aware with a low-friction offer.
+- **Standard page (6-8 sections):** Most campaigns land here. Covers problem/solution framing, proof, and CTA with room for one or two contextual sections.
+- **Long page (9-12 sections):** Complex offers, unaware/problem-aware traffic, or high-commitment actions (enterprise demos with 5+ field forms).
+
+If selecting 12+ sections, cut the weakest proof section or collapse Solution Overview into Problem Framing as a contrast variant. Beyond 12, audit each section for whether it adds conversion-relevant information the visitor doesn't already have.
+
+For section type definitions, selection signals, and variant tables, see `modules/section-taxonomy.md`. Do NOT duplicate selection logic here.
 
 ---
 

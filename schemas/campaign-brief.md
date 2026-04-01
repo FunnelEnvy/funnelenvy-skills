@@ -1,7 +1,7 @@
 # Campaign Brief Schema Reference
 
 > **Schema:** campaign-brief
-> **Version:** 1.1
+> **Version:** 1.2
 > **Authoritative source:** Inline schema in `skills/landing-page-generator/phases/brief.md` Step 6
 > **This file:** Human-readable reference copy only. If this file diverges from the phase file, the phase file wins.
 
@@ -38,10 +38,11 @@ last_updated: str                    # ISO-8601 date
 
 ```yaml
 schema: campaign-copy
-schema_version: "1.0"
+schema_version: "2.1"
 client: str
 campaign: str
-headline_approach: str               # pain | keyword | proof | all-three
+headline_approach: str               # was: pain | keyword | proof | all-three
+                                     # v2.0: matches hero variant slug: pain-lead | keyword-match | proof-lead
 recommended_headline: str            # A | B | C
 cta_text: str                        # Exact CTA button text
 sections_with_proof: int             # Count of sections containing proof points
@@ -49,13 +50,30 @@ gaps_carried_forward: [str]
 word_count: int
 generated_by: str                    # "landing-page-generator/copy"
 last_updated: str
+# NEW in v2.0
+sections: [{type: str, variant: str}]    # ordered section manifest
+section_count: int                        # count of sections in manifest
+objections_distributed_inline: int        # Pattern A objection count
+objections_in_faq_block: int             # Pattern B objection count (0 if no FAQ section)
+proof_points_used: [str]                 # P-IDs referenced in copy
+# Brand component fields (present only when brand design system detected in Step 3.5)
+component_degradations:           # omit entirely if no brand files detected
+  - section: str
+    original_variant: str
+    resolved_variant: str
+    component: str
+    reason: str
+    level: str                    # variant_degradation | section_removed | missing_component
+component_degradation_count: int  # 0 if none, omit if no brand files
+brand_design_system: str          # filename, omit if no brand files
+brand_components_html: str        # filename, omit if no brand files
 ```
 
 ### qa-report (Phase 4 output)
 
 ```yaml
 schema: qa-report
-schema_version: "1.0"
+schema_version: "1.1"
 client: str
 campaign: str
 files_checked: [str]                 # Which files were QA'd
@@ -63,6 +81,10 @@ copy_checks: str                     # "X/Y" pass count
 design_checks: str                   # "X/Y" pass count
 cross_checks: str                    # "X/Y" pass count
 overall: str                         # PASS | FAIL
+# Brand component fields (present only when brand design system detected)
+brand_component_checks: str       # "X/Y" pass count, omit if no brand files
+brand_component_violations: int   # BC- check failure count, omit if no brand files
+brand_component_warnings: int     # BC-7 warning count, omit if no brand files
 generated_by: str                    # "landing-page-generator/qa"
 last_updated: str
 ```
@@ -83,4 +105,4 @@ No YAML frontmatter (HTML file). Metadata stored in an HTML comment block at the
 
 ---
 
-*Schema reference v1.1 | Last updated March 2026*
+*Schema reference v1.2 | Last updated March 2026*

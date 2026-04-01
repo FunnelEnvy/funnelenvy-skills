@@ -1,7 +1,7 @@
 # Phase 3: Design Agent
 
 > **Reads:** agent-header.md (shared rules) + this file
-> **Depends on:** modules/conversion-playbook.md (sections 1-6 only), modules/lp-audit-taxonomy.md (construct mode: D4, D6, D9), templates/wireframe.jsx (structural reference)
+> **Depends on:** modules/conversion-playbook.md (sections 1-6 only), modules/lp-audit-taxonomy.md (construct mode: D4, D6, D9), templates/section-catalog.html (structural reference)
 > **Input:** `.claude/deliverables/campaigns/<slug>/copy.md` (Phase 2 output)
 > **Output:** `.claude/deliverables/campaigns/<slug>/page.html`
 
@@ -11,7 +11,7 @@
 
 - `copy.md` in the campaign directory -- HARD REQUIREMENT. If missing: `[PRECONDITION FAILED]: Run Phase 2 (copy) first.`
 - `modules/conversion-playbook.md` sections 1-6: Navigation, CTA Strategy, Form Strategy, Post-Submit Flow, Page Section Order, Mobile.
-- `templates/wireframe.jsx` -- structural reference for layout, section ordering, interaction patterns, annotation notes.
+- `templates/section-catalog.html` -- structural reference for section layout patterns, CSS architecture, responsive behavior, and interaction patterns. Contains one HTML block per section type:variant combination.
 
 ## Optional Inputs
 
@@ -22,6 +22,7 @@
 
 - Do NOT read positioning context files (company-identity.md, audience-messaging.md, etc.)
 - Do NOT read the brief.md
+- Do NOT read `modules/section-taxonomy.md` (section selection is the copy agent's job, not the design agent's)
 - Do NOT read playbook sections 7+ (benchmarks, testing priorities, positioning docs integration)
 - Stage isolation: the design agent builds from copy.md only. If something seems wrong with the copy, flag it but do not change it.
 
@@ -32,8 +33,9 @@
 ### Step 1: Read Copy
 
 Read the full `copy.md` including frontmatter. Extract:
-- All section copy (hero, social proof, problem/solution, proof, CTAs, FAQ, footer, lightbox, post-submit)
-- CTA button text (must be identical in all 3 placements)
+- The `sections` array from frontmatter (determines which sections to render and in what order)
+- All section copy (each `## SectionName: variant-slug` heading and its body content)
+- CTA button text (must be identical in all CTA placements)
 - Form field count and type (from frontmatter or lightbox section)
 - Any `[GAP]` markers (flag these to the human but still build the page)
 
@@ -44,7 +46,7 @@ Read the full `copy.md` including frontmatter. Extract:
 - Section 2: CTA placement (3 locations, lightbox interaction)
 - Section 3: Form strategy (field count, multi-step rules, UX)
 - Section 4: Post-submit flow (which option the brief specified)
-- Section 5: Section order (the 9-section sequence)
+- Section 5: Ordering constraints (hard rules and soft rules for section ordering)
 - Section 6: Mobile rules (mobile-first, tap targets, load time)
 
 **From `modules/lp-audit-taxonomy.md` (construct mode: D4, D6, D9):**
@@ -59,15 +61,16 @@ Read the Construct Mode section (table at bottom) plus the full dimension text f
 
 These are construction constraints, not just QA checks. Apply them as you build each section.
 
-**From `templates/wireframe.jsx`:**
-- Section layout patterns (grid columns, spacing, alignment)
+**From `templates/section-catalog.html`:**
+- Section layout patterns per type:variant combination (grid columns, spacing, alignment)
 - Lightbox modal structure (overlay, blur, close button, form layout)
-- Mobile vs. desktop responsive behavior (max-width toggle pattern)
-- Component patterns: annotation tags, strategy notes (strip these from production output), section labels, wireframe boxes (replace with real content), CTA buttons
-- Post-submit flow layout (3-step grid)
+- Mobile vs. desktop responsive behavior (breakpoint patterns, responsive grid)
+- CSS custom properties architecture (brand-overridable tokens)
+- Component patterns: CTA buttons, form inputs, accordion, stat blocks, card grids
+- Post-submit flow layout
 - FAQ accordion pattern (expand/collapse)
 
-The wireframe is an annotated reference. Use its spatial composition and interaction patterns. Strip all annotation components (AnnotationTag, StrategyNote, SectionLabel, WireframeBox placeholders) and replace with real content and production styling.
+The section catalog contains one HTML block per section type:variant. Each block includes HTML comment annotations explaining design rationale and variant-specific notes. Use the catalog's HTML patterns as structural starting points. Populate with copy content from copy.md. Adapt CSS custom properties to match the campaign's brand styling.
 
 ### ATF Design Constraints
 
@@ -75,7 +78,7 @@ These constraints apply to the hero/above-the-fold section of the HTML output.
 
 **Negative space:** ATF elements (headline, hook line, subheadline, CTA, hero image) must have generous spacing. Minimum 16px vertical gap between text elements. Minimum 32px gap between the text column and the image/visual column. Background must not compete with text. No busy patterns, no low-contrast overlays. If the background is an image, it must have a solid or gradient overlay ensuring text contrast ratio >= 4.5:1.
 
-**Hero image:** Should show the product in action (screenshot, GIF, or short video). If copy.md does not specify a hero image, use a dashed placeholder box per wireframe.jsx pattern. Do not substitute abstract illustrations or stock photography. A clean placeholder is better than a misleading image.
+**Hero image:** Should show the product in action (screenshot, GIF, or short video). If copy.md does not specify a hero image, use a dashed placeholder box matching the section-catalog.html hero pattern. Do not substitute abstract illustrations or stock photography. A clean placeholder is better than a misleading image.
 
 **Nav bar (paid LP):** Zero navigation links. Logo only. No escape routes. Every element serves the single conversion goal specified in the brief.
 
@@ -83,7 +86,7 @@ These constraints apply to the hero/above-the-fold section of the HTML output.
 
 **Which nav rule applies:** If the brief specifies `target_keywords` (indicating paid traffic), use the paid LP nav rule. If the brief does not specify keywords or explicitly notes organic/direct traffic, use the non-paid LP rule. When in doubt, default to zero nav (paid LP rule).
 
-**Hook line rendering:** If copy.md includes a hook line (marked `[OPTIONAL]` in copy output), render it as a separate element between the headline and subheadline. Visually: smaller than the headline, larger than the subheadline, same color as headline. See wireframe.jsx hero section for exact sizing. If copy.md does not include a hook line, omit the element entirely. Do not generate a hook line in the design phase.
+**Hook line rendering:** If copy.md includes a hook line (marked `[OPTIONAL]` in copy output), render it as a separate element between the headline and subheadline. Visually: smaller than the headline, larger than the subheadline, same color as headline. See section-catalog.html hero section for sizing reference. If copy.md does not include a hook line, omit the element entirely. Do not generate a hook line in the design phase.
 
 **CTA button:** Must be the most visually prominent interactive element above the fold. Use the primary button style (filled, high contrast). If the wireframe specifies a lightbox trigger, the CTA onClick opens the lightbox. Do not render the form inline in the hero unless copy.md or the brief explicitly specifies inline form placement.
 
@@ -91,7 +94,7 @@ These constraints apply to the hero/above-the-fold section of the HTML output.
 
 Search for a brand style guide or design system. Check these locations in order:
 
-1. **Context directory:** Glob the context directory (`.claude/context/` or the project's context path) for files matching `brand*`, `design-system*`, `style-guide*`, `brand-design*`. This is an **exception to stage isolation** -- brand/design files are visual references, not positioning context.
+1. **Context directory:** Glob the context directory (`.claude/context/` or the project's context path) for files matching `brand*`, `design-system*`, `style-guide*`, `brand-design*`. Also check for a companion `brand-components.html` file (exact name or matching `brand-components*`). This is an **exception to stage isolation** -- brand/design files are visual references, not positioning context.
 2. **Campaign directory:** Check `.claude/deliverables/campaigns/<slug>/` for a brand guide provided alongside other campaign files.
 3. **Human-provided:** If the human mentioned a brand file or design system path, read it.
 
@@ -114,13 +117,24 @@ If no brand file is found, ask the human for:
 4. Logo: URL, file path, or "use placeholder"
 5. "Do you have a brand design system or style guide file I should reference?"
 
-Map brand colors to the wireframe's color roles:
+Map brand colors to the section catalog's color roles:
 - `#1A1A18` (dark/primary) -> primary brand dark or keep as-is for high contrast
 - `#E85D3A` (accent/CTA) -> primary brand color for CTAs and highlights
 - `#F5F0E8` / `#FFFDF9` (light backgrounds) -> adjust to complement brand palette
 - `#8C8575` (muted text) -> keep neutral or adjust for brand warmth/coolness
 
 If a brand design system specifies exact component specs (button heights, padding, radius, form input styles), use those values exactly. Do not approximate or "modernize" brand specs. The brand system is authoritative for all visual properties it defines.
+
+**Brand component catalog detection:**
+
+If a `brand-components.html` file was found during the glob above:
+- This file IS the section catalog for this build. It replaces `templates/section-catalog.html` entirely.
+- Read `brand-components.html` in full. It contains ready-to-use HTML/CSS snippets for the client's design system.
+- Do NOT also read `templates/section-catalog.html`. The brand component library is authoritative. Using both would create competing pattern sources.
+- The design agent assembles pages by selecting and adapting snippets from `brand-components.html`, following the component's CSS classes and structural patterns.
+
+If no `brand-components.html` file was found:
+- Use `templates/section-catalog.html` as the section catalog (default behavior, no change).
 
 ### Step 4: Build HTML
 
@@ -134,27 +148,33 @@ Produce a single HTML file with all CSS and JS inline. No external dependencies 
 - Semantic HTML5 elements (header, main, section, footer)
 - Page weight target: under 50KB HTML (before images)
 
-**Section build order (matches playbook Section 5):**
+**Section Rendering Loop (driven by copy.md frontmatter `sections` array):**
 
-1. **Header**: Logo only. No navigation links. Logo is non-clickable or links to `#` (not the main site).
+For each entry in copy.md frontmatter `sections` array:
 
-2. **Hero**: Headline + subheadline + CTA button. Button triggers lightbox (JS onclick). If copy.md has 3 headline options, use the recommended one. Include the other two as HTML comments for A/B testing.
+1. Look up `{type}:{variant}` in the active section catalog:
+      - If `brand-components.html` was detected in Step 3: match against brand component snippets using the `<!-- BRAND COMPONENT: ... -->` HTML comments from copy.md to identify the target component class(es). For compositions (multiple components), combine the relevant snippets.
+      - If no brand component library: look up in `templates/section-catalog.html` (match via `data-variant` attribute or section comment block)
+2. Read the catalog's HTML pattern for that variant. When using brand components, preserve the component's CSS classes exactly (e.g., `spg-hero`, `spg-card-grid--3`, `spg-btn--primary`). Do not rename or abstract brand classes.
+3. Populate with copy content from the matching `## SectionName: variant-slug` heading in copy.md body
+4. Apply brand colors, fonts, spacing from brand files in context directory
+5. Apply responsive rules from conversion-playbook.md Section 6 (mobile)
+6. Validate against ordering constraints in conversion-playbook.md Section 5 (flag violations but do NOT reorder -- reordering requires re-running Phase 2)
+7. Write section HTML to page output
 
-3. **Social Proof Bar**: "Trusted by" + logo placeholders. Flex layout, centered. 2-row max on mobile (reduce to 3-4 logos if needed for mobile fit).
+If a section `type:variant` combination does not exist in the active catalog:
+- **Brand catalog active:** Check copy.md for a `<!-- BRAND COMPONENT: none ... -->` comment on this section. If present, build the section using only design tokens from `brand-design-system.md` (colors, typography, spacing, radii). Do not invent brand component classes. Flag the gap for brand system update.
+- **Generic catalog active:** Build a reasonable HTML pattern following the catalog's annotation convention and CSS architecture. Flag the gap for catalog update.
 
-4. **Problem/Solution**: 3-card grid (1-column mobile, 3-column desktop). Pain headline + fix body per card.
+The design agent validates that the section order in the final page.html matches copy.md's `sections` array exactly. If the design agent detects an ordering constraint violation, it flags the violation but does NOT reorder. Reordering is a Phase 2 (copy) concern.
 
-5. **Quantified Proof**: Large-type stat numbers + testimonial. 2-column grid on desktop, stacked on mobile. Testimonial fully attributed.
+**Per-section rendering notes:**
 
-6. **Mid-Page CTA**: Centered, background-differentiated section. Same CTA button text. Supporting micro-copy.
-
-7. **How It Works** (if present in copy): 3-step numbered process. Horizontal on desktop, vertical on mobile.
-
-8. **FAQ/Objections**: Accordion with expand/collapse. JS-powered toggle. Only first item expanded by default. All others collapsed.
-
-9. **Final CTA Block**: High-contrast dark background. CTA button uses accent color. Strong visual break from prior sections.
-
-10. **Footer**: Minimal. Logo + copyright + legal links + required disclaimers.
+- **Header**: Logo only. No navigation links. Logo is non-clickable or links to `#` (not the main site).
+- **Hero**: Use the recommended headline. Include other variants as HTML comments for A/B testing. Button triggers lightbox (JS onclick).
+- **Lightbox form**: Triggered by any CTA button click (shared JS handler). Fixed overlay with backdrop blur. See section-catalog.html lightbox pattern.
+- **FAQ/Objections**: Accordion with expand/collapse. JS-powered toggle. Only first item expanded by default.
+- **Footer**: Minimal. Logo + copyright + legal links + required disclaimers.
 
 **Lightbox form:**
 - Triggered by any CTA button click (shared JS handler)
@@ -186,11 +206,14 @@ Before writing, verify:
 ### Step 6: Copy Integrity Check
 
 Verify all copy from copy.md is present and unmodified in the HTML:
+- [ ] Every section in copy.md `sections` array has a rendered counterpart in page.html
+- [ ] No section in page.html exists that is not in copy.md `sections` array
+- [ ] Section order in page.html matches copy.md `sections` array exactly
 - [ ] Hero headline matches exactly
-- [ ] All 3 CTA button instances use identical text
-- [ ] Testimonial quote, name, title, company match exactly
-- [ ] Stats match exactly (numbers, units, formatting)
-- [ ] FAQ questions and answers match exactly
+- [ ] All CTA button instances use identical text
+- [ ] Testimonial quote, name, title, company match exactly (if Testimonial section present)
+- [ ] Stats match exactly (numbers, units, formatting) (if Quantified Proof section present)
+- [ ] FAQ questions and answers match exactly (if Objection Handling section present)
 - [ ] Footer disclaimers match exactly
 - [ ] No copy was added that isn't in copy.md
 - [ ] `[GAP]` markers converted to visible placeholder comments in HTML (e.g., `<!-- GAP: no named testimonial -->`)

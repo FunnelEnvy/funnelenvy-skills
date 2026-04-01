@@ -1,7 +1,7 @@
 # Phase 4: QA Validator
 
 > **Reads:** agent-header.md (shared rules) + this file
-> **Depends on:** modules/conversion-playbook.md (Section 9: QA Checklist), modules/lp-audit-taxonomy.md (10-dimension scoring framework)
+> **Depends on:** modules/conversion-playbook.md (Section 9: QA Checklist), modules/lp-audit-taxonomy.md (10-dimension scoring framework), modules/section-taxonomy.md (ordering constraints, selection signal validation)
 > **Input:** `.claude/deliverables/campaigns/<slug>/brief.md` + `copy.md` + `page.html` (whichever exist)
 > **Output:** `.claude/deliverables/campaigns/<slug>/qa-report.md`
 
@@ -13,6 +13,8 @@ At least one of `copy.md` or `page.html` must exist in the campaign directory. I
 
 `brief.md` must exist for reference (target keywords, CTA text, banned terms, required disclaimers, form strategy).
 
+`modules/section-taxonomy.md` -- for variant-signal alignment validation and ordering constraint reference.
+
 ---
 
 ## Workflow
@@ -23,6 +25,7 @@ At least one of `copy.md` or `page.html` must exist in the campaign directory. I
 2. Read `copy.md` if it exists.
 3. Read `page.html` if it exists.
 4. Read `modules/conversion-playbook.md` Section 9 (QA Checklist) for the complete checklist.
+5. Read `modules/section-taxonomy.md` for section selection signals and ordering constraints.
 
 ### Step 2: Run Copy QA (against copy.md)
 
@@ -31,8 +34,8 @@ Skip this section if copy.md does not exist.
 | # | Check | How to Verify | Result |
 |---|-------|--------------|--------|
 | C1 | Headline message-matches target keywords | Compare hero headlines against brief's `target_keywords`. At least one keyword must appear in the recommended headline (exact match or close semantic match). | PASS / FAIL |
-| C2 | Proof points in 4+ sections | Count sections containing at least one named metric, case study, or testimonial. Required in: hero, problem/solution, quantified proof, FAQ. | PASS / FAIL + count |
-| C3 | Same CTA text in 3 locations | Search for the brief's `cta_text` in hero, mid-page, and final CTA sections. Must be identical in all 3. | PASS / FAIL + locations found |
+| C2 | Proof points in 4+ sections | Count selected sections containing at least one named metric, case study, or testimonial. Proof required in Hero and any Quantified Proof, Testimonial, or Objection Handling sections present. | PASS / FAIL + count |
+| C3 | Same CTA text in all CTA locations | Search for the brief's `cta_text` in all CTA sections listed in copy.md frontmatter `sections` array (Hero, Mid-Page CTA, Final CTA). Must be identical in all. | PASS / FAIL + locations found |
 | C4 | Zero banned terms | Search copy for every term in the brief's banned terms list. Case-insensitive. | PASS / FAIL + terms found |
 | C5 | Required disclaimers present | Check footer section for each required disclaimer from the brief. | PASS / FAIL + missing items |
 | C6 | Named testimonial with full attribution | At least one testimonial with name + title + company. All three required. | PASS / FAIL |
@@ -91,7 +94,7 @@ Skip this section if page.html does not exist.
 |---|-------|--------------|--------|
 | D1 | No site navigation | Search for `<nav>` elements or link clusters in the header. Only a logo should be present. | PASS / FAIL |
 | D2 | No footer links beyond legal | Check footer for links. Only Privacy Policy, Terms, and required disclaimers allowed. No sitemap, social, blog links. | PASS / FAIL + extra links found |
-| D3 | CTA buttons in 3 locations | Search for CTA button elements. Must appear in hero, mid-page, and final block sections. | PASS / FAIL + count |
+| D3 | CTA buttons in expected locations | Search for CTA button elements. Must appear in all CTA sections from copy.md frontmatter `sections` array. | PASS / FAIL + count |
 | D4 | CTA triggers lightbox | Check for JS event handler on CTA buttons that shows a modal/overlay. Look for onclick handlers, modal toggle functions, or equivalent. | PASS / FAIL |
 | D5 | Correct form field count | Count input/select elements in the lightbox form. Must match brief's `form_strategy.fields`. | PASS / FAIL + expected vs actual |
 | D6 | Single-column on mobile | Check CSS media queries for mobile layout rules. Look for grid-template-columns, flex-direction changes at mobile breakpoint. | PASS / FAIL |
@@ -106,10 +109,61 @@ Skip this section if page.html does not exist.
 
 | # | Check | How to Verify | Result |
 |---|-------|--------------|--------|
-| X1 | All copy.md content in HTML | Systematically compare each section's text content. Flag any additions, deletions, or modifications. | PASS / FAIL + diffs |
-| X2 | No copy added by design agent | Search HTML for text content not present in copy.md (excluding structural labels and HTML comments). | PASS / FAIL |
+| X1 | All copy.md content in HTML | For each section in copy.md frontmatter `sections` array, compare the section's text content against the corresponding `<section>` in page.html. Flag any additions, deletions, or modifications. | PASS / FAIL + diffs |
+| X2 | No copy added by design agent | Search HTML for text content not present in copy.md (excluding structural labels and HTML comments). No section in page.html should exist that is not in copy.md `sections` array. | PASS / FAIL |
 
-### Step 4b: Taxonomy Dimension Scoring
+### Step 4b: Composable Section Validation
+
+Six checks that validate the composable section system across copy.md and page.html.
+
+**CS-1: Section Parity Check**
+- Every section in copy.md frontmatter `sections` array has a corresponding rendered `<section>` in page.html
+- No `<section>` in page.html exists that is NOT in copy.md `sections` array (prevents design agent from freelancing)
+- Section order in page.html matches copy.md `sections` array exactly
+- Result: PASS or FAIL
+
+**CS-2: Variant-Signal Alignment Check**
+For each section in copy.md `sections` array, verify the selected variant is consistent with the brief's context signals and L0/L1 frontmatter. Read brief.md frontmatter + L0/L1 frontmatter for this check.
+
+Flag examples:
+- Hero variant is `proof-lead` but proof_points verified < 2 -> FLAG
+- Social Proof Bar included but no recognizable logos indicated in L0 proof point registry -> FLAG
+- Problem Framing included but `traffic_awareness_stage` = product_aware or most_aware -> FLAG
+- Pricing Preview omitted but company has public pricing or `offer_type` = quote -> FLAG
+- Comparison Table included but no competitive keywords in brief and no competitive search intent -> FLAG
+
+Read `modules/section-taxonomy.md` selection signals as the reference for what signals each section/variant requires.
+- Result: count of flags (0 = clean)
+
+**CS-3: Ordering Constraint Check**
+Validate all 10 hard rules from `modules/section-taxonomy.md` / `modules/conversion-playbook.md` Section 5 against the actual section sequence in copy.md and page.html.
+- Any hard rule violation = QA FAIL
+- Validate 6 soft rules. Soft rule violations = flagged as warnings, not failures
+- Result: hard violation count + warning count
+
+**CS-4: Objection Coverage Check**
+Read `audience-messaging.md` objection inventory (body section). Verify every objection is either:
+- (a) addressed inline in a section body (identified by `<!-- Inline objection: addresses "..." -->` HTML comment in copy.md), OR
+- (b) included in the Objection Handling section (Pattern B), OR
+- (c) explicitly noted as out-of-scope in the brief's `gaps` field
+
+Unaddressed objections = FLAG
+- Result: "X/Y addressed" (X addressed out of Y total)
+
+**CS-5: CTA Consistency Check**
+- All CTA button text instances on the page use the same action text
+- No competing CTAs (different goals/actions on the same page)
+- Validates hard rule #10 from ordering constraints
+- Result: PASS or FAIL
+
+**CS-6: Proof Adjacency Check**
+- Proof elements (logos, stats, testimonials) near CTA blocks do not visually compete
+- Social proof bar uses grayscale/muted treatment (not colorful logos)
+- This is a design check on page.html, not a copy check
+- Validates hard rule #9 from ordering constraints
+- Result: PASS or FLAG (visual inspection)
+
+### Step 4c: Taxonomy Dimension Scoring
 
 After completing the Section 9 checklist, run the generated LP artifacts through the 10-dimension audit taxonomy. This is a holistic quality assessment layered on top of the prescriptive checklist.
 
@@ -128,7 +182,27 @@ After completing the Section 9 checklist, run the generated LP artifacts through
 
 **Scoring does NOT re-read context file bodies.** Read frontmatter only (~200 tokens per file) for D5/D7/D10 context checks. The copy and brief artifacts contain enough information for the remaining dimensions.
 
-**Token budget:** The taxonomy module is ~4,800 tokens. QA runs inline (no subagent), so this is absorbed by the orchestrator's context window. Total QA token cost increases from ~15K to ~20K.
+**Token budget:** The taxonomy module is ~4,800 tokens plus ~3K for section-taxonomy.md. QA runs inline (no subagent), so this is absorbed by the orchestrator's context window. Total QA token cost: ~25K with composable section checks.
+
+### Step 4d: Brand Component Validation (conditional)
+
+**Gate:** Read copy.md frontmatter. If `brand_design_system` field is present, run this step. If absent, skip entirely -- no brand constraints apply.
+
+When running, also read:
+- The `brand-design-system.md` file named in copy.md frontmatter `brand_design_system` field (from `.claude/context/` or client context directory)
+- The `brand-components.html` file named in copy.md frontmatter `brand_components_html` field
+
+| Check | What | How | Pass/Fail |
+|-------|------|-----|-----------|
+| BC-1 | CSS class compliance | Every `<section>` in page.html that has a corresponding `<!-- BRAND COMPONENT: ... -->` comment in copy.md uses CSS classes from `brand-components.html`. Grep page.html for brand component class names. | FAIL if any section uses generic/invented classes when a brand component was matched |
+| BC-2 | No generic fallback when brand exists | No section in page.html uses generic styles from `templates/section-catalog.html` when a brand component match exists for that section in copy.md | FAIL if design agent mixed catalogs |
+| BC-3 | Constraint compliance | For each section with constraints noted in the `<!-- BRAND COMPONENT: ... | CONSTRAINTS: ... -->` comment: verify page.html respects the constraint (item counts, approximate character limits reflected in rendered content) | FAIL if a card grid exceeds max items, if text visibly overflows component boundaries |
+| BC-4 | Design token compliance | Compare CSS custom properties and inline styles in page.html against `brand-design-system.md` frontmatter tokens: colors (primary, secondary, neutral), font families, font sizes, border-radius values, spacing units | FAIL if page.html uses colors, fonts, or radii not in the brand design system |
+| BC-5 | Anti-pattern compliance | Read `brand-design-system.md` for any `anti_patterns` or `prohibited` section. Check page.html does not violate listed prohibitions (e.g., no red background fills, no casual language in CTAs, specific radius values) | FAIL if any anti-pattern present in page.html |
+| BC-6 | Degradation rationale | Read `component_degradations` from copy.md frontmatter. Each entry must have a non-empty `reason` field that explains why the degradation occurred. Cross-reference: if a degradation says `level: variant_degradation`, verify page.html uses the `resolved_variant`, not the `original_variant` | FAIL if any degradation lacks rationale or if page.html contradicts the resolution |
+| BC-7 | Inferred value flagging | If `brand-design-system.md` contains any values marked `[INFERRED]` or with confidence qualifiers, check that the corresponding page.html usage is flagged in the QA report for client verification | WARN (not FAIL) -- these are flagged, not blocked |
+
+**Scoring:** BC-1 through BC-6 are pass/fail. BC-7 is warn-only. Record results in the QA report alongside existing check groups.
 
 ### Step 5: Write Report
 
@@ -137,7 +211,7 @@ Write to `.claude/deliverables/campaigns/<slug>/qa-report.md`:
 ```yaml
 ---
 schema: qa-report
-schema_version: "1.1"
+schema_version: "2.0"
 client: <company-name>
 campaign: <campaign-slug>
 files_checked:
@@ -146,6 +220,13 @@ files_checked:
 copy_checks: <pass-count>/<total>
 design_checks: <pass-count>/<total>
 cross_checks: <pass-count>/<total>
+section_count: <int, from copy.md sections array>
+section_parity: <PASS|FAIL>
+ordering_violations: <int, CS-3 hard rule violations, 0 = pass>
+ordering_warnings: <int, CS-3 soft rule deviations>
+variant_alignment_flags: <int, CS-2 flag count>
+objection_coverage: <"X/Y", CS-4 result>
+cta_consistency: <PASS|FAIL>
 dimension_ratings:
   awareness_stage_alignment: <strong|needs_work|missing>
   value_proposition_clarity: <strong|needs_work|missing>
@@ -162,6 +243,10 @@ needs_work_count: <int>
 missing_count: <int>
 top_issue: <dimension_name>
 overall: <PASS|FAIL>
+# Brand component fields (present only when brand design system detected)
+brand_component_checks: str   # "X/Y" pass count, omit if no brand files
+brand_component_violations: int  # count of BC- check failures, omit if no brand files
+brand_component_warnings: int    # count of BC-7 warnings, omit if no brand files
 generated_by: "landing-page-generator/qa"
 last_updated: <ISO-8601>
 ---
@@ -192,6 +277,23 @@ Body format:
 
 | # | Check | Result | Notes |
 |---|-------|--------|-------|
+
+## Composable Section Validation
+
+| # | Check | Result | Notes |
+|---|-------|--------|-------|
+| CS-1 | Section Parity | PASS/FAIL | [sections matched / mismatches] |
+| CS-2 | Variant-Signal Alignment | X flags | [flag details] |
+| CS-3 | Ordering Constraints | X hard / Y soft | [violations] |
+| CS-4 | Objection Coverage | X/Y addressed | [unaddressed list] |
+| CS-5 | CTA Consistency | PASS/FAIL | [mismatches] |
+| CS-6 | Proof Adjacency | PASS/FLAG | [visual notes] |
+
+## Brand Component Validation
+
+| # | Check | Result | Notes |
+|---|-------|--------|-------|
+| Brand Component | BC-1 through BC-7 | X/Y pass + Z warnings | (conditional: only when brand files detected) |
 
 ## Taxonomy Dimension Scores
 
