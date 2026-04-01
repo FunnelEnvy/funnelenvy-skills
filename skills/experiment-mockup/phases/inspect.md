@@ -26,7 +26,10 @@
 
 ### Step 1: Navigate to Target Page
 
-Use Chrome DevTools MCP to open the target URL in the connected Chrome instance.
+Use the browser MCP to open the target URL.
+
+- Chrome DevTools mode: navigate using DevTools MCP tools (the page opens in the user's Chrome)
+- Playwright mode: navigate using Playwright MCP tools (browser_navigate; the page opens in managed Chromium)
 
 Wait for full page load:
 - Document ready state
@@ -38,7 +41,7 @@ If the page fails to load (timeout, 404, connection refused): STOP. Report the e
 
 The hypothesis specifies a page and a general placement (e.g., "above or adjacent to the form on /contact," "hero section headline on /pricing").
 
-Use DevTools MCP to locate the target area:
+Use the browser MCP to locate the target area:
 
 1. **Find the primary conversion element** on the page. Query the DOM for:
    - `form` elements (contact forms, signup forms, demo request forms)
@@ -75,7 +78,7 @@ If no brand files are found, proceed. All design tokens will come from computed 
 
 ### Step 4: Extract Design Tokens
 
-For the elements surrounding the insertion point, read computed styles via DevTools MCP. Extract:
+For the elements surrounding the insertion point, read computed styles via the browser MCP. Extract:
 
 **Colors:**
 - `background-color` of the parent section
@@ -109,6 +112,18 @@ For the elements surrounding the insertion point, read computed styles via DevTo
 **CTA styling (critical: we must NOT compete with this):**
 - Full computed style of the primary CTA button: `background-color`, `color`, `font-size`, `font-weight`, `padding`, `border-radius`, `border`, `box-shadow`, `text-transform`
 - This is extracted so Phase 2 can ensure the injected element uses LOWER visual weight
+
+**Playwright mode note:** Computed styles are extracted via browser_evaluate() executing window.getComputedStyle() in the page context. The output is functionally identical to Chrome DevTools' direct CDP access. Extract all tokens in a single evaluate() call to minimize tool call overhead:
+
+```javascript
+browser_evaluate(`
+  JSON.stringify({
+    body: window.getComputedStyle(document.body),
+    heading: window.getComputedStyle(document.querySelector('h2')),
+    // ... additional elements per the token categories above
+  })
+`)
+```
 
 ### Step 5: Identify Existing Content Block Patterns
 
