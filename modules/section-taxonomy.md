@@ -74,6 +74,8 @@ Visual credibility signal. Usually appears high on the page.
 
 **Omit when:** Available logos are not recognizable to the target audience AND fewer than 3 verified proof points AND no notable endorsements. No social proof is better than weak social proof. Do NOT pad with unknown logos to hit a count threshold.
 
+**One section, one variant.** Social Proof Bar is a single section slot. Select one variant. Do not split into two separate sections (e.g., a stat bar AND a logo row). If both logos and metrics are strong, prefer `logo-row` and surface key metrics in the hero trust line (as part of the Hero section) or in a Quantified Proof Block lower on the page. The `stat-bar` variant signal explicitly requires "recognizable logos unavailable" -- if logos are available, `stat-bar` does not qualify.
+
 **Segment match caveat:** Do not show Fortune 500 logos to an SMB audience. Match logo tier to target segment.
 
 #### 6. Problem Framing

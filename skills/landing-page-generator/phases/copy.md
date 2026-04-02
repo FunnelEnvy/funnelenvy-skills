@@ -79,6 +79,8 @@ Read `modules/section-taxonomy.md`. For each of the 14 section types, evaluate t
 
 Build the section manifest as a list of `{type, variant}` pairs.
 
+**Taxonomy compliance rule:** Every section in the manifest must map to one of the 14 section types defined in the taxonomy. Do not invent custom section types (e.g., "Trust Metrics Bar," "Value Recap Strip"). If content doesn't fit an existing type, either place it within the closest matching section (as a design note or sub-element) or flag it as a gap for taxonomy update. Each section type appears at most once in the manifest (required sections appear exactly once).
+
 ### Step 3.5: Brand Component Matching (conditional)
 
 Glob `.claude/context/` (and any client-specific context directories referenced in the brief) for:
@@ -335,6 +337,8 @@ These are generation constraints, not a post-hoc checklist. Apply them as you wr
 
 Before writing the file, verify:
 
+- [ ] Every section in the manifest maps to one of the 14 taxonomy section types (no invented types)
+- [ ] No section type appears more than once in the manifest
 - [ ] Every headline message-matches target keywords from the brief
 - [ ] Every section in frontmatter `sections` array has a matching `## SectionName: variant` heading in body
 - [ ] Proof points appear in at least 4 selected sections where applicable
