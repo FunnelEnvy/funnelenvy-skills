@@ -72,7 +72,7 @@ Do not skip this step. Confidence scores that stay frozen at their initial value
 
 If you cannot complete all sections (insufficient research data, context limits):
 
-1. **Prioritize REQUIRED sections** (Company Overview, Services, Service Exclusions, Target Segments, Anti-Personas, Stated Differentiators, Proof Point Registry, Constraints). Write these first.
+1. **Prioritize REQUIRED sections** (Company Overview, Services, Service Exclusions, Target Segments, Anti-Personas, Stated Differentiators, Proof Point Registry, Constraints, Buying Triggers). Write these first.
 2. **Always write output to disk.** Partial L0 on disk is better than no L0. Downstream agents need something to read.
 3. **Mark incomplete sections with `[INCOMPLETE - reason]`.** E.g., `[INCOMPLETE - pricing page was JS-rendered, no pricing data extracted]`.
 4. **Set confidence accordingly.** Missing REQUIRED sections = confidence 1. All REQUIRED present but thin = confidence 2.
@@ -240,11 +240,24 @@ Two categories:
 ### Buying Triggers
 <!-- Output: company-identity.md > Buying Triggers -->
 
-**Source:** Research findings (review site complaints, case study triggers, "How it works" pages)
+Events or circumstances that cause prospects to actively seek a solution. Sourced from VOC extractions (Lens 3: Trigger Events), review analysis, and company website content.
 
-Acute events that create urgency. Different from persona pain points (chronic). Examples: contract renewal, failed project, leadership change, growth milestone.
+Format per trigger:
+- **Trigger:** [description of the event or circumstance]
+- **Source:** [where this was observed -- review, Reddit, website, client-provided]
+- **Frequency:** [widespread | moderate | isolated] (based on how many independent sources mention this trigger)
 
-Format: `- [Trigger event]: [Why it creates urgency]`
+Common B2B trigger categories to look for:
+- Team growth or reorganization
+- New leadership hire (especially VP/C-level)
+- Missed target or public failure
+- Competitor action
+- Budget cycle / fiscal year transition
+- Regulatory change
+- Tool sunset, acquisition, or price increase
+- Internal process breakdown at scale
+
+If no trigger events are found in research, write: `[INCOMPLETE -- no trigger events identified in available sources. Interview data recommended.]`
 
 ### Retired Positioning
 <!-- Output: company-identity.md > Retired Positioning -->
@@ -419,8 +432,8 @@ Before writing `company-identity.md` to disk, execute this procedure. Do not ski
 
 1. Scan every section in the file body that has a confidence score (e.g., `**Confidence:** 3`).
 2. Separate scores into two lists: **REQUIRED sections** and **OPTIONAL sections**.
-   - REQUIRED: Company Overview, Services & Capabilities, Service Exclusions, Target Segments, Anti-Personas, Stated Differentiators, Proof Point Registry, Constraints
-   - OPTIONAL: Company Stats, Pricing Model, Glossary, Buying Triggers, Retired Positioning, Category Gap
+   - REQUIRED: Company Overview, Services & Capabilities, Service Exclusions, Target Segments, Anti-Personas, Stated Differentiators, Proof Point Registry, Constraints, Buying Triggers
+   - OPTIONAL: Company Stats, Pricing Model, Glossary, Retired Positioning, Category Gap
 3. Set frontmatter `confidence` to the MINIMUM of the **REQUIRED section scores only**.
 4. If any OPTIONAL section has a confidence score below the file-level confidence, add a note in that section: `<!-- low-confidence optional section: does not affect file-level confidence -->`. This preserves visibility without penalizing the file.
 5. If no sections have confidence scores, set frontmatter `confidence` to 2.
@@ -440,7 +453,7 @@ The full schema for `company-identity.md`. The agent producing L0 follows this s
 ```yaml
 ---
 schema: company-identity
-schema_version: "1.0.0"
+schema_version: "1.1.0"  <!-- v1.1.0: Buying Triggers promoted from OPTIONAL to REQUIRED, structured trigger format added -->
 generated_by: positioning-framework  # or "manual"
 last_updated: 2026-02-14
 last_updated_by: positioning-framework
@@ -616,12 +629,27 @@ Sections marked **REQUIRED** must be present for the file to be considered compl
 | [Term] | [How to use it] | [What not to say] | research |
 ```
 
-#### 12. Buying Triggers (OPTIONAL)
+#### 12. Buying Triggers (REQUIRED)
 
 ```markdown
 ## Buying Triggers
 
-- [Trigger event]: [Why it creates urgency]
+Format per trigger:
+- **Trigger:** [description of the event or circumstance]
+- **Source:** [where this was observed -- review, Reddit, website, client-provided]
+- **Frequency:** [widespread | moderate | isolated]
+
+Common B2B trigger categories to look for:
+- Team growth or reorganization
+- New leadership hire (especially VP/C-level)
+- Missed target or public failure
+- Competitor action
+- Budget cycle / fiscal year transition
+- Regulatory change
+- Tool sunset, acquisition, or price increase
+- Internal process breakdown at scale
+
+If no trigger events are found in research, write: `[INCOMPLETE -- no trigger events identified in available sources. Interview data recommended.]`
 <!-- origin: research -->
 ```
 
@@ -661,6 +689,7 @@ A `company-identity.md` file is **complete** when:
 - [ ] Stated Differentiators has entries with proof point references (target: 2+; fewer is acceptable with gap marker)
 - [ ] Proof Point Registry has entries from verified sources (target: 5+; fewer is acceptable with gap marker)
 - [ ] Constraints section is present (even if no regulatory constraints exist)
+- [ ] Buying Triggers section is present with structured trigger/source/frequency format (even if `[INCOMPLETE]`)
 - [ ] `confidence` score is set and honest
 - [ ] Proof points contain zero comparative language (no "vs.", "above average", "higher than", "compared to", "half the", "more than [industry/competitor]")
 - [ ] All table sections have Origin column populated

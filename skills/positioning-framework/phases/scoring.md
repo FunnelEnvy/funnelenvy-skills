@@ -114,6 +114,29 @@ If `_research-extractions.md` exists and passes the Extractions Validation check
 
 If the file is absent or invalid, skip this cross-reference. Do not penalize confidence for missing extractions -- they are an optional enhancement.
 
+### Per-Insight Confidence in Section Scoring
+
+When calculating section confidence, factor in the distribution of per-insight confidence tags from audience-messaging.md:
+
+- A section where >50% of insights are [HIGH] confidence: no penalty
+- A section where >50% of insights are [MEDIUM] confidence: cap section confidence at 4
+- A section where >50% of insights are [LOW] confidence: cap section confidence at 3
+- A section with fewer than 5 total insights: cap section confidence at 3 regardless of individual tags
+
+This supplements, not replaces, the existing confidence rules (source coverage, data completeness). Apply whichever cap is more restrictive.
+
+### Source Reliability in Confidence
+
+When assessing sections that rely on VOC data (Language Bank, Switching Dynamics, Persona traits, Value Themes):
+
+- Built primarily from Very High + High reliability sources: no penalty
+- Built primarily from Medium-High sources (Reddit, community): cap at 4
+- Built primarily from Medium or lower sources: cap at 3
+
+A Language Bank built entirely from Reddit (Medium-High) should score lower than one built from interviews (Very High) + reviews (High) + Reddit, even if both have the same number of entries.
+
+Source reliability ratings are defined in `modules/voc-extraction.md`. Apply whichever cap (per-insight or source-reliability) is more restrictive.
+
 ---
 
 ## Positioning Health Check (6 Dimensions)

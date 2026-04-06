@@ -65,6 +65,8 @@ The downstream impact of fabricated copy is catastrophic: experiments designed a
 
 The curl extractor returns plain text with `#`-`######` heading markers. WebFetch (fallback) returns page content as markdown. In both formats, navigation menus, dropdowns, and footer content appear BEFORE the main page content in the output. You must distinguish between navigation chrome and actual page content.
 
+- `modules/voc-extraction.md` -- structured VOC extraction protocol. Apply to all Tier 1C and Tier 2 VOC sources.
+
 ### Document Structure Priority
 
 1. **SKIP** all content that is clearly navigation: link-heavy sections at the top of the document, mega-menu dropdowns (lists of links with short taglines), header bars, footer sections, cookie banners.
@@ -301,6 +303,12 @@ If you hit context limits before completing all extractions:
 2. Write the frontmatter + index table covering only the entries that exist. `total_pages` reflects actual entries written, not pages fetched.
 3. If you must choose between writing the index/frontmatter and completing L0, **L0 wins**. An extractions file with entries but no index is still usable -- consuming agents scan headers.
 
+### VOC Extractions Section
+
+After all page content extraction entries, create a `## VOC Extractions` section in `_research-extractions.md`. This section uses the entry format defined in `modules/voc-extraction.md` Section 5 (VOC Extraction Entry Format). VOC entries are separate from page content entries -- do not mix them.
+
+Write VOC entries as they are extracted during Tier 1C and Tier 2 processing. Each entry follows the structured template with Source Type, Reliability, Segment Signals, and applicable lenses.
+
 ---
 
 ## Depth Budget
@@ -447,6 +455,15 @@ Extract verbatim. Copy exact headlines, exact phrases. Don't paraphrase yet. **F
 
 **If review data is sparse:** Search company name + "review" or "vs" or "alternative" for comparison content, forum discussions, or Reddit threads.
 
+#### VOC Extraction Protocol (Tier 1C)
+
+For all review site sources, read and apply the extraction protocol in `modules/voc-extraction.md`:
+- Follow the Review Reading Order (3-star first, then 1-star, 5-star, 4-star)
+- Apply the Six-Lens VOC Extraction Framework to each substantive review
+- Tag each extraction with Source Reliability and Segment Signals
+- Write structured VOC entries to the `## VOC Extractions` section of `_research-extractions.md`
+- Mark vivid, copy-ready verbatim quotes as `[MONEY QUOTE]`
+
 ### 1D/1D-1/1E: Competitor Identification, Validation & Market Research
 
 **Competitor identification and deep extraction are handled by Agent 2 (see `competitive.md`).** This agent (Agent 1) does not perform competitive research at any depth.
@@ -470,6 +487,14 @@ Go beyond curated review sites. Find how real users talk when not writing a form
 **Reddit (automated):** Follow the query instructions in `modules/reddit-research.md`. Run 3-5 Reddit searches (see positioning-framework query templates in the module). Read 2-3 full threads with the richest discussion (highest comment count + relevance). No API key required.
 
 Reddit data feeds into: Switching Dynamics (push/pull from real switchers), Objection Handling (unmoderated complaints), Language Bank (exact buyer phrases), and Voice-of-Customer sentiment.
+
+#### VOC Extraction Protocol (Tier 2)
+
+For substantive VOC content found in Reddit threads, forums, and community posts, also apply `modules/voc-extraction.md`:
+- Apply the Six-Lens Framework (particularly Pain Points, Trigger Events, Language/Vocabulary, and Alternatives Considered)
+- Tag Reliability as Medium-High for Reddit/community sources
+- Apply Segment Tagging using subreddit name, language sophistication, and problem complexity as inference signals
+- Write structured VOC entries to `_research-extractions.md` `## VOC Extractions` section
 
 **Other unmoderated sources:**
 - **Hacker News**: Search for company mentions. Brutally candid on positioning, pricing, and alternatives.
