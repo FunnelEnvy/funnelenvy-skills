@@ -5,7 +5,9 @@
 
 # Audience & Messaging Schema (Layer 1)
 
-**Version:** 1.0.0
+<!-- v1.1: Added Money Quotes, per-insight confidence (H/M/L), frequency x intensity ranking, trigger events in persona grid, segment-before-synthesize discipline -->
+
+**Version:** 1.1.0
 **Output path:** `.claude/context/audience-messaging.md`
 **Produced by:** `positioning-framework`
 **Consumed by:** website-audit, ad copy, email sequences, copy briefs, content strategy, social content
@@ -28,7 +30,7 @@ WHO the company talks to (personas), WHAT it says (messaging), and HOW it says i
 ```yaml
 ---
 schema: audience-messaging
-schema_version: "1.0"
+schema_version: "1.1"
 generated_by: positioning-framework
 depth: standard                          # "quick" | "standard" | "deep"
 last_updated: 2026-02-16
@@ -75,6 +77,8 @@ voice_source: null                               # null if voice derived in-hous
 # Content counts
 customer_language_count: 5                      # entries in Customer Language section
 banned_terms_count: 3                           # entries in Banned Terms section
+money_quote_count: 0                            # number of money quotes across all themes
+trigger_events_per_persona: false               # true if trigger events populated for each persona
 
 ---
 ```
@@ -121,6 +125,10 @@ One row per primary persona. Each row must be distinct. If two personas have ide
 - What they've tried before and why it failed
 - How they'd describe the problem to a peer (verbatim, not marketing language)
 - What would make them a champion internally
+
+**Trigger Events** (required per persona):
+- [trigger] -- [frequency band: widespread | moderate | isolated]
+Source: L0 Buying Triggers, VOC Extractions Lens 3, Switching Dynamics Push forces.
 
 **Persona validation rules:**
 - Every audience segment with a dedicated page on the company's website MUST have a persona row or an explicit exclusion note
@@ -251,6 +259,8 @@ Attributes are what you have. Value is what the customer gets.
 ```
 
 Every value theme needs evidence. Themes without Level 1-3 proof are flagged as vulnerable.
+
+Each theme includes `[HIGH]`/`[MEDIUM]`/`[LOW]` confidence tags and frequency x intensity bands (widespread/moderate/isolated x HIGH/MEDIUM/LOW).
 
 **Proof hierarchy:**
 1. Specific metrics with attribution
@@ -421,6 +431,9 @@ If every company sounds the same, that IS the finding. Flag voice white space.
 
 Customer Language: target 5+ entries from actual reviews/forums. If fewer than 5 genuine entries exist in available sources, include what's found and mark `[N/5 found - insufficient public data]`. Never invent entries to hit the target. Banned Terms must be populated.
 
+**Money Quotes** (sub-section):
+Per value theme, 2-3 verbatim quotes directly usable in copy/ads/landing pages. Format: `"[quote]" -- [source type, date, segment]`. When public VOC insufficient: `[NO PUBLIC VOC - Interview Data Needed]` with hypothesized quotes labeled `[HYPOTHESIZED - NOT VERIFIED]`.
+
 **Used by:** Every content skill reads this before writing anything. Primary input for copywriting, email, and ad copy skills.
 
 ---
@@ -508,6 +521,12 @@ At least 3 actionable rules.
 - [ ] Language Bank Banned Terms is populated
 - [ ] Do/Don't Examples use actual sentences from company content
 - [ ] Voice Rules has actionable constraints (target: 3+; fewer is acceptable with gap marker)
+
+**VOC Integration:**
+- [ ] Money Quotes section present with at least one theme covered
+- [ ] Per-insight confidence tags present on value themes and pain points
+- [ ] Trigger Events populated per persona
+- [ ] Frequency x intensity bands used in Value Themes ordering
 
 **General:**
 - [ ] `confidence` value equals the lowest section confidence within this file

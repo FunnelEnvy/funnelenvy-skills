@@ -43,6 +43,8 @@ Load before any web fetch:
   -> WebFetch). Defines quality tags, word count thresholds, and the step-by-step extraction
   flow. Follow this pipeline for all URL fetches in this phase.
 
+- `modules/voc-extraction.md` -- structured VOC extraction protocol. Apply to competitor review sources.
+
 ---
 
 ## Graceful Degradation
@@ -336,6 +338,15 @@ For each Major or Emerging competitor (top 2-3 per JTBD tier at standard, more a
 - Tone/voice (formal/casual, technical/accessible)
 - Recent strategic signals (new content, hires, acquisitions, repositioning)
 - One specific competitive tactic (a page, form, pricing trick, dark pattern, sales behavior - URL if available)
+
+### Competitor VOC Extraction
+
+For competitor reviews, apply `modules/voc-extraction.md` with these competitive-specific adjustments:
+- Prioritize 4-star reviews (customers who like the competitor but have complaints -- these are the most credible switching signals)
+- For G2 specifically, extract all three structured fields: "What do you like best?" (their strengths = your battlecard intel), "What do you dislike?" (their weaknesses = your opportunities), "What problems are you solving?" (the JTBD)
+- Focus extraction on: Pain Points (their unresolved issues), Alternatives Considered (who else they evaluated), and Language/Vocabulary (how their customers describe the problem space)
+- Tag all competitor VOC extractions with the competitor name for downstream routing to battle cards
+- Write to `_research-extractions.md` `## VOC Extractions` section, clearly labeled with competitor name in the entry header (e.g., `### [Competitor Name] -- G2 Reviews`)
 
 ### Deep Depth Extensions (per competitor)
 

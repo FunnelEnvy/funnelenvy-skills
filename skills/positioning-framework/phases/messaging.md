@@ -71,14 +71,14 @@ Read the DEPTH parameter from the task prompt.
 - Persona messaging for top 2-3 segments from L0
 - Value themes derived from L0 differentiators + competitive gaps
 - Standard switching dynamics analysis
-- Output length: 2,000-3,500 words
+- Output length: 3,500-5,000 words
 
 ### deep
 - Persona messaging for all segments from L0
 - Extended value theme analysis with evidence mapping
 - Deep switching dynamics with Four Forces framework
 - Channel-specific messaging adaptations
-- Output length: 3,500-5,000 words
+- Output length: 4,500-6,500 words
 
 ### quick
 - This agent should NOT be launched at quick depth.
@@ -93,16 +93,38 @@ If you cannot complete all sections (insufficient input data, context limits):
 1. **Prioritize in this order:** Persona Messaging Grid, Value Themes, Messaging Hierarchy, Voice Profile, Language Bank. These are the highest-value outputs. Switching Dynamics, Seasonal Relevance, and Channel Adaptations are lower priority.
 2. **Always write output to disk.** Partial audience-messaging.md is better than none. Agent 4 needs something to read.
 3. **Mark incomplete sections with `[INCOMPLETE - reason]`.** E.g., `[INCOMPLETE - no review data available for Language Bank customer language entries]`.
-4. **Set confidence accordingly.** Missing persona data = confidence 2. No customer language from real sources = confidence 2.
+4. **Set confidence accordingly.** Missing persona data = confidence 2. No customer language from real sources = confidence 2. VOC adequacy tier caps apply (see Pre-Synthesis step 2).
 
 ---
 
 ## Output Length Targets
 - Quick: N/A (skipped at quick depth)
-- Standard: 2,000-3,500 words
-- Deep: 3,500-5,000 words
+- Standard: 3,500-5,000 words
+- Deep: 4,500-6,500 words
 
 These are targets, not hard limits. Prefer concise, evidence-dense output over padding. If a section has thin data, make it shorter, not fluffier.
+
+---
+
+## Pre-Synthesis: Segment VOC Data
+
+Before building personas or value themes, segment the VOC extraction data by the target segments defined in company-identity.md:
+
+1. Read the `## VOC Extractions` section of `_research-extractions.md`
+2. **Check VOC Adequacy.** Read the `### VOC Adequacy` summary at the end of the VOC Extractions section. Apply the confidence caps defined in `modules/voc-extraction.md`:
+   - **Adequate:** No cap. Proceed normally.
+   - **Thin:** VOC-derived sections (Value Themes, Persona pain points/triggers, Language Bank Customer Language, Money Quotes) capped at confidence 3.
+   - **Curated-Only:** VOC-derived sections capped at confidence 2. Money quotes tagged `[HYPOTHESIZED - NOT VERIFIED]` unless corroborated by non-testimonial evidence.
+   - **None:** Skip VOC-dependent synthesis. Mark sections `[INCOMPLETE - no VOC data]`. Add prerequisite: "Interview data recommended."
+3. Group extractions by segment signals (role, company size, industry, use case)
+4. For each segment, independently analyze: pain points, trigger events, desired outcomes, and language patterns
+5. Only then identify cross-segment patterns (themes that appear across 2+ segments)
+
+**Minimum viable sample rule:** If a persona has fewer than 5 independent VOC data points, mark it as `[LOW DATA - N sources]` in the persona header and note this in confidence scoring.
+
+Do NOT average across different segments before analysis. A persona that represents everyone represents no one. Segment-specific insights are more valuable than blended averages.
+
+Extractions tagged `[SEGMENT: inferred-unknown]` are included in cross-segment analysis only. Do not assign them to a specific persona.
 
 ---
 
@@ -144,6 +166,38 @@ For each value theme, assess proof status:
 - Frontmatter mapping: `proof_strength: weak`
 
 Write the assessment in the Value Themes table's "Proof Type" column as: "[Level] ([assessment])" -- e.g., "Metric (Proven)" or "Structural (Claimed)".
+
+### Per-Insight Confidence
+
+Tag every discrete insight (value theme, pain point, persona trait, language entry, switching force, objection) with a confidence level:
+
+- **[HIGH]** Theme appears in 3+ independent sources, unprompted, consistent across segments
+- **[MEDIUM]** 2 sources, OR only prompted, OR limited to one segment
+- **[LOW]** Single source, outlier, or needs validation
+
+Place the tag inline before the insight text. Example:
+- [HIGH] Customers feel overwhelmed by manual reporting across disconnected tools
+- [LOW] Some buyers want white-label capabilities for client-facing reports
+
+Source reliability (from `modules/voc-extraction.md`) factors into confidence: an insight from a single Very High reliability source (customer interview) can be [MEDIUM], while an insight from a single Medium reliability source (Reddit) stays [LOW].
+
+**VOC adequacy modifier:** When the VOC adequacy tier is Thin or Curated-Only, per-insight confidence for VOC-derived insights cannot exceed the tier cap (3 for Thin, 2 for Curated-Only) regardless of source count. An insight from 3+ curated testimonials is still [MEDIUM] at best under Curated-Only, because all sources share the same selection bias.
+
+### Frequency x Intensity Ranking
+
+Rank value themes and pain points by combined frequency and intensity:
+
+- **Frequency bands:** widespread (5+ independent sources) | moderate (2-4 sources) | isolated (1 source)
+- **Intensity:** HIGH (strong emotional language, deal-breaker framing) | MEDIUM (frustration but workable) | LOW (mild preference)
+
+Use frequency x intensity as the primary ranking dimension for:
+- Value Themes ordering (supplements current proof-strength ranking)
+- Persona "Top 3 Challenges" selection
+- Messaging Hierarchy (primary/secondary/tertiary claim ordering)
+
+A deal-breaking trust issue mentioned passionately in 3 sources (moderate frequency x HIGH intensity) outranks a mild UX annoyance mentioned in 15 reviews (widespread frequency x LOW intensity).
+
+Frequency bands are qualitative assessments based on the VOC extraction data. Do NOT attempt exact source counting across all extractions. Assess holistically from the body of evidence.
 
 ---
 
@@ -197,6 +251,16 @@ Build one row per primary persona.
 - What they've tried before and why it failed
 - How they'd describe the problem to a peer (verbatim language, not marketing language)
 - What would make them a champion internally for buying your solution
+
+**Trigger Events** (required)
+What causes this persona to start actively looking for a solution?
+- [trigger 1] -- [frequency band: widespread | moderate | isolated]
+- [trigger 2] -- [frequency band]
+
+Source trigger events from:
+1. L0 company-identity.md Buying Triggers section (if populated)
+2. VOC Extractions Lens 3 (Trigger Events) filtered to this persona's segment
+3. Switching Dynamics Push forces (reframe as trigger events where applicable)
 
 ### Persona Tiers
 
@@ -297,6 +361,18 @@ Do not write confident psychological narratives without evidence. "Buyers feel a
 
 - Force intensity: rate each force as Strong / Moderate / Weak based on evidence volume and source quality. A "Push" force sourced from 5 reviews and 3 Reddit threads is Strong. One sourced from a single FAQ page inference is Weak.
 
+### Source Conflict Resolution
+
+When VOC data from different sources conflicts on the same topic, resolve using source reliability weights (from `modules/voc-extraction.md`):
+
+1. Very High reliability source overrides Medium or lower on the same topic
+2. Two High reliability sources in agreement override one Very High with a contradictory signal
+3. When reliability is equal, frequency wins (more sources mentioning the same theme)
+4. When reliability and frequency are equal, recency wins (more recent source)
+
+Do NOT silently average conflicting data. When conflicts exist, note them:
+`"[CONFLICT: G2 reviews (High) emphasize ease of use; Reddit (Medium-High) emphasizes power/flexibility. Resolution: weighted toward G2 based on reliability and sample size.]"`
+
 ---
 
 ## Objection Handling
@@ -395,6 +471,28 @@ Words/phrases off-limits for legal, compliance, brand, or strategic reasons. **P
 ### Category Terms (use in SEO, paid search, category-level copy)
 Validated search terms buyers actually use to find solutions in this space.
 - "[term]" - Search validation: [Google Trends / search results quality]
+
+### Money Quotes
+
+For each value theme, collect 2-3 verbatim quotes that:
+- Best represent the theme's core insight
+- Use vivid, specific customer language
+- Are directly usable in copy, ads, landing pages, and sales materials
+
+Source these from `[MONEY QUOTE]`-tagged entries in `_research-extractions.md` VOC Extractions.
+
+Format per theme:
+
+#### [Value Theme Name]
+1. "[verbatim quote]" -- [source type, approximate date, segment if known]
+2. "[verbatim quote]" -- [source type, approximate date, segment if known]
+
+When public VOC data is absent or insufficient for a theme, write:
+`[NO PUBLIC VOC - Interview Data Needed]`
+Then include 2-3 hypothesized customer statements derived from L0 pain points, clearly labeled:
+- `[HYPOTHESIZED - NOT VERIFIED]` "[constructed statement based on L0 data]"
+
+Hypothesized quotes preserve downstream utility for landing-page-generator and hypothesis-generator but must never be presented as real customer language.
 
 ---
 
@@ -615,7 +713,7 @@ Common mistake to avoid: setting frontmatter confidence based on your overall as
 ```yaml
 ---
 schema: audience-messaging
-schema_version: "1.0"
+schema_version: "1.1"  <!-- v1.1: Added Money Quotes, per-insight confidence (H/M/L), frequency x intensity ranking, trigger events in persona grid, segment-before-synthesize discipline -->
 generated_by: positioning-framework
 depth: standard                          # "quick" | "standard" | "deep"
 last_updated: 2026-02-16
@@ -661,6 +759,8 @@ voice_consistency: "moderate"             # high | moderate | low - see Voice Co
 # Content counts
 customer_language_count: 5
 banned_terms_count: 3
+money_quote_count: 0                     # number of money quotes across all themes
+trigger_events_per_persona: false        # true if trigger events populated for each persona
 
 ---
 ```
@@ -680,7 +780,7 @@ banned_terms_count: 3
 |---------------|------|--------------------|-----------------|---------------------------------|--------------------------------|
 | [Role, Team] | [tier] | [What their day looks like] | 1. [Challenge] 2. [Challenge] 3. [Challenge] | [Specific outcome] | [How they'd sell it internally] |
 
-[Depth per persona: role, reports-to, KPIs, tools, prior attempts, peer language, champion criteria]
+[Depth per persona: role, reports-to, KPIs, tools, prior attempts, peer language, champion criteria, trigger_events]
 
 ### Cost of Alternatives
 
@@ -723,6 +823,8 @@ banned_terms_count: 3
 
 | Value Theme | Supporting Capabilities | Proof Type | Specific Evidence | Proof Point IDs |
 |------------|----------------------|-----------|-------------------|-----------------|
+
+Each theme includes `[HIGH]`/`[MEDIUM]`/`[LOW]` confidence tags and frequency x intensity bands (widespread/moderate/isolated x HIGH/MEDIUM/LOW).
 
 ### Messaging Hierarchy
 
@@ -799,6 +901,11 @@ banned_terms_count: 3
 
 #### Category Terms (use in SEO, paid search, category-level copy)
 - "[term]" - Search validation: [source]
+
+#### Money Quotes
+Per value theme, 2-3 verbatim quotes sourced from `[MONEY QUOTE]`-tagged VOC extractions.
+Format: "[verbatim quote]" -- [source type, approximate date, segment if known]
+When absent: `[NO PUBLIC VOC - Interview Data Needed]` with `[HYPOTHESIZED - NOT VERIFIED]` alternatives.
 
 ### Do / Don't Examples
 

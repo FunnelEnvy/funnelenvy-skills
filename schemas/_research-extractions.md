@@ -8,6 +8,8 @@ consumed_by: Agents 2, 3, 4 (selectively)
 
 # Research Extractions Schema
 
+<!-- v1.1: Added ## VOC Extractions section with 6-lens extraction framework, source reliability tags, segment signals -->
+
 Raw page extractions from Agent 1's research phase. Operational artifact (underscore-prefixed). Overwritten on each run. NOT considered prior work for depth evaluation.
 
 Authoritative spec: `skills/positioning-framework/phases/research.md`
@@ -17,7 +19,7 @@ Authoritative spec: `skills/positioning-framework/phases/research.md`
 | Field | Type | Description |
 |-------|------|-------------|
 | schema | string | Always `research-extractions` |
-| schema_version | string | `"1.0"` |
+| schema_version | string | `"1.1"` |
 | generated_by | string | `"positioning-framework/research"` |
 | last_updated | date | ISO date of generation |
 | company | string | Company name |
@@ -56,6 +58,28 @@ Each entry is a level-2 heading:
     ### Key Content Sections
     Main body content organized by page sections. Preserves headings, bullet
     lists, and content hierarchy. Rendering artifacts stripped.
+
+## VOC Extractions Entry Structure
+
+A separate `## VOC Extractions` section follows page content entries. Each entry follows this structure:
+
+### [SOURCE_URL_OR_IDENTIFIER]
+- **Source Type:** G2 review | Reddit post | Forum thread | Interview transcript | Support ticket | etc.
+- **Reliability:** Very High | High | Medium-High | Medium | Low-Medium (per `modules/voc-extraction.md` Source Reliability table)
+- **Segment Signals:** Role, Size, Industry, Use Case -- or `[SEGMENT: inferred-unknown]`
+- **Date:** approximate date if available
+
+**Six-Lens Extraction (include populated lenses only):**
+- Jobs to Be Done (functional/emotional/social)
+- Pain Points (tagged HIGH/MEDIUM/LOW intensity)
+- Trigger Events
+- Desired Outcomes
+- Language/Vocabulary (verbatim with quotation marks)
+- Alternatives Considered
+
+**Money Quotes:** Vivid verbatim quotes marked with `[MONEY QUOTE]` tag.
+
+VOC entries are written by Agent 1 (Tier 1C review sites, Tier 2 Reddit/forums) and Agent 2 (competitor review sources). Entry format defined in `modules/voc-extraction.md`.
 
 ## Content Rules
 
