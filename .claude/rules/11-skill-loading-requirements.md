@@ -2,9 +2,9 @@
 version: "1.4.3"
 updated: 2026-04-07
 ---
-# Intent Routing
+# Skill Loading Requirements
 
-Route skill loading based on file and intent signals. Skills within each plugin handle fine-grained intent matching via their trigger descriptions.
+Mandatory skill loading requirements triggered by file and intent signals. Skills within each plugin handle fine-grained intent matching via their trigger descriptions.
 
 - When the managed-document hook injects instructions after a Read, you MUST follow those instructions before responding to the user or taking any other action — even for read-only operations. Do not rationalize skipping injected instructions because the operation doesn't modify anything.
 - If a file is in a `_dev/` directory or its filename starts with `chg_`, you MUST load the `change-management` skill
