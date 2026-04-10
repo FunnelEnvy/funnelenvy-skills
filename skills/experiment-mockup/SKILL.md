@@ -49,7 +49,7 @@ You are the orchestrator for the experiment-mockup skill. You parse arguments, d
 | `.claude/deliverables/experiment-roadmap.md` exists | Hard | STOP. Tell user: "No experiment roadmap found. Run /hypothesis-generator first." |
 | Hypothesis number exists in roadmap | Hard | STOP. Tell user: "Hypothesis #N not found in experiment-roadmap.md. Available hypotheses: [list numbers and names]." |
 | Target URL is reachable | Hard | Validated in Phase 1 (live) or static-build (static). If unreachable, STOP with error. |
-| Chrome DevTools MCP connected | Soft | Auto-detected. Falls back to static mode. |
+| Chrome DevTools MCP connected | Recommended | Auto-detected. If unavailable, STOP and recommend setup. Static fallback only with explicit user consent (see Step 5.5). |
 
 **No dependency on L0/L1 context files.** The hypothesis already contains synthesized context. Re-reading L0/L1 would risk the mockup contradicting the hypothesis. **Exception:** brand design files (`brand-design-system.md`, `brand-components.html`) in `.claude/context/` are read if they exist. These are visual references, not positioning context.
 
@@ -105,69 +105,96 @@ Output directory: `.claude/deliverables/experiments/<hypothesis-slug>/`
 
 ### Step 5: Detect Execution Mode
 
-**Do NOT ask the user** whether they have a browser MCP configured. Test it.
+**Do NOT ask the user** whether they have a browser MCP configured. Test it. But do NOT silently degrade to static mode -- browser-based mockups are dramatically better, and the user deserves to know that before proceeding with a lower-fidelity fallback.
 
-1. If `--static` flag is set: use STATIC MODE. Skip detection.
+#### 5.1: Static flag override
 
-2. **Chrome DevTools pre-flight + connection:**
+If `--static` flag is set: use STATIC MODE. Skip detection. Briefly note: "Running in static mode as requested. Output will be lower fidelity (~60-80% CSS accuracy, no screenshots, no iteration). Remove `--static` to use Chrome DevTools MCP instead."
 
-   a. **Detect environment.** Check for `/mnt/c/` to identify WSL2:
-   ```bash
-   test -d /mnt/c/ && echo "WSL2" || echo "NATIVE"
-   ```
+#### 5.2: Chrome DevTools pre-flight (WSL2 only)
 
-   b. **If WSL2, run pre-flight checks** (silently fix what can be fixed, stop only when user action is required):
+a. **Detect environment:**
+```bash
+test -d /mnt/c/ && echo "WSL2" || echo "NATIVE"
+```
 
-   **Check .wslconfig for mirrored networking:**
-   ```bash
-   cat /mnt/c/Users/$USER/.wslconfig 2>/dev/null
-   ```
-   If `networkingMode=mirrored` is NOT present, tell the user:
+b. **If WSL2, run pre-flight checks** (silently fix what can be fixed, stop only when user action is required):
 
-   > WSL2 mirrored networking is required for Chrome DevTools to work across the WSL/Windows boundary. Run this in PowerShell, then restart WSL:
-   >
-   > ```powershell
-   > "[wsl2]`nnetworkingMode=mirrored" | Set-Content "$env:USERPROFILE\.wslconfig"
-   > wsl --shutdown
-   > ```
-   >
-   > Restart the session after WSL comes back up.
+**Check .wslconfig for mirrored networking:**
+```bash
+cat /mnt/c/Users/$USER/.wslconfig 2>/dev/null
+```
+If `networkingMode=mirrored` is NOT present, tell the user:
 
-   STOP here. Do not fall back to Playwright or static. The user needs to restart WSL.
+> WSL2 mirrored networking is required for Chrome DevTools to work across the WSL/Windows boundary. Run this in PowerShell, then restart WSL:
+>
+> ```powershell
+> "[wsl2]`nnetworkingMode=mirrored" | Set-Content "$env:USERPROFILE\.wslconfig"
+> wsl --shutdown
+> ```
+>
+> Restart the session after WSL comes back up.
 
-   **Check DevToolsActivePort symlink:**
-   ```bash
-   ls -la /home/$USER/.config/google-chrome/DevToolsActivePort 2>/dev/null
-   ```
-   If missing or stale (not a symlink to the Windows Chrome profile), create it silently:
-   ```bash
-   mkdir -p /home/$USER/.config/google-chrome
-   ln -sf "/mnt/c/Users/$USER/AppData/Local/Google/Chrome/User Data/DevToolsActivePort" \
-     /home/$USER/.config/google-chrome/DevToolsActivePort
-   ```
-   Do not inform the user. This is a silent fix.
+STOP here. Do not fall back to Playwright or static. The user needs to restart WSL.
 
-   **Verify the symlink target exists.** If the Windows-side file does not exist, Chrome is not running or remote debugging is not enabled. Tell the user to open Chrome and navigate to `chrome://inspect/#remote-debugging` to enable it.
+**Check DevToolsActivePort symlink:**
+```bash
+ls -la /home/$USER/.config/google-chrome/DevToolsActivePort 2>/dev/null
+```
+If missing or stale (not a symlink to the Windows Chrome profile), create it silently:
+```bash
+mkdir -p /home/$USER/.config/google-chrome
+ln -sf "/mnt/c/Users/$USER/AppData/Local/Google/Chrome/User Data/DevToolsActivePort" \
+  /home/$USER/.config/google-chrome/DevToolsActivePort
+```
+Do not inform the user. This is a silent fix.
 
-   c. **Attempt a lightweight Chrome DevTools MCP tool call.** Try to list browser tabs or get browser version info.
+**Verify the symlink target exists.** If the Windows-side file does not exist, Chrome is not running or remote debugging is not enabled. Tell the user to open Chrome and navigate to `chrome://inspect/#remote-debugging` to enable it. STOP and wait for confirmation.
 
-   d. If the tool call succeeds: use **CHROME DEVTOOLS MODE**.
+#### 5.3: Chrome DevTools connection test
 
-   e. If the tool call fails after pre-flight: retry once with a 3-second delay.
+Call `mcp__chrome-devtools__list_pages` (the exact tool name -- do not guess alternatives).
 
-   f. If still failing: log the failure reason and continue to step 3.
+- **Success:** use **CHROME DEVTOOLS MODE**. Proceed to Step 6.
+- **"No such tool" or "unknown tool" error:** The Chrome DevTools MCP server is not configured. Proceed to 5.4.
+- **Connection error, timeout, or other failure:** The MCP is configured but broken. **STOP.** Do not fall through. Show the user the specific error and help them fix it:
+  - "Connection refused" -> Chrome likely not running or remote debugging not enabled. Ask user to launch Chrome with `--remote-debugging-port=9222` or check that Chrome is open.
+  - Timeout -> Retry once after 5 seconds. If still failing, suggest the MCP server config may have a wrong port or host.
+  - Other errors -> Surface the raw error message so the user can diagnose.
+  - After each fix attempt, re-test with `mcp__chrome-devtools__list_pages` before moving on.
+  - Only proceed to 5.4 if the user explicitly says they want to skip Chrome DevTools.
 
-3. **Playwright detection:**
+#### 5.4: Playwright detection (secondary)
 
-   a. Attempt a lightweight Playwright MCP tool call (e.g., list browser contexts or get version).
+Call the Playwright MCP's page listing or version tool (the specific tool depends on which Playwright MCP is installed -- try `browser_list_contexts` or `playwright_list_pages`).
 
-   b. If the tool call succeeds: use **PLAYWRIGHT MODE**. Inform the user: "Chrome DevTools not available. Using Playwright for browser rendering. Iteration will use screenshots instead of your live browser."
+- **Success:** use **PLAYWRIGHT MODE**. Inform the user: "Using Playwright for browser rendering. You'll get real browser screenshots but iteration uses screenshot-based feedback instead of your live browser window."
+- **"No such tool" error:** No Playwright MCP configured. Proceed to 5.5.
+- **Connection error:** Same as Chrome -- STOP and help debug before falling through.
 
-   c. If the tool call fails: continue to step 4.
+#### 5.5: No browser MCP available -- STOP and recommend
 
-4. **STATIC MODE.**
+**This is a blocking gate, not a silent fallback.**
 
-   Inform the user: "No browser MCP available. Building static mockup from HTML extraction. For interactive mockups, configure Chrome DevTools MCP (recommended) or Playwright MCP."
+Tell the user:
+
+> **No browser MCP is available.** Mockups built without a browser use static HTML extraction and produce significantly lower fidelity output (~60-80% CSS accuracy, no screenshots, no interactive iteration).
+>
+> **Recommended: Set up Chrome DevTools MCP** for the best experience (live browser injection, real computed styles, interactive iteration with screenshots).
+>
+> To set it up:
+> 1. Install the Chrome DevTools MCP server in your Claude Code settings (`~/.claude/settings.json` or project `.mcp.json`)
+> 2. Launch Chrome with remote debugging: `google-chrome --remote-debugging-port=9222` (or on Mac: `open -a "Google Chrome" --args --remote-debugging-port=9222`)
+> 3. Re-run `/experiment-mockup` after setup
+>
+> **Alternative:** Playwright MCP also works (screenshot-based iteration, no live browser window needed).
+>
+> **Or proceed anyway** with static mode by replying "continue" -- but the output will be a basic HTML mockup without real browser rendering, screenshots, or iteration.
+
+STOP and wait for the user's response:
+- If they want to set up Chrome DevTools MCP: help them configure it, then re-run detection from 5.3.
+- If they say "continue" or equivalent: proceed to STATIC MODE with the degradation context carried forward.
+- If they want to set up Playwright: help them configure it, then re-run detection from 5.4.
 
 ### Step 6: Route to Phase Sequence
 
@@ -222,9 +249,17 @@ Pass to the agent:
 - Hypothesis number, name, and full hypothesis text
 - Target URL
 - Output directory path
-- Note that this is static mode (no browser MCP available)
+- Note that this is static mode (no browser MCP available). The agent should flag any CSS values it could not extract with `/* DEFAULT - could not extract */` comments.
 
 The agent executes: static-build -> annotate.
+
+**After the static agent completes**, append a notice to the bottom of `placement.md`:
+
+```
+---
+
+> **Note:** This mockup was built in static mode (no browser MCP). CSS values marked with `/* DEFAULT */` are estimates. For higher fidelity, re-run with Chrome DevTools MCP configured.
+```
 
 ### Step 7: Completion Summary
 
