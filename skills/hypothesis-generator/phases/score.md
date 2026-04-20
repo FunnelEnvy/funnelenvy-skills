@@ -59,6 +59,8 @@ These adjustments are based on the overall context quality, not individual patte
 - If the hypothesis was triggered by a partial trigger: Confidence -1
 - If audience-messaging.md provided the "after" copy: no adjustment
 - If the "after" copy was derived from L0 value props instead: Confidence -1
+- If `proof_integrity_passed` is false (from Phase 3 Step 4b): Confidence capped at 3 (unverified proof cannot support high confidence)
+- If `metric_classification` is "proxy" (from Phase 3 Step 5a): Confidence -1 (indirect measurement adds uncertainty)
 - If performance-profile.md exists and `traffic_adequacy` is "high": Confidence +1
 - If performance-profile.md exists and target page has conversion data: Confidence +1
 - If performance-profile.md exists and `traffic_adequacy` is "low": Confidence -1
@@ -115,10 +117,21 @@ Infeasible hypotheses are NOT failures. They are real opportunities that require
 
 | Tier | Criteria | Purpose |
 |------|----------|---------|
-| **Quick Win** | Confidence >= 4 AND Ease >= 4 | Build testing momentum. Low risk. |
+| **Quick Win** | Confidence >= 4 AND Ease >= 4 AND estimated_duration_weeks <= 6 | Build testing momentum. Low risk. Fast signal. |
 | **Strategic Bet** | Impact >= 4 AND ICE Total >= 10 AND not Quick Win | Move the needle. Worth the effort. |
 | **Exploration** | Everything else with ICE Total >= 7 | Learn something. Run when bandwidth allows. |
 | **Cut** | ICE Total < 7 | Not worth running. Exclude from roadmap. |
+
+**Calendar-duration override.** If `estimated_duration_weeks` (from Phase 3 Step 5b) exceeds 6 weeks, the hypothesis cannot be tiered as Quick Win regardless of Confidence and Ease scores. Re-tier using the remaining rules:
+- Strategic Bet if Impact >= 4 AND ICE Total >= 10
+- Exploration if ICE Total >= 7
+- Cut if ICE Total < 7
+
+Add annotation to downgraded hypotheses: "Meets Quick Win scoring but estimated test duration ([N] weeks) exceeds the 6-week Quick Win ceiling. Reclassified as [new tier]."
+
+Quick Wins exist to build organizational testing momentum. A 10-week test, regardless of implementation ease, does not build momentum. Mislabeling it burns stakeholder trust when the "quick" win takes a full quarter to read out.
+
+**Duration not available.** If `estimated_duration_weeks` is absent (no `performance-profile.md`), the duration constraint does not apply. Quick Win eligibility uses only Confidence >= 4 AND Ease >= 4. The absence of performance data already caps Confidence via Phase 3 graceful degradation rules, which naturally limits Quick Win qualification.
 
 If `--max` cap is hit after tiering, cut from the bottom of Explorations first, then Strategic Bets. Never cut Quick Wins (they build organizational confidence in testing).
 
