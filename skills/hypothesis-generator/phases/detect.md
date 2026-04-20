@@ -96,6 +96,21 @@ Run in parallel with signal extraction (Step 1). Scan all loaded context files f
 
 4. **Missing context files.** Context files that don't exist but would enable additional patterns. Record: file name, which pattern categories are disabled.
 
+5. **Protected brand elements.** Terms, concepts, or positioning language that may carry executive, legal, or brand-guideline authority. Check these sources:
+   - L0 `company-identity.md`: brand guidelines section listing required terminology, mandated taglines, or legally required disclaimers
+   - L0 `company-identity.md`: glossary entries marked "always use" or "required"
+   - `brand-voice.md`: mandated vocabulary, non-negotiable voice elements, or required framing
+   - L0 constraints section: regulatory language requirements, trademark usage rules
+
+   Record for each flagged element:
+   - Term or concept
+   - Protection type: `legal` (trademark, regulatory, compliance), `brand` (executive mandate, brand guidelines, voice rules), `regulatory` (industry-specific required language)
+   - Source: file and section where the protection signal was found
+
+   If none of these sources exist or contain protected elements, this flag type produces no output. That is expected for companies without formal brand governance.
+
+   These flags feed into construct.md Step 3c (Protected Element Handling). They do NOT filter opportunities in this phase.
+
 These flags are NOT used for filtering in this phase. They feed into the Prerequisites and Data Gaps compilation in Phase 4 (Step 8).
 
 **Output:** Context quality flag list, carried forward alongside opportunity list.

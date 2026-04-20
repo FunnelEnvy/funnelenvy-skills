@@ -1,6 +1,6 @@
 ---
 name: hypothesis-generator
-version: 1.4.0
+version: 1.5.0
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
 ---
 
@@ -259,7 +259,7 @@ Experiments are scored using the ICE framework:
 - **Ease** (1-5): Implementation effort (5 = trivial, 1 = major engineering)
 
 Experiments are grouped into three tiers:
-- **Quick Wins:** High confidence, high ease. Run these first to build momentum.
+- **Quick Wins:** High confidence, high ease, fast signal (<=6 weeks). Run these first to build momentum.
 - **Strategic Bets:** High impact, moderate confidence. Higher effort, higher payoff.
 - **Explorations:** Lower confidence, high learning potential. Run when you have bandwidth.
 
@@ -285,16 +285,39 @@ Experiments are grouped into three tiers:
 > **Before:** "[current headline or copy]"
 > **After:** "[proposed headline or copy]"
 
+For messaging-led hypotheses (headline, hero, positioning, value-proposition categories), show multiple variations:
+
+> **Variation A ([anchor]):** "[proposed copy]"
+> **Variation B ([anchor]):** "[proposed copy]"
+> **Variation C ([anchor]):** "[proposed copy, if applicable]"
+> **Recommended:** [A|B|C] -- [1-sentence reason]
+
 **Why this should work:** [causal mechanism, 2-3 sentences, grounded in behavioral principle]
+**Proof status:** [Verified | Needs verification -- see Prerequisites. Only shown when proof points are referenced.]
 
 **Target metric:** [primary metric and expected direction]
+**Guardrail metric:** [downstream business metric that must not degrade. Only shown when primary is a proxy metric.]
 **Audience:** [persona or segment, if specific]
 
 **Scores:** Impact [X] | Confidence [X] | Ease [X]
 [1 sentence explaining each score]
 
+**Bundled elements:** [N elements: list. Only shown when bundled_test is true.]
+> This test will teach: [will_teach summary]
+> This test will not isolate: [wont_teach summary]
+
 **What a win proves:** [learning unlocked by positive result]
 **What a loss teaches:** [learning from negative result]
+
+**Self-critique:** [Omit this section for Exploration-tier hypotheses.]
+> **Thesis challenge:** [strongest argument the causal thesis is wrong, 1-3 sentences]
+> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
+>
+> **Design challenge:** [strongest argument the test won't prove the thesis, or "Covered by bundled disclosure above"]
+> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
+>
+> **Outcome challenge:** [strongest argument a metric win could mask a business loss, or "Covered by guardrail metric above"]
+> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
 
 ---
 
@@ -410,7 +433,7 @@ If `.claude/deliverables/experiment-roadmap.md` already exists:
 
 4. **ICE scores vary.** If every hypothesis scores 7+ on all three dimensions, the scoring is broken. Real portfolios have range. Some high-impact bets have low confidence. Some easy wins have moderate impact.
 
-5. **Before/after examples for copy experiments are mandatory.** The "before" must come from context files (what the site actually says). The "after" must be adapted from audience-messaging channel adaptations or value themes. Do not invent copy from scratch.
+5. **Before/after examples for copy experiments are mandatory.** The "before" must come from context files (what the site actually says). The "after" must be adapted from audience-messaging channel adaptations or value themes. Do not invent copy from scratch. For messaging-led categories (headline, hero, positioning, value-proposition), produce 2-3 variations per Step 3b, each anchored to a different strategic direction.
 
 6. **"What a loss teaches" is mandatory.** Every experiment should have value even if it loses. If you can't articulate what a negative result teaches, the hypothesis isn't well-formed.
 
@@ -426,7 +449,15 @@ If `.claude/deliverables/experiment-roadmap.md` already exists:
 
 12. **FunnelEnvy branding in footer.**
 
-13. **The unit of testing is the hypothesis, not the variable.** When multiple page elements (H1, subhead, CTA copy, proof strip, form intro, testimonial placement) all serve the same hypothesis, they MUST be combined into a single experiment. This is not a traffic optimization; it is correct experiment design. Testing a differentiation-led H1 while the subhead still says generic aspirational copy does not test whether differentiation-led messaging works. It tests one line in a hostile context, and a loss is uninterpretable. Bundle everything that serves the idea. See `phases/construct.md` "Experiment Scope Rule" for bundling rules and examples.
+13. **The unit of testing is the hypothesis, not the variable.** When multiple page elements (H1, subhead, CTA copy, proof strip, form intro, testimonial placement) all serve the same hypothesis, they MUST be combined into a single experiment. This is not a traffic optimization; it is correct experiment design. Testing a differentiation-led H1 while the subhead still says generic aspirational copy does not test whether differentiation-led messaging works. It tests one line in a hostile context, and a loss is uninterpretable. Bundle everything that serves the idea. When a hypothesis bundles multiple elements, Step 5c's bundled variable disclosure must be populated. See `phases/construct.md` "Experiment Scope Rule" for bundling rules and examples.
+
+14. **Proof point integrity.** Hypotheses referencing quantified claims or proof points must pass the Step 4b integrity check. Claims combining elements from multiple proof points must be flagged (`proof_braid: true`) and justified. Comparative advertising claims naming specific competitors require verified-level proof and legal review annotation.
+
+15. **Proxy metric guardrails.** When the primary metric is a proxy (not a direct business outcome), a guardrail metric must be specified (Step 5a). The decision rule (additive or guardrail-primary) and filter risk note must be documented. A proxy-only win without guardrail validation is not conclusive.
+
+16. **Quick Wins require fast signal.** Quick Win tier requires estimated test duration <= 6 weeks in addition to Confidence >= 4 and Ease >= 4. A 10-week test labeled Quick Win burns stakeholder trust. If duration data is unavailable, the constraint does not apply but Confidence is already capped by graceful degradation rules.
+
+17. **Self-critique is visible, not hidden.** Every Quick Win and Strategic Bet hypothesis must include a Self-critique section in the deliverable (Step 10). The counterarguments must be stated fairly, not strawmanned. Evidence-strength language must be proportionate to actual evidence (one data point is a "signal," not a "pattern"). Internal consistency issues must be resolved before emission, not acknowledged and ignored. Explorations may omit the Self-critique section but the meta-pass still runs during construction.
 
 ---
 

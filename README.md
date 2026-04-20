@@ -11,7 +11,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | [positioning-framework](skills/positioning-framework/SKILL.md) | 1.0.0 | Autonomous positioning and messaging framework from web research |
 | [ga4-audit](skills/ga4-audit/SKILL.md) | 2.2.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, and trend analysis |
 | [aa-audit](skills/aa-audit/SKILL.md) | 1.0.0 | Adobe Analytics audit with the same output schema as ga4-audit |
-| [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.4.0 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing |
+| [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.5.0 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing |
 | [landing-page-generator](skills/landing-page-generator/SKILL.md) | 1.0.0 | B2B paid landing page generator with brief, copy, design, and QA phases |
 | [positioning-update](skills/positioning-update/SKILL.md) | 1.0.0 | Apply client feedback and corrections to positioning context files |
 | [voice-inference](skills/voice-inference/SKILL.md) | 1.0.0 | Brand voice analysis from website content with scored tone spectrum, vocabulary fingerprint, and actionable voice rules |
