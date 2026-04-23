@@ -9,13 +9,13 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | Skill | Version | Description |
 |-------|---------|-------------|
 | [positioning-framework](skills/positioning-framework/SKILL.md) | 1.0.0 | Autonomous positioning and messaging framework from web research |
-| [ga4-audit](skills/ga4-audit/SKILL.md) | 2.2.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, and trend analysis |
+| [ga4-audit](skills/ga4-audit/SKILL.md) | 2.3.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, trend analysis, and AI-referrer (LLM) traffic segmentation |
 | [aa-audit](skills/aa-audit/SKILL.md) | 1.0.0 | Adobe Analytics audit with the same output schema as ga4-audit |
 | [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.5.0 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing |
 | [landing-page-generator](skills/landing-page-generator/SKILL.md) | 1.0.0 | B2B paid landing page generator with brief, copy, design, and QA phases |
 | [positioning-update](skills/positioning-update/SKILL.md) | 1.0.0 | Apply client feedback and corrections to positioning context files |
 | [voice-inference](skills/voice-inference/SKILL.md) | 1.0.0 | Brand voice analysis from website content with scored tone spectrum, vocabulary fingerprint, and actionable voice rules |
-| [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.0.0 | Visual mockup generator for experiment hypotheses (in active development) |
+| [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.2.0 | Visual mockup generator for experiment hypotheses (in active development) |
 | [render-default-deliverables](skills/render-default-deliverables/SKILL.md) | 1.0.0 | Generates client-ready deliverables from positioning context |
 
 ## Quick Start
@@ -75,7 +75,7 @@ Each depth builds on prior work. Running quick then standard then deep is increm
 | competitive-landscape.md | Market overview, competitor profiles, claim overlap, white space |
 | audience-messaging.md | Personas, messaging hierarchy, language bank, voice rules |
 | positioning-scorecard.md | Positioning health check, messaging gaps, confidence scores |
-| performance-profile.md | Page performance, conversion funnels, channel/device breakdown, data quality |
+| performance-profile.md | Page performance, conversion funnels, channel/device breakdown, AI-referrer traffic, data quality |
 | brand-voice.md | Scored tone spectrum, vocabulary fingerprint, categorized examples, voice rules |
 | _fetch-registry.md | Internal coordination file logging all URLs fetched by each agent |
 
@@ -101,7 +101,7 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 
 **positioning-framework** researches a company and its competitors, then produces structured context files with evidence-backed analysis. It runs autonomous web research across multiple source tiers (website, reviews, Reddit, SEC filings, job postings) depending on depth level. At standard and deep depth, render-default-deliverables runs automatically after it completes.
 
-**ga4-audit** pulls 10-15 reports from a GA4 property via direct API (preferred) or analytics-mcp fallback. Classifies conversion events, groups pages by type, sizes opportunities, discovers element-level interactions (CTA clicks, link text, custom parameters), and detects failure modes. Produces `performance-profile.md`. Standalone -- works with or without positioning context, though it can optionally enrich its output with product-line mappings from `company-identity.md` if one exists. Requires GA4 credentials (see `skills/ga4-audit/.env.example`) or [analytics-mcp](https://github.com/nicholasgriffintn/analytics-mcp) as fallback.
+**ga4-audit** pulls 11-15 reports from a GA4 property via direct API (preferred) or analytics-mcp fallback. Classifies conversion events, groups pages by type, sizes opportunities, discovers element-level interactions (CTA clicks, link text, custom parameters), segments AI-referrer traffic (ChatGPT, Perplexity, Claude, Gemini, Copilot, etc.) with source normalization and trajectory analysis, and detects failure modes. Produces `performance-profile.md`. Standalone -- works with or without positioning context, though it can optionally enrich its output with product-line mappings from `company-identity.md` if one exists. Requires GA4 credentials (see `skills/ga4-audit/.env.example`) or [analytics-mcp](https://github.com/nicholasgriffintn/analytics-mcp) as fallback.
 
 **aa-audit** is the Adobe Analytics equivalent of ga4-audit. Runs a Python script against the AA 2.0 Reporting API and produces the same `performance-profile.md` schema, so all downstream skills (hypothesis-generator, render-default-deliverables) work identically regardless of analytics platform. Requires Python 3 with `requests`, Adobe Analytics API credentials (env vars), and a client config JSON file.
 

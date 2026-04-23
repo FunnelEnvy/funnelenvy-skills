@@ -31,9 +31,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - New/returning user analysis, source x page cross-tab, failure mode detection
 - Element-level interaction discovery via custom dimensions and enhanced measurement (v2.1.0)
 - Optional L0 enrichment with product-line page grouping
+- AI-referrer (LLM) traffic segmentation with source normalization and trajectory analysis (v2.3.0)
+- Step 6b: PARTIAL_REGEXP source filtering across 19 LLM referrers (ChatGPT, Perplexity, Claude, Gemini, Copilot, DeepSeek, Mistral, Meta AI, etc.), 3-query breakdown (sources, monthly trajectory, top landing pages), canonical source map collapsing provider variants (chatgpt.com/openai, perplexity/perplexity.ai, copilot.microsoft.com/copilot.cloud.microsoft, gemini.google.com/bard.google.com, chat.mistral.ai/mistral.ai)
+- Frontmatter fields: `ai_sessions_count`, `ai_sessions_pct`, `ai_conversions_count`, `ai_conversion_rate`, `ai_traffic_trend`, `ai_not_set_landing_pct`, `top_ai_sources[]`
+- Data quality flag for `(not set)` landing page share > 15% on AI-referrer traffic
+- AI-Referrer Traffic body subsection with collapsed and raw source views; collapses to one-liner below 20 sessions
 
 #### Changed
 - Inlined schema into SKILL.md, saving ~11-13K tokens per run
+- Performance-profile schema bumped to 2.2 (AI-traffic fields, additive-only change)
 
 ### positioning-framework
 
