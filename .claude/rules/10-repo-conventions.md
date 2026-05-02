@@ -1,6 +1,6 @@
 ---
 version: "1.0.1"
-updated: 2026-03-17
+updated: 2026-05-01
 ---
 # Repo Conventions
 
@@ -24,7 +24,7 @@ You MUST NOT deviate even when creating "temporary" or "one-off" files.
 - Python files use snake_case matching skill name
 - Multi-word frontmatter keys use snake_case (e.g., `resource_name`, `blocked_by`)
 - All dates MUST be represented as YYYY-MM-DD
-- **Underscore-prefixed directories** (e.g., `_dev/`, `_templates/`): Reserved for directories injected by a cross-cutting governance skill into a resource it doesn't own. The underscore prefix provides visual separation and sorts these above content directories.
+- **Underscore-prefixed directories** (e.g., `_dev/`, `_templates/`): Reserved for directories injected by a cross-cutting governance skill into a resource it doesn't own. The underscore prefix provides visual separation and sorts these above content directories. Directories owned by the resource itself use plain names without underscore prefix (e.g., `references/`, `operations/`, `transforms/`).
 - `.claude/rules/` is managed by fe-sys-hq rule deployment — you MUST NOT manually edit, add, or remove rule files from this directory. If you believe a rule needs changing, edit the source in `.claude/skills/fe-governance-deploy/rules/` instead.
 
 ## Git
@@ -35,7 +35,12 @@ You MUST NOT deviate even when creating "temporary" or "one-off" files.
 
 ## Python
 
-- When invoking Python scripts, use a fallback pattern for interpreter portability: `python "script.py" 2>/dev/null || python3 "script.py"`. The `python` command may not exist on some systems (Linux/macOS), while `python3` may not exist on others (Windows).
+- When invoking Python scripts, use the probe-then-run pattern for interpreter portability:
+  `PY=$(python3 --version >/dev/null 2>&1 && echo python3 || echo python); $PY "script.py" args`.
+  This detects a working interpreter once and runs the script once with errors un-suppressed.
+  Avoid `python "script" || python3 "script"` — when the first interpreter runs the script and
+  the script errors, the fallback masks the real error behind whatever the second interpreter
+  says (notably the "Python was not found" Microsoft Store stub on default-config Windows).
 
 ## .gitignore
 
