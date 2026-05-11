@@ -1,7 +1,7 @@
 ---
 name: ga4-audit
-version: 2.2.0
-description: "When the user wants to audit GA4 analytics data for a property. Also use when the user mentions 'GA4 audit,' 'analytics audit,' 'traffic analysis,' 'page performance,' 'conversion audit,' 'bounce rate analysis,' or 'performance profile.' Pulls 10-15 targeted reports from GA4 via direct API or analytics-mcp fallback (including element-level interaction discovery), classifies events, and produces a structured performance-profile.md context file (.claude/context/ L1). Single agent, no depth flag. Works with any GA4 property."
+version: 2.3.0
+description: "When the user wants to audit GA4 analytics data for a property. Also use when the user mentions 'GA4 audit,' 'analytics audit,' 'traffic analysis,' 'page performance,' 'conversion audit,' 'bounce rate analysis,' or 'performance profile.' Pulls 11-15 targeted reports from GA4 via direct API or analytics-mcp fallback (including element-level interaction discovery and AI-referrer traffic segmentation), classifies events, and produces a structured performance-profile.md context file (.claude/context/ L1). Single agent, no depth flag. Works with any GA4 property."
 ---
 
 # GA4 Audit
@@ -43,6 +43,8 @@ When no `<property_id>` is provided, the skill checks `company-identity.md` for 
 | `--no-compare` | false | Skip period-over-period comparison |
 
 No depth flag. The same reports run regardless of the lookback window. Data is either there or it isn't.
+
+AI-referrer detection (Step 6b) is always-on. If runtime overhead exceeds ~15 seconds on a median run or per-client configurability becomes necessary, introduce `--skip-ai`. Not before.
 
 ### Flag Validation
 
@@ -405,6 +407,91 @@ Then pull top sources within key channels (channels with >5% of total sessions):
 - Order by: sessions descending
 
 
+### Step 6b: AI-Traffic Source Detection
+
+Segment referral sessions from LLM/AI chat tools. These sit inside "Referral" in default channel groups, so they're invisible without explicit segmentation.
+
+GA4 does not normalize LLM source values, so this step pulls raw segments and collapses them at the reporting layer.
+
+#### Queries
+
+**Query 1 - By source (full audit window):**
+- Dimensions: `sessionSource`
+- Metrics: `sessions`, `totalUsers`, `newUsers`, `engagedSessions`, `averageSessionDuration`, `conversions`
+- dimensionFilter: `sessionSource` PARTIAL_REGEXP match against AI_REGEX below
+- Limit: 50
+- Order by: sessions descending
+
+**Query 2 - Monthly trajectory (full audit window):**
+- Dimensions: `yearMonth`
+- Metrics: `sessions`, `totalUsers`, `newUsers`
+- dimensionFilter: same AI filter
+- Order by: yearMonth ascending
+
+**Query 3 - Top AI-driven landing pages (full audit window):**
+- Dimensions: `landingPage`, `sessionSource`
+- Metrics: `sessions`, `totalUsers`, `conversions`
+- dimensionFilter: same AI filter
+- Limit: 25
+- Order by: sessions descending
+
+Recent 90-day source-by-month mix shifts are derived in-memory from Query 2 combined with a source-level slice of Query 1. No separate API call.
+
+#### AI_REGEX
+
+Case-insensitive, PARTIAL_REGEXP:
+
+```
+chatgpt|openai|claude\.ai|anthropic|gemini\.google|bard\.google|perplexity|copilot\.microsoft|copilot\.cloud|phind|poe\.com|deepseek|chat\.mistral|mistral\.ai|character\.ai|groq|you\.com|meta\.ai|huggingface
+```
+
+**CRITICAL - regex mode:** GA4's `FULL_REGEXP` requires whole-string match (not substring). `chatgpt` as FULL_REGEXP does NOT match `chatgpt.com`. You MUST use `PARTIAL_REGEXP`. Verify by eyeballing that `chatgpt.com` appears in results when a site has meaningful referral volume. If zero rows return on a site with known AI traffic, check the filter mode first.
+
+Mistral is matched via `chat\.mistral` or `mistral\.ai` specifically rather than bare `mistral` to avoid false positives on unrelated source strings containing those seven characters.
+
+#### Source Normalization
+
+Present both the raw source rows AND a collapsed view. Known variant pairs to merge:
+
+| Canonical | Variants seen |
+|---|---|
+| chatgpt | chatgpt.com, openai, chatgpt.com), prod-usch-auditchatgpt.us.kworld.kpmg.com |
+| perplexity | perplexity.ai, perplexity |
+| copilot | copilot.microsoft.com, copilot.cloud.microsoft |
+| gemini | gemini.google.com, bard.google.com |
+| claude | claude.ai |
+| mistral | chat.mistral.ai, mistral.ai |
+
+The collapsed view feeds the summary table. The raw view appears in an appendix so readers can see what GA4 actually returned. New variants encountered in the wild should be added to the canonical map as a maintenance task, not papered over with inference.
+
+#### Computed Fields
+
+- `ai_sessions_count` - sum across all AI sources, collapsed
+- `ai_sessions_pct` - `ai_sessions_count / total_sessions_audit_window * 100`, 2 decimals
+- `ai_conversions_count` - sum of conversions across AI sources
+- `ai_conversion_rate` - `ai_conversions_count / ai_sessions_count * 100`, 2 decimals. Set to `null` when `ai_sessions_count == 0`.
+- `top_ai_sources` - list of `{source, sessions, pct_of_ai}` for collapsed top 5
+- `ai_traffic_trend` - compare last 3 months vs prior 3 months (or prior 6mo average for 12mo audits):
+  - `growing` if delta > +25%
+  - `declining` if delta < -25%
+  - `flat` otherwise
+  - `insufficient_data` if any month < 5 sessions OR window < 6 months
+- `ai_not_set_landing_pct` - share of AI sessions with `(not set)` landing page. Data quality flag; >15% suggests a landing page capture gap.
+
+#### Quality Checks
+
+- If AI regex returns zero rows, log a diagnostic noting possible causes (regex mode error, zero traffic in window, window too narrow). Do NOT fail the audit. Proceed with `ai_sessions_count: 0`.
+- If `ai_not_set_landing_pct > 15%`, include a "Tracking Gap" flag in the Data Quality section (implementation issue on landing page capture).
+- If raw sources contain dedup pairs (e.g., both `perplexity` and `perplexity.ai` with traffic), call out in caveats so the client understands the collapse.
+
+#### Skip Condition
+
+If `ai_sessions_count < 20` across the audit window, collapse the body subsection (see Section 4 below) to a one-liner:
+
+> AI-referrer traffic: {count} sessions across {n} sources over the audit window. Below reporting threshold - detailed breakdown omitted.
+
+Frontmatter fields are still populated (with small values) so downstream consumers can read the signal.
+
 ### Step 7: Device & User Segment Report
 
 Pull device breakdown using a report query:
@@ -530,6 +617,8 @@ Assess data quality across all reports:
 
 **Channel concentration:** Flag if any single channel represents >70% of traffic.
 
+**AI-referrer tracking gap:** If Step 6b returned `ai_not_set_landing_pct > 15%`, flag under Data Quality as a landing page capture implementation issue for AI-referral traffic.
+
 Set confidence score:
 - 5: No sampling, complete tracking, high traffic
 - 4: Minor gaps (missing some enhanced measurement events, or adequate traffic)
@@ -584,7 +673,7 @@ Construct `.claude/context/performance-profile.md` with the structure below. Do 
 
 All fields required unless noted.
 
-- Metadata: `schema` ("performance-profile"), `schema_version` ("2.1"), `generated_by` ("ga4-audit"), `last_updated`, `last_updated_by` ("ga4-audit"), `confidence` (1-5), `company`, `property_id`, `property_name`, `date_range`, `days`
+- Metadata: `schema` ("performance-profile"), `schema_version` ("2.2"), `generated_by` ("ga4-audit"), `last_updated`, `last_updated_by` ("ga4-audit"), `confidence` (1-5), `company`, `property_id`, `property_name`, `date_range`, `days`
 - Traffic: `total_sessions`, `total_users`, `device_mobile_pct` (integer %)
 - Top pages (top 5 only): `top_pages[]` each with `path`, `sessions`, `bounce_rate`, `pages_per_session`, `avg_engagement_sec`, `failure_mode` (null | "shallow_engagement" | "deep_engagement")
 - Conversions (conversion-classified only): `conversion_events[]` each with `name`, `count`, `classification`. Plus `primary_conversion_event`, `primary_conversion_rate` (%)
@@ -595,6 +684,7 @@ All fields required unless noted.
 - Opportunities: `top_opportunities[]` each with `page`, `issue`, `formula_type`, `current_metric`, `target_metric`, `monthly_sessions`, `estimated_monthly_impact` ("small" | "medium" | "large"), `action_category`, `sizing_note`
 - Data quality: `traffic_adequacy` ("high" | "adequate" | "low"), `sampling_applied` (bool)
 - Element interactions (from Step 5b, omit entirely when no element data): `element_interactions_available` (bool), `element_interaction_events` (int, number of events with element data), `discovered_parameters` (list of parameter names found), `top_interactions[]` each with `page`, `event`, `element` (parameter value, e.g. "Request Demo"), `parameter` (dimension name, e.g. "linkText"), `count`, `interaction_rate` (%). Top 10 by count.
+- AI-referrer traffic (from Step 6b): `ai_sessions_count` (int), `ai_sessions_pct` (float, 2 decimals), `ai_conversions_count` (int), `ai_conversion_rate` (float, 2 decimals, null when `ai_sessions_count == 0`), `ai_traffic_trend` (string: `growing` | `flat` | `declining` | `insufficient_data`), `ai_not_set_landing_pct` (float, 2 decimals), `top_ai_sources[]` up to 5, each with `source` (canonical name), `sessions` (int), `pct_of_ai` (float).
 - Comparison (omit entirely when --no-compare): `comparison_period` with `start`, `end`. `trends` with `sessions_change_pct`, `primary_cvr_change_pp`, `bounce_rate_change_pp`, `mobile_bounce_change_pp`
 - L0: `l0_available` (bool), `l0_confidence` (int | null)
 
@@ -609,7 +699,7 @@ All sections include trend tags when comparison is enabled.
    - Page Group Performance: Group | URL Pattern | Pages | Sessions | Weighted Bounce | Weighted Engagement | Conversions | Group CVR
    - Underperforming Pages (<50% group avg CVR, >200 sessions): Page | Group | Sessions | Page CVR | Group Avg CVR | Gap
 3. **Conversion Events** -- Event Inventory: Event | Count | Classification | Notes. Per-page funnels (top 3 events): Page | Sessions | Conversions | Conversion Rate. Missing Tracking Gaps (list).
-4. **Channel Performance** -- By Channel Group: Channel | Sessions | % of Total | Bounce Rate | Engagement Rate | Conversions | Conv Rate. Top Sources: Source/Medium | Channel | Sessions | Bounce Rate | Conv Rate.
+4. **Channel Performance** -- By Channel Group: Channel | Sessions | % of Total | Bounce Rate | Engagement Rate | Conversions | Conv Rate. Top Sources: Source/Medium | Channel | Sessions | Bounce Rate | Conv Rate. Followed by **AI-Referrer Traffic** subsection (see below).
 5. **Device & User Segment Performance** -- Device Breakdown: Device | Sessions | % of Total | Bounce Rate | Engagement Rate | Avg Duration | Conv Rate. Mobile vs Desktop Gap: Metric | Desktop | Mobile | Gap | Significance. New vs Returning: Segment | Sessions | % of Total | Bounce Rate | Engagement Rate | Avg Duration | Conv Rate. Include returning:new ratio and signal.
 6. **Landing Page Performance** -- Top Entry Pages (use `landingPage` dimension, not `pagePath`): Landing Page | Sessions | % of Entries | Bounce Rate | Engagement Rate | Conv Rate. High-Bounce Entry Points (>55% bounce, top 20): Landing Page | Sessions | Bounce Rate | Top Source | Notes. Source x Landing Page Mismatches: Landing Page | Better Channel | Worse Channel | Metric | Better Value | Worse Value | Gap.
 7. **Opportunity Sizing** -- Page | Issue | Formula | Impact Bucket | Action Category | Note. Each row includes sizing_note.
@@ -619,6 +709,52 @@ All sections include trend tags when comparison is enabled.
    - Per-Page Interaction Breakdown (top 10 pages by session volume that have element data): Page | Event | Element (parameter value) | Parameter | Count | Interaction Rate | Notes
    - Interaction Gaps: pages with >500 sessions and primary CTA click rate <3%, CTA hierarchy dominance (one element >5x clicks of next), sequential content drop-off (<20% of first item). If none, "No notable interaction gaps detected."
 10. **L0 Enrichment Notes** (OPTIONAL) -- Product-Line Grouping Overrides, Funnel Stage Mapping, Tracking Gaps. Only when L0 consumed.
+
+##### Channel Performance: AI-Referrer Traffic subsection (always present, collapses below threshold)
+
+Appears inside Section 4 after the Top Sources table.
+
+Full format when `ai_sessions_count >= 20`:
+
+```markdown
+### AI-Referrer Traffic
+
+**Summary:** {ai_sessions_count} sessions ({ai_sessions_pct}% of total), {ai_conversions_count} conversions ({ai_conversion_rate}% CVR). Trend: {ai_traffic_trend}.
+
+**By source (collapsed):**
+
+| Source | Sessions | Users | Conv | CVR |
+|--------|---------:|------:|-----:|----:|
+| [top_ai_sources rows] |
+
+**Monthly trajectory:**
+
+[yearMonth | sessions table, full audit window]
+
+**Top AI-driven landing pages:**
+
+[landingPage | source | sessions | conv, top 10]
+
+**Data quality / caveats:**
+- Source normalization: [list any dedup pairs found, or "No variant collapsing required."]
+- `(not set)` landing page share: {ai_not_set_landing_pct}% [flag if >15%]
+- Raw source rows in appendix below.
+
+<details>
+<summary>Raw (un-collapsed) AI source rows</summary>
+
+[raw sessionSource rows before normalization]
+
+</details>
+```
+
+Collapsed format when `ai_sessions_count < 20`:
+
+```markdown
+### AI-Referrer Traffic
+
+{ai_sessions_count} sessions across {n} sources over the audit window. Below reporting threshold - detailed breakdown omitted.
+```
 
 #### Trend Tags
 
@@ -644,6 +780,7 @@ Performance profile written to .claude/context/performance-profile.md
   Confidence: [N]
   Comparison: [enabled, vs [start] to [end] | disabled (--no-compare)]
   Element interactions: [N events with element data | no element data available]
+  AI-referrer traffic: [N sessions ([pct]%), [trend] | below reporting threshold | none detected]
 
   Key findings:
   - [top strength]
@@ -687,7 +824,7 @@ Step 11 adds a new section to the performance profile body: "L0 Enrichment Notes
 Before writing the final file, verify:
 
 1. [ ] All 8 REQUIRED body sections are present (populated or gap-marked). OPTIONAL sections (Element-Level Interactions, L0 Enrichment Notes) present when applicable.
-2. [ ] YAML frontmatter has all required fields
+2. [ ] YAML frontmatter has all required fields. `schema_version` is `"2.2"`.
 3. [ ] Sampling status is reported accurately
 4. [ ] Conversion events are classified and confirmed by user
 5. [ ] High-Bounce callout table uses >50% bounce / >100 sessions thresholds. Underperforming table uses <50% of group average CVR / >200 sessions.
@@ -707,6 +844,11 @@ Before writing the final file, verify:
 19. [ ] Source x Landing Page Mismatches uses >15pp bounce / <50% CVR thresholds
 20. [ ] If element interaction data discovered: `element_interactions_available: true` in frontmatter, Element-Level Interactions body section present with all 3 subsections
 21. [ ] If no element interaction data: `element_interactions_available: false` in frontmatter (or field omitted entirely), no Element-Level Interactions body section
+22. [ ] AI-referrer frontmatter fields populated (all 7 fields). When `ai_sessions_count == 0`, `ai_conversion_rate` is `null` and `top_ai_sources` is an empty list.
+23. [ ] AI-Referrer Traffic body subsection present inside Section 4 (Channel Performance). Collapsed one-liner when `ai_sessions_count < 20`, full breakdown otherwise.
+24. [ ] Queries in Step 6b use `PARTIAL_REGEXP` (not `FULL_REGEXP`). If `FULL_REGEXP` was used by mistake, `chatgpt.com` will not match the `chatgpt` token and results will be empty or wrong.
+25. [ ] Source normalization applied (chatgpt/perplexity/copilot/gemini/claude/mistral variants collapsed into canonical map). Raw rows preserved in appendix.
+26. [ ] `ai_not_set_landing_pct > 15%` surfaces as a Tracking Gap entry in the Data Quality section.
 
 ---
 
@@ -742,11 +884,12 @@ When using `ga4_client.py run-report`, pass the request body as a JSON string vi
 **Common GA4 dimensions:**
 - `pagePath`, `landingPage`, `deviceCategory`
 - `sessionDefaultChannelGroup`, `sessionSource`, `sessionMedium`
-- `eventName`
+- `eventName`, `yearMonth`
 
 **Common GA4 metrics:**
-- `sessions`, `totalUsers`, `bounceRate`, `engagementRate`
-- `averageSessionDuration`, `eventCount`, `conversions`
+- `sessions`, `totalUsers`, `newUsers`, `bounceRate`, `engagementRate`
+- `averageSessionDuration`, `engagedSessions`, `eventCount`, `conversions`
 
 **Filtering for specific events:** Use `dimensionFilter` on `eventName` dimension to isolate specific conversion events when pulling per-page conversion data.
 
+**PARTIAL_REGEXP filtering:** For AI-referrer segmentation in Step 6b, set the dimensionFilter `matchType` to `PARTIAL_REGEXP` (substring match) rather than `FULL_REGEXP` (whole-string match). The AI_REGEX lists fragments, not full source strings.
