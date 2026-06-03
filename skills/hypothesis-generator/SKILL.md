@@ -1,7 +1,7 @@
 ---
 name: hypothesis-generator
 version: 1.5.0
-description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
+description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. In KB mode (see KB Mode (Dual-Mode Output)), reads the scope's silver CRO artifacts from a bound knowledge base and writes a typed gold-experiment-roadmap artifact instead. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
 ---
 
 # Hypothesis Generator
@@ -16,7 +16,7 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 - Your output goes to `.claude/deliverables/`, not `.claude/context/`
 - Your output is human-readable: no YAML frontmatter, no confidence scores inline, no references to agents, skills, context files, frontmatter, or any system internals
 
-**Output location:** `.claude/deliverables/experiment-roadmap.md`
+**Output location:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md` -- see `KB Mode (Dual-Mode Output)`)
 **Token budget:** ~40-60K (reading and analysis only, no web fetches)
 **Runtime:** ~5-8 minutes
 **Agents:** Single agent. No multi-agent pipeline.
@@ -40,6 +40,87 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 | `--focus` | all | Restrict to one or more pattern categories. Comma-separated. Valid: `headlines`, `forms`, `navigation`, `personalization`, `layout`, `pricing`, `social-proof`, `content`, `trust`, `element-engagement` |
 | `--max` | 10 | Maximum number of hypotheses to produce (min 5, max 15) |
 | `--spec` | none | Path to a spec/brief file OR inline text of client-requested items. When provided, every spec item must either map to a hypothesis or be explicitly addressed in "What's Not Here." Out-of-scope items (SEO/GEO, interlinking, content audit) are flagged with routing guidance. |
+| `--scope` | none | KB mode only. Selects which KB scope the run targets (the type skill defines valid scopes). Required in KB mode; warn-and-ignore in legacy mode. See `KB Mode (Dual-Mode Output)`. |
+| `--no-kb` | off | Force legacy `.claude/context/` I/O even when a KB binding is detected. See `KB Mode (Dual-Mode Output)`. |
+
+---
+
+## KB Mode (Dual-Mode Output)
+
+The skill runs in one of two I/O modes, resolved ONCE as Phase 1 step 0 and held in-session:
+
+- **Legacy mode** (default): everything in this skill behaves exactly as documented in the other sections. Inputs from `.claude/context/`, output to `.claude/deliverables/experiment-roadmap.md`.
+- **KB mode:** inputs are the scope's typed silver artifacts read from a knowledge base declared by the working repo, and the output is a typed `gold-experiment-roadmap` artifact written into that KB. Only read/write targets, the addition of gold frontmatter, and performance-profile schema tolerance (see `phases/detect.md` > `Profile Schema Equivalence`) change. All analysis -- Phases 2-4 reasoning, the pattern library, ICE scoring, spec intake, `--focus`, `--max`, contrarian triggers -- is identical in both modes.
+
+This is a single-agent skill: there is no agent parameter-block threading. Mode resolution produces in-session KB state (`kb_root`, `kb_type`, `scope`, type-def paths) consulted by Phase 1 (reads) and Phase 5 (write).
+
+### Mode Resolution Procedure (Phase 1, step 0)
+
+1. If `--no-kb` is set: legacy mode. Done.
+2. Read the working repo's `CLAUDE.md`. Find a `Knowledge Bases` section. If absent: legacy mode, and note in the run output: "No `Knowledge Bases` section in CLAUDE.md; using legacy I/O."
+3. Parse the KB root path (e.g., `docs/`) and KB type skill name from that section. Verify the type skill exists at `.claude/skills/{kb-type}/` and its `artifacts/` directory defines `gold-experiment-roadmap`, `silver-strategy-context`, and `bronze-company-facts` -- the output type plus the two types backing the hard L0 precondition. If any check fails: legacy mode, and report which check failed. Optional silver types are NOT mode-resolution requirements: a missing optional silver artifact degrades gracefully exactly like a missing optional legacy context file.
+4. KB mode confirmed. Resolve scope: `--scope <slug>` must match a valid scope defined by the type skill. If `--scope` is missing or invalid: HARD STOP. Display the valid scope list and ask the user to re-run with `--scope`. Do not guess a scope.
+
+There is deliberately no `--kb` force flag. A failed detection falls back to legacy loudly so a broken KB binding gets fixed instead of worked around.
+
+### Schema Authority
+
+Phase files remain the authority for analytical content. In KB mode, the bound type def (`.claude/skills/{kb-type}/artifacts/gold-experiment-roadmap.md`) is the authority for output path, frontmatter contract, and required section layout -- read it during Phase 5 before writing. `governed_by` is composed at runtime as `{kb-type}/gold-experiment-roadmap`. This skill never hardcodes a KB type skill name or client-specific path.
+
+### Read-side Mapping
+
+In KB mode, Phase 1 replaces the `.claude/context/*.md` glob with reads of the scope's artifacts:
+
+| Legacy context file | KB artifact type | Path under KB root | Required |
+|---|---|---|---|
+| `company-identity.md` | `bronze-company-facts` + `silver-strategy-context` | `captures/company-facts/{scope}-company-facts.md` + `reference/cro-{scope}/strategy-context.md` | REQUIRED |
+| `positioning-scorecard.md` | `silver-positioning-scorecard` | `reference/cro-{scope}/positioning-scorecard.md` | optional |
+| `competitive-landscape.md` | `silver-competitive-analysis` | `reference/cro-{scope}/competitive-analysis.md` | optional |
+| `audience-messaging.md` | `silver-audience-analysis` | `reference/cro-{scope}/audience-analysis.md` | optional |
+| `performance-profile.md` | `silver-performance-analysis` | `reference/cro-{scope}/performance-analysis.md` | optional |
+| `_fetch-registry.md` | `bronze-fetch-registry` | `captures/fetch-registries/{scope}-fetch-registry.md` | optional (page-block check only) |
+
+- **L0 precondition:** the LOWER of `bronze-company-facts.confidence` and `silver-strategy-context.confidence` must be >= 3. Together these two artifacts carry what `company-identity.md` carries in legacy mode (the facts/analysis split).
+- **Scope isolation is absolute:** artifacts from another scope are never read.
+- Each loaded artifact maps to its legacy equivalent per the table; Phases 2-4 consume the bodies identically in both modes.
+
+### Output Mapping and Frontmatter Contract
+
+The deliverable is written to `{kb_root}/deliverables/{scope}-experiment-roadmap.md` (path per the type def). The body is the unchanged `Output Format` render; KB mode prepends frontmatter:
+
+`fe-managed: true`, `name: {scope}-experiment-roadmap`, `description` (one line, generated), `kb_layer: gold`, `governed_by: {kb-type}/gold-experiment-roadmap`, `scope`, `data_provenance` (`client` when any consumed silver artifact is `client`-provenance, else `public`), `generated_by: hypothesis-generator`, `depends_on`, `tags` (3-7 semantic), `version`, `created`, `updated`.
+
+**`depends_on`:** KB-root-relative paths of the silver artifacts actually consumed, omitting missing optional ones -- gold-to-silver edges only. Bronze inputs are excluded: company facts flow transitively through the strategy-context artifact's own bronze edge, and the fetch registry is an operational read (page-block status), not a content source.
+
+### Prior Work Detection (KB Mode)
+
+1. Glob `{kb_root}/deliverables/{scope}-experiment-roadmap.md`.
+2. If present, the run supersedes it in place: preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch for a re-render of unchanged inputs), set `updated` to today, overwrite the body. No diffing, no merging -- the roadmap is always a complete projection of current context (same semantics as `Re-render Behavior`).
+
+### Post-Write Validation Gate
+
+After writing the gold artifact:
+
+```
+PY=$(python3 --version >/dev/null 2>&1 && echo python3 || echo python)
+$PY <kb-start-scripts>/kb_type_validate.py validate {kb_root}/deliverables/{scope}-experiment-roadmap.md
+```
+
+Resolve `<kb-start-scripts>` from the fe-knowledge-base plugin's kb-start skill `scripts/` directory (marketplace plugin cache or source repo). If validation reports errors, fix the artifact frontmatter/sections and re-validate. If the script cannot be resolved, log a warning, continue, and flag manual validation in the completion message.
+
+### KB Mode Completion Message
+
+Replace the first line of the standard completion summary with the KB artifact lines and append validation status:
+
+```
+Experiment roadmap written to {kb_root}/deliverables/{scope}-experiment-roadmap.md
+  Type: gold-experiment-roadmap | Scope: {scope} | Version: {v}
+  depends_on: [silver artifacts consumed]
+
+  [standard counts unchanged]
+
+  Validation: kb_type_validate.py passed | failed (fixed and re-validated) | unresolved (manual validation needed)
+```
 
 ---
 
@@ -71,6 +152,12 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 - No context files found: Exit with "No context files found in .claude/context/. Run /positioning-framework first."
 - L0 only, confidence < 3: Exit with "Company identity exists but confidence is too low. Run /positioning-framework --depth standard first."
 - L0 only, confidence >= 3: Proceed with limited pattern matching. Report reduced coverage in output.
+
+**In KB mode** (see `KB Mode (Dual-Mode Output)` > `Read-side Mapping`):
+- The hard requirement becomes: the LOWER of `bronze-company-facts.confidence` and `silver-strategy-context.confidence` for the scope must be >= 3.
+- Soft requirements map to the scope's optional silver artifacts with identical degradation semantics.
+- The scope's `silver-performance-analysis` artifact may lack `schema_version`. When absent, the version gating above is bypassed and `phases/detect.md` > `Profile Schema Equivalence` governs which performance-driven triggers fire by content equivalence.
+- Error states reword for KB artifacts: "No silver CRO artifacts found for scope {scope}. Run /positioning-framework --scope {scope} first." / "Scope L0 artifacts exist but confidence is too low. Run /positioning-framework --scope {scope} --depth standard first."
 
 ---
 
@@ -123,6 +210,7 @@ Wait for response. If content is provided, treat it as supplementary page contex
 
 ### Phase 1: Context Discovery and Loading
 
+0. **Mode resolution** -- run the `Mode Resolution Procedure` from `KB Mode (Dual-Mode Output)`. In legacy mode, continue below unchanged. In KB mode, steps 1-2 read the scope's artifacts per `Read-side Mapping` instead of the `.claude/context/` glob, and the handoff check uses the KB-mode branches noted below.
 1. Glob `.claude/context/*.md`
 2. Read YAML frontmatter only for each file
 3. Build context inventory (file, schema type, confidence, depth)
@@ -134,8 +222,8 @@ Wait for response. If content is provided, treat it as supplementary page contex
 **Handoff check -- run before displaying the summary.** Look for the following and flag each gap:
 
 - **No spec provided** (`--spec` was not passed): Flag. The skill can run without a spec, but spec items are frequently missed without one. Prompt for it.
-- **Page blocked** (check `.claude/context/_fetch-registry.md` if it exists -- look for `[EMPTY:BLOCKED]` or `[EMPTY:SPA]` entries for the target page): Flag. Section-level content analysis requires a screenshot.
-- **External deliverables** (check `.claude/deliverables/` -- if files exist, a prior ideation deck or external doc may be relevant): Flag only if no spec was provided and deliverables are present. Ask if there is an external deck or document to reference.
+- **Page blocked** (check `.claude/context/_fetch-registry.md` if it exists -- look for `[EMPTY:BLOCKED]` or `[EMPTY:SPA]` entries for the target page): Flag. Section-level content analysis requires a screenshot. In KB mode: read the same markers from `{kb_root}/captures/fetch-registries/{scope}-fetch-registry.md` instead.
+- **External deliverables** (check `.claude/deliverables/` -- if files exist, a prior ideation deck or external doc may be relevant): Flag only if no spec was provided and deliverables are present. Ask if there is an external deck or document to reference. In KB mode: check `{kb_root}/deliverables/` for `{scope}-`prefixed files; an existing `{scope}-experiment-roadmap.md` is prior work handled by `Prior Work Detection (KB Mode)` (supersede), not an external-deck flag.
 
 Consolidate all flags into a single pre-flight prompt. Do not issue separate prompts for each gap:
 
@@ -163,6 +251,8 @@ Reply with any handoff items above, or "skip" to proceed without them.
 ```
 
 If nothing is missing (spec provided, no blocked pages, no deliverables without a deck reference), omit the "Handoff items needed" block and show only "Proceed? [Y/n]".
+
+In KB mode, the `Context available` list shows the KB artifact paths (per `Read-side Mapping`) and the summary header includes one extra line: `KB mode: {kb-type} | scope: {scope}`.
 
 ### Phase 2: Opportunity Detection
 
@@ -225,6 +315,8 @@ The "What's Not Here" section must be non-empty when a spec is provided. A roadm
 
 Write `.claude/deliverables/experiment-roadmap.md` following the Output Format specification below.
 
+In KB mode: write to `{kb_root}/deliverables/{scope}-experiment-roadmap.md` instead -- same body, with the frontmatter contract prepended and the supersede rule applied (see `KB Mode (Dual-Mode Output)` > `Output Mapping and Frontmatter Contract` and `Prior Work Detection (KB Mode)`). After writing, run the `Post-Write Validation Gate` and use the `KB Mode Completion Message` in place of the summary below.
+
 Display completion summary:
 
 ```
@@ -246,7 +338,7 @@ Review the roadmap and let me know if any hypotheses need adjustment.
 
 ## Output Format
 
-**File:** `.claude/deliverables/experiment-roadmap.md`
+**File:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md` with the KB frontmatter contract prepended; body unchanged)
 
 ```markdown
 # [Company Name]: Experiment Roadmap
@@ -399,7 +491,7 @@ Each item names specific affected experiments and a concrete collection or verif
 
 ## Deliverable Purity Constraint
 
-The experiment roadmap must contain ZERO references to internal system concepts.
+The experiment roadmap must contain ZERO references to internal system concepts. In KB mode, the required gold frontmatter block is the sole exception to the markup-artifacts rule below; the rendered body remains free of all prohibited terms in both modes.
 
 **Prohibited terms:**
 - Layer references: "L0," "L1," "L2," "Layer 0," "Layer 1," "Layer 2"
@@ -420,6 +512,8 @@ If `.claude/deliverables/experiment-roadmap.md` already exists:
 - Overwrite with fresh render from current context
 - No diffing, no merging
 - The roadmap is always a complete projection of current context + current patterns
+
+In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope}-experiment-roadmap.md`, with KB versioning -- preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch otherwise), set `updated`, overwrite the body. See `Prior Work Detection (KB Mode)`.
 
 ---
 
