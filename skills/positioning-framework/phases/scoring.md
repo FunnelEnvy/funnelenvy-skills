@@ -4,6 +4,17 @@ This phase reads all prior context (company identity, competitive landscape, aud
 
 ---
 
+## KB Mode Output
+
+Applies ONLY when your launch prompt contains `KB MODE: enabled` (see agent-header.md > KB Mode Rules). In KB mode:
+
+- The output of this phase is `reference/cro-{scope}/positioning-scorecard.md` (type `silver-positioning-scorecard`), NOT `.claude/context/positioning-scorecard.md`. KB frontmatter contract per agent-header.md, with `depends_on` referencing the scope's `silver-competitive-analysis` and `silver-audience-analysis` artifacts (KB-root-relative paths).
+- Reads follow agent-header.md KB Mode Rules item 5: all prior KB artifacts for your scope.
+- Cross-file integrity verification applies to the KB artifacts at their KB paths: where a check below says "in `.claude/context/`", verify the scope's KB artifacts at their Output Mapping paths instead (the count is 5 bronze+silver artifacts, not 4 context files).
+- All rating, gap-analysis, and quality rules in this file apply unchanged.
+
+---
+
 ## Shared Agent Rules
 
 **Shared agent rules** (Content Integrity Check, Confidence Rules) are in `agent-header.md`. Read that file first.

@@ -1,14 +1,14 @@
 ---
 name: positioning-framework
 version: 1.0.0
-description: "When the user wants to build, audit, or update a positioning and messaging framework for a company or product. Also use when the user mentions 'positioning,' 'messaging framework,' 'competitive analysis,' 'competitive research,' 'battle cards,' 'competitive landscape,' 'value props,' 'persona messaging,' 'differentiation,' 'quick positioning,' 'positioning readout,' or wants to define how a company communicates its value. Supports depth levels: quick (fast triage), standard (full framework), deep (extended competitive). Produces structured context files (.claude/context/ L0 + L1). Runs autonomous research by default. Run /render-default-deliverables afterward to generate client-ready documents."
+description: "When the user wants to build, audit, or update a positioning and messaging framework for a company or product. Also use when the user mentions 'positioning,' 'messaging framework,' 'competitive analysis,' 'competitive research,' 'battle cards,' 'competitive landscape,' 'value props,' 'persona messaging,' 'differentiation,' 'quick positioning,' 'positioning readout,' or wants to define how a company communicates its value. Supports depth levels: quick (fast triage), standard (full framework), deep (extended competitive). Produces structured context files (.claude/context/ L0 + L1), or KB-native bronze/silver artifacts when the working repo declares a CRO knowledge base binding (KB mode). Runs autonomous research by default. Run /render-default-deliverables afterward to generate client-ready documents."
 ---
 
 # Positioning & Messaging Framework
 
 You are an expert positioning strategist with deep research capabilities. Your job is to build a comprehensive, evidence-backed positioning and messaging framework. You don't just collect information. You research, analyze, identify gaps, stress-test claims, and produce structured context files that power downstream deliverables.
 
-**Outputs:** `.claude/context/` directory (1 L0 file + up to 3 L1 files, depending on depth)
+**Outputs:** `.claude/context/` directory (1 L0 file + up to 3 L1 files, depending on depth). In KB mode (see `KB Mode (Dual-Mode Output)`), outputs are typed bronze/silver artifacts written into the working repo's knowledge base instead.
 
 **Note:** This skill produces L0 + L1 context files only. Human-readable deliverables (copy briefs, battle card PDFs, etc.) are produced by the render-default-deliverables skill, which consumes these context files. For experiment hypotheses, run /hypothesis-generator after reviewing the deliverables.
 
@@ -60,7 +60,7 @@ If the user requests **Guided Interview**, **Audit & Update**, or **Reconciliati
 ## Invocation & Flags
 
 ```
-/positioning-framework <url> [--depth quick|standard|deep] [--competitive-depth none|standard|deep] [--competitive-focus "Name"] [--property <ga4_property_id>]
+/positioning-framework <url> [--depth quick|standard|deep] [--competitive-depth none|standard|deep] [--competitive-focus "Name"] [--property <ga4_property_id>] [--scope <slug>] [--no-kb]
 ```
 
 ### Depth Levels
@@ -82,11 +82,14 @@ Default: `--depth standard`
 - `--competitive-depth deep`: Force Agent 2 to deep depth regardless of overall depth. Use for extended competitive analysis within a standard run.
 - `--competitive-focus "Name"`: Run Agent 2 focused on a single competitor at deep depth. Extends existing competitive-landscape.md.
 - `--property <ga4_property_id>`: Run a single GA4 query before Agent 1 launches to identify high-traffic and high-conversion pages. Results guide Agent 1's discretionary page selection. Optional. If omitted, Agent 1 uses its existing heuristic page selection. If auth fails or the property is invalid, logs a warning and falls back to heuristic selection.
+- `--scope <slug>`: KB mode only. Selects which KB scope the run targets (the type skill defines valid scopes). Required in KB mode; warn-and-ignore in legacy mode. See `KB Mode (Dual-Mode Output)`.
+- `--no-kb`: Force legacy `.claude/context/` output even when a KB binding is detected. See `KB Mode (Dual-Mode Output)`.
 
 ### Flag Validation
 
 - `--competitive-depth` is ignored when `--depth quick` (Agent 2 never runs at quick depth).
 - `--competitive-focus` implies `--competitive-depth deep` (single-competitor focus always runs deep extraction).
+- `--scope` in legacy mode: display "**Flag ignored.** `--scope` only applies in KB mode (no KB binding was detected, or `--no-kb` was set)." Then proceed normally.
 
 ### Flag Compatibility
 
@@ -97,6 +100,95 @@ Display this message to the user:
 > **Flag ignored.** `--competitive-depth` has no effect at quick depth because competitive analysis (Agent 2) is skipped entirely. Use `--depth standard` or `--depth deep` to enable competitive analysis.
 
 Then proceed with quick depth normally. Do NOT halt execution. Do NOT run Agent 2.
+
+---
+
+## KB Mode (Dual-Mode Output)
+
+The skill runs in one of two output modes, resolved ONCE during pre-flight (Orchestrator Flow step 2.5) and threaded to every agent:
+
+- **Legacy mode** (default): everything in this skill behaves exactly as documented in the other sections. Outputs land in `.claude/context/`.
+- **KB mode:** outputs become typed medallion artifacts written into a knowledge base declared by the working repo. Only read/write targets and output document shape change. Agent count, ordering, depth gating, research instructions, intake, checkpoints, and analysis quality rules are identical in both modes.
+
+### Mode Resolution Procedure
+
+Run during pre-flight, before Prior Work Detection:
+
+1. If `--no-kb` is set: legacy mode. Done.
+2. Read the working repo's `CLAUDE.md`. Find a `Knowledge Bases` section. If absent: legacy mode, and note in the run output: "No `Knowledge Bases` section in CLAUDE.md; using legacy output."
+3. Parse the KB root path (e.g., `docs/`) and KB type skill name from that section. Verify the type skill exists at `.claude/skills/{kb-type}/` and its `artifacts/` directory defines ALL seven CRO artifact types: `bronze-company-facts`, `bronze-research-extraction`, `bronze-fetch-registry`, `silver-strategy-context`, `silver-competitive-analysis`, `silver-audience-analysis`, `silver-positioning-scorecard`. If any check fails: legacy mode, and report which check failed (missing type skill, or list the missing types). Never write typed artifacts into a half-configured KB.
+4. KB mode confirmed. Resolve scope: `--scope <slug>` must match a valid scope defined by the type skill. If `--scope` is missing or invalid: HARD STOP. Display the valid scope list and ask the user to re-run with `--scope`. Do not guess a scope.
+5. Depth gate: KB mode supports `--depth standard` and `--depth deep` only. If depth is quick: HARD STOP with "KB mode does not support `--depth quick` (the quick-depth inline health check has no KB artifact writer). Re-run with `--depth standard`, or add `--no-kb` for a legacy quick run." Do not fall back silently.
+
+There is deliberately no `--kb` force flag. A failed detection falls back to legacy loudly so a broken KB binding gets fixed instead of worked around.
+
+### KB Parameter Block
+
+In KB mode, insert this block into every agent launch prompt immediately after the `DEPTH:` line. In legacy mode, omit it entirely (legacy prompts are unchanged).
+
+```
+KB MODE: enabled
+KB root: [path, e.g., docs/]
+KB type: [kb-type skill name]
+Scope: [slug]
+Artifact type defs (read these for output path, frontmatter contract, and section layout):
+- .claude/skills/[kb-type]/artifacts/[type].md   (one line per type this agent produces or reads)
+```
+
+### Schema Authority
+
+Phase files remain the authority for analytical content and research procedure. In KB mode, the artifact type defs are the authority for output path, frontmatter contract, and body section layout. Agents read the type defs listed in their parameter block at execution time. `governed_by` is composed at runtime as `{kb-type}/{artifact-type}`. This skill never hardcodes a KB type skill name or client-specific path.
+
+### Output Mapping
+
+| Legacy output | KB artifact type | Path under KB root | depends_on |
+|---|---|---|---|
+| `company-identity.md` (facts portion) | `bronze-company-facts` | `captures/company-facts/{scope}-company-facts.md` | — |
+| `company-identity.md` (analysis portion) | `silver-strategy-context` | `reference/cro-{scope}/strategy-context.md` | bronze-company-facts |
+| `_research-extractions.md` | `bronze-research-extraction` | `captures/research-extractions/{scope}-research-extractions.md` | — |
+| `_fetch-registry.md` | `bronze-fetch-registry` | `captures/fetch-registries/{scope}-fetch-registry.md` | — |
+| `competitive-landscape.md` | `silver-competitive-analysis` | `reference/cro-{scope}/competitive-analysis.md` | bronze-company-facts, bronze-research-extraction |
+| `audience-messaging.md` | `silver-audience-analysis` | `reference/cro-{scope}/audience-analysis.md` | silver-strategy-context |
+| `positioning-scorecard.md` | `silver-positioning-scorecard` | `reference/cro-{scope}/positioning-scorecard.md` | silver-competitive-analysis, silver-audience-analysis |
+
+`depends_on` values are KB-root-relative paths to the listed artifacts. The L0 facts/analysis split is defined in `phases/company.md` (KB Mode Output section). Research byproducts are first-class bronze in KB mode: written by Agent 1, appended by Agent 2 (fetch registry), treated as prior work on re-runs, never ephemeral.
+
+### KB Frontmatter Contract
+
+Every KB artifact carries: `fe-managed: true`, `name`, `description`, `kb_layer` (value-locked per type), `governed_by: {kb-type}/{artifact-type}`, `scope`, `generated_by: positioning-framework`, `tags` (3-7 semantic tags), `version`, `created`, `updated`. Silver artifacts additionally carry `data_provenance`, `depends_on`, and `confidence`.
+
+- `data_provenance`: `public` when all source material is public web research; `client` when client-provided input (business brief, intake answers, client docs) materially shaped the artifact. Assessed per artifact, not per run.
+- `confidence` uses the same 1-5 mechanics and rules as legacy mode.
+- Legacy schema metadata (depth, provenance block, extension markers) rides along as additional frontmatter fields. The type defs' `field_definitions` are validated for required presence, type, and value constraints; additional fields and sections are permitted.
+
+### Prior Work Detection (KB Mode)
+
+Replaces the `.claude/context/*.md` glob in KB mode:
+
+1. Glob `{kb_root}/reference/cro-{scope}/*.md` and `{kb_root}/captures/{company-facts,research-extractions,fetch-registries}/{scope}-*.md`.
+2. Keep files whose frontmatter `governed_by` names one of the seven CRO artifact types AND whose `scope` matches the requested scope.
+3. Apply the existing confidence/depth extend-vs-skip rules (Prior Work Detection section) to the matched artifacts, mapping each artifact to its legacy equivalent per the Output Mapping table. The L0 reuse check reads BOTH `bronze-company-facts` and `silver-strategy-context` (lowest of the two confidences governs).
+4. Artifacts from a different scope are NEVER read as prior work and NEVER extended. Scope isolation is absolute.
+
+### Post-Write Validation Gate
+
+In KB mode, after each agent completes and before launching the next agent, the orchestrator validates the artifacts that agent wrote:
+
+```
+PY=$(python3 --version >/dev/null 2>&1 && echo python3 || echo python)
+$PY <kb-start-scripts>/kb_type_validate.py validate <artifact-path> [...]
+```
+
+Resolve `<kb-start-scripts>` from the fe-knowledge-base plugin's kb-start skill `scripts/` directory (marketplace plugin cache or source repo). If validation reports errors, fix the artifact frontmatter/sections and re-validate before proceeding. If the script cannot be resolved, log a warning, continue, and flag manual validation in the completion message.
+
+### KB Mode Completion Message
+
+Replace the `.claude/context/` file list in the standard/deep completion message with the KB artifact list (path + type + confidence per artifact), and append:
+
+```
+Gold-layer deliverables (executive summary, battle cards) are not rendered in KB mode yet.
+render-default-deliverables runs when its KB adaptation ships.
+```
 
 ---
 
@@ -321,6 +413,8 @@ User provides a company URL, name, or existing docs. The skill does the work.
 
 ## Prior Work Detection
 
+**In KB mode:** use the glob and frontmatter filter from `KB Mode (Dual-Mode Output)` > `Prior Work Detection (KB Mode)` instead of the `.claude/context/` glob below. The numbered evaluation rules below still apply, mapped through the Output Mapping table; for the L0 reuse rule (item 1), the two-artifact confidence rule in `Prior Work Detection (KB Mode)` step 3 governs.
+
 Before starting research, glob `.claude/context/*.md`. Partition into two sets:
 
 - **Operational files** (filename starts with `_`): skip for depth evaluation. These are coordination artifacts, not research output. They are overwritten (not extended) on each run.
@@ -371,7 +465,7 @@ Each agent reads `agent-header.md` (shared agent rules) plus its specific phase 
 ### Agent 1: Research + L0
 
 **Reads:** `phases/research.md` + `phases/company.md`
-**Produces:** `.claude/context/company-identity.md`
+**Produces:** `.claude/context/company-identity.md` (KB mode: the two L0 artifacts per Output Mapping)
 **Depth-aware:** Yes. At quick depth, uses reduced page budget (4-7 fetches, Tier 1 only). At standard/deep, uses full tier hierarchy.
 
 1. Consumes Pre-Flight intake payload from orchestrator launch prompt. At quick depth: no intake (business brief consumed silently if present). At standard/deep: intake contains user-provided competitors, docs, language constraints, and context.
@@ -386,7 +480,7 @@ Each agent reads `agent-header.md` (shared agent rules) plus its specific phase 
 ### Agent 2: Competitive Landscape
 
 **Reads:** `phases/competitive.md` + Agent 1's output (`.claude/context/company-identity.md`)
-**Produces:** `.claude/context/competitive-landscape.md`
+**Produces:** `.claude/context/competitive-landscape.md` (KB mode: see Output Mapping)
 **Depth-aware:** Yes. Skipped at quick depth. At standard: 3-5 competitors. At deep: 6+ competitors with Tier 2/3 sources.
 **Supports:** `--competitive-depth`, `--competitive-focus` flags.
 
@@ -402,7 +496,7 @@ Each agent reads `agent-header.md` (shared agent rules) plus its specific phase 
 ### Agent 3: Audience + Messaging + Voice
 
 **Reads:** `phases/messaging.md` + Agent 1's output (`.claude/context/company-identity.md`) + Agent 2's output (`.claude/context/competitive-landscape.md`)
-**Produces:** `.claude/context/audience-messaging.md`
+**Produces:** `.claude/context/audience-messaging.md` (KB mode: see Output Mapping)
 **Skipped at quick depth.** No messaging analysis without competitive context.
 
 1. Builds persona messaging grid from L0 segments and competitive context
@@ -417,7 +511,7 @@ Each agent reads `agent-header.md` (shared agent rules) plus its specific phase 
 ### Agent 4: Scorecard
 
 **Reads:** `phases/scoring.md` + all 3 prior context files (company-identity.md, competitive-landscape.md, audience-messaging.md)
-**Produces:** `.claude/context/positioning-scorecard.md`
+**Produces:** `.claude/context/positioning-scorecard.md` (KB mode: see Output Mapping)
 **Skipped at quick depth.** The orchestrator produces a lightweight inline health check instead (see scoring.md Quick Depth Behavior).
 
 1. Rates positioning across 6 dimensions (honest ratings, not all Strong)
@@ -430,27 +524,34 @@ Each agent reads `agent-header.md` (shared agent rules) plus its specific phase 
 ### Orchestrator Flow
 
 ```
-1. Parse flags (depth, competitive-depth, competitive-focus)
+1. Parse flags (depth, competitive-depth, competitive-focus, scope, no-kb)
 2. Validate flag combinations (see Flag Validation above)
-3. Prior Work Detection (glob .claude/context/, read frontmatter)
+2.5. KB Mode Resolution (see KB Mode (Dual-Mode Output) > Mode Resolution Procedure)
+3. Prior Work Detection (glob .claude/context/, read frontmatter; KB mode: KB glob + frontmatter filter instead)
 4. Depth Transition Logic (see below)
 5. Pre-Flight Intake (see below)
 5.5. GA4 Priority Pages (if --property provided, see below)
-6. Launch Agent 1 (pass depth + intake payload + GA4 data if available) → wait for completion
+6. Launch Agent 1 (pass depth + KB parameter block if KB mode + intake payload + GA4 data if available) → wait for completion
      Agent 1 writes fetch registry to .claude/context/_fetch-registry.md (all URLs fetched with extraction quality).
-6a. Persist GA4 property ID to company-identity.md (if --property validated, see below)
+     KB mode: fetch registry is written as bronze-fetch-registry at its type-defined path instead.
+6a. Persist GA4 property ID to company-identity.md (if --property validated, see below; KB mode: to bronze-company-facts frontmatter)
+6b. KB mode only: Post-Write Validation Gate on Agent 1's artifacts
 6.5. Copy Verification Checkpoint (see below) -- standard/deep only
 7. If depth != quick AND competitive-depth != none:
      Agent 2 reads _fetch-registry.md before fetching. Skips URLs already fetched by Agent 1 when data is in L0.
-     Launch Agent 2 (pass competitive-depth, competitive-focus, + intake payload) → wait for completion
+     Launch Agent 2 (pass competitive-depth, competitive-focus, KB parameter block if KB mode, + intake payload) → wait for completion
+     KB mode only: Post-Write Validation Gate on Agent 2's artifacts
 8. If depth != quick:
-     Launch Agent 3 (pass intake payload) → wait for completion
+     Launch Agent 3 (pass intake payload + KB parameter block if KB mode) → wait for completion
+     KB mode only: Post-Write Validation Gate on Agent 3's artifacts
 9. If depth == quick:
      Produce inline health check (no Agent 4, same context as Agent 1)
    If depth != quick:
-     Launch Agent 4 (pass intake payload) → wait for completion
-10. If depth != quick:
+     Launch Agent 4 (pass intake payload + KB parameter block if KB mode) → wait for completion
+     KB mode only: Post-Write Validation Gate on Agent 4's artifacts
+10. If depth != quick AND legacy mode:
       Auto-invoke render-default-deliverables (see below)
+    If KB mode: skip auto-invoke (see KB Mode Completion Message)
 11. Present completion message (see below)
 12. User reviews, provides corrections
 13. If corrections needed: re-run affected agent(s) only
@@ -575,7 +676,7 @@ If `--property` was not provided but existing `company-identity.md` already has 
 
 ### Step 6.5: Copy Verification Checkpoint
 
-**Skip at quick depth.** At standard and deep depth, after Agent 1 completes:
+**Skip at quick depth.** In KB mode, Homepage Messaging lives in the scope's `bronze-company-facts` artifact: perform the read in step 1 and any correction writes in steps 3-4 against that artifact instead of `company-identity.md`. At standard and deep depth, after Agent 1 completes:
 
 1. Read `.claude/context/company-identity.md` > Homepage Messaging section
 2. Present extracted copy to the user:
@@ -610,6 +711,8 @@ This catches JS rendering failures, stale CDN content, geo-targeted page variati
 
 ### Auto-Invoke: render-default-deliverables
 
+**In KB mode: do NOT auto-invoke at any depth.** render-default-deliverables is not yet KB-adapted and would read/write legacy paths. The KB Mode Completion Message tells the user gold-layer rendering arrives with that skill's KB adaptation.
+
 At `--depth standard` and `--depth deep`, after all agents complete, automatically invoke the render-default-deliverables skill. This produces human-readable deliverables from the context files just generated.
 
 **How to invoke:** Use the Skill tool to invoke `render-default-deliverables`. The skill handles its own context discovery, tiering, and generation. Do not pass arguments. Do not read or modify its output.
@@ -629,7 +732,7 @@ Run /positioning-framework for full analysis.
 Run /render-default-deliverables to generate shareable documents.
 ```
 
-**After `--depth standard` or `--depth deep`:**
+**After `--depth standard` or `--depth deep`** (KB mode: use the KB Mode Completion Message variant from `KB Mode (Dual-Mode Output)`):
 ```
 Positioning analysis complete for [Company Name].
 
@@ -649,7 +752,7 @@ Review the deliverables and let me know if any need adjustment.
 
 If an agent returns an error or does not complete:
 
-1. **Check for partial output.** Graceful degradation rules require agents to write to disk before checkpoints. Check if the expected output file exists in `.claude/context/`.
+1. **Check for partial output.** Graceful degradation rules require agents to write to disk before checkpoints. Check if the expected output file exists in `.claude/context/` (KB mode: check the agent's Output Mapping path(s) for the scope instead).
 2. **If partial output exists:** Read the file's frontmatter. If confidence >= 2, proceed to the next agent with a note: "Prior agent produced partial output at confidence [N]. Downstream analysis may be limited."
 3. **If no output exists:** Retry the agent once with the same inputs.
 4. **If second attempt fails:** Skip the failed agent. Proceed with remaining agents using available context files only. Present the gap to the user in the completion message: "[Agent name] failed to produce [file name]. Deliverables depending on this file will be skipped or degraded."
@@ -663,7 +766,7 @@ Dependency implications of skipping agents:
 
 ### Orchestrator Quality Checks (after all agents complete)
 
-At standard/deep depth, after Agent 4 returns and before presenting the completion message, the orchestrator verifies:
+At standard/deep depth, after Agent 4 returns and before presenting the completion message, the orchestrator verifies (in KB mode, apply the first two checks to the KB artifacts at their Output Mapping paths instead; the Post-Write Validation Gate has already validated frontmatter per type):
 
 - [ ] All 4 context files exist in `.claude/context/` with valid YAML frontmatter
 - [ ] `_research-extractions.md` exists in `.claude/context/`. Check `total_pages` in frontmatter matches actual entry count (count `## N.` headers). Log warning on mismatch, proceed. Check `total_words` in frontmatter against sanity-check ceiling for depth (Quick: 8K, Standard: 20K, Deep: 35K). Log warning if exceeded, do not trim.
@@ -720,7 +823,8 @@ Read your instructions from:
 
 Company: [name] ([url])
 Depth: [quick/standard/deep]
-Prior work: [summary of what exists in .claude/context/]
+[If KB mode: insert the KB Parameter Block here -- see KB Mode (Dual-Mode Output)]
+Prior work: [summary of what exists in .claude/context/, or of matched KB artifacts in KB mode]
 
 Pre-Flight intake:
 - Named competitors [origin: client]: [list from intake, or "none provided"]
@@ -744,7 +848,7 @@ Use these pages to guide your research priorities:
 - SHOULD fetch low-traffic-high-conversion pages if within page budget
 - Deprioritize low-traffic-low-conversion pages unless they match a required category (homepage, features, pricing)
 
-Execute the research and build company-identity.md. Thread language constraints into the Glossary and Constraints sections. Named competitors are required competitive research targets. Return a completion summary with:
+Execute the research and build company-identity.md (KB mode: the two L0 artifacts per phases/company.md > KB Mode Output). Thread language constraints into the Glossary and Constraints sections. Named competitors are required competitive research targets. Return a completion summary with:
 - Key findings
 - Confidence assessment
 - Gaps flagged for user review
@@ -761,14 +865,15 @@ Read your instructions from:
 Company: [name] ([url])
 Competitive depth: deep
 Competitive focus: [name or "none"]
+[If KB mode: insert the KB Parameter Block here -- see KB Mode (Dual-Mode Output)]
 Prior work: [summary of existing competitive-landscape.md, if any]
 
 Pre-Flight intake:
 - Named competitors [origin: client]: [list -- these are REQUIRED analysis targets, research them even if not found in web searches]
 - Additional context [origin: client]: [any sales context, win/loss notes from user]
 
-Read .claude/context/company-identity.md for L0 context.
-Execute competitive analysis and build competitive-landscape.md. Return a completion summary with:
+Read your L0 context (legacy: .claude/context/company-identity.md; KB mode: the L0 artifacts in your parameter block).
+Execute competitive analysis and build competitive-landscape.md (KB mode: your Output Mapping artifact). Return a completion summary with:
 - Competitors identified and sized
 - Key competitive findings
 - White space identified
@@ -784,14 +889,15 @@ Read your instructions from:
 - skills/positioning-framework/phases/messaging.md
 
 Company: [name] ([url])
+[If KB mode: insert the KB Parameter Block here -- see KB Mode (Dual-Mode Output)]
 Prior work: [summary of existing audience-messaging.md, if any]
 
 Pre-Flight intake:
 - Language constraints [origin: client]: [must-use/must-avoid terms -- these are AUTHORITATIVE, override research-discovered patterns where they conflict]
 - Additional context [origin: client]: [voice preferences, audience nuances from user]
 
-Read .claude/context/company-identity.md and .claude/context/competitive-landscape.md.
-Execute messaging analysis and build audience-messaging.md. Return a completion summary.
+Read your L0 and competitive context (legacy: .claude/context/company-identity.md and .claude/context/competitive-landscape.md; KB mode: the artifacts in your parameter block).
+Execute messaging analysis and build audience-messaging.md (KB mode: your Output Mapping artifact). Return a completion summary.
 ```
 
 Example Agent 4 launch prompt:
@@ -803,13 +909,14 @@ Read your instructions from:
 - skills/positioning-framework/phases/scoring.md
 
 Company: [name] ([url])
+[If KB mode: insert the KB Parameter Block here -- see KB Mode (Dual-Mode Output)]
 
 Pre-Flight intake:
 - Named competitors [origin: client]: [for scoring context]
 - Language constraints [origin: client]: [for scoring context]
 - Additional context [origin: client]: [for scoring context]
 
-Read all 3 prior context files. Execute health check and build positioning-scorecard.md. Return a completion summary with overall positioning health check.
+Read all prior context (legacy: the 3 context files; KB mode: the scope's artifacts in your parameter block). Execute health check and build positioning-scorecard.md (KB mode: your Output Mapping artifact). Return a completion summary with overall positioning health check.
 ```
 
 **Important:** Use `model: "opus"` on all Task tool calls for agents 1-4.

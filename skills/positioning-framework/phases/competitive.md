@@ -6,6 +6,17 @@
 
 ---
 
+## KB Mode Output
+
+Applies ONLY when your launch prompt contains `KB MODE: enabled` (see agent-header.md > KB Mode Rules). In KB mode:
+
+- The output of this phase is `reference/cro-{scope}/competitive-analysis.md` (type `silver-competitive-analysis`), NOT `.claude/context/competitive-landscape.md`. KB frontmatter contract per agent-header.md, with `depends_on` referencing the scope's `bronze-company-facts` and `bronze-research-extraction` artifacts (KB-root-relative paths).
+- L0 reads become the two KB L0 artifacts and the fetch registry read/write-back targets `bronze-fetch-registry`, per agent-header.md KB Mode Rules item 5. Fetch-registry write-back keeps its append semantics at the bronze path.
+- The legacy split-file migration check (`market-landscape.md` + `competitor-profiles.md`) does not apply in KB mode; skip it.
+- All analysis instructions, depth gating, and quality rules in this file apply unchanged.
+
+---
+
 ## Shared Agent Rules
 
 **Shared agent rules** (Proof Point Protocol, Content Integrity Check, Confidence Rules) are in `agent-header.md`. Read that file first.

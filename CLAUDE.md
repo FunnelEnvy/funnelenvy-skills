@@ -340,6 +340,8 @@ Consolidated positioning, competitive research, and messaging framework. Feed it
 
 Runs up to 4 sequential agents depending on depth (Research+L0, Competitive, Messaging+Voice, Scorecard). Each depth builds on prior work incrementally.
 
+**Dual-mode output:** When the working repo's CLAUDE.md declares a `Knowledge Bases` section whose type skill defines the 7 CRO artifact types, the skill writes KB-native bronze/silver artifacts into that KB instead of `.claude/context/` (KB mode, requires `--scope <slug>`; `--no-kb` forces legacy). Legacy behavior is unchanged when no KB binding is detected. See SKILL.md > KB Mode (Dual-Mode Output).
+
 Four modes: Autonomous Research (default), Guided Interview, Audit & Update, Reconciliation (compare research against client's manual worksheet).
 
 ### render-default-deliverables (v1.0.0)

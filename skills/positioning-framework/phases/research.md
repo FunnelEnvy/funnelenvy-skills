@@ -4,6 +4,19 @@ Instructions for the research agent. This file covers all research tiers for the
 
 ---
 
+## KB Mode Output
+
+Applies ONLY when your launch prompt contains `KB MODE: enabled` (see agent-header.md > KB Mode Rules). The research byproducts this file directs you to write to `.claude/context/` are written as first-class bronze artifacts instead:
+
+| Legacy target | KB artifact | Type def |
+|---|---|---|
+| `.claude/context/_research-extractions.md` | `captures/research-extractions/{scope}-research-extractions.md` | `bronze-research-extraction` |
+| `.claude/context/_fetch-registry.md` | `captures/fetch-registries/{scope}-fetch-registry.md` | `bronze-fetch-registry` |
+
+Both carry the KB frontmatter contract from agent-header.md (bronze: no `depends_on`, no `data_provenance`). Everything else in this file applies unchanged at the new paths: the streaming write pattern, the per-page entry format, artifact stripping, the index rewrite, registry quality tags, and the write-before-checkpoint ordering. In KB mode these files are prior work on re-runs: extend the existing scope-matched artifact rather than overwriting.
+
+---
+
 ## Shared Agent Rules
 
 **Shared agent rules** (Proof Point Protocol, Content Integrity Check, Confidence Rules) are in `agent-header.md`. Read that file first.

@@ -8,6 +8,16 @@
 
 ---
 
+## KB Mode Output
+
+Applies ONLY when your launch prompt contains `KB MODE: enabled` (see agent-header.md > KB Mode Rules). In KB mode:
+
+- The output of this phase is `reference/cro-{scope}/audience-analysis.md` (type `silver-audience-analysis`), NOT `.claude/context/audience-messaging.md`. KB frontmatter contract per agent-header.md, with `depends_on` referencing the scope's `silver-strategy-context` artifact (KB-root-relative path).
+- Reads follow agent-header.md KB Mode Rules item 5: both KB L0 artifacts, `silver-competitive-analysis`, and `bronze-research-extraction`.
+- All analysis instructions and quality rules in this file apply unchanged.
+
+---
+
 ## Shared Agent Rules
 
 **Shared agent rules** (Proof Point Protocol, Content Integrity Check, Confidence Rules) are in `agent-header.md`. Read that file first.
