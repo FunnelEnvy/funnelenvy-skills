@@ -7,6 +7,8 @@
 - `modules/experiment-patterns.md` (loaded by orchestrator)
 - Any `modules/evidence-*.md` files (optional, loaded by orchestrator if present)
 
+In KB mode the orchestrator supplies the same context bodies, sourced from the scope's silver artifacts per the SKILL.md `KB Mode (Dual-Mode Output)` > `Read-side Mapping`. Trigger and detection logic below is source-agnostic and unchanged.
+
 ## Depth Behavior
 
 This phase does not vary by depth. All available context is scanned regardless of how it was produced.
@@ -122,6 +124,23 @@ These flags are NOT used for filtering in this phase. They feed into the Prerequ
 These triggers fire only when quantitative GA4 data exists. They produce net-new opportunities that positioning analysis alone cannot surface. Each trigger is concrete and data-dependent.
 
 Run these in parallel with pattern matching (Step 2). Performance-driven opportunities join the opportunity list with `signal_source: performance-profile.md`.
+
+#### Profile Schema Equivalence
+
+The trigger conditions below are written against the ga4-audit v2.x performance-profile field names. Profiles produced by other audit skills may carry equivalent data under different structure, and may lack `schema_version` entirely (common for KB-mode silver performance artifacts).
+
+- When the profile carries `schema_version`, the SKILL.md Preconditions version gating applies unchanged.
+- When `schema_version` is absent, bypass the version gate and evaluate each trigger by **content equivalence**: if the profile body carries semantically equivalent data, the trigger fires against that content. Equivalence examples:
+
+| v2.x field condition | Equivalent profile content |
+|---|---|
+| `top_opportunities` with `estimated_monthly_impact` | A pre-sized opportunity table or list with impact buckets (e.g., Large / Medium / Small) |
+| `trends.primary_cvr_change_pp`, `trends.bounce_rate_change_pp` | Period-delta or period-over-period trend tables for conversion and bounce metrics |
+| Page sessions/bounce conditions (paid traffic, entry points, high-bounce pages) | A page-level traffic/bounce table with per-page volumes |
+| Data-gap gating (what can't be measured) | Documented data-gap or measurement-constraint notes in the profile body |
+
+- Triggers whose data has no equivalent in the profile (e.g., `element_interactions_available`, `top_interactions`, `page_groups`, `failure_mode`, `new_vs_returning` when those structures are absent) self-gate off, exactly as absent frontmatter fields do today.
+- Equivalence is evaluated per trigger, not per profile: one profile may satisfy the opportunity-sizing and trend triggers while lacking element-interaction data entirely.
 
 | Trigger Condition | Hypothesis Type | Example |
 |---|---|---|
