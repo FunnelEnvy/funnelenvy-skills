@@ -7,14 +7,14 @@ description: >
   while preserving the legacy .claude/context/ behavior for non-KB clients. First Path B
   skill adaptation; the pilot client engagement is the first consumer.
 governed_by: change-management/change-document
-status: QA
+status: Closed
 resource_name: positioning-framework
 resource_version: "TBD"
 impact: 4
 confidence: 4
 ease: 2
 initiative: cro-kb-path-b
-version: "0.7.0"
+version: "0.8.0"
 created: 2026-06-03
 updated: 2026-06-03
 ---
@@ -276,6 +276,7 @@ added as clearly-bounded conditional blocks ("In KB mode: ..."), never by rewrit
 
 | Version | Changes |
 |---|---|
+| 0.8.0 | Closed: user QA approval. Skill CHANGELOG.md created with [Unreleased] entry. Release deferred until first-run acceptance (Validation item 4) passes in a fresh session from the pilot client repo |
 | 0.7.0 | QA: adversarial review (2 blockers, 4 should-fix, 2 nits) all resolved. Quick depth hard-stopped in KB mode; launch-prompt literal reads gated on mode; Copy Verification Checkpoint + Agent Failure Recovery KB targets; handoff file purged from branch history (client-string leak) |
 | 0.6.0 | Build complete: R1-R8 implemented across 9 files (SKILL.md centralized KB Mode section + bounded pointers, agent-header KB Mode Rules, per-phase KB Mode Output blocks, README/CLAUDE.md descriptions). 213 insertions, 15 deletions, all deletions superset rewrites. R9 verified: zero client strings in diff |
 | 0.5.0 | Build: status transition |
