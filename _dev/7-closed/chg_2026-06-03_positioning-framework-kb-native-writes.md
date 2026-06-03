@@ -9,7 +9,7 @@ description: >
 governed_by: change-management/change-document
 status: Closed
 resource_name: positioning-framework
-resource_version: "TBD"
+resource_version: "1.1.0"
 impact: 4
 confidence: 4
 ease: 2
