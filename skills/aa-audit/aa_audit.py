@@ -338,8 +338,28 @@ def build_date_ranges(days: int, no_compare: bool) -> dict:
 # Report Parsing Helpers
 # ============================================================================
 
+_coerce_warned: set = set()
+
+
+def _coerce_cell(name: str, value) -> float:
+    """Coerce a report cell to float. The Reports API can return strings
+    (e.g., "NaN") in comparison windows; non-numeric cells become 0.0."""
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        result = float("nan")
+    if result != result:  # NaN from API or failed parse
+        if name not in _coerce_warned:
+            _coerce_warned.add(name)
+            print(f"  Warning: non-numeric cell value for '{name}' coerced to 0.0",
+                  file=sys.stderr)
+        return 0.0
+    return result
+
+
 def _normalize_value(name: str, value: float) -> float:
     """Normalize AA metric values. Bouncerate comes as 0-1, convert to 0-100%."""
+    value = _coerce_cell(name, value)
     if name == "bouncerate" and 0 <= value <= 1:
         return round(value * 100, 2)
     return value
