@@ -14,7 +14,7 @@ impact: 4
 confidence: 4
 ease: 3
 initiative: cro-kb-path-b
-version: "0.1.0"
+version: "0.2.0"
 created: 2026-06-03
 updated: 2026-06-03
 ---
@@ -30,10 +30,13 @@ positioning-framework v1.1.0 shipped dual-mode output (chg_2026-06-03_positionin
 - The positioning-framework KB-mode machinery (mode resolution from the working repo CLAUDE.md, `--scope`/`--no-kb` flags, KB frontmatter contract, post-write validation via kb_type_validate.py) is authored per-skill, not shared.
 - Pilot learning: the audit skills are single-agent, so the adaptation is smaller than positioning-framework's — one output mapping row (`performance-profile.md` → `silver-performance-analysis` at `reference/cro-{scope}/performance-analysis.md`), no multi-agent parameter threading.
 - Pilot learning: `depends_on` is required by the silver type but audit data is query-time (no bronze source artifact exists); the pilot used a same-layer edge to the analytics reference doc. The adaptation needs a documented `depends_on` policy for this case (same-layer reference vs bronze data-export capture).
+- Schema-version skew: ga4-audit emits `schema_version: "2.2"` while aa-audit's documented output pins `"2.0"`, and the consumer ([hypothesis-generator detect.md](../../skills/hypothesis-generator/phases/detect.md) Step 1c) declares no accepted schema_version range. No enforced contract guarantees the performance-profile shape is interchangeable across producers.
 
 ## Approach
 
 Mirror the positioning-framework KB Mode section in both audit skills: pre-flight mode resolution, `--scope` requirement, type-def-driven output path/frontmatter/layout, post-write validation gate. Extract or restate the shared mode-resolution procedure consistently. Resolve the `depends_on` policy for query-time data as part of Design.
+
+Additionally, own the cross-skill performance-profile schema-version contract: a single versioned schema (canonical owner, accepted `schema_version` range declared by the consumer, AA/GA4 equivalence rule) so detect.md's performance triggers fire identically regardless of producing skill. Producer-side conformance for aa-audit is tracked separately in [chg_2026-06-03_aa-audit-performance-profile-schema-conformance](chg_2026-06-03_aa-audit-performance-profile-schema-conformance.md).
 
 ## Requirements
 
@@ -47,4 +50,5 @@ Stub — filled during Design. Must include a KB-native audit run whose artifact
 
 | Version | Changes |
 |---------|---------|
+| 0.2.0 | Merged in the cross-skill performance-profile schema-version contract concern (ga4 "2.2" vs aa "2.0" skew, no consumer-declared accepted range) — surfaced by change-capture at the hypothesis-generator-kb-native Backlog → Discovery transition. |
 | 0.1.0 | Initial backlog change document — extend KB-native writes to the audit skills; pattern proven manually during the 2026-06-03 pilot. |
