@@ -7,14 +7,14 @@ description: >
   while preserving the legacy .claude/context/ behavior for non-KB clients. First Path B
   skill adaptation; the pilot client engagement is the first consumer.
 governed_by: change-management/change-document
-status: Discovery
+status: Build
 resource_name: positioning-framework
 resource_version: "TBD"
 impact: 4
 confidence: 4
 ease: 2
 initiative: cro-kb-path-b
-version: "0.3.0"
+version: "0.5.0"
 created: 2026-06-03
 updated: 2026-06-03
 ---
@@ -172,25 +172,111 @@ the live first-client run defined in `Validation`.
 
 ## Requirements
 
-Stub — filled during Design after Approach approval.
+All edits are markdown instruction changes in `skills/positioning-framework/`; no scripts are
+added or modified. Legacy-mode instruction paths must remain textually intact — KB behavior is
+added as clearly-bounded conditional blocks ("In KB mode: ..."), never by rewriting legacy steps.
+
+### R1: SKILL.md (orchestrator)
+
+1. **Flags**: add `--scope <slug>` and `--no-kb` to the flag definitions section, with validation
+   rules (`--scope` meaningless in legacy mode → warn and ignore; `--no-kb` forces legacy).
+2. **KB Mode Resolution pre-flight step**, slotted with existing flag parsing: parse working-repo
+   CLAUDE.md `Knowledge Bases` section → KB root + type skill name; verify the repo-local type
+   skill defines all 7 CRO artifact types in `artifacts/`; resolve scope (hard stop listing valid
+   scopes when missing in KB mode); on any failed check, fall back to legacy and report which
+   check failed.
+3. **Parameter threading**: a KB parameter block (`kb_mode`, `kb_root`, `kb_type`, `scope`,
+   per-agent artifact type def paths) inserted immediately after the `depth:` line in all four
+   agent launch prompts.
+4. **Prior-work detection branch**: in KB mode, glob `{kb_root}/reference/cro-{scope}/*.md` plus
+   the three scoped captures paths, filter by `governed_by` + `scope`, then apply the existing
+   confidence/depth rules. Legacy glob untouched.
+5. **Post-write validation gate**: after each agent completes in KB mode, run
+   `kb_type_validate.py validate` on its new artifacts and fix errors before launching the next
+   agent. Document the script's plugin-cache resolution and the probe-then-run Python pattern.
+6. **Render skip**: in KB mode, do not auto-invoke render-default-deliverables; print the
+   gold-rendering-comes-later note. Legacy auto-invoke untouched.
+7. **Sanity checks**: extend the existing output sanity checks to cover the KB paths in KB mode.
+
+### R2: agent-header.md (shared agent rules)
+
+1. KB-mode addendum: write targets come exclusively from the launch-prompt parameter block; KB
+   frontmatter contract summary (with the type defs as authority); confidence and
+   extension-marker rules apply to KB artifacts unchanged; never read or write artifacts of a
+   different scope.
+
+### R3: phases/company.md (Agent 1, L0)
+
+1. KB-mode output branch: produce `bronze-company-facts` and `silver-strategy-context` per the
+   `Output Mapping (KB Mode)` section mapping table (including the five relocated sections and
+   the frontmatter block split).
+2. `silver-strategy-context` declares `depends_on` → the bronze company-facts artifact and
+   carries `data_provenance` per the per-artifact rule.
+3. Proof point IDs remain immutable across the split; silver `Differentiators` reference bronze
+   registry IDs.
+
+### R4: phases/research.md (Agent 1, research byproducts)
+
+1. KB-mode write targets: extractions → `bronze-research-extraction`, fetch registry →
+   `bronze-fetch-registry`, at the type-defined captures paths with bronze frontmatter.
+2. Streaming-write pattern and artifact-stripping rules preserved in both modes.
+
+### R5: phases/competitive.md (Agent 2)
+
+1. KB-mode reads: bronze-company-facts + silver-strategy-context (instead of company-identity)
+   and the bronze fetch registry; appends new URLs to `bronze-fetch-registry` (append semantics
+   preserved).
+2. KB-mode write: `silver-competitive-analysis` with `depends_on` → bronze-company-facts,
+   bronze-research-extraction.
+
+### R6: phases/messaging.md (Agent 3)
+
+1. KB-mode reads: both L0 artifacts + silver-competitive-analysis + bronze extractions.
+2. KB-mode write: `silver-audience-analysis` with `depends_on` → silver-strategy-context.
+
+### R7: phases/scoring.md (Agent 4)
+
+1. KB-mode reads: all prior KB artifacts for the scope.
+2. KB-mode write: `silver-positioning-scorecard` with `depends_on` →
+   silver-competitive-analysis, silver-audience-analysis.
+
+### R8: Repo documentation
+
+1. Update the skill's description in both repo CLAUDE.md files and README.md to state dual-mode
+   output (KB-native when a client KB binding is detected, legacy otherwise). No version bumps —
+   versioning happens at release per change-management.
+
+### R9: Public-repo hygiene (cross-cutting)
+
+1. No client names, client domains, private repo names, or engagement identifiers in any skill
+   file, commit message, or PR content. All examples use generic placeholders (`{kb-type}`,
+   `{scope}`, `docs/`).
 
 ## Validation
 
-Stub — to include at minimum the acceptance criteria for the first run, executed from the pilot
-client repo (results documented privately there):
-
-- `/positioning-framework` in KB mode writes bronze + silver artifacts into the client KB at the
-  type-defined paths for the requested scope
-- `kb_type_validate.py validate` passes on every new artifact
-- `kb_graph.py health` shows correct `depends_on` edges (per the Output Mapping graph, no
-  layer-inverted edges)
-- Zero files land in `.claude/context/`
-- Legacy mode regression: a non-KB invocation still writes `.claude/context/` exactly as v1.0.0
+1. **Client-string sweep**: `git diff main..HEAD` greps clean for client identifiers
+   (case-insensitive) before any push or PR.
+2. **Legacy regression (static)**: diff review confirms every legacy instruction path is
+   textually unchanged outside added conditional KB blocks; a read-through of the mode-resolution
+   step confirms a repo without a `Knowledge Bases` section resolves to legacy.
+3. **Document-management review** passes findings-clean on all changed markdown.
+4. **First-run acceptance** (executed from the pilot client repo; results documented privately
+   there):
+   - KB-mode run writes bronze + silver artifacts at the type-defined paths for the requested
+     scope
+   - `kb_type_validate.py validate` passes on every new artifact
+   - `kb_graph.py health` shows `depends_on` edges exactly per the Output Mapping graph, no
+     layer-inverted edges
+   - Zero files land in `.claude/context/`
+   - Scope isolation: artifacts of the non-requested scope are untouched
+5. **Legacy regression (behavioral, post-release)**: next legacy invocation behaves identically
+   to v1.0.0 (outputs in `.claude/context/`, no KB messages beyond the mode line).
 
 ## Changelog
 
 | Version | Changes |
 |---|---|
+| 0.4.0 | Design: Requirements (R1-R9 per-file breakdown) and Validation (5 checks incl. client-string sweep and first-run acceptance) filled against approved Approach |
 | 0.3.0 | Discovery: all 6 Open Issues resolved with user (decisions integrated into Approach); client references sanitized for public repo |
 | 0.2.0 | Discovery: research-informed Approach (mode resolution, schema authority, output + L0 split mapping tables, validation gate, scope boundaries); Open Issues recommendations sharpened, OQ 5 (render skip) and OQ 6 (data_provenance) added |
 | 0.1.0 | Initial backlog creation from Path B handoff |
