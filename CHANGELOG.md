@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [1.1.0] - 2026-06-03
 
 ### hypothesis-generator
 
@@ -50,6 +50,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - Buyer alternatives discovery process in competitive phase
 - `--property` flag for GA4-guided page selection
 - GA4 property ID persistence in company-identity.md for downstream skill auto-detection
+- Dual-mode output (KB mode): typed bronze/silver artifacts into a client knowledge base when a KB binding is detected; --scope/--no-kb flags; per-agent post-write validation gate; legacy output unchanged
 
 #### Changed
 - Integrated markdown.new as primary web extractor with three-tier fallback

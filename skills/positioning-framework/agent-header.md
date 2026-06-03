@@ -31,6 +31,18 @@ Every agent follows this precedence: **accuracy > completeness > format**.
 
 ---
 
+## KB Mode Rules
+
+These rules apply ONLY when your launch prompt contains a `KB MODE: enabled` parameter block. If the block is absent, you are in legacy mode: ignore this section entirely and follow the rest of this file and your phase file as written.
+
+1. **Write targets come exclusively from the parameter block + artifact type defs.** Read every artifact type def listed in your parameter block before writing. The type def is the authority for output path (under the KB root), frontmatter contract, and body section layout. Your phase file remains the authority for analytical content and research procedure. Never write to `.claude/context/`.
+2. **KB frontmatter contract.** Every artifact you write carries `fe-managed: true`, `name`, `description`, `kb_layer` (per type def), `governed_by: {kb-type}/{artifact-type}` composed from your parameter block, `scope` (from your parameter block), `generated_by: positioning-framework`, `tags` (3-7 semantic), `version`, `created`, `updated`. Silver artifacts additionally carry `data_provenance` (`public` unless client-provided input materially shaped this artifact, then `client`), `depends_on` (KB-root-relative paths per your phase file's KB Mode section), and `confidence`.
+3. **Confidence, extension, provenance, and proof rules are unchanged.** Apply every rule in this file (Confidence Rules, When Extending a File, Proof Point Protocol, Content Integrity Check, Provenance Protocol) to KB artifacts exactly as you would to legacy context files. Extension markers (`<!-- extended by ... -->`) go in KB artifact sections the same way.
+4. **Scope isolation is absolute.** Never read, write, or extend an artifact whose frontmatter `scope` differs from the scope in your parameter block. Artifacts of other scopes are not prior work.
+5. **Where your phase file OR launch prompt says to read or build a legacy context file, use its KB equivalent** for your scope instead: `company-identity.md` becomes BOTH `bronze-company-facts` AND `silver-strategy-context` (read both); `competitive-landscape.md` becomes `silver-competitive-analysis`; `audience-messaging.md` becomes `silver-audience-analysis`; `_fetch-registry.md` becomes `bronze-fetch-registry`; `_research-extractions.md` becomes `bronze-research-extraction`. Paths are in your parameter block's type defs.
+
+---
+
 ## Confidence Rules
 
 ### Confidence Can Increase When:

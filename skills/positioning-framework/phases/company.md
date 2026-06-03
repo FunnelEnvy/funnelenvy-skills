@@ -4,6 +4,39 @@ Instructions for building `company-identity.md` from research findings. This fil
 
 ---
 
+## KB Mode Output
+
+Applies ONLY when your launch prompt contains `KB MODE: enabled` (see agent-header.md > KB Mode Rules). In KB mode, do NOT write `company-identity.md`. Produce TWO artifacts instead, splitting the L0 content you would have written:
+
+| Artifact | Type def | Content |
+|---|---|---|
+| `{scope}-company-facts.md` | `bronze-company-facts` | Factual content (mapping below) |
+| `strategy-context.md` | `silver-strategy-context` | Analytical content (mapping below) |
+
+Build the full L0 content per this phase file's instructions and schema, then route each section per this mapping:
+
+| L0 schema section | Destination | Notes |
+|---|---|---|
+| Company Overview | bronze: `Company Overview` | |
+| Services & Capabilities | bronze: `Product Catalog` | fold Service Exclusions in as a subsection |
+| Company Stats | bronze: `Key Statistics` | |
+| Glossary | bronze: `Glossary` | |
+| Constraints | bronze: `Constraints` | |
+| Homepage Messaging | bronze: `Homepage Messaging` | verbatim, with source attribution tags |
+| Proof Point Registry | bronze: additional section | proof IDs stay immutable |
+| Pricing Model | bronze: additional section | |
+| Target Segments | silver: `Target Segments` | fold Anti-Personas in as a subsection |
+| Stated Differentiators | silver: `Differentiators` | reference proof by ID; the registry lives in bronze |
+| Buying Triggers | silver: `Buying Triggers` | |
+| Category Gap | silver: `Category Gap` | |
+| Retired Positioning | silver: additional section | |
+
+Frontmatter split: the L0 schema's `company` block (including `ga4_property`) goes on the bronze artifact; `category` and `target_market` go on the silver artifact. Both artifacts carry the KB frontmatter contract from agent-header.md. The silver artifact declares `depends_on` referencing the bronze artifact's KB-root-relative path, and `data_provenance` per the rule in agent-header.md.
+
+Every construction rule in this file (factual-only language for facts, prohibited patterns, provenance tags, proof protocol, completeness markers) applies unchanged; only the file routing differs. Sections beyond a type def's REQUIRED list are valid additional sections.
+
+---
+
 ## Depth Behavior
 
 Read the DEPTH parameter from the task prompt.
