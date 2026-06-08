@@ -6,6 +6,13 @@
 # Development directories (may contain client references)
 skills/**/_dev/
 
+# Module bundles accidentally written into a skill dir (shared modules live at repo-root modules/,
+# a sibling of skills/; a symlinked/isolated invocation can deposit a stale copy here -- see ARCHITECTURE.md gotcha 16)
+skills/**/modules/
+
+# Internal architecture reference (header: "Not shipped in the public repo")
+/ARCHITECTURE.md
+
 # Execution plans (development artifacts, not source)
 execution-plan/
 

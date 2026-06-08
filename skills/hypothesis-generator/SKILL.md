@@ -222,6 +222,8 @@ Wait for response. If content is provided, treat it as supplementary page contex
 
 ### Phase 1: Context Discovery and Loading
 
+**Module resolution and availability (do this before loading any module).** Every `modules/<name>.md` reference in this skill and its phase files is repository-root-relative: the shared library lives in the `modules/` directory at the repo root, a sibling of `skills/`, NOT inside this skill's own folder. When the skill is invoked from a symlinked or installed location (e.g., `~/.claude/skills/hypothesis-generator/`), resolve this skill's real path first (follow the symlink), then load `modules/` from the repository root (the parent of `skills/`). If the required library (`experiment-patterns.md`, `ice-scoring.md`, `contrarian-triggers.md`, `hypothesis-interactions.md`) cannot be located and read, STOP and report that the shared pattern library is unavailable. Do NOT substitute embedded or remembered CRO patterns, ICE calibration, or contrarian/interaction logic: a roadmap produced without the library is not valid output, and a plausible-looking silent fallback is the exact failure this guard prevents.
+
 0. **Mode resolution** -- run the `Mode Resolution Procedure` from `KB Mode (Dual-Mode Output)`. In legacy mode, continue below unchanged. In KB mode, steps 1-2 read the scope's artifacts per `Read-side Mapping` instead of the `.claude/context/` glob, and the handoff check uses the KB-mode branches noted below.
 1. Glob `.claude/context/*.md`
 2. Read YAML frontmatter only for each file
@@ -583,6 +585,8 @@ In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope
 ---
 
 ## Module Dependencies
+
+Modules resolve from the repository-root `modules/` directory (a sibling of `skills/`), not from this skill's own folder. See Phase 1 `Module resolution and availability` for symlink-aware resolution and the hard load-failure guard.
 
 ```
 SKILL.md (this file)
