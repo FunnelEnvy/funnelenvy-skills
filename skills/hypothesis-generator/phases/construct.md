@@ -41,6 +41,8 @@ Example: if you test a differentiation-led H1 while the subhead still says "fast
 
 This constraint applies throughout the construction process below. When evaluating opportunities from Phase 2, actively look for opportunities targeting the same page with the same underlying hypothesis and merge them before constructing individual experiments.
 
+**Cross-surface bundling rule.** Bundle elements that serve one idea on the same page or section. Across different surfaces, bundle only if a single failure mode can be named for a combined loss. If a combined loss would list three or more independent things that could have failed on different surfaces, sequence the experiments instead of bundling them. A bundle whose loss-analysis cannot name one failure mode is not one experiment; it is several wearing one name. (This rule is shared verbatim with `modules/hypothesis-interactions.md` > `Same-Page Interaction Analysis Process`; keep the two copies in sync.)
+
 ---
 
 ## Pre-Construction Red-Flag Checks
@@ -228,6 +230,8 @@ Every hypothesis requires a "why." This is the CRO reasoning that separates a ri
 3. **Prediction:** What change in behavior the variant should produce
 4. **Metric:** How that behavior change manifests in measurable terms
 
+The Prediction must carry a read threshold, not just a direction. State the condition under which the variant ships and the condition under which it is abandoned. For proxy-only scopes with no CVR baseline, the honest form is: "ship if the variant proxy beats control by the test's MDE at full sample; abandon if flat at full sample." Do not fabricate a point estimate ("+X%") when no baseline supports one. This read threshold renders in the deliverable as the `Expected effect and read threshold` line.
+
 **Example:**
 > Visitors from paid search land on the homepage and see a category-defining headline ("Revenue Intelligence Platform"). These visitors already know the category: they searched for it. Repeating category language wastes the highest-attention moment on information they already have. Replacing with outcome language ("Close 40% more deals") immediately communicates value, reducing bounce rate and increasing demo request clicks. The primary metric is demo request rate; secondary metric is bounce rate.
 
@@ -380,7 +384,8 @@ Where:
 
 **Edge cases:**
 - **CVR available:** Compute duration normally using the page's conversion rate for the primary conversion event.
-- **CVR not available but sessions are:** Output: "Cannot estimate (no conversion rate baseline). If testing engagement metric, feasibility depends on effect size."
+- **CVR not available but a variant-instrumented proxy is definable:** Estimate feasibility on the proxy metric's expected base rate and the surface's traffic. Output: "~N weeks on [proxy] at this traffic." Do not output "Cannot estimate" when a proxy is instrumentable.
+- **CVR not available and no proxy is instrumentable:** Output: "Cannot estimate (no conversion rate baseline). If testing engagement metric, feasibility depends on effect size."
 - **No performance data at all:** Omit both Baseline and Test Feasibility lines (same as current behavior for Baseline).
 - **Page not in performance-profile.md:** Omit Baseline and Test Feasibility (page has insufficient data).
 
@@ -562,6 +567,7 @@ After deduplication, analyze interactions between surviving hypotheses.
 - Before/after must show the combined variant, not two separate before/afters
 - "What a win proves" addresses the combined strategy
 - "What a loss teaches" must distinguish: "If the combined variant loses, it could mean [strategy A] failed, [strategy B] failed, or the combination created a negative interaction. To disambiguate, next test [A] or [B] in isolation."
+- **Render check (hard gate):** a bundled hypothesis MUST carry the bundle-disclosure block with a non-empty "This test will not isolate" line. A bundled hypothesis whose loss-analysis states a single verdict without naming what the test cannot isolate fails the render and must be revised before output.
 
 **Output annotations carried to Phase 4:**
 - `interaction_type`: "bundled" | "multiplicative_dependency" | "additive" | "none"
@@ -574,7 +580,7 @@ After deduplication, analyze interactions between surviving hypotheses.
 
 Before emitting the final hypothesis list, generate the strongest counterarguments to each hypothesis and check the writeup for internal consistency. This step catches reasoning weaknesses that targeted rules (Steps 3b, 3c, 4b, 5a, 5c) miss: inconsistencies between the skill's own arguments, evidence claims that overstate their support, and causal reasoning that doesn't survive scrutiny.
 
-This is a required pass. It runs on all hypotheses. The deliverable rendering may omit the self-critique section for Exploration-tier hypotheses (determined after Phase 4 scoring), but the pass itself runs unconditionally.
+This is a required pass. It runs on all hypotheses, and the self-critique section is rendered for every hypothesis regardless of tier. The pass itself runs unconditionally.
 
 **Procedure:**
 

@@ -198,6 +198,8 @@ When two or more hypotheses target the same page:
    - Uses the lower Ease of the two (more implementation work)
    - Gets a single "What a win proves" and "What a loss teaches" that addresses the combined mechanism, not each element separately
 
+**Cross-surface bundling rule.** Bundle elements that serve one idea on the same page or section. Across different surfaces, bundle only if a single failure mode can be named for a combined loss. If a combined loss would list three or more independent things that could have failed on different surfaces, sequence the experiments instead of bundling them. A bundle whose loss-analysis cannot name one failure mode is not one experiment; it is several wearing one name. (This rule is shared verbatim with `skills/hypothesis-generator/phases/construct.md` > `Experiment Scope Rule`; keep the two copies in sync.)
+
 ## Cross-Page Interaction Rules
 
 Hypotheses targeting different pages are independent by default. Exceptions:

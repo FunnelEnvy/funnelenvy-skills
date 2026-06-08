@@ -2,7 +2,7 @@
 
 Version: 1.1.0
 Last updated: 2026-03-20
-Trigger count: 13
+Trigger count: 14
 
 This module defines context conditions where standard CRO recommendations are wrong, counterproductive, or actively harmful. The hypothesis construction phase checks every hypothesis against this matrix before finalizing.
 
@@ -265,6 +265,23 @@ For each constructed hypothesis, check the "Detection Signal" column. If any sig
 - If condition cannot be validated: "Condition is unverified. Test as exploration-tier with explicit validation as the primary learning goal."
 
 **Evidence basis:** Apparel retailer (agency test): icon-to-"Log In" text change = +55% logins, +4.1% orders because the logged-in experience had genuine value (saved cart, payment info, streamlined checkout). Same test on a social impact fundraising site completely failed because the account had minimal value (just order history). The surface change was identical; the underlying value proposition was not.
+
+---
+
+### CTR-14: Device/OS Defect Misattribution
+
+**Standard advice:** Attribute a device-specific friction gap to channel messaging or page rendering.
+**When wrong:** An OS-level or browser-family script-error defect explains the device gap, not message fit.
+
+**Detection signals (ANY match triggers):**
+- A device or OS cut in the performance profile shows the error-session rate concentrated by OS or browser family (e.g., Android 50% vs Windows 25%, or SamsungInternet/ChromeMobile high vs desktop Chrome baseline) rather than by page or channel
+- A device friction gap coincides with an identified script-error family on the same sessions
+- The hypothesis proposes a mobile/device messaging or rendering change on a surface whose device gap is error-explained
+
+**Action:** Gate
+**Gate condition:** Route to fix-and-monitor before any device-targeted messaging hypothesis. The fix is the error remediation, not a messaging test or a Core Web Vitals audit. Add a verification note: "Confirm the device gap survives the error fix before testing messaging; messaging tests on error-degraded sessions are uninterpretable." Cap at Strategic Bet tier until the error family is ruled out.
+
+**Evidence basis:** An OS/browser-level defect inflates a device friction gap independent of message fit. Testing a messaging variant on error-degraded sessions cannot separate message effect from error effect.
 
 ---
 
