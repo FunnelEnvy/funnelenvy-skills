@@ -11,7 +11,7 @@ Evaluate unmatched signals from Phase 2 for novel testable experiments not cover
 
 ## Quality Gate
 
-Every context-derived opportunity MUST pass ALL six criteria. If any criterion fails, the signal is discarded. No exceptions.
+Every context-derived opportunity MUST pass ALL six criteria. If any criterion fails, the signal is discarded, unless that criterion specifies routing it elsewhere (criteria 5 and 6 route to "What's Not Here" or Prerequisites rather than discarding). A signal never becomes a hypothesis on a failed criterion.
 
 1. **Specific observable signal.** The opportunity points to a concrete condition in a named context file section. "Messaging could be stronger" fails. "Homepage subhead uses feature language while audience-messaging recommends outcome-first framing for the CTO persona" passes.
 
@@ -22,6 +22,8 @@ Every context-derived opportunity MUST pass ALL six criteria. If any criterion f
 4. **Before state documented.** The current state is either directly quoted from context or clearly inferable from a specific context file section. Invented or assumed "before" states fail.
 
 5. **Genuine uncertainty.** The outcome of the experiment is not predetermined. If the change is so obviously correct that no reasonable person would argue against it, it's a "just do it" fix, not a hypothesis. Flag it in "What's Not Here" instead.
+
+   **Untestable-differentiator routing branch.** If a signal points to the company's highest-value differentiator BUT the differentiator cannot be A/B tested (it is entitled-account-only, store-wide-claim-unsupportable, or otherwise structurally untestable at current scope), do NOT discard it and do NOT force it into a hypothesis. Route it to "What's Not Here" as a productization or positioning decision, carrying the demand evidence (who is asking, how often) and the specific blocker (data coverage, entitlement scope, compliance). score.md Step 5b records it under the structurally-untestable-differentiator routing category.
 
 6. **Not a pattern gap.** The signal shouldn't match a pattern that was skipped because of missing data. That's a data gap, handled by Prerequisites (Phase 3, Change 3). Check: could this signal have triggered a pattern if more data were available? If yes, route to Prerequisites instead.
 

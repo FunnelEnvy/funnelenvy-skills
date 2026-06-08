@@ -54,6 +54,7 @@ Confidence measures how certain you are that the experiment will produce a measu
 - Partial triggers (from Phase 2) reduce Confidence by 1
 - Confidence 5 should only appear when calibration data from evidence modules is present
 - "Before" state based on exact copy from context: no adjustment. "Before" state inferred: Confidence -1.
+- When conversions lack page attribution but variant-level instrumentation is available: Confidence reflects the proxy read's interpretability, not revenue attribution. A high-traffic surface with a variant-instrumented proxy that reads out within the feasibility window earns its Confidence on the proxy. Note the revenue-attribution limitation separately in the hypothesis; do not cap proxy-read Confidence for it.
 
 ---
 
@@ -253,5 +254,7 @@ Context-derived hypotheses (from Phase 2b) lack pattern precedent. They represen
 - The Confidence -1 penalty can be neutralized (+1) only with a specific evidence citation from context files. "Strong evidence" as a general claim doesn't qualify. Name the context file section and the specific data point.
 
 **Anti-pattern: Context-derived inflation.** If context-derived hypotheses are consistently scoring Confidence 3+ (after the penalty), the penalty isn't doing its job. At least half of context-derived hypotheses should remain at Confidence 2 after all adjustments.
+
+**Exceeding the Confidence-3 cap.** A context-derived hypothesis may exceed Confidence 3 when it BOTH cites a specific, named piece of corroborating evidence from context (a verified before-state quote, a quantified performance signal, or a named behavioral-friction finding) AND targets a high-traffic, proxy-readable surface. Either alone holds the cap at 3. This is the path by which a pattern-starved scope with strong evidence can still earn a Quick Win. It is a narrow exit, not a loophole: the inflation anti-pattern above still governs the general population.
 
 **Skip steps 2-3:** Context-derived hypotheses have no pattern modifiers or calibration overrides. Jump from Step 1 directly to Step 4 (contextual adjustments) then Step 5 (interaction modifiers).

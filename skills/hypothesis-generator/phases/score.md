@@ -19,6 +19,7 @@ This phase does not vary by depth.
 | No competitive-landscape.md | Impact scores for competitive-pressure hypotheses capped at 3. |
 | No audience-messaging.md | Confidence scores for persona-based hypotheses capped at 3 (less certainty about messaging fit). |
 | No baseline traffic/conversion data (no performance-profile.md) | Confidence scores capped at 4 globally. Add note to roadmap: "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses." |
+| Performance data present but conversions lack page attribution | Cap revenue-attribution confidence only; do NOT apply a blanket Confidence cap. Default the target metric to a variant-instrumented proxy. Emit one measurement-enablement item as a scored prerequisite-experiment (named, with the enablement vehicle and date if engagement-constraints supply one). |
 | Calibration data from evidence modules | Override pattern baselines with calibrated scores where available. Calibrated scores take precedence. |
 
 ---
@@ -107,6 +108,8 @@ For each infeasible hypothesis:
 
 Infeasible hypotheses are NOT failures. They are real opportunities that require either more traffic, a different measurement approach, or a different test design. The "What's Not Here" section should present them as future opportunities, not rejects.
 
+**Structurally-untestable-differentiator (distinct from low-traffic infeasibility).** When a signal routed from Phase 2b (detect-contextual.md criterion 5, untestable-differentiator branch) points to the company's highest-value differentiator that cannot be A/B tested at current scope, record it in "What's Not Here" framed as a productization/positioning decision with its demand evidence (who is asking, how often) and blocker (data coverage, entitlement scope, compliance), not as a low-traffic infeasible experiment. The recommendation is a business-model or data-coverage decision, not a test design. Do not assign it a traffic-based infeasibility reason or an alternative measurement approach as if more traffic would unlock it.
+
 **Count:** Track the number of infeasible-routed hypotheses for the completion summary.
 
 ### Step 6: Compute ICE Totals and Tier
@@ -137,7 +140,15 @@ If `--max` cap is hit after tiering, cut from the bottom of Explorations first, 
 
 ### Step 7: Sequencing
 
-Sequencing uses three layers, applied in priority order:
+Sequencing applies the layers below in priority order. When an `engagement-constraints` input is present, the engagement-derived constraints from Phase 2 Step 1d apply first as real-world gating; the remaining layers order experiments within that gating. When no engagement-constraints input is present, skip Layer 0 and sequence on LIFT and dependencies exactly as before.
+
+**Layer 0: Engagement-derived constraints (from Phase 2 Step 1d, only when an engagement-constraints input is present)**
+Apply the sequencing and tier constraints derived in Step 1d:
+- **Release-window timing overrides ordering.** Where a committed release touches a surface an experiment targets, that experiment must read out fully before the release or start after it (a surface touched by a release cannot hold a baseline across it). This timing constraint overrides LIFT and tiebreak ordering for the affected experiments.
+- **Concurrency ceiling.** Cap how many experiments launch together at the approval-bandwidth ceiling derived in Step 1d. Queue the remainder by tier and ICE.
+- **Tier ceiling on high-risk surfaces.** Where Step 1d derived a tier ceiling (e.g., a freshly cautious governance gate), cap the tier that high-risk-surface experiments can reach.
+
+Render the engagement reasoning in the Sequencing Rationale prose (the "why this order"), not as raw constraint text. For example: "The PDP-and-cart experiment starts after the August release because the release touches both surfaces and a baseline cannot hold across it; copy-light, off-configurator tests run first, two to three concurrent at most, reflecting current approval bandwidth." The derived implication reaches the roadmap, not the calendar entry or the incident history.
 
 **Layer 1: Interaction dependencies (from Phase 3 Step 9)**
 Multiplicative dependencies are hard constraints. If hypothesis A has `interaction_dependency.depends_on = B`, then B runs before A regardless of tier or LIFT category. Render these dependencies explicitly in the Sequencing Rationale.

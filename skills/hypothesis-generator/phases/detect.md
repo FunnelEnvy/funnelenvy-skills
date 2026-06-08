@@ -4,8 +4,10 @@
 
 - Full body of `company-identity.md` (L0)
 - Full body of all available L1 context files (including `performance-profile.md` if present)
-- `modules/experiment-patterns.md` (loaded by orchestrator)
+- `modules/experiment-patterns.md` (the base library, loaded by orchestrator)
+- The matched archetype pattern module (e.g., `modules/patterns-procurement.md`), if the orchestrator resolved one in SKILL.md Phase 1 `Archetype resolution`. Absent until an archetype module exists; detection runs on the base library alone when none is loaded.
 - Any `modules/evidence-*.md` files (optional, loaded by orchestrator if present)
+- `engagement-constraints` input (optional): delivery and governance state, consumed by Step 1d. Absent in most runs; Step 1d is skipped when absent. Never produces opportunities, only constraints.
 
 In KB mode the orchestrator supplies the same context bodies, sourced from the scope's silver artifacts per the SKILL.md `KB Mode (Dual-Mode Output)` > `Read-side Mapping`. Trigger and detection logic below is source-agnostic and unchanged.
 
@@ -164,14 +166,39 @@ The trigger conditions below are written against the ga4-audit v2.x performance-
 | `top_interactions` shows one element gets >5x clicks of next element for same event on same page | CTA hierarchy dominance | "On /pricing, 'Request Demo' gets 245 clicks vs 'View Plans' at 42. Secondary CTA nearly invisible." |
 | `top_interactions` shows sequential items (carousel, tabs) where later items get <20% of first item interactions | Content below first view invisible | "Homepage carousel: slide 1 gets 890 interactions, slide 3 gets 67 (7.5%). Content after first slide is effectively hidden." |
 | Element data exists for a page already targeted by a positioning-derived hypothesis | Enrichment: adds interaction baseline | "Element data shows 'Get Started' CTA on / has 1.5% click rate. Adds baseline to existing homepage messaging hypothesis." |
+| A single non-search, non-self-referral source contributes a large share of sessions AND its intent is unverified | Denominator / segmentation hypothesis, or a routed client question | "A partner/seller tool is the second-largest traffic source; should its arrivals sit in the buyer-funnel denominator at all? Route as a client question or a segmentation hypothesis, not a conversion experiment." |
+| A cross-property referral (sister brand, parent domain) shows an elevated quickback rate vs other sources | Cross-property handoff-pathing hypothesis | "Referrals from a sister property quickback well above the site average; the handoff landing experience mismatches arriving intent. Test the landing/pathing for that referral segment." |
 
 **Trigger evaluation rules:**
 - Use the performance-profile.md frontmatter `top_pages` for quick lookups. Read body sections for full data when a trigger condition needs per-page detail.
 - "Sessions/mo" = sessions in the profile's date range, normalized to 30 days if the range differs.
 - Triggers that match a page already targeted by a positioning-derived hypothesis still fire. They produce a separate performance-driven opportunity that will merge with the positioning-derived one in Phase 3 (Step 7), enriching it with baseline data.
 - Each performance-driven opportunity uses ICE baseline 3/3/3 (same as context-derived). The performance data provides evidence for scoring modifiers in Phase 4, not for inflating the baseline.
+- The arrival-mix and cross-property triggers fire off the arrival-mix / source data in the performance profile. When the source's intent cannot be determined from context, prefer routing a client question over inventing a hypothesis about an unknown population.
 
 **Output:** Performance-driven opportunities added to the opportunity list, tagged `type: "performance-driven"`.
+
+### Step 1d: Engagement-Constraint Reasoning
+
+Skip this step if no `engagement-constraints` input is present.
+
+Read the engagement-constraints input. For each constraint, derive its experiment implication. This is reasoning, not extraction: do not copy the constraint into the roadmap. Derive what it means for timing, tiering, or feasibility, and carry only the derived implication forward.
+
+Procedure:
+
+1. **Release calendar:** for each experiment, does a committed release change a target surface during the test window? If yes, the experiment must read out fully before the release or start after it. A surface touched by a release cannot hold a baseline across it.
+2. **Approval/governance bandwidth:** how many concurrent experiments can clear the client gate? Set a concurrency ceiling. On a freshly cautious gate (recent incidents, escalations), set a tier ceiling on high-risk surfaces.
+3. **Measurement-infrastructure timeline:** when does the enablement that lifts a Confidence cap actually land? Set the earliest re-tier window and sequence readouts to mature into it, not before.
+4. **Internal-tester/QA constraints:** does a test on an internally-visible surface need a tester-exclusion mechanism before launch? If yes, gate the experiment on that mechanism.
+5. **Delivery-match risk:** does a delivery constraint (e.g., a customer network blocking the variant-delivery domain) dilute the test population? Flag as a launch-gate check.
+
+The procedure generalizes beyond these five: for any constraint the input supplies, name the experiment property it bounds (timing, concurrency, tier, feasibility, or launch-gating), then carry the derived bound forward. The worked examples below show the reasoning applied; they are not the only constraints the step handles.
+
+Worked example 1 (release calendar): an August release carries a PDP and cart redesign. An experiment targeting both PDP and cart faces double exposure, so it starts after the release and uses the pre-release window for integration-feasibility scoping only. An experiment targeting cart alone can read out fully before the release or start after. The reasoning, not the calendar entry, is what reaches the roadmap.
+
+Worked example 2 (approval bandwidth): a series of injection-caused UX incidents leads to a governance escalation and a signalled preference for a more pragmatic pace. Plan two to three concurrent approvals at most. Copy-light, off-configurator experiments are the near-window candidates; configurator-touching experiments belong to the next pace conversation. The derived constraint is a concurrency ceiling plus a tier ceiling on the riskiest surface, not a restatement of the incident history.
+
+**Output:** engagement-derived sequencing and tier constraints, carried to Phase 4 (sequencing) and to the Prerequisites section. These are constraints, NOT hypotheses. Do not add them to the opportunity list.
 
 ### Step 2: Match Signals Against Patterns
 
@@ -182,6 +209,7 @@ For each signal extracted in Step 1, check against the trigger conditions ("Appl
 - A pattern can be triggered by signals from multiple context files. Use the strongest signal.
 - If a pattern's trigger condition partially matches (e.g., "form has 5+ fields" and you found a form but can't confirm field count), create the opportunity but flag it as "trigger partially confirmed."
 - If `--focus` flag was set, only evaluate patterns in the specified categories.
+- **Archetype precedence (only when an archetype module was loaded; see SKILL.md Phase 1 `Archetype resolution`):** Check archetype patterns before base patterns. A base pattern still fires if it full-matches a page + mechanism that no archetype pattern covers. When a base pattern and an archetype pattern match the same page + mechanism, the Phase 3 Step 8 deduplication (`construct.md` `Step 8: Deduplication and Filtering`) merges them; on a tie of trigger strength, the archetype pattern's baseline (`ice_baseline`) wins, because it is more specific to the store type. No archetype module loaded means this rule is inert and matching runs on the base library exactly as before.
 
 ### Step 3: Evidence Augmentation
 

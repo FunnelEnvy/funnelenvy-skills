@@ -87,35 +87,35 @@ check "has name: hypothesis-generator" \
 echo ""
 
 echo "[3] Phase file count"
-check "phases/ has exactly 3 files" \
+check "phases/ has exactly 4 files" \
   "ls skills/hypothesis-generator/phases/ | wc -l | tr -d ' '" \
-  "3"
+  "4"
 echo ""
 
 echo "[4] Pattern count"
-check "experiment-patterns.md has 28 patterns" \
+check "experiment-patterns.md has 32 patterns" \
   "grep -c '^### [A-Z]\{2\}-[0-9]\{2\}:' modules/experiment-patterns.md" \
-  "28"
+  "32"
 echo ""
 
 echo "[5] ICE calibration completeness"
 check "Impact calibration" \
-  "grep -c 'Impact Calibration' modules/ice-scoring.md" \
+  "grep -c '^## Impact Calibration' modules/ice-scoring.md" \
   "1"
 check "Confidence calibration" \
-  "grep -c 'Confidence Calibration' modules/ice-scoring.md" \
+  "grep -c '^## Confidence Calibration' modules/ice-scoring.md" \
   "1"
 check "Ease calibration" \
-  "grep -c 'Ease Calibration' modules/ice-scoring.md" \
+  "grep -c '^## Ease Calibration' modules/ice-scoring.md" \
   "1"
 echo ""
 
 echo "[6] Prohibited content"
 check "No ClickUp references in new files" \
-  "grep -ri 'clickup\|click_up' skills/hypothesis-generator/ modules/experiment-patterns.md modules/ice-scoring.md | head -1" \
+  "grep -ri 'clickup\|click_up' skills/hypothesis-generator/ modules/experiment-patterns.md modules/ice-scoring.md modules/contrarian-triggers.md modules/hypothesis-interactions.md modules/patterns-procurement.md | head -1" \
   "EMPTY"
 check "No em dashes in new files" \
-  "grep -rP '\xe2\x80\x94' skills/hypothesis-generator/ modules/experiment-patterns.md modules/ice-scoring.md | head -1" \
+  "grep -rP '\xe2\x80\x94' skills/hypothesis-generator/ modules/experiment-patterns.md modules/ice-scoring.md modules/contrarian-triggers.md modules/hypothesis-interactions.md modules/patterns-procurement.md | head -1" \
   "EMPTY"
 echo ""
 
@@ -152,6 +152,22 @@ check_warn "Manifest template excludes experiment-roadmap.md" \
   "grep -c 'experiment-roadmap.md' skills/render-default-deliverables/SKILL.md" \
   "NONZERO"
 # NOTE: After Phase 2, any remaining match should only be in the cross-reference note.
+echo ""
+
+echo "[11] Procurement archetype module"
+check_exists "modules/patterns-procurement.md" "modules/patterns-procurement.md"
+check "patterns-procurement.md has 6 patterns" \
+  "grep -c '^### PR-[0-9]\{2\}:' modules/patterns-procurement.md" \
+  "6"
+echo ""
+
+echo "[12] Contrarian trigger count"
+check "contrarian-triggers.md has 14 triggers" \
+  "grep -c '^### CTR-[0-9]\{2\}:' modules/contrarian-triggers.md" \
+  "14"
+check "contrarian-triggers.md count line says 14" \
+  "grep -c '^Trigger count: 14' modules/contrarian-triggers.md" \
+  "1"
 echo ""
 
 echo "=== Results ==="

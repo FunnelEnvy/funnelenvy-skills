@@ -13,14 +13,25 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 - You CAN and SHOULD apply analytical reasoning beyond what context files literally state
 - You match observed patterns in context files against known CRO experiment patterns
 - You produce hypotheses with causal mechanisms, not just "fix this gap"
-- Your output goes to `.claude/deliverables/`, not `.claude/context/`
-- Your output is human-readable: no YAML frontmatter, no confidence scores inline, no references to agents, skills, context files, frontmatter, or any system internals
+- Your output goes to the deliverable location (legacy: `.claude/deliverables/`; KB mode: the bound KB), never to `.claude/context/`
+- The deliverable BODY is human-readable and stays pure in both modes: no confidence scores inline, no references to agents, skills, context files, schemas, or any system internals. In legacy mode the deliverable carries no frontmatter. In KB mode the deliverable carries the gold artifact frontmatter block (per the gold type def), which is the only system surface permitted; the body remains pure exactly as in legacy mode. See `Deliverable Purity Constraint`.
 
 **Output location:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md` -- see `KB Mode (Dual-Mode Output)`)
 **Token budget:** ~40-60K (reading and analysis only, no web fetches)
 **Runtime:** ~5-8 minutes
 **Agents:** Single agent. No multi-agent pipeline.
 **Model:** Opus
+
+---
+
+## Operating Modes
+
+This skill runs in one of two I/O modes, resolved once at Phase 1 step 0 and held in-session. The analysis is identical in both; only the read/write targets and the deliverable's frontmatter differ.
+
+- **Legacy mode** (default): reads L0 + L1 context from `.claude/context/*.md` and writes the roadmap to `.claude/deliverables/experiment-roadmap.md`. The deliverable carries no frontmatter.
+- **KB mode** (current production): invoked under the KB harness (`governed_by: {kb-type}/gold-experiment-roadmap`). Reads the scope's silver artifacts from the bound knowledge base (resolved via the gold artifact's `depends_on`) and writes a typed gold `experiment-roadmap` artifact into the KB. The gold artifact's frontmatter block (per the bound gold type def) is the only system surface; the body stays free of system internals per the `Deliverable Purity Constraint`, exactly as in legacy mode.
+
+The full KB-mode contract (mode resolution, read-side mapping, output path, frontmatter contract, validation gate) is documented in `KB Mode (Dual-Mode Output)` below. Sections that name only the legacy `.claude/` paths are labeled "(legacy mode)"; their KB-mode equivalents live in that section.
 
 ---
 
@@ -47,10 +58,9 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 
 ## KB Mode (Dual-Mode Output)
 
-The skill runs in one of two I/O modes, resolved ONCE as Phase 1 step 0 and held in-session:
+The two I/O modes are summarized in `Operating Modes`; this section specifies the full KB-mode contract. Mode is resolved ONCE as Phase 1 step 0 and held in-session.
 
-- **Legacy mode** (default): everything in this skill behaves exactly as documented in the other sections. Inputs from `.claude/context/`, output to `.claude/deliverables/experiment-roadmap.md`.
-- **KB mode:** inputs are the scope's typed silver artifacts read from a knowledge base declared by the working repo, and the output is a typed `gold-experiment-roadmap` artifact written into that KB. Only read/write targets, the addition of gold frontmatter, and performance-profile schema tolerance (see `phases/detect.md` > `Profile Schema Equivalence`) change. All analysis -- Phases 2-4 reasoning, the pattern library, ICE scoring, spec intake, `--focus`, `--max`, contrarian triggers -- is identical in both modes.
+In KB mode, only the read/write targets, the addition of gold frontmatter, and performance-profile schema tolerance (see `phases/detect.md` > `Profile Schema Equivalence`) change. All analysis -- Phases 2-4 reasoning, the pattern library, ICE scoring, spec intake, `--focus`, `--max`, contrarian triggers -- is identical in both modes.
 
 This is a single-agent skill: there is no agent parameter-block threading. Mode resolution produces in-session KB state (`kb_root`, `kb_type`, `scope`, type-def paths) consulted by Phase 1 (reads) and Phase 5 (write).
 
@@ -126,10 +136,10 @@ Experiment roadmap written to {kb_root}/deliverables/{scope}-experiment-roadmap.
 
 ## Preconditions
 
-**Hard requirement:**
+**Hard requirement (legacy mode):**
 - `company-identity.md` must exist in `.claude/context/` with confidence >= 3
 
-**Soft requirements (degrade gracefully):**
+**Soft requirements (legacy mode, degrade gracefully):**
 - `positioning-scorecard.md`: If missing, opportunity detection relies on context gap analysis instead of scorecard ratings. Hypotheses will have lower Confidence scores.
 - `competitive-landscape.md`: If missing, competitive pressure patterns (pricing transparency, differentiator crowding triggers) are unavailable. Those patterns are skipped.
 - `audience-messaging.md`: If missing, persona-based patterns (segment hero personalization, industry proof matching, nav intent mismatch) lose specificity. Generic versions are produced with a note.
@@ -147,8 +157,9 @@ Experiment roadmap written to {kb_root}/deliverables/{scope}-experiment-roadmap.
     - Existing v1 triggers still fire
     - New v2/v2.1 triggers are skipped (fields won't exist in frontmatter)
     - Backwards compatible, no breaking changes
+- `engagement-constraints` (optional): a capture of delivery and governance state, including release calendar, approval/governance bandwidth, measurement-infrastructure timeline, internal-tester/QA constraints, and delivery-match risks. If present, the skill reasons over it (Phase 2 Step 1d) to derive sequencing and tier constraints. If absent, sequencing uses LIFT and dependencies only. This input never produces hypotheses; it produces constraints on hypotheses already generated. In legacy mode it is an optional context file (`.claude/context/engagement-constraints.md`, loaded by the Phase 1 glob like any other context file). In KB mode it maps to an engagement-context artifact in the bound knowledge base, read per the type skill's artifact definitions.
 
-**Error states:**
+**Error states (legacy mode):**
 - No context files found: Exit with "No context files found in .claude/context/. Run /positioning-framework first."
 - L0 only, confidence < 3: Exit with "Company identity exists but confidence is too low. Run /positioning-framework --depth standard first."
 - L0 only, confidence >= 3: Proceed with limited pattern matching. Report reduced coverage in output.
@@ -156,6 +167,7 @@ Experiment roadmap written to {kb_root}/deliverables/{scope}-experiment-roadmap.
 **In KB mode** (see `KB Mode (Dual-Mode Output)` > `Read-side Mapping`):
 - The hard requirement becomes: the LOWER of `bronze-company-facts.confidence` and `silver-strategy-context.confidence` for the scope must be >= 3.
 - Soft requirements map to the scope's optional silver artifacts with identical degradation semantics.
+- The optional `engagement-constraints` input maps to the scope's engagement-context artifact, if the bound KB defines one. Absent maps to absent: Step 1d is skipped and sequencing falls back to LIFT plus dependencies, identical to legacy.
 - The scope's `silver-performance-analysis` artifact may lack `schema_version`. When absent, the version gating above is bypassed and `phases/detect.md` > `Profile Schema Equivalence` governs which performance-driven triggers fire by content equivalence.
 - Error states reword for KB artifacts: "No silver CRO artifacts found for scope {scope}. Run /positioning-framework --scope {scope} first." / "Scope L0 artifacts exist but confidence is too low. Run /positioning-framework --scope {scope} --depth standard first."
 
@@ -217,7 +229,17 @@ Wait for response. If content is provided, treat it as supplementary page contex
 4. Check preconditions (see above)
 5. Load full body of all available context files
 6. Check for evidence augmentation modules (glob `modules/evidence-*.md`). If any exist, load them. These modules provide additional pattern-matching data and scoring calibration beyond what context files contain. The skill works without them; they enrich when present.
-7. Check for missing handoff items and present the pre-flight summary.
+7. **Archetype resolution and pattern loading.** Read `category.primary` from the strategy context loaded above (legacy mode: `company-identity.md` frontmatter; KB mode: the scope's `silver-strategy-context`, per `Read-side Mapping`). Resolve the archetype via the mapping table below (case-insensitive substring match against `category.primary`, first match wins). Load the base pattern library AND the matched archetype module. On no match, load the base library only and flag reduced archetype coverage in the pre-flight summary.
+
+   | `category.primary` contains | Archetype | Module to load (in addition to the base library) |
+   |---|---|---|
+   | "procurement", "punchout", "e-procurement", "CPQ", "contract catalog", "authenticated" | procurement | `modules/patterns-procurement.md` |
+   | "SaaS", "software platform", subscription software | b2b-saas | `modules/patterns-b2b-saas.md` (when it exists; skip if absent) |
+   | "ecommerce", "online store", "DTC", "retail", "(online)" | b2c-ecommerce | base library (current default) |
+   | no match | base only | base library (current default) |
+
+   "Base library" in this rollout means the current `modules/experiment-patterns.md`. A later refactor will split it into `patterns-base.md` + `patterns-b2c-ecommerce.md`; until then the current library is the default and archetype modules load additively on top. If an archetype module named in the table does not exist on disk, skip it silently and proceed (graceful degradation, consistent with the skill's existing missing-input behavior). This layer is additive: until an archetype module exists, every scope loads the base library only and behavior is unchanged.
+8. Check for missing handoff items and present the pre-flight summary.
 
 **Handoff check -- run before displaying the summary.** Look for the following and flag each gap:
 
@@ -236,6 +258,8 @@ Context available:
   performance-profile.md (confidence: 3, 30 days, 45.2K sessions)  [or: not found]
 
 Pattern categories active: all 10 (32 patterns loaded)
+Archetype: [resolved value] (resolved from category.primary)
+Patterns loaded: base library + [archetype module name, or "none"]
 Performance-driven triggers: [active | inactive (no performance-profile.md)]
 Evidence augmentation: [none | list loaded modules]
 Max hypotheses: 10
@@ -388,6 +412,7 @@ For messaging-led hypotheses (headline, hero, positioning, value-proposition cat
 **Proof status:** [Verified | Needs verification -- see Prerequisites. Only shown when proof points are referenced.]
 
 **Target metric:** [primary metric and expected direction]
+**Expected effect and read threshold:** [direction plus the ship/abandon condition. For proxy-only scopes with no CVR baseline, use the MDE-based form ("ship if the variant proxy beats control by the test's MDE at full sample; abandon if flat at full sample"), not a fabricated point estimate.]
 **Guardrail metric:** [downstream business metric that must not degrade. Only shown when primary is a proxy metric.]
 **Audience:** [persona or segment, if specific]
 
@@ -401,7 +426,9 @@ For messaging-led hypotheses (headline, hero, positioning, value-proposition cat
 **What a win proves:** [learning unlocked by positive result]
 **What a loss teaches:** [learning from negative result]
 
-**Self-critique:** [Omit this section for Exploration-tier hypotheses.]
+**Behavioral evidence ([source], [date]):** [the specific friction finding (dead clicks, quickbacks, error rates) that corroborates or qualifies the mechanism, with its source. Required only when a behavioral-friction signal exists for the target surface; omit the line entirely when none does.]
+
+**Self-critique:** [Required on every hypothesis.]
 > **Thesis challenge:** [strongest argument the causal thesis is wrong, 1-3 sentences]
 > **Response:** [rebuttal or acknowledgment, 1-2 sentences]
 >
@@ -551,7 +578,7 @@ In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope
 
 16. **Quick Wins require fast signal.** Quick Win tier requires estimated test duration <= 6 weeks in addition to Confidence >= 4 and Ease >= 4. A 10-week test labeled Quick Win burns stakeholder trust. If duration data is unavailable, the constraint does not apply but Confidence is already capped by graceful degradation rules.
 
-17. **Self-critique is visible, not hidden.** Every Quick Win and Strategic Bet hypothesis must include a Self-critique section in the deliverable (Step 10). The counterarguments must be stated fairly, not strawmanned. Evidence-strength language must be proportionate to actual evidence (one data point is a "signal," not a "pattern"). Internal consistency issues must be resolved before emission, not acknowledged and ignored. Explorations may omit the Self-critique section but the meta-pass still runs during construction.
+17. **Self-critique is visible, not hidden.** Every hypothesis, regardless of tier, must include a Self-critique section in the deliverable (Step 10). The counterarguments must be stated fairly, not strawmanned. Evidence-strength language must be proportionate to actual evidence (one data point is a "signal," not a "pattern"). Internal consistency issues must be resolved before emission, not acknowledged and ignored.
 
 ---
 
@@ -563,7 +590,9 @@ SKILL.md (this file)
   ├── phases/detect-contextual.md   Phase 2b: context-derived opportunity detection
   ├── phases/construct.md           Phase 3: hypothesis construction with causal reasoning
   ├── phases/score.md               Phase 4: ICE scoring and sequencing
-  ├── modules/experiment-patterns.md   CRO pattern library (32 patterns, 10 categories)
+  ├── modules/experiment-patterns.md   CRO pattern library (32 patterns, 10 categories; the base library)
+  ├── modules/patterns-procurement.md  procurement archetype patterns (loaded by archetype resolver; see Phase 1)
+  ├── modules/patterns-b2b-saas.md     b2b-saas archetype patterns (loaded by archetype resolver; see Phase 1)
   ├── modules/ice-scoring.md           ICE calibration anchors, empirical benchmarks, B2B SaaS calibration, and predictive scoring reference
   ├── modules/contrarian-triggers.md   Contrarian filter: context conditions where standard CRO advice backfires (13 triggers)
   ├── modules/hypothesis-interactions.md  Interaction-effect model: AND/OR/XOR gates between hypothesis pairs, empirical interaction effects
