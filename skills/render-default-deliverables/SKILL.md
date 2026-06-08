@@ -382,6 +382,8 @@ If you catch yourself writing any prohibited term, rewrite the sentence to attri
 
 **Battle card file naming:** Read `modules/slugify.md` before generating any battle card filenames. Generate slugs using the slugification rules in that module. The canonical input is the `name` field from each competitor entry in `competitive-landscape.md`.
 
+**Module resolution.** `modules/slugify.md` is repository-root-relative: `modules/` lives at the repo root, a sibling of `skills/`, not inside this skill's folder. When running from a symlinked install (e.g., `~/.claude/skills/render-default-deliverables/`), resolve this skill's real path and load `modules/` from the repo root (the parent of `skills/`). If `slugify.md` cannot be read, note it in the run output and apply the documented fallback (lowercase, spaces and non-alphanumerics to single hyphens, trim leading/trailing hyphens) rather than guessing per-file slug formats.
+
 **Tier:** 3
 **Length:** 400-700 words per card
 

@@ -31,6 +31,12 @@ Every agent follows this precedence: **accuracy > completeness > format**.
 
 ---
 
+## Module Resolution
+
+Your phase file references shared library files as `modules/<name>.md` (e.g., `modules/web-extract.md`, `modules/reddit-research.md`, `modules/competitive-assessment.md`, `modules/voc-extraction.md`). These paths are repository-root-relative: the `modules/` directory lives at the repo root, a sibling of `skills/`, NOT inside the skill folder. When the skill is invoked from a symlinked or installed location (e.g., `~/.claude/skills/positioning-framework/`), resolve the skill's real path first (follow the symlink), then load `modules/` from the repository root (the parent of `skills/`). If a module your phase requires cannot be located and read, STOP and report that the shared module is unavailable. Do NOT proceed on a remembered version of the extraction or assessment protocol: a research or scoring pass run against half-remembered protocol is unreliable, and the failure is easy to miss.
+
+---
+
 ## KB Mode Rules
 
 These rules apply ONLY when your launch prompt contains a `KB MODE: enabled` parameter block. If the block is absent, you are in legacy mode: ignore this section entirely and follow the rest of this file and your phase file as written.

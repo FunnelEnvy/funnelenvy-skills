@@ -411,6 +411,8 @@ User provides a company URL, name, or existing docs. The skill does the work.
 
 - **`.claude/business-brief.md`** - Client-provided business context (competitors, terminology, regulatory constraints, audience, service boundaries, retired positioning). See `modules/business-brief.md` for the template. If present, the orchestrator loads it during Pre-Flight intake and threads answers into agent launch prompts. If absent at standard/deep depth, the orchestrator prompts the user with 5 intake questions before launching agents. At quick depth, no prompts -- the brief is consumed silently if it exists.
 
+**Module resolution.** `modules/<name>.md` paths (here and in the phase files) are repository-root-relative: `modules/` is at the repo root, a sibling of `skills/`, not inside the skill folder. When running from a symlinked install (e.g., `~/.claude/skills/positioning-framework/`), resolve the skill's real path and load `modules/` from the repo root (the parent of `skills/`). If `modules/business-brief.md` cannot be read, fall back to the 5 intake questions rather than assuming a remembered template. Agents inherit the same convention from `agent-header.md` > `Module Resolution`.
+
 ## Prior Work Detection
 
 **In KB mode:** use the glob and frontmatter filter from `KB Mode (Dual-Mode Output)` > `Prior Work Detection (KB Mode)` instead of the `.claude/context/` glob below. The numbered evaluation rules below still apply, mapped through the Output Mapping table; for the L0 reuse rule (item 1), the two-artifact confidence rule in `Prior Work Detection (KB Mode)` step 3 governs.
