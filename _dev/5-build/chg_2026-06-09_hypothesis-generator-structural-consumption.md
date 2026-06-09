@@ -16,7 +16,7 @@ impact: 4
 confidence: 4
 ease: 3
 initiative: cro-kb-path-b
-status_note: Build complete, committed c0858a4 on dj_live-capture-skill (PR 10, supersedes PR 9); pending KB-repo chain validation
+status_note: Build complete; KB chain run PASSED all watch items; absence regression outstanding; ready for QA
 version: "0.2.0"
 created: 2026-06-09
 updated: 2026-06-09
@@ -101,6 +101,29 @@ No scripts added, modified, or removed. Not script-affecting.
 
 Cross-repo dependency: the functional run executes in the bound KB repo (private). No client data
 enters this repo.
+
+### Results (2026-06-09, KB-repo chain run against the real artifact)
+
+1. Validator 24/24 PASS, counts unchanged; purity greps clean. DONE (build step).
+2. Chain run PASSED: structural artifact loaded in silver reads AND gold depends_on; gold artifact
+   superseded in place (1.0.0 to 1.0.1); kb_type_validate passed; post-write review clean.
+3. Watch items, all correct:
+   - FO-01/FO-02 fired on the site-wide form with the Step 1 site-wide scope correction (form
+     targeted as a system across all instances, pooled traffic makes it testable). Composed
+     correctly with the CTR-01 enterprise qualifying-friction reframe (defer qualification via
+     progressive steps + enrichment rather than naive field-cutting).
+   - TC-01 correctly did NOT fire: the only absent page was a WAF-blocked zero-content capture
+     (artifact, not a gap) and expertise is not a claimed differentiator; routed to What's Not
+     Here with reasoning. Trust-qualifier downgrade behaved as designed.
+   - CR-01 fired on the competitive leg only; the not_checked existence tri-state neither fired
+     nor suppressed the structural leg. Tri-state semantics held.
+   - 9 hypotheses (4 QW / 3 SB / 2 EX); deliverable body purity held.
+4. OUTSTANDING: absence regression (remove the structural artifact, re-run, confirm completion
+   with no confidence penalty).
+5. PRODUCER-SIDE FINDING (routes to live-capture, not this change): a page captured with a
+   non-clean page_block_status asserted tri-state existence fields as absent instead of
+   not_checked. A pass that never rendered content cannot assert absence. The consumer's trust
+   qualifiers compensated, but the artifact should not record the false assertion.
 
 ## Changelog
 
