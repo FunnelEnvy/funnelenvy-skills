@@ -88,11 +88,13 @@ In KB mode, Phase 1 replaces the `.claude/context/*.md` glob with reads of the s
 | `competitive-landscape.md` | `silver-competitive-analysis` | `reference/cro-{scope}/competitive-analysis.md` | optional |
 | `audience-messaging.md` | `silver-audience-analysis` | `reference/cro-{scope}/audience-analysis.md` | optional |
 | `performance-profile.md` | `silver-performance-analysis` | `reference/cro-{scope}/performance-analysis.md` | optional |
+| (none -- KB-native) | `silver-structural-observation` | `reference/cro-{scope}/live-structure.md` | optional |
 | `_fetch-registry.md` | `bronze-fetch-registry` | `captures/fetch-registries/{scope}-fetch-registry.md` | optional (page-block check only) |
 
 - **L0 precondition:** the LOWER of `bronze-company-facts.confidence` and `silver-strategy-context.confidence` must be >= 3. Together these two artifacts carry what `company-identity.md` carries in legacy mode (the facts/analysis split).
 - **Scope isolation is absolute:** artifacts from another scope are never read.
 - Each loaded artifact maps to its legacy equivalent per the table; Phases 2-4 consume the bodies identically in both modes.
+- The `silver-structural-observation` row has no legacy `.claude/context/` equivalent: it is a KB-native structural projection consumed only in KB mode. Its body carries factual page-structure observations; the source-agnostic structural triggers in `phases/detect.md` consume it like any other loaded body, with no per-trigger handling. An absent artifact degrades gracefully, identical to any optional silver read.
 
 ### Output Mapping and Frontmatter Contract
 
