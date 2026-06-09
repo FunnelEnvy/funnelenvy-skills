@@ -15,6 +15,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | [landing-page-generator](skills/landing-page-generator/SKILL.md) | 2.0.0 | B2B paid landing page generator with brief, copy, design, and QA phases |
 | [positioning-update](skills/positioning-update/SKILL.md) | 1.0.0 | Apply client feedback and corrections to positioning context files |
 | [voice-inference](skills/voice-inference/SKILL.md) | 1.0.0 | Brand voice analysis from website content with scored tone spectrum, vocabulary fingerprint, and actionable voice rules |
+| [live-capture](skills/live-capture/SKILL.md) | 0.1.0 | Live-page structural and copy capture. Navigates selected pages, passively reads the rendered DOM across viewports, and writes two factual artifacts (structure + verbatim copy). Dual-mode: legacy `.claude/context/` files, or KB-native bronze plus a silver structural artifact (in active development) |
 | [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.2.0 | Visual mockup generator for experiment hypotheses (in active development) |
 | [render-default-deliverables](skills/render-default-deliverables/SKILL.md) | 1.0.0 | Generates client-ready deliverables from positioning context |
 
@@ -39,6 +40,8 @@ Run a skill:
 /landing-page-generator example-co campaign-slug --stage brief
 /voice-inference https://example.com
 /voice-inference https://example.com --mode compare
+/live-capture https://example.com
+/live-capture https://example.com --scope b2c
 /experiment-mockup 1
 ```
 

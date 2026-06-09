@@ -12,7 +12,7 @@
   "plugins": [
     {
       "name": "funnelenvy-skills",
-      "description": "9 skills for positioning research, brand voice analysis, GA4 auditing, hypothesis generation, landing page creation, and experiment mockups",
+      "description": "10 skills for positioning research, brand voice analysis, GA4 auditing, hypothesis generation, landing page creation, live-page capture, and experiment mockups",
       "source": "./",
       "skills": [
         "./skills/positioning-framework",
@@ -23,6 +23,7 @@
         "./skills/hypothesis-generator",
         "./skills/landing-page-generator",
         "./skills/voice-inference",
+        "./skills/live-capture",
         "./skills/experiment-mockup"
       ]
     }
