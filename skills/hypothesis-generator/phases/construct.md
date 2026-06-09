@@ -57,6 +57,8 @@ Run these before building any hypothesis. Each check targets a class of errors t
 
 **Before attributing mobile bounce to a technical or rendering failure:** check traffic source composition for mobile in `performance-profile.md`. If one channel represents more than 60% of mobile traffic and that channel has a high bounce rate across ALL devices (e.g., direct traffic bounces at 60%+ on desktop too), the mobile bounce rate is a messaging problem for that channel, not a rendering problem. The fix is the same messaging intervention as desktop, not a Core Web Vitals or layout audit. A 9x device bounce gap does not by itself indicate a technical problem - it indicates the dominant mobile channel is failing for the same reason it fails on desktop.
 
+**Structural render check (when the structural observation artifact is loaded):** read `mobile_render_clean` for the target page before constructing any mobile hypothesis. `false` (broken render, console errors, or failed requests observed on the mobile viewport): do NOT construct an A/B test; route the item to fix-and-monitor, consistent with CTR-14's gate, with a note that the rendering defect must be fixed and the device gap re-measured before any messaging or layout test is interpretable. `true` (clean render directly observed): the rendering-defect explanation is ruled out, and the mobile hypothesis proceeds as a layout, content, or messaging test. Field not assessed for the target page: the channel-composition check above governs alone.
+
 ### Conversion path selection bias
 
 **Before proposing routing changes based on a higher-converting dedicated page or path:** check absolute volume. A dedicated form page that converts at 5x the rate of the embedded form may simply be receiving self-selected higher-intent visitors who navigated there deliberately. The higher CVR reflects visitor intent, not page quality. The correct experiment is reducing friction on the primary path (two-step form, progressive disclosure), not routing all traffic to the dedicated page. Flag this distinction in the hypothesis: is the mechanism "better page" or "higher-intent visitor"?
@@ -82,6 +84,8 @@ For each opportunity, identify the specific page and element the experiment targ
 - Element must be identified (e.g., "Hero headline," "Primary CTA," "Lead capture form," "Navigation menu"), not vague ("the top of the page")
 - If the exact page can't be determined from context, use the most likely page based on the pattern's typical deployment and note the assumption
 
+**Site-wide scope check (when the structural observation artifact is loaded):** if `form_recurs_sitewide` is true and the hypothesis targets the recurring form, the experiment target is the full set of form instances site-wide, named as such (e.g., "the global demo-request form, all instances"), not a single page; a per-page form hypothesis on a site-wide form understates both reach and implementation surface. Likewise, if `sitewide_primary_cta_label` is set and the hypothesis tests CTA verb or label, the target is the site-wide CTA instance set. For performance-fired engagement opportunities (EE-02, EE-03, NX-06) on pages the structural observation covers, use the observed element identifiers (sequential UI items, CTA labels, overlay tooling) to name the exact element: observation satisfies the specificity requirement directly, where inference only approximates it.
+
 ### Step 2: Current State Documentation
 
 Document what exists now. This is the control in the experiment.
@@ -94,6 +98,7 @@ Document what exists now. This is the control in the experiment.
 **For structural experiments:**
 - Describe the current layout, form structure, navigation pattern, or page architecture based on what context files reveal
 - Flag when your understanding of current state is inferred rather than directly observed
+- When the structural observation artifact covers the target page, the current state is directly observed: cite the observation (field counts, CTA labels, element presence) and do not flag it as inferred
 - **Do not assume a page has no conversion mechanism just because context files don't mention one.** Context files may not document every form, CTA, or interactive element. When claiming "no conversion path exists" for a page, note that this is based on available context and may need verification. If performance-profile.md shows 0 conversions for a page, that could mean no mechanism exists OR that an existing mechanism is not firing/tracked. State the ambiguity rather than asserting absence.
 
 **For personalization experiments:**
@@ -104,6 +109,7 @@ Document what exists now. This is the control in the experiment.
 - Record: sessions/mo, bounce rate, conversion rate (for primary conversion event), and top traffic source
 - This data populates the `**Baseline:**` line in the deliverable template
 - If the target page doesn't appear in performance-profile.md (low traffic or not tracked), note "No baseline data for this page" and skip the Baseline line
+- The structural observation artifact never supplies baseline metrics. Baseline lines come only from performance data; structure supplies current-state facts and element identity, exactly as before
 
 ### Step 3: Proposed Change
 

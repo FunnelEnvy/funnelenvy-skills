@@ -88,11 +88,13 @@ In KB mode, Phase 1 replaces the `.claude/context/*.md` glob with reads of the s
 | `competitive-landscape.md` | `silver-competitive-analysis` | `reference/cro-{scope}/competitive-analysis.md` | optional |
 | `audience-messaging.md` | `silver-audience-analysis` | `reference/cro-{scope}/audience-analysis.md` | optional |
 | `performance-profile.md` | `silver-performance-analysis` | `reference/cro-{scope}/performance-analysis.md` | optional |
+| (none -- KB-native) | `silver-structural-observation` | `reference/cro-{scope}/live-structure.md` | optional |
 | `_fetch-registry.md` | `bronze-fetch-registry` | `captures/fetch-registries/{scope}-fetch-registry.md` | optional (page-block check only) |
 
 - **L0 precondition:** the LOWER of `bronze-company-facts.confidence` and `silver-strategy-context.confidence` must be >= 3. Together these two artifacts carry what `company-identity.md` carries in legacy mode (the facts/analysis split).
 - **Scope isolation is absolute:** artifacts from another scope are never read.
 - Each loaded artifact maps to its legacy equivalent per the table; Phases 2-4 consume the bodies identically in both modes.
+- The `silver-structural-observation` row has no legacy `.claude/context/` equivalent: it is a KB-native structural projection consumed only in KB mode. Its body carries factual page-structure observations, consumed by the Step 1 structural extraction stanza and the Step 1e field-keyed structural triggers in `phases/detect.md`. An absent artifact skips Step 1e with no confidence penalty (structure was not assessed), degrading like any optional silver read.
 
 ### Output Mapping and Frontmatter Contract
 
@@ -169,6 +171,7 @@ Experiment roadmap written to {kb_root}/deliverables/{scope}-experiment-roadmap.
 - Soft requirements map to the scope's optional silver artifacts with identical degradation semantics.
 - The optional `engagement-constraints` input maps to the scope's engagement-context artifact, if the bound KB defines one. Absent maps to absent: Step 1d is skipped and sequencing falls back to LIFT plus dependencies, identical to legacy.
 - The scope's `silver-performance-analysis` artifact may lack `schema_version`. When absent, the version gating above is bypassed and `phases/detect.md` > `Profile Schema Equivalence` governs which performance-driven triggers fire by content equivalence.
+- The scope's `silver-structural-observation` artifact is an optional soft input. When present, it enables the Step 1 structural extraction stanza and the Step 1e structural triggers in `phases/detect.md`, plus observed current-state documentation and site-wide scope correction in `phases/construct.md`. When missing, those are skipped with NO confidence penalty and NO global cap: absence means page structure was not assessed, not that structure is sound or broken. Add "Run /live-capture for structure-driven triggers and observed current-state documentation" to Prerequisites.
 - Error states reword for KB artifacts: "No silver CRO artifacts found for scope {scope}. Run /positioning-framework --scope {scope} first." / "Scope L0 artifacts exist but confidence is too low. Run /positioning-framework --scope {scope} --depth standard first."
 
 ---
@@ -524,7 +527,8 @@ The experiment roadmap must contain ZERO references to internal system concepts.
 
 **Prohibited terms:**
 - Layer references: "L0," "L1," "L2," "Layer 0," "Layer 1," "Layer 2"
-- File references: "company-identity.md," "competitive-landscape.md," "positioning-scorecard.md," "audience-messaging.md," "context file," "context directory"
+- File references: "company-identity.md," "competitive-landscape.md," "positioning-scorecard.md," "audience-messaging.md," "live-structure.md," "context file," "context directory"
+- Structural observation references: "structural observation artifact," "structural observation," and raw observation field names (e.g., "form_recurs_sitewide," "mobile_render_clean," "named_client_proof_present"). Describe the observed fact in natural language instead ("the demo form renders 13 fields on every page it appears")
 - System references: "Agent," "orchestrator," "phase file," "skill file," "SKILL.md," "frontmatter," "schema," "fetch registry"
 - Pattern references: "pattern ID," "HM-01," "FO-02," "experiment-patterns.md," "pattern matching"
 - Process references: "from L0," "per the context file," "the scoring phase determined," "opportunity detection found"
