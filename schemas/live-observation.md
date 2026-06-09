@@ -29,7 +29,8 @@ pattern fires on a page without loading the body:
   (`login_present`, `login_above_fold`, `login_nav_rank`), proof (`named_client_proof_present`
   and `team_credibility_present`, both tri-state since they depend on below-fold lazy content;
   `proof_element_count`), sequential UI (`sequential_ui_present`,
-  `sequential_ui_items`), `objection_faq_present` / `chatbot_present` (tri-state),
+  `sequential_ui_items`), `objection_faq_present` / `chatbot_present` (tri-state;
+  `objection_faq_present` has no detection pass yet, emitted `not_checked`),
   `mobile_render_clean` (derived), `content_hash`, `page_block_status`, `page_confidence`.
 
 ## Body

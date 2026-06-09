@@ -8,15 +8,15 @@ description: >
   positioning-framework's KB write contract. Legacy mode writes L0 to .claude/context/; KB mode
   writes bronze and enriches the silver-structural-observation type unblocked by Phase A.
 governed_by: change-management/change-document
-status: QA
+status: Closed
 resource_name: live-capture
 resource_version: "TBD"
 impact: 4
 confidence: 4
 ease: 2
 initiative: cro-kb-path-b
-status_note: QA round 1 folded in (blocked-page tri-state fix + 2 schema declarations + objection_faq_present default); pending user QA approval
-version: "0.2.0"
+status_note: Closed, QA approved; unreleased pending the live-capture skill release
+version: "0.3.0"
 created: 2026-06-09
 updated: 2026-06-09
 ---
@@ -125,5 +125,6 @@ Resolution: a content-blocked-pages rule added to `agent-header.md` (Tri-State E
 
 | Version | Changes |
 |---|---|
+| 0.3.0 | QA approved, closed. Fresh-context Closed-gate review clean (one cosmetic nit fixed: reference-copy parity note on `objection_faq_present`). Awaiting the live-capture skill release. |
 | 0.2.0 | QA round 1: folded in producer-side fixes from the first KB-mode chain run. Content-blocked pages now write pass-dependent tri-states as `not_checked` (not `absent`); declared `sitewide_form_field_count` and per-page `name`; `objection_faq_present` emitted explicitly as `not_checked` until a detection pass exists. Consumer untouched. |
 | 0.1.0 | Backlog: live-capture skill scoped from the approved Phase B plan and the v1.1 observation schema. |
