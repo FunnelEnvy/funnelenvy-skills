@@ -63,6 +63,11 @@ funnelenvy-skills/
 │   │   └── phases/               # Phase-specific instruction modules
 │   │       ├── extract.md        # Phase 1: page discovery + extraction
 │   │       └── analyze.md        # Phase 2: voice analysis + rule derivation
+│   ├── live-capture/
+│   │   ├── SKILL.md              # Orchestrator v0.1.0 (flags, I/O + browser mode resolution, routing)
+│   │   ├── agent-header.md       # Shared agent rules (factual-not-interpretive, tri-state, position encoding)
+│   │   ├── phases/               # select (Section 8), capture (passive DOM), static-capture, write (inline schema)
+│   │   └── scripts/              # page_select.py (leverage ranking), content_hash.py (recapture-diff)
 │   ├── experiment-mockup/
 │   │   ├── SKILL.md              # Orchestrator v1.0.0 (~parses flags, detects mode, routes phases)
 │   │   ├── agent-header.md       # Shared agent rules (all phases)
@@ -266,7 +271,8 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 7. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
 8. **`/landing-page-generator <company> <slug> --stage all`** (optional, produces campaign landing page from L0 + L1 context, ~260-400K tokens)
 9. **`/voice-inference <url>`** (optional, standalone brand voice analysis, ~80-120K tokens, ~10-15 min)
-10. **`/experiment-mockup <hypothesis-number>`** (optional, produces visual mockup + placement rationale for a specific hypothesis)
+10. **`/live-capture <url>`** (optional, captures live-page structure + copy as factual context; feeds hypothesis-generator and experiment-mockup. Browser-based, dual-mode)
+11. **`/experiment-mockup <hypothesis-number>`** (optional, produces visual mockup + placement rationale for a specific hypothesis)
 
 **Tip:** Add `--property <ga4_property_id>` to any positioning-framework invocation to use GA4 traffic data for page selection (e.g., `/positioning-framework https://example.com --property properties/123456789`). This runs a single lightweight query before research begins and saves the property ID to `company-identity.md` so downstream skills like ga4-audit can auto-detect it. The full ga4-audit still runs separately.
 
@@ -428,6 +434,23 @@ Brand voice analysis from website content. Extracts 12-15 pages across content t
 - Operational: _voice-extractions.md (raw page extractions)
 
 **Runtime:** ~80-120K tokens. ~10-15 minutes.
+
+### live-capture (v0.1.0, in active development)
+Live-page structural and copy capture. Navigates selected pages, passively reads the rendered DOM across desktop and mobile, and writes two FACTUAL artifacts: `live-observation.md` (page structure) and `live-copy.md` (verbatim copy). Facts and two permitted mechanical derivations only; no judgments (consumers compute the interpretation). Reuses experiment-mockup's browser stack (Chrome DevTools / Playwright / static fallback, with the configured-but-broken = STOP rule) and positioning-framework's dual-mode KB write contract.
+
+**Invocation:** `/live-capture <url> [--scope <slug>] [--no-kb] [--static] [--urls <comma-list>] [--viewports desktop,mobile]`
+
+**Page selection:** Section 8 leverage algorithm (`scripts/page_select.py`): traffic, conversion-gap-below-benchmark, bounce, device-gap weighted sum; two lanes (conversion by leverage, content by organic sessions); always-capture homepage + positive-control; no-profile nav-crawl fallback (confidence capped at 3).
+
+**Dependencies:**
+- Hard: URL provided, a browser MCP (or `--static`)
+- Soft: `performance-profile.md` / `silver-performance-analysis` (page selection; nav-crawl fallback when absent)
+
+**Outputs:**
+- Legacy: L0 `live-observation.md` + `live-copy.md` in `.claude/context/`
+- KB mode: bronze (`bronze-note-capture`, `bronze-research-extraction`) + silver enrichment `silver-structural-observation` at `reference/cro-{scope}/live-structure.md`
+
+**Note:** KB-mode silver enrichment depends on the client type skill registering `silver-structural-observation` (Phase A Change B). Legacy mode is independent. Authoritative artifact schema inlined in `phases/write.md`; reference copies in `schemas/`.
 
 ### experiment-mockup (v1.0.0)
 Visual mockup generator for proposed experiment changes. Takes a hypothesis from `experiment-roadmap.md`, navigates to the target page, injects the proposed change styled to match the site's design, iterates with the user in real time, then captures the approved state as a standalone HTML artifact with CRO placement rationale. Two modes: live (Chrome DevTools MCP, interactive, ~90% visual fidelity) and static (HTML extraction fallback, non-interactive, ~70% fidelity).

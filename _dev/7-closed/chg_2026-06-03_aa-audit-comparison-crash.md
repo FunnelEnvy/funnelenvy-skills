@@ -44,13 +44,13 @@ Coerce cell values to float with a safe fallback (non-numeric → 0.0 with a std
 ## Validation
 
 1. `python -m unittest _tests.unit.test_aa_audit -v` — all tests pass.
-2. Live end-to-end: full `--days 90` run with comparison enabled against the known-crashing case (`hpeecompriv` via HPE-altloader's `aa-config-b2b-store.json`) completes and emits valid JSON including the `comparison` block. Pre-fix this run reproduces the TypeError at `aa_audit.py:343`.
+2. Live end-to-end: full `--days 90` run with comparison enabled against the known-crashing case (a client report suite via that client's AA config) completes and emits valid JSON including the `comparison` block. Pre-fix this run reproduces the TypeError at `aa_audit.py:343`.
 
 ## Changelog
 
 | Version | Changes |
 |---------|---------|
 | 0.4.0 | QA → Closed: user approved QA 2026-06-03; unreleased changelog entry added to new skills/aa-audit/CHANGELOG.md (first CHANGELOG for this skill). |
-| 0.3.0 | Build → QA: fix implemented (_coerce_cell + _normalize_value), 13 unit tests passing, live end-to-end validation against hpeecompriv with comparison enabled completed (exit 0, comparison block emitted, coercion warning observed on the previously-crashing bouncerate cell). |
+| 0.3.0 | Build → QA: fix implemented (_coerce_cell + _normalize_value), 13 unit tests passing, live end-to-end validation against a client report suite with comparison enabled completed (exit 0, comparison block emitted, coercion warning observed on the previously-crashing bouncerate cell). |
 | 0.2.0 | Backlog → Build (expedited per user direction): Requirements and Validation filled; coercion point refined to `_normalize_value` choke point covering both parse paths. |
 | 0.1.0 | Initial backlog change document — TypeError crash observed live 2026-06-03; --no-compare workaround documented. |

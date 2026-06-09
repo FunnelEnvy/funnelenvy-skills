@@ -277,9 +277,10 @@ For each constructed hypothesis, check the "Detection Signal" column. If any sig
 - A device or OS cut in the performance profile shows the error-session rate concentrated by OS or browser family (e.g., Android 50% vs Windows 25%, or SamsungInternet/ChromeMobile high vs desktop Chrome baseline) rather than by page or channel
 - A device friction gap coincides with an identified script-error family on the same sessions
 - The hypothesis proposes a mobile/device messaging or rendering change on a surface whose device gap is error-explained
+- A structural observation artifact records a broken mobile render (`mobile_render_clean: false`) on the surface the hypothesis targets, a direct observation of a defect-class explanation independent of any script-error telemetry
 
 **Action:** Gate
-**Gate condition:** Route to fix-and-monitor before any device-targeted messaging hypothesis. The fix is the error remediation, not a messaging test or a Core Web Vitals audit. Add a verification note: "Confirm the device gap survives the error fix before testing messaging; messaging tests on error-degraded sessions are uninterpretable." Cap at Strategic Bet tier until the error family is ruled out.
+**Gate condition:** Route to fix-and-monitor before any device-targeted messaging hypothesis. The fix is the error remediation, not a messaging test or a Core Web Vitals audit. Add a verification note: "Confirm the device gap survives the error fix before testing messaging; messaging tests on error-degraded sessions are uninterpretable." Cap at Strategic Bet tier until the error family is ruled out. A structural observation of a clean mobile render (`mobile_render_clean: true`) on the target surface counts as ruling out the rendering-defect family: the gate lifts and the hypothesis proceeds as a layout or content test. Script-error families identified in performance data still require their own rule-out; a clean render does not clear an error-telemetry signal.
 
 **Evidence basis:** An OS/browser-level defect inflates a device friction gap independent of message fit. Testing a messaging variant on error-degraded sessions cannot separate message effect from error effect.
 

@@ -8,8 +8,9 @@
 - The matched archetype pattern module (e.g., `modules/patterns-procurement.md`), if the orchestrator resolved one in SKILL.md Phase 1 `Archetype resolution`. Absent until an archetype module exists; detection runs on the base library alone when none is loaded.
 - Any `modules/evidence-*.md` files (optional, loaded by orchestrator if present)
 - `engagement-constraints` input (optional): delivery and governance state, consumed by Step 1d. Absent in most runs; Step 1d is skipped when absent. Never produces opportunities, only constraints.
+- The structural observation artifact body (KB mode only, optional): the scope's `silver-structural-observation` artifact (`live-structure.md`), loaded by the orchestrator per SKILL.md `Read-side Mapping` when present. Consumed by the Step 1 structural extraction stanza and the Step 1e field-keyed triggers.
 
-In KB mode the orchestrator supplies the same context bodies, sourced from the scope's silver artifacts per the SKILL.md `KB Mode (Dual-Mode Output)` > `Read-side Mapping`. Trigger and detection logic below is source-agnostic and unchanged.
+In KB mode the orchestrator supplies the same context bodies, sourced from the scope's silver artifacts per the SKILL.md `KB Mode (Dual-Mode Output)` > `Read-side Mapping`. Trigger and detection logic below is source-agnostic and unchanged, with one addition: the structural observation artifact is KB-native (no legacy equivalent) and is consumed by Step 1 and Step 1e only.
 
 ## Depth Behavior
 
@@ -23,6 +24,7 @@ This phase does not vary by depth. All available context is scanned regardless o
 | competitive-landscape.md | Skip competitive-pressure patterns (pricing transparency, differentiator crowding). |
 | audience-messaging.md | Skip persona-dependent patterns (segment hero, industry proof, nav intent mismatch). |
 | performance-profile.md | Skip all performance-driven triggers (Step 1c). Confidence capped at 4 globally. Add "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses" to Prerequisites. |
+| Structural observation artifact (live-structure, KB mode) | Skip structural observation triggers (Step 1e). NO confidence penalty and NO global cap: absence means page structure was not assessed, not that structure is sound or broken. Element targeting falls back to context-inferred pages. Add "Run /live-capture for structure-driven triggers and observed current-state documentation" to Prerequisites. |
 | All L1 files | Detect from L0 only. Limited to patterns triggered by website copy, proof points, and structural signals. |
 
 ---
@@ -85,6 +87,14 @@ Scan each context file for specific, concrete signals that indicate a testable o
   - CTA hierarchy dominance (one element gets disproportionate clicks)
   - Sequential content drop-off (carousel/tab engagement decay)
   - Discovered parameter types (what element tracking exists)
+
+**From the structural observation artifact (live-structure, KB mode, if loaded):**
+- Site-level: form recurrence (`form_recurs_sitewide`, sitewide form field and required-field counts), site-wide primary CTA label, existence tri-states (`comparison_page_exists`, `roi_tool_exists`, `pricing_page_exists`), `nav_persona_segmented`
+- Per-page (frontmatter pages digest plus body blocks): form presence, field and required-field counts, embed vendor; primary CTA label and `cta_count`; login presence, above-fold placement, nav rank; proof signals (`named_client_proof_present`, `proof_element_count`, `team_credibility_present`); sequential UI presence and item count; `chatbot_present`; `objection_faq_present`; `mobile_render_clean`; navigation labels
+- Copy skeleton (headline, subhead, section heading text captured verbatim): feeds generic pattern matching in Step 2 exactly like website copy from L0 (e.g., service-page differentiation, specificity injection)
+- Trust qualifiers: a `page_block_status` other than clean, a low `page_confidence`, or a viewport divergence note downgrades trigger strength to "partial" for signals from that page
+- Tri-state fields (`present | absent | not_checked`) are never coerced to booleans. A field missing from a page record is treated as `not_checked`.
+- Rendered page height and section count feed existing page-length patterns (e.g., PS-02) as ordinary signals; they need no dedicated trigger.
 
 ### Step 1b: Context Quality Flags
 
@@ -199,6 +209,42 @@ Worked example 1 (release calendar): an August release carries a PDP and cart re
 Worked example 2 (approval bandwidth): a series of injection-caused UX incidents leads to a governance escalation and a signalled preference for a more pragmatic pace. Plan two to three concurrent approvals at most. Copy-light, off-configurator experiments are the near-window candidates; configurator-touching experiments belong to the next pace conversation. The derived constraint is a concurrency ceiling plus a tier ceiling on the riskiest surface, not a restatement of the incident history.
 
 **Output:** engagement-derived sequencing and tier constraints, carried to Phase 4 (sequencing) and to the Prerequisites section. These are constraints, NOT hypotheses. Do not add them to the opportunity list.
+
+### Step 1e: Structural Observation Triggers
+
+**Skip this step entirely if the structural observation artifact is not loaded.** Skipping has no confidence consequence: absence means structure was not assessed.
+
+These triggers fire on directly observed page structure. They are field-keyed against the structural observation artifact (KB mode), mirroring how Step 1c keys against the performance profile. Run in parallel with pattern matching (Step 2). Structure-driven opportunities join the opportunity list with `signal_source: structural-observation`.
+
+**Normative rules (binding for every trigger below):**
+
+1. **Tri-state evaluation.** `present` fires presence-conditioned triggers and suppresses absence-conditioned ones. `absent` fires absence-conditioned triggers and suppresses presence-conditioned ones. `not_checked` does neither: the pattern may still fire from other sources exactly as it does today.
+2. **Structure-vs-behavior boundary (no double-counting).** Structure supplies TARGETS and current-state confirmation. Performance supplies FIRING COUNTS for engagement patterns (EE-02, the EE-03 element leg, the NX-06 depth leg, the NX-07 return-rate leg). A structural field never re-fires a trigger that performance data already fired for the same page; it enriches that opportunity's element targeting instead (the merge happens in Phase 3 Step 8 as usual).
+3. **Existence tri-states are observational input only.** For comparison/ROI/pricing existence fields, the firing logic stays competitive- or positioning-driven; the structural field confirms or suppresses the structural leg of the trigger, it does not fire the pattern alone.
+
+| Trigger Condition | Pattern(s) | Example |
+|---|---|---|
+| Form present with 5+ fields or a high required-field count | FO-01, FO-02 | "Demo form has 13 fields, 11 required. Field reduction or multi-step candidates, confirmed by direct observation rather than inference." |
+| Form present with no value reinforcement or trust signals observed near it | FO-03; FO-04 (partial unless field labels were captured) | "Contact form renders with no proof element in its section. Context reinforcement candidate." |
+| High `cta_count` on one page OR a generic or high-commitment primary CTA label | NX-02; EE-03 | "Page shows 11 CTAs with equal visual weight; primary label is 'Submit'. Hierarchy and label clarity candidates." |
+| `login_present` true AND (`login_above_fold` false OR low nav rank) | NX-07 (structural leg; full trigger only with the performance return-rate leg, else partial) | "Login sits at nav rank 7. With a high return-visitor share this fires fully; without return-rate data it is partial." |
+| `sequential_ui_present` true with multiple items | EE-02 (targeting enrichment only; firing requires performance drop-off data) | "Tabs with 5 panels observed on a solutions page. If element data shows later-tab drop-off, this names the exact element to de-bury." |
+| `named_client_proof_present: absent` OR low `proof_element_count` on an evaluation-stage page | HM-02, SP-01, SP-02, SP-03 | "Pricing page renders zero named-client proof elements. Proof injection candidates." |
+| `team_credibility_present: absent` where expertise is a claimed differentiator | TC-01 | "Services page shows no team credibility surface despite expertise positioning." |
+| `objection_faq_present: absent` on a decision-stage page | TC-02 | "No objection-handling content observed on a comparison-stage page." |
+| `chatbot_present: present` or an overlay observed over a primary CTA | NX-06 (intervention-leg confirmation; depth leg stays performance-driven) | "Chat widget overlaps the primary CTA on mobile. Confirms the intervention surface for an interference test." |
+| Navigation labels do not reflect persona segmentation AND audience context defines 2+ distinct personas (`nav_persona_segmented` false) | NX-01, PS-03 | "Nav is organized by product line while two personas with distinct jobs are defined. IA segmentation candidate." |
+| `comparison_page_exists: absent` | CR-01 structural leg confirmed (`present` suppresses CR-01) | "No comparison page observed; competitive context showing 3+ direct competitors supplies the firing condition." |
+| `roi_tool_exists: absent` | CR-02 / CR-03 structural leg confirmed (`present` suppresses) | "No ROI or assessment tool observed; proof registry and persona data supply the firing condition." |
+| `pricing_page_exists: absent` | PZ-01 structural leg confirmed (`present` suppresses) | "No pricing page observed; competitor pricing transparency supplies the firing condition." |
+| Copy skeleton on a service page reads generically against claimed differentiators | PS-04 | "Service page headline could describe any vendor in the category while the claim overlap map shows crowded claims." |
+
+**Trigger evaluation rules:**
+- Per-page conditions evaluate off the frontmatter pages digest; read the page's body block when a condition needs detail (labels, ordering, overlay position). Site-level fields evaluate once per run.
+- Each structure-driven opportunity uses ICE baseline 3/3/3, the same as context-derived. Direct observation provides current-state evidence for Phase 4 modifiers, never an inflated baseline and never a fabricated performance baseline.
+- Out of scope by design: personalization patterns (PE-01, PE-02) need cross-session variance a single capture cannot supply; exit-path patterns (NX-03) need behavioral data; value-before-commitment sequencing (NX-05) is deferred.
+
+**Output:** Structure-driven opportunities added to the opportunity list, tagged `type: "structure-driven"`.
 
 ### Step 2: Match Signals Against Patterns
 
