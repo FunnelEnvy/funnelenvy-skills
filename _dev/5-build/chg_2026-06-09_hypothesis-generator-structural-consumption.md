@@ -16,7 +16,7 @@ impact: 4
 confidence: 4
 ease: 3
 initiative: cro-kb-path-b
-status_note: Build complete, validator 24/24; pending KB-repo chain validation + branch reconciliation (edits uncommitted on dj_live-capture-skill tree)
+status_note: Build complete, committed c0858a4 on dj_live-capture-skill (PR 10, supersedes PR 9); pending KB-repo chain validation
 version: "0.2.0"
 created: 2026-06-09
 updated: 2026-06-09
