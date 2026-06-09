@@ -21,7 +21,8 @@ viewports: [desktop, mobile]
 confidence: 1-5                       # coverage-weighted aggregate (see Confidence Model), NOT a min()
 # --- site-level pattern fast-path (facts + mechanical derivations only) ---
 form_recurs_sitewide: bool
-sitewide_form_required_field_count: int | null
+sitewide_form_field_count: int | null            # perceived length of the recurring site-wide form
+sitewide_form_required_field_count: int | null    # actual friction of the recurring site-wide form
 sitewide_primary_cta_label: str | null
 comparison_page_exists: present | absent | not_checked   # CR-01
 roi_tool_exists: present | absent | not_checked          # CR-02 / CR-03
@@ -30,6 +31,7 @@ nav_persona_segmented: bool           # DERIVED: nav labels match /for-|by-(role
 # --- per-page firing digest (one entry per captured page) ---
 pages:
   - path: str
+    name: str                                    # human-readable page name (display label for the path)
     form_present: bool
     form_field_count: int | null               # FO-01/02 (perceived length)
     form_required_field_count: int | null       # FO-01/02 (actual friction)
@@ -44,7 +46,7 @@ pages:
     proof_element_count: int                     # SP-*
     sequential_ui_present: bool                  # EE-02
     sequential_ui_items: int                     # EE-02
-    objection_faq_present: present | absent | not_checked   # TC-02
+    objection_faq_present: present | absent | not_checked   # TC-02 (no detection pass yet: emit not_checked, see capture.md)
     chatbot_present: present | absent | not_checked          # NX-06 / overlay
     mobile_render_clean: bool                    # DERIVED: mobile console_errors + failed_requests == 0
     content_hash: str                            # hash(H1 + structural skeleton)
@@ -59,6 +61,8 @@ last_updated_by: str
 Derived frontmatter fields are limited to `mobile_render_clean` and `nav_persona_segmented`, each with the stated deterministic rule. Do NOT add comparative judgment fields (`login_competes_with_prospect_cta`, `primary_cta_verb_strength`, `sequential_ui_burial`); those are consumer computations.
 
 `page_block_status` values: `clean` | `akamai-403` | `challenge` | `partial`. `akamai-403` is the vendor-neutral catch-all for any WAF 403 (Akamai, Cloudflare, DataDome, PerimeterX, Imperva); `challenge` is a bot-challenge interstitial; `partial` is a page that rendered but did not fully settle. A systemic WAF block on a headless browser stops the run rather than emitting these per page (see `capture.md` Step 1).
+
+**Content-blocked records assert nothing.** When a page's `page_block_status` is `akamai-403` or `challenge` (no content rendered), every pass-dependent tri-state field on that page entry (`named_client_proof_present`, `team_credibility_present`, `objection_faq_present`, `chatbot_present`) is `not_checked` by definition, never `absent`, and the pass-dependent counts (`cta_count`, `proof_element_count`, `form_field_count`, `form_required_field_count`) are `null`, never an observed-looking `0`. A pass that never rendered content cannot assert absence (per `agent-header.md` > Tri-State Existence Discipline). A `partial` record, by contrast, rendered and keeps its real captured observations.
 
 ### live-observation.md body
 

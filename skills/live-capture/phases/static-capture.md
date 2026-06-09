@@ -12,7 +12,7 @@ Use `modules/web-extract.md`, prioritizing raw HTML over markdown:
 
 1. `curl -sL --max-time 15 <url>` for raw HTML.
 2. If curl fails or returns empty: fall through to `web-extract.md` Tier 0 (markdown.new) for at least structural understanding.
-3. If all tiers fail: record `page_block_status` (`akamai-403` / `challenge` / `partial`) for that page and continue. Do not abort the run.
+3. If all tiers fail: record `page_block_status` (`akamai-403` / `challenge` / `partial`) for that page and continue. Do not abort the run. For a content-blocked record (`akamai-403` / `challenge` / zero content fetched), every pass-dependent tri-state field for that page is `not_checked` and the pass-dependent counts are `null`, never `absent` or `0`: nothing was parsed, so the record asserts nothing (per `agent-header.md` > Tri-State Existence Discipline).
 
 Also fetch linked stylesheets (`<link rel="stylesheet">`, resolve relative URLs) for any structural class hints.
 

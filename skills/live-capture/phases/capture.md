@@ -18,7 +18,7 @@ Read `agent-header.md` first. Facts only, tri-state for pass-dependent existence
   - Chrome DevTools mode: `emulate` with `viewport: "1280x900x1"` for desktop and `viewport: "390x844x3,mobile,touch"` for mobile.
   - Playwright mode: a mobile browser context / `browser_resize` to true device metrics (Playwright honors sub-window viewports).
   - If neither path can set a true sub-window mobile viewport, capture desktop only, set `viewports: [desktop]`, and record the mobile gap in Capture Caveats (do not emit fabricated or window-clamped mobile data).
-- Wait for document ready. Network idle is best-effort: tracker-heavy sites may never idle. Cap the idle wait (~10-15s); if it does not settle, set `page_block_status: partial` and proceed (do not abort). If the page genuinely fails to load (404, connection refused, bot challenge), record `page_block_status` (`akamai-403`, `challenge`, or `partial`), capture whatever rendered, and continue. An isolated blocked page never aborts the run.
+- Wait for document ready. Network idle is best-effort: tracker-heavy sites may never idle. Cap the idle wait (~10-15s); if it does not settle, set `page_block_status: partial` and proceed (do not abort). If the page genuinely fails to load (404, connection refused, bot challenge), record `page_block_status` (`akamai-403`, `challenge`, or `partial`), capture whatever rendered, and continue. An isolated blocked page never aborts the run. For a content-blocked record (`akamai-403` / `challenge` / zero content rendered), write every pass-dependent tri-state field as `not_checked` and the pass-dependent counts as `null`, never `absent` or `0`: no detection pass ran against rendered content, so the record asserts nothing (per `agent-header.md` > Tri-State Existence Discipline). A `partial` page that did render keeps its real observations.
 
 **Systemic WAF block (first-page rule).** A WAF block is: HTTP `403` with an `Access Denied` / `errors.edgesuite.net` (Akamai) body, or a Cloudflare / DataDome / PerimeterX / Imperva challenge interstitial, or any bot-challenge page in place of content. Distinguish systemic from isolated:
 
@@ -54,6 +54,8 @@ Capture these blocks (full definitions in `write.md` > authoritative schema):
 - **G. Navigation / IA** -- top-nav item labels (raw; note many enterprise mega-navs are button-driven, so capture nav `<button>` labels too, not only anchors), login placement in nav. Detect the footer by `footer, [role=contentinfo]` OR a recognizable footer region (sites often omit the semantic `<footer>` landmark); record footer presence by region, and separately whether a semantic landmark exists. Leave persona-vs-feature classification to the consumer; record raw labels.
 - **H. Render / technical (per viewport)** -- `console_error_count`, `page_error_count`, `failed_request_count`, `rendered_page_height`, `render_correctness`. Read console + network signals from the browser MCP. (Static mode cannot populate these; see static-capture.md.)
 - **I. Chatbot / overlays** -- `chatbot_present` (tri-state), number of systems, fire trigger, offer text, `overlays_cta` bool.
+
+`objection_faq_present` (TC-02) has no dedicated detection pass yet. Emit it explicitly as `not_checked` for every page rather than omitting it: omission would read to the consumer as missing-equals-not_checked anyway, but an explicit value keeps the artifact schema-complete and honest about the absent pass. Do not write `absent` (no pass looked) and do not infer it from headings here.
 
 ### Step 3: Viewport divergence
 

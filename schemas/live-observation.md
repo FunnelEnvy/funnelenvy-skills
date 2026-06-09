@@ -20,10 +20,11 @@ pattern fires on a page without loading the body:
 
 - Site level: `schema`, `schema_version`, `company`, `url`, `capture_date`, `capture_method`,
   `pages_captured`, `viewports`, `confidence` (coverage-weighted aggregate, not a min),
-  `form_recurs_sitewide`, `sitewide_form_required_field_count`, `sitewide_primary_cta_label`,
+  `form_recurs_sitewide`, `sitewide_form_field_count`, `sitewide_form_required_field_count`,
+  `sitewide_primary_cta_label`,
   `comparison_page_exists` / `roi_tool_exists` / `pricing_page_exists` (tri-state),
   `nav_persona_segmented` (derived).
-- Per page (`pages[]`): `path`, form fields (`form_present`, `form_field_count`,
+- Per page (`pages[]`): `path`, `name` (human-readable page name), form fields (`form_present`, `form_field_count`,
   `form_required_field_count`, `form_embed`), CTA (`primary_cta_label`, `cta_count`), login
   (`login_present`, `login_above_fold`, `login_nav_rank`), proof (`named_client_proof_present`
   and `team_credibility_present`, both tri-state since they depend on below-fold lazy content;
@@ -39,5 +40,6 @@ Site-level section, then per-page blocks A-I + K plus a fixed `viewport_divergen
 ## Tri-state and provenance
 
 - Pass-dependent existence fields use `present | absent | not_checked`, never a bare `false`.
+- On a content-blocked page (`page_block_status: akamai-403` or `challenge`, no content rendered), every pass-dependent tri-state field is `not_checked` by definition and the pass-dependent counts are `null`: a pass that never rendered content cannot assert `absent`.
 - `capture_method` (capture fidelity) is distinct from KB `data_provenance` (buyer validation).
 - Position encoding is `fold + ordinal + region`, never absolute pixels.

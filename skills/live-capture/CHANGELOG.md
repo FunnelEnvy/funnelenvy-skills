@@ -17,5 +17,9 @@
 
 - KB-mode resolution fix: artifact types are resolved via the two-level lookup (repo-local `artifacts/` then the kb-start base), so kb-start-inherited types like `bronze-note-capture` no longer cause a false legacy fallback. `silver-structural-observation` is the explicit KB-mode gate. Surfaced while wiring the skill into a KB whose `bronze-note-capture` is inherited from kb-start.
 
+- Content-blocked pages no longer assert tri-state absence (surfaced by the first full KB-mode chain run). A page hard-blocked by a WAF (`page_block_status: akamai-403` / `challenge`, zero content rendered) had no detection pass run against rendered content, so it now writes every pass-dependent tri-state field as `not_checked` (never `absent`) and pass-dependent counts as `null` (never an observed-looking `0`). `partial` pages that did render keep their real observations. Rule added to `agent-header.md`, `phases/capture.md`, `phases/write.md`, and `phases/static-capture.md`. The consumer (hypothesis-generator) needs no change: its `not_checked`-neither-fires-nor-suppresses rule already handles the corrected output.
+- Schema completeness: declared two emitted-but-undeclared fields in the authoritative schema (`phases/write.md`) and mirrored them in `schemas/live-observation.md`: site-level `sitewide_form_field_count` (perceived-length sibling of `sitewide_form_required_field_count`) and per-page `name` (human-readable page label alongside `path`).
+- `objection_faq_present` is now emitted explicitly as `not_checked` until a detection pass exists, rather than omitted. Schema-complete and honest about the absent pass; the field is retained because hypothesis-generator Step 1e keys TC-02 on it.
+
 ### Notes
 - Legacy mode is fully testable in this repo. KB-mode silver enrichment targets `silver-structural-observation`, which exists once Phase A's client-repo Change B registers the type; full end-to-end KB validation runs in the bound KB repo.

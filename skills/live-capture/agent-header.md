@@ -28,6 +28,8 @@ Anything whose detection depends on a pass that may not have run is recorded as 
 - Genuinely lazy-loaded or interaction-gated content that was not expanded: mark `nested_content_available: not_checked`, not a false `absent`.
 - Booleans are reserved for facts observable in the rendered DOM of a captured page (e.g. `form_present`, `login_above_fold`).
 
+**Content-blocked pages assert nothing.** When a page's capture is content-blocked (`page_block_status: akamai-403` or `challenge`, or any zero-content result), no page content was ever rendered, so the detection passes never ran. EVERY pass-dependent tri-state field for that page MUST be `not_checked`, never `absent`. A pass that never saw rendered content cannot confirm absence, that is the exact false assertion the tri-state design exists to prevent. Counts that those passes would populate (`cta_count`, `proof_element_count`, `form_field_count`, `form_required_field_count`) are `null` for the blocked page, not an observed-looking `0`. This is distinct from `partial` (the page rendered but did not fully settle): a `partial` page's real observations stand as captured and must NOT be blanked, the consumer already downgrades partial-page signal strength. Only the below-fold-dependent proof fields follow their own narrower `partial` rule above.
+
 ---
 
 ## 3. Position Encoding Is Portable

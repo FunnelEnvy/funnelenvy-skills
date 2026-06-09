@@ -15,8 +15,8 @@ impact: 4
 confidence: 4
 ease: 2
 initiative: cro-kb-path-b
-status_note: Build complete, scripts tested (32 green); pending user QA + KB-mode validation in client repo
-version: "0.1.0"
+status_note: QA round 1 folded in (blocked-page tri-state fix + 2 schema declarations + objection_faq_present default); pending user QA approval
+version: "0.2.0"
 created: 2026-06-09
 updated: 2026-06-09
 ---
@@ -107,8 +107,23 @@ Repo-level (registration package deal):
 6. Registration complete (README/marketplace.json/both CLAUDE.md/SKILL+CHANGELOG); doc-management
    review clean.
 
+## QA Findings and Resolution
+
+The first full KB-mode chain run (live-capture -> silver structural artifact -> hypothesis-generator) surfaced one bug and two schema-completeness gaps. All three are producer-side and folded into this change during QA.
+
+**Finding 1 (bug): content-blocked pages asserted tri-state absence.** A page hard-blocked by the site's WAF (HTTP 403, zero content rendered) was recorded with a non-clean `page_block_status` AND a proof tri-state field set to `absent`. That is a false assertion: the proof-detection pass never saw a rendered page, so it observed nothing. `absent` means "looked and confirmed not there"; the correct value for a pass that never ran against rendered content is `not_checked`. This is the exact false-assertion class the tri-state design exists to prevent (the same reason v1.1 promoted the proof fields from bool to tri-state for below-fold lazy content). The downstream consumer survived it only because its trust qualifiers downgrade non-clean-page signals and the relevant firing condition happened not to hold; the producer must not rely on consumer compensation.
+
+Resolution: a content-blocked-pages rule added to `agent-header.md` (Tri-State Existence Discipline), `phases/capture.md` (per-page WAF-block flow), `phases/write.md` (authoritative schema constraint), and `phases/static-capture.md` (static block-status path). On any content-blocked page (`page_block_status: akamai-403` / `challenge` / zero-content), every pass-dependent tri-state field is `not_checked` and pass-dependent counts are `null`, never `absent` / `0`. `partial` pages (rendered but not fully settled) are explicitly unaffected: their real observations stand and are not blanked.
+
+**Finding 2 (schema gap): two emitted-but-undeclared fields.** The capture emits `sitewide_form_field_count` (site-level, sibling of the already-declared required-count) and per-page `name` (human-readable page label alongside `path`), neither declared in the authoritative schema. Resolution: both declared in `phases/write.md`, mirrored in `schemas/live-observation.md`. Emission unchanged.
+
+**Finding 3 (decision): `objection_faq_present` declared but never emitted.** The schema declares this tri-state but no detection pass populates it. Resolution: kept the field and emit it explicitly as `not_checked` until a detection pass exists (schema-complete and honest, zero capture-logic work now). One line added to the capture flow; `phases/write.md` schema annotated. The field is NOT dropped: hypothesis-generator Step 1e keys TC-02 on it, so removal would orphan a consumer trigger.
+
+**Consumer (hypothesis-generator) untouched, by design.** Step 1e's tri-state rule (`not_checked` neither fires nor suppresses) and its missing-field-equals-`not_checked` convention already handle the corrected output. No consumer change is needed; touching it would duplicate the contract the producer now satisfies.
+
 ## Changelog
 
 | Version | Changes |
 |---|---|
+| 0.2.0 | QA round 1: folded in producer-side fixes from the first KB-mode chain run. Content-blocked pages now write pass-dependent tri-states as `not_checked` (not `absent`); declared `sitewide_form_field_count` and per-page `name`; `objection_faq_present` emitted explicitly as `not_checked` until a detection pass exists. Consumer untouched. |
 | 0.1.0 | Backlog: live-capture skill scoped from the approved Phase B plan and the v1.1 observation schema. |
