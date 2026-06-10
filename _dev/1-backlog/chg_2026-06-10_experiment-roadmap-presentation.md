@@ -13,7 +13,7 @@ resource_version: "TBD"
 impact: 4
 confidence: 4
 ease: 2
-version: "0.1.0"
+version: "0.2.0"
 created: 2026-06-10
 updated: 2026-06-10
 ---
@@ -32,6 +32,7 @@ updated: 2026-06-10
 | 2 | Approach OQ | Mockup integration contract | Spoke pages center on a control-vs-proposed comparison fed by experiment-mockup outputs. There is no defined naming/location convention linking a mockup artifact to a roadmap experiment number, and the renderer needs a deterministic glob to populate frames and the hub's per-card mockup-status indicator. | Define a per-scope mockup directory convention keyed by experiment number during Design, aligned with experiment-mockup's existing `Output Files` conventions; absent mockups render as labeled placeholder frames. |
 | 3 | Approach OQ | Rendered HTML placement in KB repos | The gold artifact is the markdown; the HTML presentation is a derived view, not a `kb_layer` artifact. Where the rendered site lives in a consuming KB repo (and whether it is committed) is ungoverned. | Sibling directory next to the gold artifact (e.g., `deliverables/{scope}-roadmap-site/`), no `kb_layer` frontmatter, markdown remains source of truth. Confirm against kb-start governance during Discovery. |
 | 4 | Approach OQ | Hosting/deploy step | The multi-page output wants hosting (Cloudflare Pages discussed) rather than file sharing. Deploy could be a skill step or stay manual. | Out of scope for v1 — document the one-line `wrangler pages deploy` command in the skill's completion message; revisit as a follow-up once the render pipeline is proven. |
+| 5 | Approach OQ | Humanizer dependency resolution | The required humanizer pass depends on the `humanizer` skill, which currently lives at the requesting user's device level — not in this plugin or a marketplace plugin this skill can declare a dependency on. A plugin skill cannot assume a device-level skill exists at run time. | Resolve at Discovery: either (a) detect-and-degrade — run the pass when `humanizer` resolves, warn and skip when absent; or (b) embed the relevant style rules (the AI-writing-sign checklist) as a renderer-owned reference doc so the pass has no external dependency. Lean (b) for portability. |
 
 ## Background
 
@@ -53,8 +54,10 @@ Render the markdown roadmap into a self-contained static site with a hub-and-spo
 - **Pitch-focus principle:** the HTML curates, the markdown remains the analytical record. Measurement design (target metric/guardrail/threshold cells), inconclusive protocols, and bundled-elements disclosures stay markdown-only.
 - **Visual system:** FunnelEnvy design language per the prior single-page deliverable pattern — IBM Plex Sans, CSS-variable palette, color-coded tier badges and callouts, browser-chrome mockup frames with lightbox zoom, sticky scroll-spy nav.
 - **Inputs:** the gold roadmap markdown (sole content source) plus optional mockup artifacts (Open Issue 2). Re-render is a complete projection of the current markdown, mirroring hypothesis-generator's `Re-render Behavior` — no diffing.
+- **Humanizer pass (user requirement, 2026-06-10):** because the output is a client-facing deliverable, render-authored copy (condensed card hypotheses, mockup annotations, section leads — anywhere the renderer phrases rather than quotes) runs through the `humanizer` skill as a final pipeline step before write. Passages lifted verbatim from the gold markdown are already deliverable-grade and may be exempted; the pass targets prose the renderer writes.
+- **Reference implementation:** a hand-built instance of the full design now exists in the consuming client KB repo (PR-reviewed), giving Design a concrete template for the page anatomy, shared stylesheet, and JS behaviors rather than a from-scratch spec.
 
-Structural placement (flag vs. skill), the mockup contract, output placement, and deploy are open — see `## Open Issues`.
+Structural placement (flag vs. skill), the mockup contract, output placement, deploy, and the humanizer dependency are open — see `## Open Issues`.
 
 ## Requirements
 
@@ -76,4 +79,5 @@ Pending — populated during QA.
 
 | Version | Changes |
 |---------|---------|
+| 0.2.0 | Humanizer pass added to Approach as a user requirement (render-authored copy only; verbatim gold-markdown passages exempt); OQ 5 seeded for the humanizer dependency (device-level skill — detect-and-degrade vs embedded style rules); reference-implementation note added (hand-built instance now exists in the consuming client KB repo). |
 | 0.1.0 | Initial backlog change document — multi-page roadmap presentation render from gold-experiment-roadmap markdown, design validated via wireframe session; four approach OQs seeded (flag vs. skill, mockup contract, output placement, deploy). |
