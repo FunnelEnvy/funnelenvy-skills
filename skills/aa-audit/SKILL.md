@@ -1,7 +1,8 @@
 ---
 name: aa-audit
-version: 1.0.0
+version: 1.1.0
 description: "When the user wants to audit Adobe Analytics data for a property. Also use when the user mentions 'AA audit,' 'Adobe Analytics audit,' 'AA performance profile,' or 'AA traffic analysis.' Runs a Python script against the AA 2.0 Reporting API, interprets the JSON output, and produces a structured performance-profile.md context file (.claude/context/ L1). Single agent, no depth flag. Works with any AA implementation given a client config file."
+updated: 2026-06-11
 ---
 
 # AA Audit

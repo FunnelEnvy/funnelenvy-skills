@@ -1,7 +1,8 @@
 ---
 name: live-capture
-version: 0.1.0
+version: 0.2.0
 description: "When the user wants to capture a live site's page structure and copy as factual input for CRO analysis. Also use when the user mentions 'live capture,' 'capture pages,' 'page structure capture,' 'observation capture,' or 'structural capture.' Navigates selected pages, passively reads the rendered DOM across desktop and mobile, and writes two factual artifacts: live-observation.md (structure) and live-copy.md (copy). Legacy mode writes L0 to .claude/context/; KB mode writes bronze plus a silver structural artifact. Facts only, no analysis."
+updated: 2026-06-11
 ---
 
 # Live Capture

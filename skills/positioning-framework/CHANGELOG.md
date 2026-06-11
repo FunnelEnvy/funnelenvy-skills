@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.1.1] - 2026-06-11
 
 ### Fixed
 - Module resolution hardening: agent-header.md (shared by all agents) and SKILL.md now state that modules/<name>.md references are repository-root-relative (a sibling of skills/) with symlink-aware resolution for isolated or installed invocations, and require agents to STOP and report rather than proceed on a remembered extraction or assessment protocol when a required module cannot be read. The orchestrator falls back to the 5 intake questions when modules/business-brief.md is unreadable.
