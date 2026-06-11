@@ -96,6 +96,10 @@ Capture stdout (JSON) and stderr (progress messages). Display progress to the us
 
 If the script exits with an error, display the error and stop. Do not retry.
 
+**Config notes (optional blocks):**
+- `scope`: isolates one sub-property inside a blended report suite. `scope.segment_id` (preferred when a segment exists) applies that segment to every report; otherwise `scope.prefixes` builds a broad single-token `search` clause on `scope.prefix_dimension` (default `variables/entrypage`). When `scope` is unset, every report runs whole-suite (pre-change behavior). The script reports the resolved method in `meta.scope_method` (`segment` | `prefix` | `none`). When scope is prefix-only (approximate), note the post-consent page-attribution caveat in the profile and cap confidence.
+- `interaction_dimensions`: array of element-click dimensions to enumerate (default `customlink`/`clickmaplink`/`clickmappage`). Legacy `dimensions.link_text` is honored as a single-eVar fallback when `interaction_dimensions` is absent.
+
 ### Step 2: Parse JSON and Validate
 
 Parse the JSON output. Verify:
@@ -192,16 +196,47 @@ From the config's `conversion_events` and `engagement_events`:
 - Bounce mismatch: >15pp gap between channels
 - Conversion mismatch: one channel's CVR <50% of another
 
-### Step 7: Interpret Element Interactions
+### Step 7: Interpret Element Instrumentation (REQUIRED)
 
-**Element clicks** (from `element_clicks` array, if present):
-- Top clicked elements by visit volume
-- Interaction rate = event count / total visits
+This produces the REQUIRED Element-Level Interactions body section. It always emits a finding -- presence with volumes when elements are tracked, AND an explicit absence assertion when they are not. Never silently skip.
+
+**Element interactions** (from `element_interactions.by_dimension`, keyed by interaction dimension):
+- For each dimension, list top interacted elements by visit volume and interaction rate = element count / total visits.
+- Roll up into `tracked_elements[]` (each `name`, `count`, `status`). `status="dark"` when the comparison block flagged a present-then-0 regression for that element; else `live`.
 
 **Clickmap regions** (from `clickmap_regions` array, if present):
-- Top interacted regions
+- Top interacted regions (supplementary).
 
-If both arrays are empty, note "No element-level interaction data available."
+**Determine `element_instrumentation_state`:**
+- `present`: interaction dimensions configured AND meaningful volume returned across the scoped unit.
+- `partial`: some interaction dimensions return data but expected structural element classes (e.g., primary CTA) are missing.
+- `absent`: no interaction dimensions configured, OR all configured dimensions return empty for the scoped unit.
+
+**Absence assertion (when `partial`/`absent`):**
+- Populate `missing_element_classes[]` (e.g., primary CTA, nav links, form fields not instrumented).
+- Set a non-null `instrumentation_ask` recommending the specific tracking to add (e.g., "Instrument primary CTA clicks via Custom Link s.tl() or Activity Map").
+- The body section LEADS with this gap statement. Do not write "No element-level interaction data available" as a terminal skip -- absence is a finding, not a non-result.
+
+**Search-reliability caveat:** element enumeration uses a broad single-token prefix `search` at an untruncated limit. Empty results from a narrow/over-scoped query are inconclusive, NOT proof of absence. The script already enumerates broadly; if a dimension returns empty under an approximate (prefix-only) scope, treat as inconclusive and note it.
+
+### Step 7b: Measurement Integrity (REQUIRED)
+
+This produces the REQUIRED Measurement Integrity body section from `event_liveness` and a friction pass. Always emit it.
+
+**Event liveness / dead bindings** (from `event_liveness[]`):
+- Each configured conversion/engagement event carries `count` and `status`.
+- `dead`: count == 0 over the full window -- a configured event whose binding never fired. Surface as a dead binding (the implementation is wired in config but not emitting).
+- `dark`: present in the comparison window then 0 in primary (from `comparison.event_liveness_regressions`) -- a click/event that regressed dark partway through.
+- `spiked`: 0 then present, or a large jump -- newly firing or a measurement spike worth flagging.
+- Roll dead bindings + dark/spiked zero-crossings into `measurement_integrity_flags[]`.
+
+**Friction interactions** (from `element_interactions` values + event names):
+- The script pre-flags friction candidates: each `element_interactions` row carries a `friction` boolean set by `aa_audit.py`'s `is_friction_token` (the single source of truth for the token set, shared by script, SKILL, and tests). Use that flag rather than re-deriving tokens. For event names not run through the script, apply the same helper conceptually.
+- Surface the top non-navigation interactions by volume.
+- When a baseline event is determinable (e.g., a form-start or configuration-start event), compute `ratio_to_baseline` for each friction interaction (friction count / baseline count); else leave `ratio_to_baseline` null.
+- Populate `friction_interactions[]` (each `interaction`, `count`, `ratio_to_baseline`, `type`).
+
+If no events are dead/dark/spiked and no friction interactions are detected, state that explicitly ("No dead bindings, zero-crossings, or friction interactions detected") -- the section is still present.
 
 ### Step 8: Opportunity Sizing and Analysis
 
@@ -233,7 +268,7 @@ Construct `.claude/context/performance-profile.md` using the same schema as ga4-
 
 All fields required unless noted.
 
-- Metadata: `schema` ("performance-profile"), `schema_version` ("2.0"), `generated_by` ("aa-audit"), `last_updated`, `last_updated_by` ("aa-audit"), `confidence` (1-5), `company` (from config company_id), `report_suite`, `date_range`, `days`
+- Metadata: `schema` ("performance-profile"), `schema_version` ("2.3"), `generated_by` ("aa-audit"), `last_updated`, `last_updated_by` ("aa-audit"), `confidence` (1-5), `company` (from config company_id), `report_suite`, `date_range`, `days`
 - Traffic: `total_sessions` (visits), `total_users` (visitors), `device_mobile_pct` (integer %)
 - Top pages (top 5): `top_pages[]` each with `path`, `sessions`, `bounce_rate`, `pages_per_session`, `avg_engagement_sec`, `failure_mode`
 - Conversions: `conversion_events[]` each with `name`, `count`, `classification`. Plus `primary_conversion_event`, `primary_conversion_rate` (%)
@@ -243,6 +278,9 @@ All fields required unless noted.
 - Page groups: `page_groups[]` each with `group`, `url_pattern`, `monthly_sessions`, `conversion_rate`, `bounce_rate`, `page_count`
 - Opportunities: `top_opportunities[]` each with `page`, `issue`, `formula_type`, `current_metric`, `target_metric`, `monthly_sessions`, `estimated_monthly_impact`, `action_category`, `sizing_note`
 - Data quality: `traffic_adequacy` ("high" | "adequate" | "low"), `sampling_applied` (false for AA 2.0 virtual report suites)
+- Scope (schema 2.3): `scope_applied` (bool), `scope_method` ("segment" | "prefix" | "none", from `meta.scope_method`), `scope_note` (string | null; description + accuracy caveat when approximate/prefix-only)
+- Element instrumentation (schema 2.3, ALWAYS emitted): `element_instrumentation_state` ("present" | "partial" | "absent"), `tracked_elements[]` each `name`/`count`/`status` ("live" | "dark"), `missing_element_classes[]`, `instrumentation_ask` (string | null). `element_interactions_available` retained for back-compat but is no longer a skip signal.
+- Measurement integrity (schema 2.3): `event_liveness[]` each `event`/`count`/`status` ("live" | "dead" | "dark" | "spiked"), `measurement_integrity_flags[]`, `friction_interactions[]` each `interaction`/`count`/`ratio_to_baseline` (nullable)/`type`
 - Comparison (omit when --no-compare): `comparison_period` with `start`, `end`. `trends` with `sessions_change_pct`, `primary_cvr_change_pp`, `bounce_rate_change_pp`, `mobile_bounce_change_pp`
 - L0: `l0_available` (bool), `l0_confidence` (int | null)
 
@@ -260,18 +298,21 @@ Use these mappings when writing the output to match the ga4-audit schema:
 | pages_per_session | pageviews / visits | Computed from site totals |
 | conversions | from config conversion_events | Client-specific |
 
-#### Body Sections (8 REQUIRED, 2 OPTIONAL)
+#### Body Sections (10 REQUIRED, 1 OPTIONAL)
 
-1. **Property Overview** - Report suite metadata, date range, data quality notes.
+1. **Property Overview** - Report suite metadata, date range, data quality notes. Include the scope statement: scoped sub-property (segment/prefix) or whole-suite, plus the accuracy caveat when prefix-only.
 2. **Page Performance** - 4 subsections: Top Pages, High-Bounce Pages, Page Group Performance, Underperforming Pages.
 3. **Conversion Events** - Event Inventory, Per-page funnels, Missing Tracking Gaps.
 4. **Channel Performance** - By Channel, Top Sources (from channel_detail).
 5. **Device & User Segment Performance** - Device Breakdown, Mobile vs Desktop Gap, New vs Returning.
 6. **Landing Page Performance** - Top Entry Pages, High-Bounce Entry Points, Source x Landing Page Mismatches.
 7. **Opportunity Sizing** - Quantified opportunities with impact buckets.
-8. **Key Metrics Summary** - Strengths, Weaknesses, Experiment Opportunities, Data Gaps.
-9. **Element-Level Interactions** (OPTIONAL) - Only when element click/clickmap data exists.
-10. **L0 Enrichment Notes** (OPTIONAL) - Only when company-identity.md consumed.
+8. **Element-Level Interactions** (REQUIRED, from Step 7) - ALWAYS present. Element inventory with volumes (`tracked_elements`) and interaction rates when instrumented; when `element_instrumentation_state` is `partial`/`absent`, LEADS with the gap statement, `missing_element_classes`, and `instrumentation_ask`. Includes the broad-prefix search-reliability caveat. Friction interactions surface here.
+9. **Measurement Integrity** (REQUIRED, from Step 7b) - ALWAYS present. Dead bindings (configured events with zero volume over the window), dark/spiked zero-crossings (from the comparison diff), and friction interactions (token match + top non-navigation, with ratio-to-baseline when determinable).
+10. **Key Metrics Summary** - Strengths, Weaknesses, Experiment Opportunities, Data Gaps.
+11. **L0 Enrichment Notes** (OPTIONAL) - Only when company-identity.md consumed.
+
+**Scope + confidence caveat:** when `scope_method` is `prefix` (approximate, no segment), document the post-consent page-attribution caveat in Property Overview and cap `confidence` (do not exceed 3 on scope grounds alone).
 
 #### Trend Tags (when comparison enabled)
 
@@ -292,8 +333,8 @@ Use these mappings when writing the output to match the ga4-audit schema:
 
 Before writing the final file, verify:
 
-1. [ ] All 8 REQUIRED body sections present
-2. [ ] YAML frontmatter has all required fields
+1. [ ] All 10 REQUIRED body sections present (including Element-Level Interactions and Measurement Integrity)
+2. [ ] YAML frontmatter has all required fields; `schema_version` is `"2.3"`
 3. [ ] Conversion events confirmed by user
 4. [ ] High-Bounce uses >50% bounce / >100 sessions thresholds
 5. [ ] Underperforming uses <50% group avg CVR / >200 sessions
@@ -309,6 +350,9 @@ Before writing the final file, verify:
 15. [ ] Source x Landing Page Mismatches uses >15pp bounce / <50% CVR thresholds
 16. [ ] If comparison enabled: trends section present with all four metrics
 17. [ ] If L0 consumed: l0_available true and enrichment section exists
+18. [ ] Element-Level Interactions section present (REQUIRED): `element_instrumentation_state` emitted; when `partial`/`absent`, `missing_element_classes` populated and `instrumentation_ask` non-null, section leads with the gap statement (no silent skip)
+19. [ ] Measurement Integrity section present (REQUIRED): `event_liveness` covers every configured event; dead bindings and dark/spiked zero-crossings surfaced; friction interactions populated (or "None detected")
+20. [ ] Scope frontmatter present (`scope_applied`, `scope_method`, `scope_note`); when `scope_method` is `prefix`, scope note + accuracy caveat in Property Overview and confidence capped accordingly
 
 ---
 
@@ -326,7 +370,9 @@ Performance profile written to .claude/context/performance-profile.md
   Traffic adequacy: [high/adequate/low]
   Confidence: [N]
   Comparison: [enabled, vs [start] to [end] | disabled (--no-compare)]
-  Element interactions: [available | no element data]
+  Scope: [segment | prefix (approximate) | whole-suite]
+  Element instrumentation: [present | partial | absent]
+  Measurement integrity: [N dead bindings, N dark/spiked, N friction]
 
   Key findings:
   - [top strength]

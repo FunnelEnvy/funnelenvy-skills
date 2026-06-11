@@ -1,11 +1,20 @@
 {
   "company_id": "your_company_id",
   "report_suite": "your_report_suite_id",
+  "scope": {
+    "segment_id": "",
+    "prefixes": [],
+    "prefix_dimension": "variables/entrypage"
+  },
   "dimensions": {
     "page": "variables/evar4",
-    "link_text": "variables/evar200",
     "region": "variables/clickmapregion"
   },
+  "interaction_dimensions": [
+    "variables/customlink",
+    "variables/clickmaplink",
+    "variables/clickmappage"
+  ],
   "conversion_events": [
     {"id": "metrics/event3", "name": "Form Complete", "classification": "conversion"},
     {"id": "metrics/event33", "name": "Qualified Messenger", "classification": "conversion"},

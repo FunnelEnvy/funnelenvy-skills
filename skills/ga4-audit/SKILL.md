@@ -41,6 +41,8 @@ When no `<property_id>` is provided, the skill checks `company-identity.md` for 
 | `--days` | 90 | Number of days to look back from today |
 | `--date-range` | last 90 days | Explicit date range in `YYYY-MM-DD:YYYY-MM-DD` format. Overrides `--days`. |
 | `--no-compare` | false | Skip period-over-period comparison |
+| `--scope-page-contains` | (none) | Restrict every report to pages whose `pagePath` contains this substring (sub-property scope). Unset = whole property. |
+| `--scope-host` | (none) | Restrict every report to a single `hostName` (sub-property scope). Combinable with `--scope-page-contains`. Unset = whole property. |
 
 No depth flag. The same reports run regardless of the lookback window. Data is either there or it isn't.
 
@@ -63,6 +65,18 @@ AI-referrer detection (Step 6b) is always-on. If runtime overhead exceeds ~15 se
 ### Comparison Rule (applies to ALL run_report calls)
 
 When comparison is enabled (default), include a second date range for the comparison period. GA4 returns metrics for both periods in one response. When --no-compare is set, use only the primary date range. Do not repeat this logic per step.
+
+### Scope Rule (applies to ALL run_report calls)
+
+When `--scope-page-contains <substr>` and/or `--scope-host <host>` is set, add a `dimensionFilter` to EVERY `run_report` request to restrict the unit of analysis to one sub-property inside a larger property. Follow the same "applies to ALL run_report calls" discipline as the Comparison Rule -- do not repeat the filter logic per step.
+
+- `--scope-page-contains` -> `dimensionFilter` on `pagePath` with `matchType: CONTAINS` (substring).
+- `--scope-host` -> `dimensionFilter` on `hostName` with exact match.
+- Both set -> combine under an `andGroup` filter expression.
+- When the step already needs a `dimensionFilter` (e.g., Step 5 event filter), wrap the existing filter and the scope filter in an `andGroup` so both apply.
+- Unset (default) = whole property, exactly as before.
+
+Record the resolved scope in frontmatter: `scope_applied` (bool), `scope_method` (`"page_contains"` | `"host"` | `"both"` | `"none"`), `scope_note` (human-readable description; when scope is approximate, note the page-attribution caveat and cap confidence at 3 on scope grounds).
 
 ---
 
@@ -161,6 +175,12 @@ Pull all events with their counts for the date range using a report query:
 
 
 Classification (key event, heuristic, L0) is based on the current period only. The comparison period provides event volume trends but does not change classification.
+
+**Event liveness / dead-binding audit (feeds Measurement Integrity):** Step 3a already pulls every event with counts. From that same data:
+- Flag any configured or key event returning zero over the window as a **dead binding** (`status="dead"`) -- the event is defined/expected but not firing.
+- When comparison is enabled, diff each event's primary vs comparison count to flag **zero-crossings**: present-then-0 -> `dark`; 0-then-present or a large jump -> `spiked`.
+- Emit these into the `event_liveness[]` frontmatter list (each `event`, `count`, `status`) and roll dead bindings + zero-crossings into `measurement_integrity_flags[]` for the REQUIRED Measurement Integrity body section (Step 10).
+- "Expected" events for dead-binding purposes are the conversion/key events from classification plus any L0-stated conversion points (Step 3c).
 
 Events where `conversions > 0` are GA4 key events. Tag them `[KEY EVENT]`. These are the highest-confidence classification: the property owner explicitly marked them as key events in GA4.
 
@@ -335,11 +355,13 @@ Output:
 |------|-------|----------|----------|---------------|-----|
 ```
 
-### Step 5b: Element-Level Interaction Discovery
+### Step 5b: Element-Level Interaction Discovery (REQUIRED output)
 
-This step discovers custom event parameters and queries element-level interactions on top pages. It adds specificity to downstream hypotheses by capturing which elements visitors interact with (or don't).
+This step discovers element-level interactions and produces the REQUIRED Element-Level Interactions body section. It ALWAYS emits `element_instrumentation_state` (`present` | `partial` | `absent`) -- absence is asserted as a finding, never a silent skip.
 
-**Skip conditions:** If no custom dimensions/parameters exist AND enhanced measurement dimensions yield no data, skip entirely. Output: "No element-level interaction data available."
+**No silent skip.** Even when no custom event-scoped parameters exist, GA4 enhanced measurement (autotrack) `linkText`/`linkUrl` are enumerated. If those also yield nothing, set `element_instrumentation_state: "absent"`, populate `missing_element_classes`, set a non-null `instrumentation_ask`, and the body section LEADS with the gap statement. The legacy "No element-level interaction data available" terminal skip is removed.
+
+**Scoped page set:** enumerate interactions across the scoped sub-property page set (per the Scope Rule), not only the Step-4 top pages. When scope is unset, this is the property's top pages as before.
 
 #### Step 5b-1: Parameter Discovery
 
@@ -353,7 +375,7 @@ Also check for standard enhanced measurement dimensions that carry element conte
 - `fileExtension`, `fileName` (from file_download events)
 - `videoTitle` (from video events)
 
-If no custom event-scoped dimensions exist AND no enhanced measurement element dimensions are available, skip this step entirely.
+**Always enumerate autotrack.** `linkText`/`linkUrl` are available on any property with enhanced measurement enabled, independent of custom event-scoped parameters. Enumerate them even when no custom event params exist. Only when BOTH custom params AND `linkText`/`linkUrl` return no data do you record `element_instrumentation_state: "absent"` -- and even then you emit the section with the absence finding (see Step 5b-4). Do not skip the step.
 
 #### Step 5b-2: Element Interaction Queries (max 5 additional `run_report` calls)
 
@@ -369,12 +391,14 @@ run_report:
   order_by: eventCount descending
 ```
 
-Run one query per discovered parameter dimension (up to 5 total). If multiple parameters exist, prioritize:
+Run one query per discovered parameter dimension (up to 5 total). When no custom event-scoped parameters exist, still run the `linkText` (and, budget permitting, `linkUrl`) autotrack queries. If multiple parameters exist, prioritize:
 1. Custom parameters with "cta," "button," "label," or "form" in the name
 2. `linkText` (most informative standard dimension)
 3. `linkUrl`
 4. Other custom event-scoped dimensions
 5. `videoTitle`, `fileExtension`
+
+**Element-event trend (comparison):** when comparison is enabled, include the comparison date range on these queries (per the Comparison Rule) so element-event volumes carry a primary-vs-comparison trend. An element that fired then went to zero is a `dark` zero-crossing; surface it in Measurement Integrity alongside event liveness.
 
 #### Step 5b-3: Compute Interaction Metrics
 
@@ -387,9 +411,20 @@ Flag notable findings:
 - One element gets >5x interactions of the next element for the same event type (CTA hierarchy dominance)
 - Later items in sequential elements (carousel slides, tab panels) get <20% of first item interactions (content below first view invisible)
 
-#### Step 5b-4: Record Results
+#### Step 5b-4: Record Results and Determine Instrumentation State
 
-Store element interaction data for the frontmatter and body section. If no meaningful interactions were discovered, set `element_interactions_available: false` in frontmatter and skip the body section.
+Always determine and emit `element_instrumentation_state`:
+- `present`: meaningful interaction volume returned across the scoped page set.
+- `partial`: some interactions return data but expected structural element classes (e.g., primary CTA, nav, form fields) are missing.
+- `absent`: neither custom params nor autotrack `linkText`/`linkUrl` returned data for the scoped unit.
+
+Populate `tracked_elements[]` (each `name`, `count`, `status` -- `dark` when the comparison trend flagged a present-then-0 element, else `live`). For `partial`/`absent`, populate `missing_element_classes[]` and a non-null `instrumentation_ask` (e.g., "Enable enhanced measurement outbound click tracking" or "Instrument primary CTA via a custom event parameter").
+
+The Element-Level Interactions body section is ALWAYS written (Step 10 section 9). When state is `absent`/`partial` it LEADS with the gap statement and the `instrumentation_ask`. `element_interactions_available` is retained for back-compat but is no longer a skip signal -- `element_instrumentation_state` is authoritative.
+
+#### Step 5b-5: Friction Pass
+
+Rank event names and `linkText` values matching friction tokens (`error`, `invalid`, `required`, `fail`, `denied`) and surface the top non-navigation interactions by volume. When a baseline event is determinable (e.g., a form-start or a flow-start event), compute `ratio_to_baseline` (friction count / baseline count); else null. Populate `friction_interactions[]` (each `interaction`, `count`, `ratio_to_baseline`, `type`). These surface in the Measurement Integrity body section.
 
 ### Step 6: Channel/Source Report
 
@@ -673,7 +708,8 @@ Construct `.claude/context/performance-profile.md` with the structure below. Do 
 
 All fields required unless noted.
 
-- Metadata: `schema` ("performance-profile"), `schema_version` ("2.2"), `generated_by` ("ga4-audit"), `last_updated`, `last_updated_by` ("ga4-audit"), `confidence` (1-5), `company`, `property_id`, `property_name`, `date_range`, `days`
+- Metadata: `schema` ("performance-profile"), `schema_version` ("2.3"), `generated_by` ("ga4-audit"), `last_updated`, `last_updated_by` ("ga4-audit"), `confidence` (1-5), `company`, `property_id`, `property_name`, `date_range`, `days`
+- Scope (schema 2.3): `scope_applied` (bool), `scope_method` ("page_contains" | "host" | "both" | "none"), `scope_note` (string | null; description + page-attribution caveat when approximate)
 - Traffic: `total_sessions`, `total_users`, `device_mobile_pct` (integer %)
 - Top pages (top 5 only): `top_pages[]` each with `path`, `sessions`, `bounce_rate`, `pages_per_session`, `avg_engagement_sec`, `failure_mode` (null | "shallow_engagement" | "deep_engagement")
 - Conversions (conversion-classified only): `conversion_events[]` each with `name`, `count`, `classification`. Plus `primary_conversion_event`, `primary_conversion_rate` (%)
@@ -683,12 +719,13 @@ All fields required unless noted.
 - Page groups: `page_groups[]` each with `group`, `url_pattern`, `monthly_sessions`, `conversion_rate`, `bounce_rate`, `page_count`
 - Opportunities: `top_opportunities[]` each with `page`, `issue`, `formula_type`, `current_metric`, `target_metric`, `monthly_sessions`, `estimated_monthly_impact` ("small" | "medium" | "large"), `action_category`, `sizing_note`
 - Data quality: `traffic_adequacy` ("high" | "adequate" | "low"), `sampling_applied` (bool)
-- Element interactions (from Step 5b, omit entirely when no element data): `element_interactions_available` (bool), `element_interaction_events` (int, number of events with element data), `discovered_parameters` (list of parameter names found), `top_interactions[]` each with `page`, `event`, `element` (parameter value, e.g. "Request Demo"), `parameter` (dimension name, e.g. "linkText"), `count`, `interaction_rate` (%). Top 10 by count.
+- Element instrumentation (schema 2.3, from Step 5b, ALWAYS emitted): `element_instrumentation_state` ("present" | "partial" | "absent"), `tracked_elements[]` each `name`/`count`/`status` ("live" | "dark"), `missing_element_classes[]`, `instrumentation_ask` (string | null). `element_interactions_available` (bool) retained for back-compat but no longer a skip signal. Detail fields (present when state is `present`/`partial`): `element_interaction_events` (int), `discovered_parameters` (list of parameter names found), `top_interactions[]` each with `page`, `event`, `element` (parameter value, e.g. "Request Demo"), `parameter` (dimension name, e.g. "linkText"), `count`, `interaction_rate` (%). Top 10 by count.
+- Measurement integrity (schema 2.3, from Steps 3 + 5b-5): `event_liveness[]` each `event`/`count`/`status` ("live" | "dead" | "dark" | "spiked"), `measurement_integrity_flags[]` (dead bindings + zero-crossings), `friction_interactions[]` each `interaction`/`count`/`ratio_to_baseline` (nullable)/`type`
 - AI-referrer traffic (from Step 6b): `ai_sessions_count` (int), `ai_sessions_pct` (float, 2 decimals), `ai_conversions_count` (int), `ai_conversion_rate` (float, 2 decimals, null when `ai_sessions_count == 0`), `ai_traffic_trend` (string: `growing` | `flat` | `declining` | `insufficient_data`), `ai_not_set_landing_pct` (float, 2 decimals), `top_ai_sources[]` up to 5, each with `source` (canonical name), `sessions` (int), `pct_of_ai` (float).
 - Comparison (omit entirely when --no-compare): `comparison_period` with `start`, `end`. `trends` with `sessions_change_pct`, `primary_cvr_change_pp`, `bounce_rate_change_pp`, `mobile_bounce_change_pp`
 - L0: `l0_available` (bool), `l0_confidence` (int | null)
 
-#### Body Sections (8 REQUIRED, 2 OPTIONAL)
+#### Body Sections (10 REQUIRED, 1 OPTIONAL)
 
 All sections include trend tags when comparison is enabled.
 
@@ -704,11 +741,18 @@ All sections include trend tags when comparison is enabled.
 6. **Landing Page Performance** -- Top Entry Pages (use `landingPage` dimension, not `pagePath`): Landing Page | Sessions | % of Entries | Bounce Rate | Engagement Rate | Conv Rate. High-Bounce Entry Points (>55% bounce, top 20): Landing Page | Sessions | Bounce Rate | Top Source | Notes. Source x Landing Page Mismatches: Landing Page | Better Channel | Worse Channel | Metric | Better Value | Worse Value | Gap.
 7. **Opportunity Sizing** -- Page | Issue | Formula | Impact Bucket | Action Category | Note. Each row includes sizing_note.
 8. **Key Metrics Summary** -- Strengths (2-4, cite numbers), Weaknesses (2-4, cite thresholds), Experiment Opportunities (3-5, cite metric gaps), Data Gaps. Each point cites specific numbers from sections 1-8.
-9. **Element-Level Interactions** (OPTIONAL, from Step 5b) -- Only present when element interaction data was discovered. 3 subsections:
-   - Discovered Parameters: Parameter | Scope | Source | Events With Data
-   - Per-Page Interaction Breakdown (top 10 pages by session volume that have element data): Page | Event | Element (parameter value) | Parameter | Count | Interaction Rate | Notes
-   - Interaction Gaps: pages with >500 sessions and primary CTA click rate <3%, CTA hierarchy dominance (one element >5x clicks of next), sequential content drop-off (<20% of first item). If none, "No notable interaction gaps detected."
-10. **L0 Enrichment Notes** (OPTIONAL) -- Product-Line Grouping Overrides, Funnel Stage Mapping, Tracking Gaps. Only when L0 consumed.
+9. **Element-Level Interactions** (REQUIRED, from Step 5b) -- ALWAYS present; `element_instrumentation_state` is emitted in every run.
+   - When `present`/`partial`, 3 subsections:
+     - Discovered Parameters: Parameter | Scope | Source | Events With Data
+     - Per-Page Interaction Breakdown (top 10 pages by session volume that have element data, across the scoped page set): Page | Event | Element (parameter value) | Parameter | Count | Interaction Rate | Notes
+     - Interaction Gaps: pages with >500 sessions and primary CTA click rate <3%, CTA hierarchy dominance (one element >5x clicks of next), sequential content drop-off (<20% of first item). If none, "No notable interaction gaps detected."
+   - When `absent` (or `partial` with missing structural classes): the section LEADS with the gap statement -- which structural element classes are not instrumented (`missing_element_classes`) and the recommended `instrumentation_ask`. This is a finding, not a skip.
+10. **Measurement Integrity** (REQUIRED, from Steps 3 + 5b-5) -- ALWAYS present.
+    - Dead Bindings: configured/key events returning zero over the window (`event_liveness` rows with `status="dead"`). Each: Event | Count | Status.
+    - Zero-Crossings (comparison only): events/elements that went `dark` (present-then-0) or `spiked` (0-then-present or large jump).
+    - Friction Interactions: token-matched (error/invalid/required/fail/denied) and top non-navigation interactions: Interaction | Count | Ratio to Baseline | Type.
+    - If none of the three classes detected, state "No dead bindings, zero-crossings, or friction interactions detected" -- the section is still present.
+11. **L0 Enrichment Notes** (OPTIONAL) -- Product-Line Grouping Overrides, Funnel Stage Mapping, Tracking Gaps. Only when L0 consumed.
 
 ##### Channel Performance: AI-Referrer Traffic subsection (always present, collapses below threshold)
 
@@ -779,7 +823,9 @@ Performance profile written to .claude/context/performance-profile.md
   Traffic adequacy: [high/adequate/low]
   Confidence: [N]
   Comparison: [enabled, vs [start] to [end] | disabled (--no-compare)]
-  Element interactions: [N events with element data | no element data available]
+  Scope: [page_contains | host | both | whole-property]
+  Element instrumentation: [present | partial | absent]
+  Measurement integrity: [N dead bindings, N dark/spiked, N friction]
   AI-referrer traffic: [N sessions ([pct]%), [trend] | below reporting threshold | none detected]
 
   Key findings:
@@ -823,8 +869,8 @@ Step 11 adds a new section to the performance profile body: "L0 Enrichment Notes
 
 Before writing the final file, verify:
 
-1. [ ] All 8 REQUIRED body sections are present (populated or gap-marked). OPTIONAL sections (Element-Level Interactions, L0 Enrichment Notes) present when applicable.
-2. [ ] YAML frontmatter has all required fields. `schema_version` is `"2.2"`.
+1. [ ] All 10 REQUIRED body sections are present (populated or gap-marked), including Element-Level Interactions and Measurement Integrity. OPTIONAL section (L0 Enrichment Notes) present when applicable.
+2. [ ] YAML frontmatter has all required fields. `schema_version` is `"2.3"`.
 3. [ ] Sampling status is reported accurately
 4. [ ] Conversion events are classified and confirmed by user
 5. [ ] High-Bounce callout table uses >50% bounce / >100 sessions thresholds. Underperforming table uses <50% of group average CVR / >200 sessions.
@@ -842,13 +888,15 @@ Before writing the final file, verify:
 17. [ ] Underperforming pages use group-relative benchmarks (not site-wide)
 18. [ ] New vs Returning section present with signal classification
 19. [ ] Source x Landing Page Mismatches uses >15pp bounce / <50% CVR thresholds
-20. [ ] If element interaction data discovered: `element_interactions_available: true` in frontmatter, Element-Level Interactions body section present with all 3 subsections
-21. [ ] If no element interaction data: `element_interactions_available: false` in frontmatter (or field omitted entirely), no Element-Level Interactions body section
-22. [ ] AI-referrer frontmatter fields populated (all 7 fields). When `ai_sessions_count == 0`, `ai_conversion_rate` is `null` and `top_ai_sources` is an empty list.
-23. [ ] AI-Referrer Traffic body subsection present inside Section 4 (Channel Performance). Collapsed one-liner when `ai_sessions_count < 20`, full breakdown otherwise.
-24. [ ] Queries in Step 6b use `PARTIAL_REGEXP` (not `FULL_REGEXP`). If `FULL_REGEXP` was used by mistake, `chatgpt.com` will not match the `chatgpt` token and results will be empty or wrong.
-25. [ ] Source normalization applied (chatgpt/perplexity/copilot/gemini/claude/mistral variants collapsed into canonical map). Raw rows preserved in appendix.
-26. [ ] `ai_not_set_landing_pct > 15%` surfaces as a Tracking Gap entry in the Data Quality section.
+20. [ ] Element-Level Interactions section present (REQUIRED): `element_instrumentation_state` (`present` | `partial` | `absent`) emitted in frontmatter; when `present`/`partial` the 3 subsections are populated; when `absent`/`partial` the section LEADS with the gap statement, `missing_element_classes` is populated, and `instrumentation_ask` is non-null (no silent skip)
+21. [ ] Autotrack enumerated: `linkText`/`linkUrl` queried even when no custom event-scoped parameters exist
+22. [ ] Measurement Integrity section present (REQUIRED): `event_liveness` covers configured/key events; dead bindings flagged; with comparison, dark/spiked zero-crossings surfaced; `friction_interactions` populated (or "None detected")
+23. [ ] Scope frontmatter present (`scope_applied`, `scope_method`, `scope_note`); when a scope flag is set, the `dimensionFilter` was applied to every `run_report` call and confidence capped when scope is approximate
+24. [ ] AI-referrer frontmatter fields populated (all 7 fields). When `ai_sessions_count == 0`, `ai_conversion_rate` is `null` and `top_ai_sources` is an empty list.
+25. [ ] AI-Referrer Traffic body subsection present inside Section 4 (Channel Performance). Collapsed one-liner when `ai_sessions_count < 20`, full breakdown otherwise.
+26. [ ] Queries in Step 6b use `PARTIAL_REGEXP` (not `FULL_REGEXP`). If `FULL_REGEXP` was used by mistake, `chatgpt.com` will not match the `chatgpt` token and results will be empty or wrong.
+27. [ ] Source normalization applied (chatgpt/perplexity/copilot/gemini/claude/mistral variants collapsed into canonical map). Raw rows preserved in appendix.
+28. [ ] `ai_not_set_landing_pct > 15%` surfaces as a Tracking Gap entry in the Data Quality section.
 
 ---
 

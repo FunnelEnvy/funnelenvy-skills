@@ -5,9 +5,9 @@
 
 # Performance Profile Schema (Layer 1)
 
-**Version:** 2.2.0
+**Version:** 2.3.0
 **Output path:** `.claude/context/performance-profile.md`
-**Produced by:** `ga4-audit`
+**Produced by:** `ga4-audit`, `aa-audit` (shared schema)
 **Consumed by:** hypothesis-generator (ICE scoring calibration + performance-driven hypotheses), website-audit (traffic prioritization), render-default-deliverables (executive summary enrichment)
 
 ---
@@ -27,7 +27,7 @@ Time-bounded analytics snapshot from GA4. Contains page-level traffic, engagemen
 ```yaml
 ---
 schema: performance-profile
-schema_version: "2.2"
+schema_version: "2.3"
 generated_by: ga4-audit
 last_updated: 2026-04-23
 last_updated_by: ga4-audit
@@ -104,7 +104,30 @@ top_opportunities:
 traffic_adequacy: "high"             # high | adequate | low
 sampling_applied: false
 
-# Element-level interactions (Step 5b; omitted when no element data)
+# Sub-property scope (schema 2.3; how the unit of analysis was isolated)
+scope_applied: false                 # true when a sub-property scope was applied to all reports
+scope_method: "none"                 # isolation method: none | (aa) segment | prefix | (ga4) page_contains | host | both
+scope_note: null                     # human-readable scope description + accuracy caveat when approximate
+
+# Element-instrumentation state (schema 2.3; ALWAYS emitted, replaces silent skip)
+element_instrumentation_state: "present"   # present | partial | absent
+tracked_elements:                    # each: name, count, status (live | dark)
+  - name: "Request Demo"
+    count: 245
+    status: live
+missing_element_classes: []          # element classes expected but not instrumented (drives the ask)
+instrumentation_ask: null            # recommended instrumentation ask when state is absent/partial; null when present
+
+# Measurement integrity (schema 2.3)
+event_liveness:                      # every configured/key event: event, count, status
+  - event: "metrics/event3"
+    count: 1240
+    status: live                     # live | dead | dark | spiked
+measurement_integrity_flags: []      # dead bindings + zero-crossings surfaced for the body section
+friction_interactions: []            # each: interaction, count, ratio_to_baseline (nullable), type
+
+# Element-level interactions (Step 5b; element_interactions_available retained for
+# back-compat but no longer a skip signal -- element_instrumentation_state is authoritative)
 element_interactions_available: true
 element_interaction_events: 3
 discovered_parameters:
@@ -208,9 +231,11 @@ Google's default channel grouping buckets all LLM referrers under "Referral." An
 
 ## Markdown Body Sections
 
-8 REQUIRED + 2 OPTIONAL (Element-Level Interactions, L0 Enrichment Notes).
+10 REQUIRED + 1 OPTIONAL (L0 Enrichment Notes), as of schema 2.3.
 
-For the full body section spec, see `skills/ga4-audit/SKILL.md` Step 10.
+Schema 2.3 promoted **Element-Level Interactions** from OPTIONAL to REQUIRED and added a REQUIRED **Measurement Integrity** section. The element-interactions section is always emitted: when `element_instrumentation_state` is `absent` it leads with the gap statement and a non-null `instrumentation_ask` rather than being skipped. Measurement Integrity surfaces dead bindings, zero-crossings (dark/spiked), and friction interactions.
+
+For the full body section spec, see `skills/ga4-audit/SKILL.md` Step 10 (GA4) and `skills/aa-audit/SKILL.md` Step 9 (AA).
 
 AI-referrer reporting lives inside Section 4 (Channel Performance) as a named subsection that appears after the Top Sources table. The subsection has two formats:
 
@@ -227,7 +252,8 @@ The frontmatter fields populate in both cases so downstream consumers can read t
 
 A performance-profile.md file is considered **complete** when:
 
-- [ ] YAML frontmatter has all required fields. `schema_version: "2.2"`.
+- [ ] YAML frontmatter has all required fields. `schema_version: "2.3"`.
+- [ ] `scope_applied`, `scope_method`, and `scope_note` frontmatter fields present (scope_method `none` when whole-property/suite)
 - [ ] Property Overview includes data quality notes (sampling status, coverage gaps)
 - [ ] Page Performance has top 50 pages (or all pages if fewer) with traffic and engagement metrics
 - [ ] High-Bounce Pages table populated (or marked "None above threshold")
@@ -252,8 +278,9 @@ A performance-profile.md file is considered **complete** when:
 - [ ] If comparison enabled: trend tags (`[WORSENING]`/`[IMPROVING]`/`[STABLE]`) applied to Key Metrics Summary
 - [ ] `l0_available` and `l0_confidence` frontmatter fields present (even when false/null)
 - [ ] If L0 consumed: L0 Enrichment Notes section present
-- [ ] If element interaction data discovered: `element_interactions_available: true`, Element-Level Interactions body section present with all 3 subsections
-- [ ] If no element interaction data: `element_interactions_available: false` or field omitted, no Element-Level Interactions body section
+- [ ] `element_instrumentation_state` (`present` | `partial` | `absent`) present in frontmatter and Element-Level Interactions body section ALWAYS present (REQUIRED)
+- [ ] When `element_instrumentation_state` is `absent`/`partial`: `missing_element_classes` populated and `instrumentation_ask` non-null; the body section leads with the gap statement (no silent skip)
+- [ ] Measurement Integrity body section present (REQUIRED): `event_liveness` covers every configured/key event; dead bindings and dark/spiked zero-crossings surfaced in `measurement_integrity_flags`; `friction_interactions` populated (or "None detected")
 - [ ] Every event classified into exactly one tier: `[KEY EVENT]`, `[heuristic]`, or `[L0: ...]`
 - [ ] Opportunity sizing uses impact buckets, not point estimates
 - [ ] AI-referrer frontmatter fields populated (all 7 fields). `ai_conversion_rate` is `null` when `ai_sessions_count == 0`. `top_ai_sources` is `[]` when no AI traffic.
@@ -275,6 +302,7 @@ Unlike other L1 context files, performance-profile.md is **overwritten entirely 
 
 | Version | Change |
 |---------|--------|
+| 2.3 | Added sub-property scope fields (`scope_applied`, `scope_method`, `scope_note`); promoted Element-Level Interactions from OPTIONAL to REQUIRED with always-emitted `element_instrumentation_state` (present/partial/absent), `tracked_elements`, `missing_element_classes`, `instrumentation_ask`; added REQUIRED Measurement Integrity section with `event_liveness`, `measurement_integrity_flags`, `friction_interactions`. Shared by ga4-audit and aa-audit. |
 | 2.2 | Added AI-referrer traffic frontmatter fields and body subsection (Step 6b). |
 | 2.1 | Added element-level interaction frontmatter and body section (Step 5b). |
 | 2.0 | Added page groups, source mismatches, period-over-period trends, failure modes, opportunity sizing. |

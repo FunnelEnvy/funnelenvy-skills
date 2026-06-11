@@ -85,6 +85,44 @@ def load_config(path: Optional[str] = None) -> dict:
     return config
 
 
+def resolve_scope(config: dict):
+    """Resolve the optional sub-property scope to (segment_ids, search_prefix).
+
+    Resolution precedence (one change point scopes all 9 reports):
+    - scope.segment_id set     -> (["<id>"], None)   (preferred when a segment exists)
+    - else scope.prefixes set  -> (None, "<broad single-token search clause>")
+    - neither                  -> (None, None)        (whole-suite, pre-change behavior)
+
+    The prefix fallback builds a SINGLE BROAD-TOKEN search clause on
+    scope.prefix_dimension. AA's reporting search silently returns empty for
+    narrow multi-token / colon `contains:` clauses, so the clause is kept to a
+    single broad token. The first prefix token is used as the broad anchor.
+
+    Returns:
+        (segment_ids: Optional[List[str]], search_prefix: Optional[str])
+    """
+    scope = config.get("scope") or {}
+    segment_id = scope.get("segment_id")
+    if segment_id:
+        return ([segment_id], None)
+
+    prefixes = scope.get("prefixes") or []
+    # Drop empty strings; the example config ships empty placeholders.
+    prefixes = [p for p in prefixes if p]
+    if prefixes:
+        prefix_dim = scope.get("prefix_dimension") or STANDARD_DIMENSIONS["entry_page"]
+        # Broad single-token clause only (never multi-token/colon contains).
+        token = str(prefixes[0]).strip().split()[0]
+        clause = f"( CONTAINS '{token}' )"
+        # Encode the target dimension into the clause-bearing return; the
+        # caller threads this onto run_report's `search` param, which scopes
+        # the active report's own dimension. For prefix scoping we rely on the
+        # entry/page dimension reports; a broad token keeps the search reliable.
+        return (None, clause)
+
+    return (None, None)
+
+
 # ============================================================================
 # AA API Client
 # ============================================================================
@@ -99,6 +137,12 @@ class AAClient:
         self.company_id = config["company_id"]
         self.rsid = config["report_suite"]
         self.config = config
+
+        # Default scope applied to every report unless a call overrides it.
+        # Unset scope leaves both at falsy defaults so run_report reproduces
+        # the exact pre-change payload (no segment filter, no search key).
+        self.default_segment_ids: Optional[List[str]] = None
+        self.default_search: Optional[str] = None
 
         self.client_id = os.environ.get("ADOBE_AA_CLIENT_ID")
         self.client_secret = os.environ.get("ADOBE_AA_CLIENT_SECRET")
@@ -162,6 +206,13 @@ class AAClient:
         Returns:
             Full API response dict with rows, columns, summaryData.
         """
+        # Merge client-level default scope when the call does not override it.
+        # One change point (the resolved scope on AAClient) scopes all reports.
+        if segment_ids is None:
+            segment_ids = self.default_segment_ids
+        if search is None:
+            search = self.default_search
+
         global_filters = [
             {"type": "dateRange", "dateRange": date_range}
         ]
@@ -403,6 +454,49 @@ def _resolve_page_dim(config: dict) -> str:
     return config.get("dimensions", {}).get("page", STANDARD_DIMENSIONS["page_fallback"])
 
 
+# Default platform-native click dimensions for element interaction enumeration.
+DEFAULT_INTERACTION_DIMENSIONS = [
+    "variables/customlink",
+    "variables/clickmaplink",
+    "variables/clickmappage",
+]
+
+
+def resolve_interaction_dimensions(config: dict) -> Optional[List[str]]:
+    """Resolve the element-interaction dimensions to enumerate.
+
+    Precedence:
+    1. config.interaction_dimensions (the new array knob) when present/non-empty.
+    2. Back-compat: legacy config.dimensions.link_text -> [that single eVar].
+    3. None when neither is configured (caller emits an explicit absence finding).
+    """
+    dims = config.get("interaction_dimensions")
+    if dims:
+        return list(dims)
+
+    legacy = config.get("dimensions", {}).get("link_text")
+    if legacy:
+        return [legacy]
+
+    return None
+
+
+# Friction-interaction token set. A friction interaction is an element label
+# denoting a validation error, dead-end, or failed action (rather than a
+# navigation or success). The script pre-flags candidates deterministically via
+# is_friction_token; the aa-audit SKILL's friction pass does richer
+# interpretation on top. This constant + helper are the single source of truth
+# the SKILL and the unit tests share, so the token set cannot silently drift.
+FRICTION_TOKENS = ("error", "invalid", "required", "fail", "denied")
+
+
+def is_friction_token(value: str) -> bool:
+    """True when an interaction label matches a friction token (case-insensitive
+    substring match). Safe on None/empty."""
+    v = (value or "").lower()
+    return any(tok in v for tok in FRICTION_TOKENS)
+
+
 def _get_all_metrics(config: dict, include_conversion: bool = False,
                      include_engagement: bool = False,
                      extra: Optional[List[str]] = None) -> List[str]:
@@ -525,19 +619,49 @@ def fetch_new_vs_returning(client: AAClient, config: dict, date_range: str) -> d
     return {"rows": rows, "summary": summary}
 
 
-def fetch_element_clicks(client: AAClient, config: dict, date_range: str) -> Optional[dict]:
-    """Report 7: Element clicks by link text."""
-    link_dim = config.get("dimensions", {}).get("link_text")
-    if not link_dim:
+def fetch_element_interactions(
+    client: AAClient, config: dict, date_range: str
+) -> Optional[dict]:
+    """Report 7 (generalized): Element interactions across click dimensions.
+
+    Supersedes the prior single-dimension `fetch_element_clicks`. Iterates the
+    resolved `interaction_dimensions` (default customlink/clickmaplink/clickmappage,
+    legacy `dimensions.link_text` eVar honored via resolve_interaction_dimensions),
+    running one scoped report per dimension.
+
+    Search-reliability caveat: element events on a sub-property rank below
+    site-wide noise, so each dimension is enumerated by a BROAD single-token
+    prefix `search` at an UNtruncated limit (>= 400 rows). Narrow multi-token or
+    colon `contains:` clauses silently return empty against AA's reporting
+    search and must NOT be used here -- treat any such empty result as
+    inconclusive, not as "no interactions." The broad-token scope clause is
+    supplied by resolve_scope via the client default `search`.
+
+    Returns:
+        {"by_dimension": {dim: {"rows": [...], "summary": {...}}}, "dimensions": [...]}
+        or None when no interaction dimensions are configured.
+    """
+    dims = resolve_interaction_dimensions(config)
+    if not dims:
         return None
 
     metrics = _get_all_metrics(config, include_engagement=True)
     names = _metric_names(metrics, config)
 
-    resp = client.run_report(link_dim, metrics, date_range, limit=50)
-    rows = parse_report_rows(resp, names)
-    summary = extract_summary(resp, names)
-    return {"rows": rows, "summary": summary, "dimension": link_dim}
+    by_dimension = {}
+    for dim in dims:
+        # limit >= 400: untruncated enumeration so scoped sub-property elements
+        # are not lost below the default top-50 waterline.
+        resp = client.run_report(dim, metrics, date_range, limit=400)
+        rows = parse_report_rows(resp, names)
+        # Deterministically pre-flag friction candidates so the SKILL's friction
+        # pass and downstream consumers share one token set (is_friction_token).
+        for r in rows:
+            r["friction"] = is_friction_token(str(r.get("value", "")))
+        summary = extract_summary(resp, names)
+        by_dimension[dim] = {"rows": rows, "summary": summary}
+
+    return {"by_dimension": by_dimension, "dimensions": dims}
 
 
 def fetch_clickmap_regions(client: AAClient, config: dict, date_range: str) -> Optional[dict]:
@@ -567,6 +691,69 @@ def fetch_page_conversions(client: AAClient, config: dict, date_range: str) -> d
     rows = parse_report_rows(resp, names)
     summary = extract_summary(resp, names)
     return {"rows": rows, "summary": summary, "dimension": page_dim}
+
+
+def fetch_event_liveness(client: AAClient, config: dict, date_range: str) -> List[dict]:
+    """Event-liveness audit: count EVERY configured conversion + engagement
+    event over the window and flag dead bindings.
+
+    A configured event that returns zero over the full window is a dead binding
+    (status="dead") -- the event is wired into config but the implementation is
+    not firing it. Surfaced into the Measurement Integrity section.
+
+    Returns a list of {event, name, count, status} (status="dead" when count == 0,
+    else "live"). dark/spiked transitions are computed later by diffing against
+    the comparison window via classify_regression.
+    """
+    events = list(config.get("conversion_events", [])) + list(config.get("engagement_events", []))
+    if not events:
+        return []
+
+    metric_ids = [e["id"] for e in events]
+    names = _metric_names(metric_ids, config)
+
+    # A single dimensionless-style pull: use the page dimension report and read
+    # summaryData totals for each event metric over the window.
+    page_dim = _resolve_page_dim(config)
+    resp = client.run_report(page_dim, metric_ids, date_range, limit=1)
+    summary = extract_summary(resp, names)
+
+    result = []
+    for evt, name in zip(events, names):
+        count = summary.get(name, 0) or 0
+        result.append({
+            "event": evt["id"],
+            "name": evt["name"],
+            "count": count,
+            "status": "dead" if count == 0 else "live",
+        })
+    return result
+
+
+def classify_regression(primary_count: float, comparison_count: float,
+                        spike_factor: float = 3.0) -> str:
+    """Classify an event/element regression by diffing primary vs comparison.
+
+    Pure helper (unit-testable, no API). Given a metric's count in the primary
+    (current) window and the comparison (prior) window:
+
+    - present-then-0  (comparison > 0, primary == 0) -> "dark"   (went dark)
+    - 0-then-present  (comparison == 0, primary > 0)  -> "spiked" (newly firing)
+    - large jump      (primary >= spike_factor * comparison, comparison > 0) -> "spiked"
+    - dead in both    (both == 0)                     -> "dead"
+    - otherwise                                       -> "live"
+    """
+    p = primary_count or 0
+    c = comparison_count or 0
+    if p == 0 and c == 0:
+        return "dead"
+    if p == 0 and c > 0:
+        return "dark"
+    if c == 0 and p > 0:
+        return "spiked"
+    if c > 0 and p >= spike_factor * c:
+        return "spiked"
+    return "live"
 
 
 # ============================================================================
@@ -629,6 +816,19 @@ def main():
     config = load_config(args.config)
     client = AAClient(config)
 
+    # Resolve optional sub-property scope and store on the client so every
+    # report is scoped from one change point. Unset scope leaves the defaults
+    # falsy, preserving the exact pre-change payload.
+    scope_segment_ids, scope_search = resolve_scope(config)
+    client.default_segment_ids = scope_segment_ids
+    client.default_search = scope_search
+    if scope_segment_ids:
+        scope_method = "segment"
+    elif scope_search:
+        scope_method = "prefix"
+    else:
+        scope_method = "none"
+
     # Auth check
     print("Authenticating with Adobe IMS...", file=sys.stderr)
     client.get_token()
@@ -659,11 +859,14 @@ def main():
     print("Fetching new vs returning...", file=sys.stderr)
     new_returning = fetch_new_vs_returning(client, config, primary_range)
 
-    print("Fetching element clicks...", file=sys.stderr)
-    element_clicks = fetch_element_clicks(client, config, primary_range)
+    print("Fetching element interactions...", file=sys.stderr)
+    element_interactions = fetch_element_interactions(client, config, primary_range)
 
     print("Fetching clickmap regions...", file=sys.stderr)
     clickmap_regions = fetch_clickmap_regions(client, config, primary_range)
+
+    print("Fetching event liveness...", file=sys.stderr)
+    event_liveness = fetch_event_liveness(client, config, primary_range)
 
     print("Fetching page conversions...", file=sys.stderr)
     page_conversions = fetch_page_conversions(client, config, primary_range)
@@ -682,8 +885,11 @@ def main():
             },
             "days": args.days,
             "config_dimensions": config.get("dimensions", {}),
+            "interaction_dimensions": resolve_interaction_dimensions(config),
             "conversion_events": config.get("conversion_events", []),
             "engagement_events": config.get("engagement_events", []),
+            "scope_applied": scope_method != "none",
+            "scope_method": scope_method,
         },
         "site_totals": pages.get("summary", {}),
         "pages": pages.get("rows", []),
@@ -692,8 +898,11 @@ def main():
         "devices": devices.get("rows", []),
         "landing_pages": landing_pages.get("rows", []),
         "new_vs_returning": new_returning.get("rows", []),
-        "element_clicks": element_clicks.get("rows", []) if element_clicks else [],
+        # Generalized element-interaction capture (supersedes element_clicks).
+        # by_dimension keyed by interaction dimension; null when none configured.
+        "element_interactions": element_interactions,
         "clickmap_regions": clickmap_regions.get("rows", []) if clickmap_regions else [],
+        "event_liveness": event_liveness,
         "page_conversions": page_conversions.get("rows", []),
         "landing_page_channels": lp_channels,
     }
@@ -721,6 +930,57 @@ def main():
         print("  Page conversions...", file=sys.stderr)
         comp_page_conv = fetch_page_conversions(client, config, comp_range)
 
+        print("  Element interactions...", file=sys.stderr)
+        comp_element = fetch_element_interactions(client, config, comp_range)
+
+        print("  Event liveness...", file=sys.stderr)
+        comp_liveness = fetch_event_liveness(client, config, comp_range)
+
+        # Liveness regression: diff each configured event's primary vs comparison
+        # count to detect present-then-0 (dark) and 0-then-present/large-jump (spiked).
+        comp_count_by_event = {e["event"]: e["count"] for e in comp_liveness}
+        event_liveness_regressions = []
+        for e in event_liveness:
+            comp_count = comp_count_by_event.get(e["event"], 0)
+            reg = classify_regression(e["count"], comp_count)
+            # Promote the primary status with the regression classification so a
+            # high-to-zero (dark) or zero-to-present (spiked) transition surfaces.
+            if reg in ("dark", "spiked"):
+                e["status"] = reg
+            event_liveness_regressions.append({
+                "event": e["event"],
+                "name": e["name"],
+                "primary_count": e["count"],
+                "comparison_count": comp_count,
+                "status": reg,
+            })
+
+        # Element-interaction regression: per dimension, diff each element value's
+        # primary vs comparison count to flag dark/spiked elements.
+        element_interaction_regressions = {}
+        if element_interactions and comp_element:
+            primary_by_dim = element_interactions.get("by_dimension", {})
+            comp_by_dim = comp_element.get("by_dimension", {})
+            for dim, primary_block in primary_by_dim.items():
+                comp_block = comp_by_dim.get(dim, {})
+                comp_rows = {r.get("value"): r for r in comp_block.get("rows", [])}
+                dim_regs = []
+                for r in primary_block.get("rows", []):
+                    val = r.get("value")
+                    p_count = r.get("visits", 0) or 0
+                    comp_r = comp_rows.get(val, {})
+                    c_count = comp_r.get("visits", 0) or 0
+                    reg = classify_regression(p_count, c_count)
+                    if reg in ("dark", "spiked"):
+                        dim_regs.append({
+                            "element": val,
+                            "primary_count": p_count,
+                            "comparison_count": c_count,
+                            "status": reg,
+                        })
+                if dim_regs:
+                    element_interaction_regressions[dim] = dim_regs
+
         output["comparison"] = {
             "date_range": {
                 "start": dates["comparison"]["start"],
@@ -733,6 +993,10 @@ def main():
             "landing_pages": comp_landing.get("rows", []),
             "new_vs_returning": comp_nr.get("rows", []),
             "page_conversions": comp_page_conv.get("rows", []),
+            "element_interactions": comp_element,
+            "event_liveness": comp_liveness,
+            "event_liveness_regressions": event_liveness_regressions,
+            "element_interaction_regressions": element_interaction_regressions,
         }
     else:
         output["comparison"] = None
