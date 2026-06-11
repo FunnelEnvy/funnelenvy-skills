@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.0] - 2026-06-11
 
 ### Added
 - Initial `live-capture` skill (Phase B of the observation-artifact integration). A dual-mode capture skill that navigates selected pages, passively reads the rendered DOM across desktop and mobile, and writes two factual artifacts: `live-observation.md` (page structure, blocks A-I + K plus a viewport_divergence block) and `live-copy.md` (verbatim copy). Facts and two permitted mechanical derivations only; no judgments.

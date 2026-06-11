@@ -1,7 +1,8 @@
 ---
 name: render-default-deliverables
-version: 1.0.0
+version: 1.0.1
 description: "When the user wants to generate client-ready deliverables from existing positioning context. Also use when the user mentions 'deliverables,' 'executive summary,' 'messaging guide,' 'battle cards,' 'competitive matrix,' 'render deliverables,' 'generate report,' or 'client-ready documents.' Reads L0 + L1 context files from .claude/context/ and produces polished, human-readable documents in .claude/deliverables/. No research, no analysis, no web fetches. Pure synthesis and formatting."
+updated: 2026-06-11
 ---
 
 # Render Deliverables

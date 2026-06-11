@@ -4,6 +4,50 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.0] - 2026-06-11
+
+### aa-audit
+
+#### Added
+- **aa-audit**: Element-interaction and measurement-integrity capture by default: sub-property `scope` (segment or entry/page prefix), `interaction_dimensions` array, scoped element enumeration, event-liveness audit, and friction tagging; element-instrumentation and a new Measurement Integrity section promoted to REQUIRED (v1.1.0, performance-profile schema 2.3)
+
+#### Fixed
+- **aa-audit**: Comparison-period fetch crash on string/NaN cells (v1.1.0)
+
+### ga4-audit
+
+#### Added
+- **ga4-audit**: Element-interaction and measurement-integrity capture by default: scope `dimensionFilter` flags, Step 3 event-liveness, Step 5b rework (no silent skip, autotrack enumeration, scoped page set), friction pass; element-instrumentation and Measurement Integrity promoted to REQUIRED (v2.4.0, performance-profile schema 2.3)
+
+### hypothesis-generator
+
+#### Added
+- **hypothesis-generator**: Archetype architecture layer (resolver + loader) and procurement archetype pattern module; structural-observation consumption (Phase C); KB dual-mode I/O; engagement-context reasoning input; CTR-14 contrarian trigger; output quality blocks (v1.6.0)
+
+#### Changed
+- **hypothesis-generator**: Self-critique rendered on every hypothesis regardless of tier (v1.6.0)
+
+#### Fixed
+- **hypothesis-generator**: Module resolution hardening, validator realignment, cross-surface bundling reconciliation (v1.6.0)
+
+### live-capture
+
+#### Added
+- **live-capture**: Initial skill (Phase B): Section 8 page selection (`page_select.py`), browser-mode detection, `content_hash.py` recapture-diff, dual-mode I/O, headless-WAF handling, coverage-weighted confidence; authoritative schema inlined in `phases/write.md` (v0.2.0)
+
+#### Fixed
+- **live-capture**: Content-blocked tri-state handling, KB-mode artifact-type resolution, schema completeness, explicit `not_checked` defaults (v0.2.0)
+
+### positioning-framework
+
+#### Fixed
+- **positioning-framework**: Module resolution hardening for `modules/` references (v1.1.1)
+
+### render-default-deliverables
+
+#### Fixed
+- **render-default-deliverables**: Module resolution hardening for the `modules/slugify.md` reference (v1.0.1)
+
 ## [1.1.0] - 2026-06-03
 
 ### hypothesis-generator

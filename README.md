@@ -8,16 +8,16 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 
 | Skill | Version | Description |
 |-------|---------|-------------|
-| [positioning-framework](skills/positioning-framework/SKILL.md) | 1.1.0 | Autonomous positioning and messaging framework from web research. Dual-mode output: legacy `.claude/context/` files, or KB-native artifacts when a CRO knowledge base binding is detected |
-| [ga4-audit](skills/ga4-audit/SKILL.md) | 2.3.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, trend analysis, and AI-referrer (LLM) traffic segmentation |
-| [aa-audit](skills/aa-audit/SKILL.md) | 1.0.0 | Adobe Analytics audit with the same output schema as ga4-audit |
-| [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.5.0 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing. Dual-mode I/O: legacy `.claude/context/` files, or KB-native (reads the scope's silver artifacts, writes a typed gold experiment roadmap) when a CRO knowledge base binding is detected |
+| [positioning-framework](skills/positioning-framework/SKILL.md) | 1.1.1 | Autonomous positioning and messaging framework from web research. Dual-mode output: legacy `.claude/context/` files, or KB-native artifacts when a CRO knowledge base binding is detected |
+| [ga4-audit](skills/ga4-audit/SKILL.md) | 2.4.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, trend analysis, and AI-referrer (LLM) traffic segmentation |
+| [aa-audit](skills/aa-audit/SKILL.md) | 1.1.0 | Adobe Analytics audit with the same output schema as ga4-audit |
+| [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.6.0 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing. Dual-mode I/O: legacy `.claude/context/` files, or KB-native (reads the scope's silver artifacts, writes a typed gold experiment roadmap) when a CRO knowledge base binding is detected |
 | [landing-page-generator](skills/landing-page-generator/SKILL.md) | 2.0.0 | B2B paid landing page generator with brief, copy, design, and QA phases |
 | [positioning-update](skills/positioning-update/SKILL.md) | 1.0.0 | Apply client feedback and corrections to positioning context files |
 | [voice-inference](skills/voice-inference/SKILL.md) | 1.0.0 | Brand voice analysis from website content with scored tone spectrum, vocabulary fingerprint, and actionable voice rules |
-| [live-capture](skills/live-capture/SKILL.md) | 0.1.0 | Live-page structural and copy capture. Navigates selected pages, passively reads the rendered DOM across viewports, and writes two factual artifacts (structure + verbatim copy). Dual-mode: legacy `.claude/context/` files, or KB-native bronze plus a silver structural artifact (in active development) |
+| [live-capture](skills/live-capture/SKILL.md) | 0.2.0 | Live-page structural and copy capture. Navigates selected pages, passively reads the rendered DOM across viewports, and writes two factual artifacts (structure + verbatim copy). Dual-mode: legacy `.claude/context/` files, or KB-native bronze plus a silver structural artifact (in active development) |
 | [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.2.0 | Visual mockup generator for experiment hypotheses (in active development) |
-| [render-default-deliverables](skills/render-default-deliverables/SKILL.md) | 1.0.0 | Generates client-ready deliverables from positioning context |
+| [render-default-deliverables](skills/render-default-deliverables/SKILL.md) | 1.0.1 | Generates client-ready deliverables from positioning context |
 
 ## Quick Start
 

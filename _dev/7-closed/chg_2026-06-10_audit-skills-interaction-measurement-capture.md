@@ -10,7 +10,7 @@ description: >
 governed_by: change-management/change-document
 status: Closed
 resource_name: [aa-audit, ga4-audit]
-resource_version: "TBD"
+resource_version: "1.2.0"
 impact: 5
 confidence: 4
 ease: 2

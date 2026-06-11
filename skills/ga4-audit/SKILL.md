@@ -1,7 +1,8 @@
 ---
 name: ga4-audit
-version: 2.3.0
+version: 2.4.0
 description: "When the user wants to audit GA4 analytics data for a property. Also use when the user mentions 'GA4 audit,' 'analytics audit,' 'traffic analysis,' 'page performance,' 'conversion audit,' 'bounce rate analysis,' or 'performance profile.' Pulls 11-15 targeted reports from GA4 via direct API or analytics-mcp fallback (including element-level interaction discovery and AI-referrer traffic segmentation), classifies events, and produces a structured performance-profile.md context file (.claude/context/ L1). Single agent, no depth flag. Works with any GA4 property."
+updated: 2026-06-11
 ---
 
 # GA4 Audit

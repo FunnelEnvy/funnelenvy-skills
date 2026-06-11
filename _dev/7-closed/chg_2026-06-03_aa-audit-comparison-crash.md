@@ -9,13 +9,13 @@ description: >
 governed_by: change-management/change-document
 status: Closed
 resource_name: aa-audit
-resource_version: "TBD"
+resource_version: "1.1.0"
 impact: 2
 confidence: 5
 ease: 5
 version: "0.4.0"
 created: 2026-06-03
-updated: 2026-06-03
+updated: 2026-06-11
 ---
 # AA Audit Comparison-Period Crash
 

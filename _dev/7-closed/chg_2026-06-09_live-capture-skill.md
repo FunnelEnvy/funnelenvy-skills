@@ -10,7 +10,7 @@ description: >
 governed_by: change-management/change-document
 status: Closed
 resource_name: live-capture
-resource_version: "TBD"
+resource_version: "0.2.0"
 impact: 4
 confidence: 4
 ease: 2
@@ -18,7 +18,7 @@ initiative: cro-kb-path-b
 status_note: Closed, QA approved; unreleased pending the live-capture skill release
 version: "0.3.0"
 created: 2026-06-09
-updated: 2026-06-09
+updated: 2026-06-11
 ---
 
 # live-capture Skill (Phase B)
