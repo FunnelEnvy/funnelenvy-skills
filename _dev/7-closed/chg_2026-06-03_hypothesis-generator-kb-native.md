@@ -7,16 +7,17 @@ description: >
   write the experiment roadmap as a typed gold-experiment-roadmap artifact. First skill in the
   Path B chain to exercise the KB read side and a gold-layer write.
 governed_by: change-management/change-document
-status: QA
+status: Closed
 resource_name: hypothesis-generator
-resource_version: "TBD"
+resource_version: "1.6.0"
 impact: 4
 confidence: 4
 ease: 3
 initiative: cro-kb-path-b
-version: "0.5.0"
+status_note: Closed; shipped in hypothesis-generator v1.6.0 (lifecycle reconciliation of a stale QA doc)
+version: "0.6.0"
 created: 2026-06-03
-updated: 2026-06-03
+updated: 2026-06-14
 ---
 # Hypothesis Generator KB-Native I/O
 
@@ -138,6 +139,7 @@ Pilot (post-merge acceptance gate, deferred to a bound-KB client repo session):
 
 | Version | Changes |
 |---------|---------|
+| 0.6.0 | Closed (lifecycle reconciliation). The change shipped in hypothesis-generator v1.6.0 (CHANGELOG [1.6.0], 2026-06-11) but the doc was left in _dev/6-qa with resource_version TBD. Reconciled: status QA to Closed, resource_version stamped 1.6.0, moved to _dev/7-closed/. QA had already passed (0.5.0); the post-merge pilot acceptance (Validation 4-5) was the deferred gate, consistent with how it was framed. No skill or Requirements content change. |
 | 0.5.0 | QA — public-repo sweep clean, additive-diff legacy regression verified (all modified lines preserve original text verbatim), link audits and frontmatter validation clean after fixing one stale lifecycle-move link in the aa-audit conformance backlog doc. |
 | 0.4.0 | Build — R1-R4 implemented as designed: SKILL.md KB Mode section + bounded branches at every legacy I/O touchpoint, detect.md Profile Schema Equivalence subsection + KB sourcing note, README/CLAUDE.md dual-mode descriptions, skill CHANGELOG.md created with [Unreleased] entry. No deviations from Requirements. |
 | 0.3.0 | Design — Requirements filled (R1 SKILL.md KB Mode section + bounded branches, R2 detect.md Profile Schema Equivalence, R3 repo doc descriptions, R4 skill CHANGELOG creation, R5 doc sync); Validation filled (3 static checks pre-merge, 2 pilot acceptance checks post-merge). |
