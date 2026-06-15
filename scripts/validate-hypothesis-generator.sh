@@ -170,6 +170,30 @@ check "contrarian-triggers.md count line says 14" \
   "1"
 echo ""
 
+echo "[13] Experiment-history consumption"
+check "Output Format has Evidence From Completed Experiments section" \
+  "grep -c '^## Evidence From Completed Experiments' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "Read-side Mapping references experiment-history (gold-experiment-roadmap producer KB)" \
+  "grep -c 'gold-experiment-roadmap. (producer KB)' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "experiment_history_available guarded in Deliverable Purity Constraint" \
+  "grep -c 'experiment_history_available' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "prior_winner guarded in Deliverable Purity Constraint" \
+  "grep -c 'prior_winner' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "replication_candidate guarded in Deliverable Purity Constraint" \
+  "grep -c 'replication_candidate' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "transferable_rule guarded in Deliverable Purity Constraint" \
+  "grep -c 'transferable_rule' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "replication_target_surfaces guarded in Deliverable Purity Constraint" \
+  "grep -c 'replication_target_surfaces' skills/hypothesis-generator/SKILL.md" \
+  "1"
+echo ""
+
 echo "=== Results ==="
 echo "  PASS: $PASS"
 echo "  FAIL: $FAIL"

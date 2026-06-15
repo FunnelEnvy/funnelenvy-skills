@@ -67,6 +67,7 @@ These adjustments are based on the overall context quality, not individual patte
 - If performance-profile.md exists and `traffic_adequacy` is "low": Confidence -1
 - If target page has `failure_mode` matching the hypothesis mechanism (e.g., messaging hypothesis + `shallow_engagement`): Confidence +1 (data confirms mechanism)
 - If target page has `failure_mode` contradicting the hypothesis mechanism (e.g., messaging hypothesis + `deep_engagement`): Confidence -1 (data suggests different root cause)
+- If the hypothesis is a validated-mechanism replication (a `prior_winner` from the bound experiment-history input carries a rollout/replication next-experiment that this hypothesis executes, and the replicated mechanism is the dominant change): Confidence +1 (the mechanism is empirically validated, not inferred). This lift applies to the raw Confidence; see the order-of-operations note below.
 
 **Impact adjustments:**
 - If the targeted page is the homepage: Impact +1 (highest traffic page for most B2B sites)
@@ -85,6 +86,11 @@ These adjustments are based on the overall context quality, not individual patte
 - If the hypothesis requires structural/layout changes: no adjustment
 - If the hypothesis requires personalization infrastructure: Ease -1 (unless context suggests it exists)
 - If the hypothesis requires changes to third-party embedded elements (forms, chatbots): Ease -1
+- If the hypothesis replicates a proven variant from the experiment-history input (the winning design exists and is being re-applied): Ease +1 (proven variant lowers implementation cost)
+
+**Order of operations (replication modifier).** The replication Confidence +1 above applies to the **raw Confidence** computed by the soft modifiers in this `score.md` Step 4. When the sibling premise-rigor change is present, its **gated Confidence rubric runs as a hard ceiling AFTER all soft Step 4 modifiers** (a gate fail caps Confidence at 3, multiple fails at 2). Therefore the replication +1 **never bypasses an affirmative gate failure**: a replication of a proven mechanism whose primary metric is uninstrumented on the target surface, or whose premise is contradicted by another loaded artifact on the target surface, is still capped by the gate. The replication modifier is a soft lift on raw Confidence, not a gate override. If the premise-rigor change has not yet landed when this builds, the +1 simply applies as a standard soft modifier clamped to 1-5 (the ordering note is forward-compatible). Scores remain clamped to 1-5 after all modifiers (existing Step 2 rule).
+
+**Quick Win reachability.** With this Step 4 +1 on Confidence and +1 on Ease, a replication of a proven winner can reach Confidence >= 4 AND Ease >= 4 and clear the Quick Win bar (subject to the <= 6-week duration rule in Step 6 and any gate ceiling). This is the intended outcome: it is what the Step 7 sequencing reorder alone cannot produce.
 
 ### Step 5: Score Validation
 
@@ -177,7 +183,7 @@ Run the easiest wins first. Build momentum. Get the team comfortable with the te
 
 When two or more hypotheses share the same tier, LIFT category, and have similar ICE scores, apply these tiebreakers in order:
 
-1. **Winner Replication Priority.** When experiment-history data is available (future: experiment-history context layer) and a pattern has produced a statistically significant win on one page, queue a replication test of the same pattern on adjacent pages ahead of untested patterns. Replication tests have structurally higher Confidence (validated mechanism) and lower implementation cost (proven variant). This tiebreaker fires ONLY when experiment-history data exists. Without it, all hypotheses are treated as untested.
+1. **Winner Replication Priority.** Active when the experiment-history input is bound (the producer KB's gold index plus the silver insights it links, resolved per SKILL.md `KB Mode (Dual-Mode Output)` > `Read-side Mapping`). When a completed winner's insight carries a rollout/replication next-experiment that matches a hypothesis in this run's tier, that replication hypothesis inherits the source record's target surfaces and priority and sorts ahead of untested hypotheses in the same tier and LIFT category. Replication tests have structurally higher Confidence (validated mechanism) and lower implementation cost (proven variant). This is a within-tier sequencing reorder only; it does not by itself change any ICE score (the Confidence/Ease scoring lift for a validated-mechanism replication is `score.md` Step 4). The item is tri-state-safe: when the experiment-history input is absent, it is inert and all hypotheses are treated as untested, with no penalty, exactly as before.
 
 2. **Proximity-to-Conversion Ordering.** Within the same LIFT category and ICE tier, pages closer to the conversion event run first. Priority order: checkout/booking > pricing > demo request/signup > product pages > homepage > category/solutions pages > content/blog pages. Rationale: conversion-adjacent pages have tighter feedback loops (shorter path from test to measurable outcome) and changes compound less with upstream variables. **Override:** If two hypotheses differ by >= 3 ICE points, the higher-ICE hypothesis takes precedence regardless of page proximity. Proximity is a tiebreaker, not a trump card.
 

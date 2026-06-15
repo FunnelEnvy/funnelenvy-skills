@@ -9,6 +9,7 @@
 - Any `modules/evidence-*.md` files (optional, loaded by orchestrator if present)
 - `engagement-constraints` input (optional): delivery and governance state, consumed by Step 1d. Absent in most runs; Step 1d is skipped when absent. Never produces opportunities, only constraints.
 - The structural observation artifact body (KB mode only, optional): the scope's `silver-structural-observation` artifact (`live-structure.md`), loaded by the orchestrator per SKILL.md `Read-side Mapping` when present. Consumed by the Step 1 structural extraction stanza and the Step 1e field-keyed triggers.
+- The experiment-history input (KB mode only, optional): the producer KB's gold index plus the silver insight records it links, loaded by the orchestrator per SKILL.md `Read-side Mapping` when bound. Consumed by the Step 1g experiment-history triggers. Absent in most runs; Step 1g is skipped when absent with no confidence consequence.
 
 In KB mode the orchestrator supplies the same context bodies, sourced from the scope's silver artifacts per the SKILL.md `KB Mode (Dual-Mode Output)` > `Read-side Mapping`. Trigger and detection logic below is source-agnostic and unchanged, with one addition: the structural observation artifact is KB-native (no legacy equivalent) and is consumed by Step 1 and Step 1e only.
 
@@ -25,6 +26,7 @@ This phase does not vary by depth. All available context is scanned regardless o
 | audience-messaging.md | Skip persona-dependent patterns (segment hero, industry proof, nav intent mismatch). |
 | performance-profile.md | Skip all performance-driven triggers (Step 1c). Confidence capped at 4 globally. Add "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses" to Prerequisites. |
 | Structural observation artifact (live-structure, KB mode) | Skip structural observation triggers (Step 1e). NO confidence penalty and NO global cap: absence means page structure was not assessed, not that structure is sound or broken. Element targeting falls back to context-inferred pages. Add "Run /live-capture for structure-driven triggers and observed current-state documentation" to Prerequisites. |
+| Experiment-history input (not bound, KB mode) | Skip experiment-history triggers (Step 1g). NO confidence penalty and NO global cap: absence means no prior-experiment evidence was available. Add "Connect a completed-experiment knowledge base" to Prerequisites. |
 | All L1 files | Detect from L0 only. Limited to patterns triggered by website copy, proof points, and structural signals. |
 
 ---
@@ -245,6 +247,22 @@ These triggers fire on directly observed page structure. They are field-keyed ag
 - Out of scope by design: personalization patterns (PE-01, PE-02) need cross-session variance a single capture cannot supply; exit-path patterns (NX-03) need behavioral data; value-before-commitment sequencing (NX-05) is deferred.
 
 **Output:** Structure-driven opportunities added to the opportunity list, tagged `type: "structure-driven"`.
+
+### Step 1g: Experiment-History Triggers
+
+**Skip this step entirely if the experiment-history input is not bound.** Skipping has no confidence consequence: absence means no prior-experiment evidence was available.
+
+These triggers fire on completed, measured experiment results read from the producer KB's gold index plus the silver insight records it links (KB mode only), per SKILL.md `KB Mode (Dual-Mode Output)` > `Read-side Mapping`. The index is filtered to the run's `--scope` by default; documented cross-scope reads are allowed where a win on one scope legitimately informs another. Run in parallel with pattern matching (Step 2). Experiment-history-derived opportunities join the opportunity list with `signal_source: experiment-history`.
+
+For each completed **winner** whose insight carries a rollout/replication next-experiment with a target surface present in this scope, emit a replication opportunity:
+- `type: "experiment-history-derived"`
+- `signal_source: experiment-history`
+- ICE baseline **3/3/3** (the same neutral midpoint as context-derived and performance-driven opportunities; the empirical validation provides evidence for the Phase 4 modifiers, never an inflated baseline)
+- carry the source record's target surfaces and priority forward (consumed by `phases/score.md` Step 7 sequencing and the Step 4 replication modifier)
+
+**Boundary (no double-counting).** Experiment-history supplies a replication TARGET and a validated mechanism. It does not re-fire a pattern that another source already fired for the same page; it enriches/merges with that opportunity in Phase 3 Step 8 as usual.
+
+**Output:** Experiment-history-derived opportunities added to the opportunity list, tagged `type: "experiment-history-derived"`.
 
 ### Step 2: Match Signals Against Patterns
 

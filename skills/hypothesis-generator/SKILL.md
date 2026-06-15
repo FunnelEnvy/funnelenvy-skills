@@ -90,12 +90,14 @@ In KB mode, Phase 1 replaces the `.claude/context/*.md` glob with reads of the s
 | `audience-messaging.md` | `silver-audience-analysis` | `reference/cro-{scope}/audience-analysis.md` | optional |
 | `performance-profile.md` | `silver-performance-analysis` | `reference/cro-{scope}/performance-analysis.md` | optional |
 | (none -- KB-native) | `silver-structural-observation` | `reference/cro-{scope}/live-structure.md` | optional |
+| (none -- KB-native) | `gold-experiment-roadmap` (producer KB) + the silver insight records it links | `deliverables/{scope}-experiment-roadmap.md` (producer KB root) + linked silver insight paths | optional |
 | `_fetch-registry.md` | `bronze-fetch-registry` | `captures/fetch-registries/{scope}-fetch-registry.md` | optional (page-block check only) |
 
 - **L0 precondition:** the LOWER of `bronze-company-facts.confidence` and `silver-strategy-context.confidence` must be >= 3. Together these two artifacts carry what `company-identity.md` carries in legacy mode (the facts/analysis split).
 - **Scope isolation is absolute:** artifacts from another scope are never read.
 - Each loaded artifact maps to its legacy equivalent per the table; Phases 2-4 consume the bodies identically in both modes.
 - The `silver-structural-observation` row has no legacy `.claude/context/` equivalent: it is a KB-native structural projection consumed only in KB mode. Its body carries factual page-structure observations, consumed by the Step 1 structural extraction stanza and the Step 1e field-keyed structural triggers in `phases/detect.md`. An absent artifact skips Step 1e with no confidence penalty (structure was not assessed), degrading like any optional silver read.
+- The experiment-history row has no legacy `.claude/context/` equivalent either: it is KB-native, consumed only in KB mode. It is read **read-only** from the producer KB's gold index plus the silver insight records that index links. There is **no `depends_on` graph edge** into the producer KB: the evidence is cited by natural attribution / source pointer only, which preserves both KBs' self-containment and the skill's no-research charter (a KB read is not web research). The index is **filtered to the run's `--scope` by default**, with documented cross-scope reads allowed where a win on one scope legitimately informs another. An absent producer-KB binding **skips the completed-experiment-evidence section and the replication scoring path with NO confidence penalty and NO global cap** (absence means no prior-experiment evidence was available, not that a hypothesis is weak), degrading like any optional silver read.
 
 ### Output Mapping and Frontmatter Contract
 
@@ -103,7 +105,7 @@ The deliverable is written to `{kb_root}/deliverables/{scope}-experiment-roadmap
 
 `fe-managed: true`, `name: {scope}-experiment-roadmap`, `description` (one line, generated), `kb_layer: gold`, `governed_by: {kb-type}/gold-experiment-roadmap`, `scope`, `data_provenance` (`client` when any consumed silver artifact is `client`-provenance, else `public`), `generated_by: hypothesis-generator`, `depends_on`, `tags` (3-7 semantic), `version`, `created`, `updated`.
 
-**`depends_on`:** KB-root-relative paths of the silver artifacts actually consumed, omitting missing optional ones -- gold-to-silver edges only. Bronze inputs are excluded: company facts flow transitively through the strategy-context artifact's own bronze edge, and the fetch registry is an operational read (page-block status), not a content source.
+**`depends_on`:** KB-root-relative paths of the silver artifacts actually consumed, omitting missing optional ones -- gold-to-silver edges only. Bronze inputs are excluded: company facts flow transitively through the strategy-context artifact's own bronze edge, and the fetch registry is an operational read (page-block status), not a content source. The experiment-history input is also excluded: it is a read-only cross-KB read of a separate producer KB, cited by natural attribution only, with no `depends_on` graph edge into that KB.
 
 ### Prior Work Detection (KB Mode)
 
@@ -173,6 +175,7 @@ Experiment roadmap written to {kb_root}/deliverables/{scope}-experiment-roadmap.
 - The optional `engagement-constraints` input maps to the scope's engagement-context artifact, if the bound KB defines one. Absent maps to absent: Step 1d is skipped and sequencing falls back to LIFT plus dependencies, identical to legacy.
 - The scope's `silver-performance-analysis` artifact may lack `schema_version`. When absent, the version gating above is bypassed and `phases/detect.md` > `Profile Schema Equivalence` governs which performance-driven triggers fire by content equivalence.
 - The scope's `silver-structural-observation` artifact is an optional soft input. When present, it enables the Step 1 structural extraction stanza and the Step 1e structural triggers in `phases/detect.md`, plus observed current-state documentation and site-wide scope correction in `phases/construct.md`. When missing, those are skipped with NO confidence penalty and NO global cap: absence means page structure was not assessed, not that structure is sound or broken. Add "Run /live-capture for structure-driven triggers and observed current-state documentation" to Prerequisites.
+- The scope's experiment-history input (the producer KB's gold index plus the silver insight records it links, per `KB Mode (Dual-Mode Output)` > `Read-side Mapping`) is an optional soft input. When present, it enables the completed-experiment-evidence section (`Output Format` > `Evidence From Completed Experiments`), the Step 7 winner-replication sequencing path, the Step 4 replication Confidence/Ease modifier in `phases/score.md`, and the Step 1g experiment-history enrichment leg in `phases/detect.md`. When missing, those are skipped with NO confidence penalty and NO global cap: absence means no prior-experiment evidence was available, not that a hypothesis is weak. Add "Connect a completed-experiment knowledge base for replication-grade Quick Wins and completed-experiment evidence" to Prerequisites. Per the `Mode Resolution Procedure`, this experiment-history input is an optional silver-class input and is NOT a mode-resolution requirement: a missing producer-KB binding is invisible to mode resolution and the skill runs unchanged.
 - Error states reword for KB artifacts: "No silver CRO artifacts found for scope {scope}. Run /positioning-framework --scope {scope} first." / "Scope L0 artifacts exist but confidence is too low. Run /positioning-framework --scope {scope} --depth standard first."
 
 ---
@@ -228,7 +231,7 @@ Wait for response. If content is provided, treat it as supplementary page contex
 
 **Module resolution and availability (do this before loading any module).** Every `modules/<name>.md` reference in this skill and its phase files is repository-root-relative: the shared library lives in the `modules/` directory at the repo root, a sibling of `skills/`, NOT inside this skill's own folder. When the skill is invoked from a symlinked or installed location (e.g., `~/.claude/skills/hypothesis-generator/`), resolve this skill's real path first (follow the symlink), then load `modules/` from the repository root (the parent of `skills/`). If the required library (`experiment-patterns.md`, `ice-scoring.md`, `contrarian-triggers.md`, `hypothesis-interactions.md`) cannot be located and read, STOP and report that the shared pattern library is unavailable. Do NOT substitute embedded or remembered CRO patterns, ICE calibration, or contrarian/interaction logic: a roadmap produced without the library is not valid output, and a plausible-looking silent fallback is the exact failure this guard prevents.
 
-0. **Mode resolution** -- run the `Mode Resolution Procedure` from `KB Mode (Dual-Mode Output)`. In legacy mode, continue below unchanged. In KB mode, steps 1-2 read the scope's artifacts per `Read-side Mapping` instead of the `.claude/context/` glob, and the handoff check uses the KB-mode branches noted below.
+0. **Mode resolution** -- run the `Mode Resolution Procedure` from `KB Mode (Dual-Mode Output)`. In legacy mode, continue below unchanged. In KB mode, steps 1-2 read the scope's artifacts per `Read-side Mapping` instead of the `.claude/context/` glob, and the handoff check uses the KB-mode branches noted below. In KB mode, the optional experiment-history input (the producer KB's gold index plus the silver insights it links, per `Read-side Mapping`) is resolved and loaded alongside the other optional silver reads here -- read-only, with no `depends_on` edge -- and is consumed by `phases/detect.md` (Step 1g enrichment leg) and `phases/score.md` (Step 4 replication modifier + Step 7 sequencing). It adds no phase/module file.
 1. Glob `.claude/context/*.md`
 2. Read YAML frontmatter only for each file
 3. Build context inventory (file, schema type, confidence, depth)
@@ -392,6 +395,18 @@ Experiments are grouped into three tiers:
 | 1 | [name] | [page] | Quick Win | 4 | 4 | 5 | 13 |
 | 2 | ... | ... | ... | ... | ... | ... | ... |
 
+## Evidence From Completed Experiments
+
+[Present ONLY in KB mode when a completed-experiment input is bound and carries at least one relevant record. Omit this section entirely otherwise (legacy mode, no producer-KB binding, or no relevant records). This is evidence narrative that frames the tiers below with what has already been validated, not a scored tier.
+
+For each surfaced completed experiment, render in natural language:
+- **Outcome:** what was tested and what happened (e.g., "a specific-claim hero beat the generic control on demo-request rate").
+- **Mechanism:** why it worked, the transferable behavioral principle.
+- **Transferable rule:** the generalizable lesson and where it plausibly applies next.
+- **Attribution:** natural source reference only (e.g., "a prior test on the pricing page"). No experiment identifiers or activity numbers, no system internals.
+
+Where a record carries a rollout/replication next-experiment that maps to a hypothesis in this roadmap, name the connection in prose: "Hypothesis N below replicates this on the solutions page."]
+
 ## Quick Wins
 
 ### 1. [Experiment Name]
@@ -530,6 +545,7 @@ The experiment roadmap must contain ZERO references to internal system concepts.
 - Layer references: "L0," "L1," "L2," "Layer 0," "Layer 1," "Layer 2"
 - File references: "company-identity.md," "competitive-landscape.md," "positioning-scorecard.md," "audience-messaging.md," "live-structure.md," "context file," "context directory"
 - Structural observation references: "structural observation artifact," "structural observation," and raw observation field names (e.g., "form_recurs_sitewide," "mobile_render_clean," "named_client_proof_present"). Describe the observed fact in natural language instead ("the demo form renders 13 fields on every page it appears")
+- Experiment-history references: `experiment_history_available`, `prior_winner`, `replication_candidate`, `transferable_rule`, `replication_target_surfaces`, experiment identifiers / activity numbers, the producer KB's type name. Describe the prior result in natural language instead ("an earlier test on the pricing page lifted demo requests").
 - System references: "Agent," "orchestrator," "phase file," "skill file," "SKILL.md," "frontmatter," "schema," "fetch registry"
 - Pattern references: "pattern ID," "HM-01," "FO-02," "experiment-patterns.md," "pattern matching"
 - Process references: "from L0," "per the context file," "the scoring phase determined," "opportunity detection found"
