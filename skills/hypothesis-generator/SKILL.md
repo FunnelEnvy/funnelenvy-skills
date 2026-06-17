@@ -54,6 +54,7 @@ The full KB-mode contract (mode resolution, read-side mapping, output path, fron
 | `--spec` | none | Path to a spec/brief file OR inline text of client-requested items. When provided, every spec item must either map to a hypothesis or be explicitly addressed in "What's Not Here." Out-of-scope items (SEO/GEO, interlinking, content audit) are flagged with routing guidance. |
 | `--scope` | none | KB mode only. Selects which KB scope the run targets (the type skill defines valid scopes). Required in KB mode; warn-and-ignore in legacy mode. See `KB Mode (Dual-Mode Output)`. |
 | `--no-kb` | off | Force legacy `.claude/context/` I/O even when a KB binding is detected. See `KB Mode (Dual-Mode Output)`. |
+| `--present` | off | After a successful roadmap write, invoke the separate `roadmap-presentation` skill to render the roadmap as a client-facing multi-page HTML site, passing the same mode (KB `--scope` or legacy). Pure chaining affordance: adds no analytical behavior and changes no scoring, pattern, or output-content logic. See `Re-render Behavior`. |
 
 ---
 
@@ -564,6 +565,8 @@ If `.claude/deliverables/experiment-roadmap.md` already exists:
 - The roadmap is always a complete projection of current context + current patterns
 
 In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope}-experiment-roadmap.md`, with KB versioning -- preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch otherwise), set `updated`, overwrite the body. See `Prior Work Detection (KB Mode)`.
+
+**`--present` chaining.** When `--present` is set, after the roadmap write completes successfully, invoke the separate `roadmap-presentation` skill against the just-written roadmap, passing the same mode (KB `--scope` or legacy). It renders the roadmap as a client-facing multi-page HTML site. This is a chaining affordance only: it runs a separate skill after write and changes nothing about the roadmap's analytical content. Fires in both modes.
 
 ---
 

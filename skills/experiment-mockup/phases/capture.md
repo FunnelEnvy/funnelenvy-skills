@@ -15,8 +15,10 @@
 
 ## Outputs
 
-- `.claude/deliverables/experiments/<slug>/mockup.html` (standalone self-contained HTML)
-- `.claude/deliverables/experiments/<slug>/mockup-screenshot.png` (browser viewport screenshot)
+Written to the output directory the orchestrator passes (legacy `.claude/deliverables/experiments/<slug>/`; KB mode `{kb_root}/deliverables/experiments/<slug>/`):
+
+- `<output-dir>/mockup.html` (standalone self-contained HTML)
+- `<output-dir>/mockup-screenshot.png` (browser viewport screenshot)
 
 ---
 
@@ -121,7 +123,7 @@ Requirements:
 
 ### Step 4: Write Files
 
-1. Create the output directory if it doesn't exist: `.claude/deliverables/experiments/<slug>/`
+1. Create the orchestrator-provided output directory if it doesn't exist (legacy `.claude/deliverables/experiments/<slug>/`; KB mode `{kb_root}/deliverables/experiments/<slug>/`)
 2. Write `mockup.html` to the output directory
 3. Write `mockup-screenshot.png` to the output directory (already saved in Step 1)
 4. Confirm both files are written: "Mockup captured. Files written to [output directory]."

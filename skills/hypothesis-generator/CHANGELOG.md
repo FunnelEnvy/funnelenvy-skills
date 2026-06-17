@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Added
+- Thin `--present` chaining flag: after a successful roadmap write, invokes the separate `roadmap-presentation` skill to render the roadmap as a client-facing multi-page HTML site, passing the same mode (KB `--scope` or legacy). Pure chaining affordance; adds no analytical behavior and changes no scoring, pattern, or output-content logic. Fires in both modes. (chg_2026-06-10_experiment-roadmap-presentation)
 - Optional experiment-history consumption (KB mode): when the bound repo declares a completed-experiment knowledge base, read its gold index plus the linked silver insights (read-only, scope-filtered with cross-scope allowed, no depends_on edge), surface a new Evidence From Completed Experiments section in the roadmap, activate the Step 7 winner-replication sequencing reorder, and add a Step 4 replication Confidence/Ease modifier (raw-Confidence lift; a gated Confidence rubric stays a hard ceiling); detect.md Step 1g experiment-history triggers; absent input never penalizes; Deliverable Purity and validator additions. (chg_2026-06-14_hypothesis-generator-experiment-history-consumption) [hypothesis-generator-experiment-history-consumption]
 
 ## [1.6.0] - 2026-06-11
