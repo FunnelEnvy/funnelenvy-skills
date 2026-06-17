@@ -6,12 +6,15 @@ description: >-
   Also use when the user mentions 'experiment mockup,' 'mockup hypothesis,'
   'inject change,' 'DOM injection,' 'visual mockup,' 'mock up experiment,'
   'show proposed change,' 'experiment preview,' or 'mockup for hypothesis N.'
-  Takes a hypothesis from experiment-roadmap.md, navigates to the target page,
-  injects the proposed change styled to match the site, iterates with the user,
-  and captures the approved state as a standalone HTML artifact with CRO
-  placement rationale. Three modes: live (Chrome DevTools MCP, interactive),
-  playwright (Playwright MCP, screenshot-based iteration), and static (HTML
-  extraction fallback, non-interactive).
+  Takes a hypothesis from an experiment roadmap (KB-mode gold artifact or legacy
+  deliverable), navigates to the target page, injects the proposed change styled
+  to match the site, iterates with the user, and captures the approved state as a
+  standalone HTML artifact with CRO placement rationale. Dual-mode I/O: KB mode
+  reads the scope's gold roadmap and writes mockups under the bound knowledge
+  base; legacy mode reads and writes under .claude/deliverables/. Three browser
+  modes: live (Chrome DevTools MCP, interactive), playwright (Playwright MCP,
+  screenshot-based iteration), and static (HTML extraction fallback,
+  non-interactive).
 ---
 
 # Experiment Mockup
@@ -25,20 +28,60 @@ You are the orchestrator for the experiment-mockup skill. You parse arguments, d
 ## Invocation
 
 ```
-/experiment-mockup <hypothesis-number> [--url <override-url>] [--static]
+/experiment-mockup <hypothesis-number> [--url <override-url>] [--static] [--scope <slug>] [--no-kb]
 ```
 
 **Arguments:**
-- `<hypothesis-number>` (required): Which hypothesis from experiment-roadmap.md (e.g., "1" for hypothesis #1, matching the `### N. [Name]` heading pattern)
+- `<hypothesis-number>` (required): Which hypothesis from the experiment roadmap (e.g., "1" for hypothesis #1, matching the `### N. [Name]` heading pattern)
 - `--url <override-url>` (optional): Override target URL when hypothesis references multiple pages or you want to mock up the change on a different page
 - `--static` (optional): Force static fallback mode even if Chrome DevTools MCP is available
+
+**I/O mode flags** (independent of the browser-mode detection above):
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--scope` | none | KB mode only. Selects which KB scope the run targets (the type skill defines valid scopes). Required in KB mode; warn-and-ignore in legacy mode. See `KB Mode (Dual-Mode Output)`. |
+| `--no-kb` | off | Force legacy `.claude/deliverables/` I/O even when a KB binding is detected. See `KB Mode (Dual-Mode Output)`. |
 
 **Examples:**
 ```
 /experiment-mockup 1
 /experiment-mockup 3 --url https://example.com/contact
 /experiment-mockup 2 --static
+/experiment-mockup 1 --scope b2c
+/experiment-mockup 2 --no-kb
 ```
+
+---
+
+## KB Mode (Dual-Mode Output)
+
+The skill runs in one of two I/O modes, resolved once in the orchestrator (Step 1b) and held in-session. The browser-mode detection (live / playwright / static) and all phase logic are identical in both I/O modes; only the roadmap-read path and the mockup-write base differ.
+
+- **Legacy mode** (default): reads the roadmap from `.claude/deliverables/experiment-roadmap.md` and writes mockups to `.claude/deliverables/experiments/<slug>/`.
+- **KB mode**: the run resolved a `{scope}`; reads the gold roadmap at `{kb_root}/deliverables/{scope}-experiment-roadmap.md` and writes mockups to `{kb_root}/deliverables/experiments/<slug>/`.
+
+Mode resolution mirrors hypothesis-generator's and roadmap-presentation's `KB Mode (Dual-Mode Output)` exactly, so all three skills behave identically about KB binding and `--scope` semantics. The mockups experiment-mockup writes in KB mode are exactly the source artifacts roadmap-presentation resolves at `{kb_root}/deliverables/experiments/<slug>/`.
+
+### Mode Resolution Procedure (orchestrator, Step 1b)
+
+1. If `--no-kb` is set: legacy mode. Done.
+2. Read the working repo's `CLAUDE.md`. Find a `Knowledge Bases` section. If absent: legacy mode, and note in the run output: "No `Knowledge Bases` section in CLAUDE.md; using legacy I/O."
+3. Parse the KB root path and KB type skill name from that section. Verify the type skill exists at `.claude/skills/{kb-type}/` and its `artifacts/` directory defines `gold-experiment-roadmap` (the roadmap source artifact type). If the check fails: legacy mode, and report which check failed.
+4. KB mode confirmed. Resolve scope: `--scope <slug>` must match a valid scope defined by the type skill. If `--scope` is missing or invalid: HARD STOP. Display the valid scope list and ask the user to re-run with `--scope`. Do not guess a scope.
+
+There is deliberately no `--kb` force flag. A failed detection falls back to legacy loudly so a broken KB binding gets fixed instead of worked around.
+
+When KB mode is confirmed, hold this in-session state for the load and write steps: `kb_root`, `kb_type`, `scope`. The roadmap-read path and the mockup output base derive from these per `Operating mode targets` below. This skill never hardcodes a KB type skill name or a client-specific path.
+
+### Operating mode targets
+
+| Target | Legacy mode | KB mode |
+|--------|-------------|---------|
+| Roadmap source (read, hard precondition) | `.claude/deliverables/experiment-roadmap.md` | `{kb_root}/deliverables/{scope}-experiment-roadmap.md` |
+| Mockup output base (write) | `.claude/deliverables/experiments/<slug>/` | `{kb_root}/deliverables/experiments/<slug>/` |
+
+The mockup output is NOT a KB artifact: it carries no `kb_layer` frontmatter. The KB-mode path only co-locates the mockups under the KB deliverables tree so roadmap-presentation can resolve them. The existing `placement.md` / `mockup.html` frontmatter rules are unchanged in both modes.
 
 ---
 
@@ -46,8 +89,8 @@ You are the orchestrator for the experiment-mockup skill. You parse arguments, d
 
 | Condition | Type | What Happens If Missing |
 |-----------|------|------------------------|
-| `.claude/deliverables/experiment-roadmap.md` exists | Hard | STOP. Tell user: "No experiment roadmap found. Run /hypothesis-generator first." |
-| Hypothesis number exists in roadmap | Hard | STOP. Tell user: "Hypothesis #N not found in experiment-roadmap.md. Available hypotheses: [list numbers and names]." |
+| The roadmap source for the resolved mode exists (legacy: `.claude/deliverables/experiment-roadmap.md`; KB: `{kb_root}/deliverables/{scope}-experiment-roadmap.md`) | Hard | STOP. Tell user: "No experiment roadmap found at [resolved path]. Run /hypothesis-generator first (with --scope <slug> in KB mode)." |
+| Hypothesis number exists in roadmap | Hard | STOP. Tell user: "Hypothesis #N not found in the roadmap. Available hypotheses: [list numbers and names]." |
 | Target URL is reachable | Hard | Validated in Phase 1 (live) or static-build (static). If unreachable, STOP with error. |
 | Chrome DevTools MCP connected | Recommended | Auto-detected. If unavailable, STOP and recommend setup. Static fallback only with explicit user consent (see Step 5.5). |
 
@@ -67,13 +110,21 @@ You are the orchestrator for the experiment-mockup skill. You parse arguments, d
 
 ### Step 1: Parse Arguments
 
-Parse `<hypothesis-number>` from arguments. Parse optional `--url` and `--static` flags.
+Parse `<hypothesis-number>` from arguments. Parse optional `--url`, `--static`, `--scope`, and `--no-kb` flags.
 
-If no hypothesis number provided, STOP: "Usage: /experiment-mockup <hypothesis-number> [--url <url>] [--static]"
+If no hypothesis number provided, STOP: "Usage: /experiment-mockup <hypothesis-number> [--url <url>] [--static] [--scope <slug>] [--no-kb]"
+
+### Step 1b: Resolve I/O Mode
+
+Run the `Mode Resolution Procedure` from `KB Mode (Dual-Mode Output)`. This sets the mode (legacy or KB) and, in KB mode, the in-session `kb_root` / `kb_type` / `scope`. The resolved mode determines the roadmap-read path (Step 2) and the mockup output base (Step 4). It does NOT affect browser-mode detection (Step 5).
 
 ### Step 2: Load Hypothesis
 
-Read `.claude/deliverables/experiment-roadmap.md`.
+Read the roadmap source for the resolved mode:
+- **Legacy mode:** `.claude/deliverables/experiment-roadmap.md`
+- **KB mode:** `{kb_root}/deliverables/{scope}-experiment-roadmap.md`
+
+If the file does not exist, STOP per the Preconditions table (roadmap-exists gate).
 
 Find the hypothesis matching the provided number. Hypotheses are numbered sequentially with headings like `### 1. [Experiment Name]`. Extract:
 - Hypothesis number
@@ -101,7 +152,11 @@ Derive the hypothesis slug from the experiment name using `modules/slugify.md` r
 1. Take the experiment name (text after "### N. " in the heading)
 2. Apply slugify rules: lowercase, strip articles, replace non-alphanumeric with hyphens, collapse consecutive hyphens, strip leading/trailing hyphens
 
-Output directory: `.claude/deliverables/experiments/<hypothesis-slug>/`
+Output directory (resolved against the mockup output base for the mode from Step 1b):
+- **Legacy mode:** `.claude/deliverables/experiments/<hypothesis-slug>/`
+- **KB mode:** `{kb_root}/deliverables/experiments/<hypothesis-slug>/`
+
+The full resolved output directory path is passed to the phase agent; the phases write to the path the orchestrator computes here (the phase files show the legacy path as the canonical example).
 
 ### Step 5: Detect Execution Mode
 
@@ -268,8 +323,9 @@ After the agent completes, display:
 ```
 Experiment mockup complete for hypothesis #[N]: [name]
 
-Mode: [chrome-devtools|playwright|static]
-Output: .claude/deliverables/experiments/<slug>/
+I/O mode: [KB (scope: <slug>) | legacy]
+Browser mode: [chrome-devtools|playwright|static]
+Output: [resolved output directory: .claude/deliverables/experiments/<slug>/ or {kb_root}/deliverables/experiments/<slug>/]
   - mockup.html (standalone, open in any browser)
   - placement.md (CRO rationale + implementation notes)
   - mockup-screenshot.png (live mode only)
@@ -293,7 +349,7 @@ Output: .claude/deliverables/experiments/<slug>/
 
 ## Architecture Notes
 
-- **Layer:** L2 deliverable skill. Writes to `.claude/deliverables/experiments/`. Does NOT write to `.claude/context/`.
+- **Layer:** L2 deliverable skill. Writes to the mockup output base for the resolved I/O mode (legacy `.claude/deliverables/experiments/`; KB `{kb_root}/deliverables/experiments/`). Does NOT write to `.claude/context/`. The KB-mode output is not a KB artifact (no `kb_layer` frontmatter); see `KB Mode (Dual-Mode Output)`.
 - **Layer violation (documented):** This skill makes web requests (DevTools navigation or curl extraction), which violates the "L2 skill NEVER makes web requests" invariant. This is the same category of contained violation as hypothesis-generator's L1/L2 hybrid position. The alternative (an L1 skill that extracts page structure into a context file, then a separate L2 skill that builds the mockup) adds a file, a schema, and a skill boundary for zero user benefit.
 - **Does NOT re-read L0/L1 context files.** The hypothesis is the single source of truth.
 - **Single hypothesis per invocation.** No batching.
@@ -312,7 +368,16 @@ Output: .claude/deliverables/experiments/<slug>/
 
 ## Re-run Behavior
 
-If output files already exist for the same hypothesis slug:
+If output files already exist for the same hypothesis slug (within the resolved mode's output base):
 - Ask user before overwriting: "Mockup files already exist for [hypothesis name]. Overwrite? (y/n)"
 - If yes: overwrite all files
 - If no: STOP
+
+---
+
+## Changelog
+
+| Version | Changes |
+|---------|---------|
+| Unreleased | Dual-mode I/O retrofit (KB / legacy). New `KB Mode (Dual-Mode Output)` section: mode resolution mirrors hypothesis-generator and roadmap-presentation exactly (`--no-kb` forces legacy; a detected `Knowledge Bases` binding plus a valid `--scope` selects KB mode; missing/invalid `--scope` in KB mode is a HARD STOP listing valid scopes; failed detection falls back to legacy loudly). Read side: KB mode reads the gold roadmap at `{kb_root}/deliverables/{scope}-experiment-roadmap.md`; legacy unchanged. Write side: KB mode writes mockups to `{kb_root}/deliverables/experiments/<slug>/` (co-located so roadmap-presentation resolves them; not a KB artifact, no `kb_layer`); legacy unchanged. New `--scope` and `--no-kb` flags; mode-aware roadmap-exists precondition, output-directory resolution (Step 1b, Step 2, Step 4), completion message, and Architecture Notes layer line. Phase path references generalized to the orchestrator-provided output directory (legacy path shown as the canonical example). |
+| 1.2.0 | Playwright browser mode added (screenshot-based iteration) as the secondary detection tier between Chrome DevTools and static. |

@@ -17,6 +17,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | [voice-inference](skills/voice-inference/SKILL.md) | 1.0.0 | Brand voice analysis from website content with scored tone spectrum, vocabulary fingerprint, and actionable voice rules |
 | [live-capture](skills/live-capture/SKILL.md) | 0.2.0 | Live-page structural and copy capture. Navigates selected pages, passively reads the rendered DOM across viewports, and writes two factual artifacts (structure + verbatim copy). Dual-mode: legacy `.claude/context/` files, or KB-native bronze plus a silver structural artifact (in active development) |
 | [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.2.0 | Visual mockup generator for experiment hypotheses (in active development) |
+| [roadmap-presentation](skills/roadmap-presentation/SKILL.md) | 0.1.0 | Renders an experiment roadmap into a client-facing multi-page HTML site (hub overview plus one spoke per experiment) with control-vs-proposed mockup comparisons. Deterministic chrome plus a humanizer pass. Dual-mode: legacy `.claude/deliverables/` or KB-native (in active development) |
 | [render-default-deliverables](skills/render-default-deliverables/SKILL.md) | 1.0.1 | Generates client-ready deliverables from positioning context |
 
 ## Quick Start
@@ -43,6 +44,8 @@ Run a skill:
 /live-capture https://example.com
 /live-capture https://example.com --scope b2c
 /experiment-mockup 1
+/roadmap-presentation
+/roadmap-presentation --scope b2c
 ```
 
 The `--stage` flag on landing-page-generator controls which phases run: `brief`, `copy`, `design`, `qa`, or `all` (default).
@@ -113,6 +116,8 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 **voice-inference** analyzes how a company communicates by extracting 12-15 pages across content types (homepage, product, blog, case studies, about) and building an evidence-backed voice profile. Scores tone dimensions, identifies vocabulary patterns and sentence architecture, catalogs 33+ categorized examples, and derives actionable voice rules. Two modes: observe (infer from content alone) and compare (compare inferred voice against customer-provided brand docs). Does not require positioning-framework to have been run first. Produces `brand-voice.md`.
 
 **experiment-mockup** (in active development) takes a hypothesis from the experiment roadmap and builds a visual mockup showing the proposed change in the context of the real target page. In live mode (requires Chrome DevTools MCP), it injects the change into the user's browser, matches the site's design system using computed styles, and iterates on placement and styling in real time. In static mode (automatic fallback), it extracts page HTML and builds a standalone mockup file. Both modes produce a CRO placement rationale explaining why the element is positioned where it is, what visual hierarchy strategy it uses, and how the dev team should implement it.
+
+**roadmap-presentation** (in active development) renders the experiment roadmap into a self-contained, multi-page HTML site: a hub overview page (tier- or disposition-grouped experiment index, sequencing diagram, client asks) plus one pitch-focused spoke page per experiment with a control-vs-proposed mockup comparison fed by experiment-mockup outputs. A deterministic scaffolding script emits all chrome (FunnelEnvy design system, page shells, prev/next pager chain) so renders never drift; the skill curates the roadmap for pitch and runs a humanizer pass over authored prose. Chain it directly off hypothesis-generator with `/hypothesis-generator --present`. Dual-mode: legacy `.claude/deliverables/` or KB-native.
 
 **positioning-update** applies client feedback, stakeholder corrections, and new intelligence to existing context files. Paste an email, Slack thread, or meeting notes and it classifies each piece of information, shows you a structured change plan, and executes surgical edits after approval. No web research. Triggers deliverable re-render automatically.
 

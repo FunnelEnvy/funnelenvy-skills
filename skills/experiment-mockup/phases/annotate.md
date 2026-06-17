@@ -17,7 +17,7 @@
 
 ## Output
 
-- `.claude/deliverables/experiments/<slug>/placement.md`
+- `<output-dir>/placement.md` (the orchestrator-provided output directory: legacy `.claude/deliverables/experiments/<slug>/`; KB mode `{kb_root}/deliverables/experiments/<slug>/`)
 
 ---
 
@@ -118,6 +118,6 @@ If no risk flags are identified, write: "No significant implementation risks ide
 
 ### Step 2: Write to Disk
 
-Write `placement.md` to `.claude/deliverables/experiments/<slug>/placement.md`.
+Write `placement.md` to the orchestrator-provided output directory (legacy `.claude/deliverables/experiments/<slug>/placement.md`; KB mode `{kb_root}/deliverables/experiments/<slug>/placement.md`).
 
 Confirm: "Placement rationale written to [path]."

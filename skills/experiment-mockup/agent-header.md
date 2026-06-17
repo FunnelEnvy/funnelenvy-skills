@@ -17,18 +17,20 @@ These rules apply to all agents spawned by the experiment-mockup skill. Read thi
 
 ## 2. Context Files
 
-This skill does NOT read L0/L1 context files. The hypothesis from `experiment-roadmap.md` is the single source of truth for what to mock up. Re-reading context files risks contradicting the hypothesis.
+This skill does NOT read L0/L1 context files. The hypothesis from the experiment roadmap (the orchestrator-provided roadmap source: legacy `.claude/deliverables/experiment-roadmap.md`, or KB mode `{kb_root}/deliverables/{scope}-experiment-roadmap.md`) is the single source of truth for what to mock up. Re-reading context files risks contradicting the hypothesis.
 
 **Exception: brand design files.** If brand files (`brand-design-system.md`, `brand-components.html`, or similar `brand*`/`design-system*`/`style-guide*` files) exist in the context directory, read them. These are visual references, not positioning context. They do not conflict with the hypothesis. Brand file tokens are authoritative for colors, typography, spacing, and component patterns. Computed/parsed styles fill gaps where the brand file is silent.
 
+Read/write paths resolve against the orchestrator-provided roadmap source and output directory (legacy `.claude/deliverables/...`; KB mode `{kb_root}/deliverables/...`). The table shows the legacy paths as the canonical example.
+
 | File | Layer | How Used |
 |------|-------|----------|
-| `.claude/deliverables/experiment-roadmap.md` | Deliverable | Read: hypothesis source (page, change, copy, scores) |
+| `<roadmap-source>` (legacy `.claude/deliverables/experiment-roadmap.md`; KB `{kb_root}/deliverables/{scope}-experiment-roadmap.md`) | Deliverable | Read: hypothesis source (page, change, copy, scores) |
 | `.claude/context/brand-design-system.md` | Visual reference | Read (if exists): authoritative design tokens, color palette, typography, spacing |
 | `.claude/context/brand-components.html` | Visual reference | Read (if exists): ready-to-use HTML/CSS component patterns |
-| `.claude/deliverables/experiments/<slug>/mockup.html` | Deliverable | Write: standalone HTML mockup |
-| `.claude/deliverables/experiments/<slug>/mockup-screenshot.png` | Deliverable | Write: browser screenshot (live mode only) |
-| `.claude/deliverables/experiments/<slug>/placement.md` | Deliverable | Write: CRO placement rationale |
+| `<output-dir>/mockup.html` | Deliverable | Write: standalone HTML mockup |
+| `<output-dir>/mockup-screenshot.png` | Deliverable | Write: browser screenshot (live mode only) |
+| `<output-dir>/placement.md` | Deliverable | Write: CRO placement rationale |
 
 ---
 

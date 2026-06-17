@@ -18,7 +18,7 @@
 
 ## Outputs
 
-- `.claude/deliverables/experiments/<slug>/mockup.html` (standalone self-contained HTML)
+- `<output-dir>/mockup.html` (standalone self-contained HTML; output dir is orchestrator-provided: legacy `.claude/deliverables/experiments/<slug>/`, KB mode `{kb_root}/deliverables/experiments/<slug>/`)
 - Working state for Phase 4 (annotate.md): insertion point, design tokens, placement rationale
 
 **No screenshot in static mode** (no browser to screenshot).
@@ -183,7 +183,7 @@ Requirements:
 
 ### Step 6: Write Files and Report
 
-1. Create the output directory: `.claude/deliverables/experiments/<slug>/`
+1. Create the orchestrator-provided output directory (legacy `.claude/deliverables/experiments/<slug>/`; KB mode `{kb_root}/deliverables/experiments/<slug>/`)
 2. Write `mockup.html` to the output directory.
 3. Report to the user:
 
