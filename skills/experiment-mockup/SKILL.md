@@ -1,20 +1,9 @@
 ---
 name: experiment-mockup
-version: 1.2.0
+version: 1.3.0
 description: >-
-  When the user wants to create a visual mockup of a proposed experiment change.
-  Also use when the user mentions 'experiment mockup,' 'mockup hypothesis,'
-  'inject change,' 'DOM injection,' 'visual mockup,' 'mock up experiment,'
-  'show proposed change,' 'experiment preview,' or 'mockup for hypothesis N.'
-  Takes a hypothesis from an experiment roadmap (KB-mode gold artifact or legacy
-  deliverable), navigates to the target page, injects the proposed change styled
-  to match the site, iterates with the user, and captures the approved state as a
-  standalone HTML artifact with CRO placement rationale. Dual-mode I/O: KB mode
-  reads the scope's gold roadmap and writes mockups under the bound knowledge
-  base; legacy mode reads and writes under .claude/deliverables/. Three browser
-  modes: live (Chrome DevTools MCP, interactive), playwright (Playwright MCP,
-  screenshot-based iteration), and static (HTML extraction fallback,
-  non-interactive).
+modes: live (Chrome DevTools MCP, interactive), playwright (Playwright MCP,
+updated: 2026-06-18
 ---
 
 # Experiment Mockup
@@ -381,6 +370,6 @@ If output files already exist for the same hypothesis slug (within the resolved 
 
 | Version | Changes |
 |---------|---------|
-| Unreleased | Key-based output-directory resolution: `Step 4` now resolves the output directory from the matched hypothesis's persisted `**Key:**` field instead of `slugify(experiment name)`, with a shared fallback contract (prefer `**Key:**`; when absent, fall back to `slugify(title)` and print a one-line warning, no hard failure on keyless roadmaps). `Step 2` now also extracts the `**Key:**` field. Decouples mockup resolution from mutable roadmap heading titles (chg_2026-06-18_stable-mockup-resolution-key). |
-| Unreleased | Dual-mode I/O retrofit (KB / legacy). New `KB Mode (Dual-Mode Output)` section: mode resolution mirrors hypothesis-generator and roadmap-presentation exactly (`--no-kb` forces legacy; a detected `Knowledge Bases` binding plus a valid `--scope` selects KB mode; missing/invalid `--scope` in KB mode is a HARD STOP listing valid scopes; failed detection falls back to legacy loudly). Read side: KB mode reads the gold roadmap at `{kb_root}/deliverables/{scope}-experiment-roadmap.md`; legacy unchanged. Write side: KB mode writes mockups to `{kb_root}/deliverables/experiments/<slug>/` (co-located so roadmap-presentation resolves them; not a KB artifact, no `kb_layer`); legacy unchanged. New `--scope` and `--no-kb` flags; mode-aware roadmap-exists precondition, output-directory resolution (Step 1b, Step 2, Step 4), completion message, and Architecture Notes layer line. Phase path references generalized to the orchestrator-provided output directory (legacy path shown as the canonical example). |
+| 1.3.0 | Key-based output-directory resolution: `Step 4` now resolves the output directory from the matched hypothesis's persisted `**Key:**` field instead of `slugify(experiment name)`, with a shared fallback contract (prefer `**Key:**`; when absent, fall back to `slugify(title)` and print a one-line warning, no hard failure on keyless roadmaps). `Step 2` now also extracts the `**Key:**` field. Decouples mockup resolution from mutable roadmap heading titles (chg_2026-06-18_stable-mockup-resolution-key). |
+| 1.3.0 | Dual-mode I/O retrofit (KB / legacy). New `KB Mode (Dual-Mode Output)` section: mode resolution mirrors hypothesis-generator and roadmap-presentation exactly (`--no-kb` forces legacy; a detected `Knowledge Bases` binding plus a valid `--scope` selects KB mode; missing/invalid `--scope` in KB mode is a HARD STOP listing valid scopes; failed detection falls back to legacy loudly). Read side: KB mode reads the gold roadmap at `{kb_root}/deliverables/{scope}-experiment-roadmap.md`; legacy unchanged. Write side: KB mode writes mockups to `{kb_root}/deliverables/experiments/<slug>/` (co-located so roadmap-presentation resolves them; not a KB artifact, no `kb_layer`); legacy unchanged. New `--scope` and `--no-kb` flags; mode-aware roadmap-exists precondition, output-directory resolution (Step 1b, Step 2, Step 4), completion message, and Architecture Notes layer line. Phase path references generalized to the orchestrator-provided output directory (legacy path shown as the canonical example). |
 | 1.2.0 | Playwright browser mode added (screenshot-based iteration) as the secondary detection tier between Chrome DevTools and static. |

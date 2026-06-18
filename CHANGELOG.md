@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.0] - 2026-06-18
+
+### roadmap-presentation
+
+#### Added
+- **roadmap-presentation** (new skill, 0.3.0): renders an experiment roadmap into a self-contained multi-page HTML site (hub overview plus one spoke per experiment) with control-vs-proposed mockup comparisons. Deterministic `scaffold_site.py` chrome in a reconciliation-ledger design language (IBM Plex Mono data layer, disposition palette, hero run-order spine), version-agnostic section-mapping, humanizer pass. Dual-mode (legacy `.claude/deliverables/` or KB). Key-based mockup resolution; `--present` chaining from hypothesis-generator
+
+### experiment-mockup
+
+#### Added
+- **experiment-mockup**: dual-mode I/O (KB / legacy) — reads the scope's gold roadmap and writes mockups under the bound knowledge base; new `--scope` and `--no-kb` flags (v1.3.0)
+
+#### Changed
+- **experiment-mockup**: output directory now resolves by the roadmap's persisted `**Key:**` field (with `slugify(title)` fallback plus warning) instead of `slugify(title)`, decoupling mockups from mutable heading titles (v1.3.0)
+
+### hypothesis-generator
+
+#### Added
+- **hypothesis-generator**: stable per-experiment `**Key:**` emission (immutable, dual-mode regen carry-forward, churn reporting); optional experiment-history consumption in KB mode (gold index plus silver insights, winner-replication sequencing, replication Confidence/Ease modifier); thin `--present` chaining flag to roadmap-presentation (v1.7.0)
+
 ## [1.2.0] - 2026-06-11
 
 ### aa-audit

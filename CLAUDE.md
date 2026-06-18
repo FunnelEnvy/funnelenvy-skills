@@ -78,7 +78,7 @@ funnelenvy-skills/
 │   │       ├── annotate.md       # Phase 4 (both): CRO placement rationale
 │   │       └── static-build.md   # Fallback: combined extract + build (no DevTools)
 │   ├── roadmap-presentation/
-│   │   ├── SKILL.md              # Orchestrator v0.1.0 (single agent: parse roadmap, scaffold chrome, curate, humanize, write site)
+│   │   ├── SKILL.md              # Orchestrator v0.3.0 (single agent: parse roadmap, scaffold chrome, curate, humanize, write site)
 │   │   ├── scripts/             # scaffold_site.py (deterministic CSS/JS/page-shell/pager-chain emission)
 │   │   └── references/          # ai-writing-signs.md (embedded humanizer rules)
 │   └── render-default-deliverables/
@@ -381,7 +381,7 @@ Property ID is optional. If omitted, auto-detects from `company-identity.md` fro
 
 **Runtime:** ~5-8 minutes. ~50-80K tokens. Single interaction point (event classification confirmation).
 
-### hypothesis-generator (v1.5.0)
+### hypothesis-generator (v1.7.0)
 Standalone CRO hypothesis engine. Reads positioning context (L0 + L1) plus optional performance data, applies
 32 experiment patterns across 10 categories plus performance-driven triggers, and produces a prioritized experiment
 roadmap with ICE scoring, test feasibility estimation, contrarian filtering (13 triggers that reframe or suppress standard CRO advice in B2B and context-specific scenarios), interaction-effect modeling (AND/OR/XOR gates between same-page hypotheses, 7 empirical interaction effects), LIFT-model sequencing (Relevance > Clarity > Anxiety > Distraction > Urgency within tiers), empirical tiebreakers (winner replication, proximity-to-conversion ordering), and inconclusive test guidance per experiment including post-deployment causal impact validation and directional significance soft-coding. When `performance-profile.md` is present, produces data-calibrated scores with empirical benchmarks and B2B SaaS calibration anchors, traffic-driven hypotheses, and per-experiment feasibility notes. Infeasible experiments (insufficient traffic) are routed to "What's Not Here" with alternative approaches. Dual-mode I/O: when the working repo declares a CRO knowledge base binding, reads the scope's silver artifacts from the KB and writes a typed gold-experiment-roadmap artifact (`--scope` required; `--no-kb` forces legacy), with schema-tolerant performance trigger evaluation for profiles lacking `schema_version`. Manually invoked: /hypothesis-generator
@@ -459,7 +459,7 @@ Live-page structural and copy capture. Navigates selected pages, passively reads
 
 **Note:** KB-mode silver enrichment depends on the client type skill registering `silver-structural-observation` (Phase A Change B). Legacy mode is independent. Authoritative artifact schema inlined in `phases/write.md`; reference copies in `schemas/`.
 
-### experiment-mockup (v1.0.0)
+### experiment-mockup (v1.3.0)
 Visual mockup generator for proposed experiment changes. Takes a hypothesis from `experiment-roadmap.md`, navigates to the target page, injects the proposed change styled to match the site's design, iterates with the user in real time, then captures the approved state as a standalone HTML artifact with CRO placement rationale. Two modes: live (Chrome DevTools MCP, interactive, ~90% visual fidelity) and static (HTML extraction fallback, non-interactive, ~70% fidelity).
 
 **Invocation:** `/experiment-mockup <hypothesis-number> [--url <override-url>] [--static] [--scope <slug>] [--no-kb]`
@@ -482,7 +482,7 @@ Visual mockup generator for proposed experiment changes. Takes a hypothesis from
 
 **Runtime:** ~40-80K tokens (live, variable with iteration), ~30-50K tokens (static).
 
-### roadmap-presentation (v0.1.0)
+### roadmap-presentation (v0.3.0)
 Renders an experiment roadmap markdown (KB-mode gold or legacy deliverable) into a self-contained, multi-page static HTML site: a hub overview page (tier- or disposition-grouped experiment index, sequencing diagram, "what's not here" exclusions, client asks) plus one pitch-focused spoke page per experiment with a control-vs-proposed mockup comparison fed by experiment-mockup outputs. Single agent, no subagents. A deterministic scaffolding script emits all chrome (FunnelEnvy CSS design system, JS behaviors, page shells, prev/next pager chain) so renders never drift; the agent does the judgment work (curation, version-agnostic section-mapping, humanizer pass). Render skill: no web research, no analysis, no `.claude/context/` writes.
 
 **Invocation:** `/roadmap-presentation [--scope <slug>] [--no-kb] [--out <dir>]`. Also chainable via `/hypothesis-generator --present`.

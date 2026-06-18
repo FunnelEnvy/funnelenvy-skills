@@ -11,7 +11,7 @@ description: >
 governed_by: change-management/change-document
 status: Closed
 resource_name: [hypothesis-generator, experiment-mockup, roadmap-presentation]
-resource_version: "TBD"
+resource_version: "1.3.0"
 impact: 3
 confidence: 4
 ease: 3

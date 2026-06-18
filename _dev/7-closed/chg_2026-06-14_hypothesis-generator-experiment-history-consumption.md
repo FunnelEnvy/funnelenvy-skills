@@ -11,7 +11,7 @@ description: >
 governed_by: change-management/change-document
 status: Closed
 resource_name: hypothesis-generator
-resource_version: "TBD"
+resource_version: "1.7.0"
 impact: 4
 confidence: 4
 ease: 2
