@@ -1,8 +1,8 @@
 ---
 name: roadmap-presentation
-version: 0.1.0
+version: 0.2.0
 description: "When the user wants to render an experiment roadmap as a client-facing presentation. Also use when the user mentions 'render the roadmap as a presentation,' 'roadmap site,' 'present the experiment roadmap,' 'roadmap HTML,' 'roadmap presentation,' or the explicit /roadmap-presentation invocation. Renders a gold-experiment-roadmap (KB mode) or legacy experiment-roadmap.md into a self-contained, multi-page static site: a hub overview page plus one pitch-focused spoke page per experiment, with a control-vs-proposed mockup comparison fed by experiment-mockup outputs. Deterministic chrome via a scaffolding script; the agent curates content and runs a humanizer pass. No web research, no analysis, no .claude/context/ writes."
-updated: 2026-06-17
+updated: 2026-06-18
 ---
 
 # Roadmap Presentation
@@ -80,7 +80,7 @@ Run `Mode Resolution Procedure` above. Locate the source roadmap markdown at the
 Parse the source markdown into:
 
 - **Top-level sections** that actually exist (do NOT assume a fixed shape: see `Version-agnostic section-mapping`).
-- **Experiment items**: each `### N. {Title}` heading, in roadmap order, with its number, title, hypothesis, ICE scores (if present), page targets, disposition, variations, why-this-should-work, win/loss reads, self-critique, and per-experiment asks.
+- **Experiment items**: each `### N. {Title}` heading, in roadmap order, with its number, title, `**Key:**` field (the stable mockup-resolution key; absent on legacy / un-backfilled roadmaps), hypothesis, ICE scores (if present), page targets, disposition, variations, why-this-should-work, win/loss reads, self-critique, and per-experiment asks.
 - **Item dispositions**: detect reframed, held, superseded, and net-new items, not only cleanly scored experiments. Each disposition gets a visible treatment.
 - **Hub-level content**: the measurement-constraint callout, the stat row inputs, the sequencing/run-order grouping, the "what's not here" exclusions, and the "What We Need From {Client}" asks. `{Client}` resolves from the roadmap's own content, never hardcoded.
 
@@ -90,12 +90,12 @@ This is a read-and-structure pass. No site files are written yet.
 
 For each experiment heading `### N. {Title}`:
 
-1. Derive the mockup slug by applying `modules/slugify.md` rules to `{Title}`, identical to experiment-mockup `Step 4: Generate Output Directory Slug`, so identical titles resolve to identical slugs. (Apply the Python fallback in `modules/slugify.md` when resolving 3+ slugs.)
-2. Resolve the source mockup directory at the mode's mockup base: KB mode `{kb_root}/deliverables/experiments/{slug}/`; legacy mode `.claude/deliverables/experiments/{slug}/`.
+1. Resolve the source mockup directory name from the experiment's parsed `**Key:**` field, identical to experiment-mockup `Step 4: Generate Output Directory Slug`, so an experiment and its mockup stay linked across title edits. The shared fallback contract: **prefer the `**Key:**` field; when it is absent (a legacy / un-backfilled roadmap), fall back to `slugify({Title})` per `modules/slugify.md` and print a one-line warning** naming the experiment and the missing field, then proceed. (Apply the Python fallback in `modules/slugify.md` when resolving 3+ slugs in fallback mode.) No hard failure on keyless roadmaps.
+2. Resolve the source mockup directory at the mode's mockup base: KB mode `{kb_root}/deliverables/experiments/{key}/`; legacy mode `.claude/deliverables/experiments/{key}/`.
 3. When that directory exists with `mockup.html` plus screenshot(s), mark the experiment `mockup_present: true`. When absent, mark `mockup_present: false`.
-4. Record any experiment with no matching mockup directory (missing) and any mockup directory matching no current experiment title (orphan: signals a title rename between roadmap versions) for the completion message.
+4. Record any experiment with no matching mockup directory (missing) and any mockup directory whose key matches no current experiment key (orphan) for the completion message. With stable keys a title rename no longer orphans a mockup; an orphan now signals a deleted experiment or a key that changed, which should not happen given key immutability.
 
-The slug is used only to locate source artifacts at build time. The in-site asset path is number-keyed (`assets/mockups/experiment-NN/`), so the deployed site never depends on slug stability.
+The key is used only to locate source artifacts at build time. The in-site asset path is number-keyed (`assets/mockups/experiment-NN/`), so the deployed site never depends on key stability.
 
 ### Phase 4: Scaffold the chrome (deterministic)
 
@@ -147,7 +147,7 @@ Re-render is a complete projection of the current markdown (no diffing, no mergi
 
 The full per-experiment resolution steps live in Phase 3. Summary of the invariants:
 
-- Slug is derived from the title via `modules/slugify.md`, identical to experiment-mockup, so identical titles resolve identically.
+- The source-directory name is the experiment's `**Key:**` field (with `slugify(title)` fallback for keyless roadmaps), identical to experiment-mockup's resolution, so an experiment and its mockup stay linked across title edits.
 - Source artifacts are located at the mode's mockup base; copied display assets land at the number-keyed in-site path `{site}/assets/mockups/experiment-NN/` and are referenced relatively (the site is self-contained).
 - Absent source directory renders labeled placeholder frames, not an error and not an empty slot. The comparison slots are populated when experiment-mockup has run for the same mode and scope (it writes to the same mockup base this contract resolves); they show placeholders until then.
 - The completion message reports missing-mockup experiments and orphan mockup directories, surfacing drift rather than hiding it.
@@ -194,7 +194,7 @@ Modules resolve from the repository-root `modules/` directory (a sibling of `ski
 SKILL.md (this file)
   ├── scripts/scaffold_site.py        Deterministic chrome emission
   ├── references/ai-writing-signs.md  Humanizer pass rules
-  └── modules/slugify.md              Title-to-slug rules (mockup resolution, Phase 3)
+  └── modules/slugify.md              Title-to-slug rules: fallback resolver for keyless roadmaps and key-minting basis, not the primary live resolver (Phase 3 reads the persisted **Key:**)
 ```
 
 ## Quality Rules
@@ -214,4 +214,5 @@ SKILL.md (this file)
 
 | Version | Changes |
 |---------|---------|
+| 0.2.0 | Key-based mockup resolution: Phase 3 resolves the source mockup directory by the experiment's persisted `**Key:**` field instead of `slugify(title)`, with a `slugify(title)` fallback plus one-line warning for keyless roadmaps. Phase 2 parse now captures the `**Key:**` field. `Mockup-Resolution Contract` and `Module Dependencies` updated (slugify is now the fallback resolver / key-minting basis, not the primary live resolver); orphan-detection reworded (orphan = key with no current experiment, not a title rename). `scripts/scaffold_site.py` docstring synced to key-based resolution (comment-only, zero behavioral change; in-site asset paths stay number-keyed). (chg_2026-06-18_stable-mockup-resolution-key) |
 | 0.1.0 | Initial skill: dual-mode (KB / legacy) render of an experiment-roadmap markdown into a hub-and-spoke static site. Deterministic `scaffold_site.py` chrome (CSS design system, JS behaviors, page shells, pager chain). Mockup-resolution contract (slug-based source location, number-keyed in-site assets, placeholder frames, missing/orphan drift reporting). Version-agnostic section-mapping and pitch-focus curation. Embedded `ai-writing-signs.md` humanizer reference and pass. Companion `--present` chaining flag on hypothesis-generator. |

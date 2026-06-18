@@ -24,9 +24,10 @@ Manifest schema (JSON):
       ]
     }
 
-The agent slugifies experiment titles separately (per modules/slugify.md) to
-locate source mockup directories; this script keys assets only by zero-padded
-experiment number, so the deployed site never depends on slug stability.
+The agent resolves source mockup directories by each experiment's stable Key
+field (slugify(title) fallback for keyless roadmaps); this script keys assets
+only by zero-padded experiment number, so the deployed site never depends on
+slug stability.
 """
 import argparse
 import html
