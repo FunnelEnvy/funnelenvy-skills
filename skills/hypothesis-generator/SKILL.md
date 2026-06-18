@@ -111,7 +111,7 @@ The deliverable is written to `{kb_root}/deliverables/{scope}-experiment-roadmap
 ### Prior Work Detection (KB Mode)
 
 1. Glob `{kb_root}/deliverables/{scope}-experiment-roadmap.md`.
-2. If present, the run supersedes it in place: preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch for a re-render of unchanged inputs), set `updated` to today, overwrite the body. No diffing, no merging -- the roadmap is always a complete projection of current context (same semantics as `Re-render Behavior`).
+2. If present, the run supersedes it in place: preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch for a re-render of unchanged inputs), set `updated` to today, overwrite the body. No diffing, no merging -- the roadmap is always a complete projection of current context (same semantics as `Re-render Behavior`). Before overwriting, build the `prior normalized-title -> prior **Key:**` map from this prior roadmap and apply the **Key carry-forward rule** (defined once in `Re-render Behavior`): reuse a prior key on a normalized-title match, mint a fresh `slugify(title)` otherwise. Only the key value is carried forward; the rest of the body is a fresh projection.
 
 ### Post-Write Validation Gate
 
@@ -135,8 +135,13 @@ Experiment roadmap written to {kb_root}/deliverables/{scope}-experiment-roadmap.
 
   [standard counts unchanged]
 
+  Key churn: [re-minted this run: titles whose key was freshly minted | "all keys minted fresh (first run)" | "no key churn"]
+  Orphaned prior keys: [prior keys matching no experiment this run | "none"]
+
   Validation: kb_type_validate.py passed | failed (fixed and re-validated) | unresolved (manual validation needed)
 ```
+
+Key churn reporting (the same re-minted / orphaned lines as the legacy summary) is informational, not a gate.
 
 ---
 
@@ -363,10 +368,15 @@ Experiment roadmap written to .claude/deliverables/experiment-roadmap.md
   Performance data: [available (N sessions, N days) | not available]
   Element interaction data: [available (N events) | not available]
 
+  Key churn: [re-minted this run: list of experiment titles whose key was freshly minted because no prior normalized-title matched | "all keys minted fresh (first run)" when there was no prior roadmap | "no key churn" when every key carried forward]
+  Orphaned prior keys: [prior keys that match no experiment in this run, with their prior titles | "none"]
+
   Top experiment: [name] (ICE: [score])
 
 Review the roadmap and let me know if any hypotheses need adjustment.
 ```
+
+Key churn reporting is informational, not a gate -- it lets a human review whether a reworded title produced a fresh key (which would re-orphan its mockup) or whether an experiment was dropped (orphaning its prior key).
 
 ---
 
@@ -412,6 +422,7 @@ Where a record carries a rollout/replication next-experiment that maps to a hypo
 
 ### 1. [Experiment Name]
 
+**Key:** [stable slug minted once from the title; see key-minting rule below]
 **Page:** [specific page or URL path]
 **What to test:** [concrete, specific change]
 
@@ -459,6 +470,8 @@ For messaging-led hypotheses (headline, hero, positioning, value-proposition cat
 >
 > **Outcome challenge:** [strongest argument a metric win could mask a business loss, or "Covered by guardrail metric above"]
 > **Response:** [rebuttal or acknowledgment, 1-2 sentences]
+
+**Key field (minting rule).** The `**Key:**` value is `slugify(title)` (per `modules/slugify.md`), minted **once** at first generation and then **immutable**. It is **position-independent** (does not embed the roadmap number `N`) and is **never re-derived from the title** on any later run. On a fresh roadmap (no prior to read), every experiment's key is minted fresh as `slugify(title)`. On a re-render, keys are carried forward from the prior roadmap per `Re-render Behavior` (the carry-forward rule), not re-derived. The key is the stable join key downstream skills use to resolve a mockup to its experiment, so it must survive title edits.
 
 ---
 
@@ -564,7 +577,13 @@ If `.claude/deliverables/experiment-roadmap.md` already exists:
 - No diffing, no merging
 - The roadmap is always a complete projection of current context + current patterns
 
-In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope}-experiment-roadmap.md`, with KB versioning -- preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch otherwise), set `updated`, overwrite the body. See `Prior Work Detection (KB Mode)`.
+**Key carry-forward rule (the canonical carry-forward rule, referenced from both modes).** The `**Key:**` field is the one body value preserved across a re-render; everything else is a complete fresh projection. Before overwriting an existing roadmap, read it (if it exists) and build a `prior normalized-title -> prior **Key:**` map from every prior experiment that carries a `**Key:**` field. Normalized-title match = case-insensitive comparison after trimming surrounding whitespace (no slugify; the map key is the human title text). During render, for each experiment:
+- If its normalized title matches a prior entry, **reuse that prior key verbatim**.
+- Otherwise, **mint a fresh `slugify(title)`**.
+
+This keeps the "complete projection, no merging" framing for body content -- only the key value is carried forward, nothing else. The common case (a human edits the displayed title without re-running this skill) needs none of this: the persisted `**Key:**` field is simply left untouched.
+
+In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope}-experiment-roadmap.md`, with KB versioning -- preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch otherwise), set `updated`, overwrite the body. The same key carry-forward rule applies to the KB-mode prior roadmap. See `Prior Work Detection (KB Mode)`.
 
 **`--present` chaining.** When `--present` is set, after the roadmap write completes successfully, invoke the separate `roadmap-presentation` skill against the just-written roadmap, passing the same mode (KB `--scope` or legacy). It renders the roadmap as a client-facing multi-page HTML site. This is a chaining affordance only: it runs a separate skill after write and changes nothing about the roadmap's analytical content. Fires in both modes.
 
@@ -605,6 +624,8 @@ In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope
 16. **Quick Wins require fast signal.** Quick Win tier requires estimated test duration <= 6 weeks in addition to Confidence >= 4 and Ease >= 4. A 10-week test labeled Quick Win burns stakeholder trust. If duration data is unavailable, the constraint does not apply but Confidence is already capped by graceful degradation rules.
 
 17. **Self-critique is visible, not hidden.** Every hypothesis, regardless of tier, must include a Self-critique section in the deliverable (Step 10). The counterarguments must be stated fairly, not strawmanned. Evidence-strength language must be proportionate to actual evidence (one data point is a "signal," not a "pattern"). Internal consistency issues must be resolved before emission, not acknowledged and ignored.
+
+18. **Every emitted experiment carries a `**Key:**` field.** The key is minted once via `slugify(title)` and preserved verbatim across regens and title edits; it is never re-derived from a changed title. It is the stable join key downstream skills use to resolve a mockup to its experiment.
 
 ---
 

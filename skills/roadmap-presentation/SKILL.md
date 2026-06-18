@@ -1,8 +1,8 @@
 ---
 name: roadmap-presentation
-version: 0.1.0
+version: 0.3.0
 description: "When the user wants to render an experiment roadmap as a client-facing presentation. Also use when the user mentions 'render the roadmap as a presentation,' 'roadmap site,' 'present the experiment roadmap,' 'roadmap HTML,' 'roadmap presentation,' or the explicit /roadmap-presentation invocation. Renders a gold-experiment-roadmap (KB mode) or legacy experiment-roadmap.md into a self-contained, multi-page static site: a hub overview page plus one pitch-focused spoke page per experiment, with a control-vs-proposed mockup comparison fed by experiment-mockup outputs. Deterministic chrome via a scaffolding script; the agent curates content and runs a humanizer pass. No web research, no analysis, no .claude/context/ writes."
-updated: 2026-06-17
+updated: 2026-06-18
 ---
 
 # Roadmap Presentation
@@ -11,7 +11,7 @@ You render an experiment roadmap into a self-contained, multi-page static site w
 
 **You are a render skill, not an analysis skill.** You do NOT generate hypotheses, score, or research. You read the existing roadmap markdown, curate it for pitch (drop the dense analytical rigor that belongs in the markdown record), map whatever section shape the roadmap actually has, and emit a styled site. The markdown remains the source of truth; the site is a derived view.
 
-**The split:** a deterministic scaffolding script (`scripts/scaffold_site.py`) emits every byte of chrome (the CSS design system, the JS behaviors, the page shells, and the prev/next pager chain) so renders cannot drift. You do only the judgment work: curation, version-agnostic section-mapping, and a humanizer pass over the prose you author.
+**The split:** a deterministic scaffolding script (`scripts/scaffold_site.py`) emits every byte of chrome (the CSS design system, the JS behaviors, the page shells, and the prev/next pager chain) so renders cannot drift. The design language is a "reconciliation ledger": IBM Plex Sans for prose, IBM Plex Mono for the data layer (codes, scores, dates, percentages), a disciplined disposition palette, and a run-order spine in the hero. You do only the judgment work: curation, version-agnostic section-mapping, and a humanizer pass over the prose you author.
 
 **Output (legacy mode):** `.claude/deliverables/roadmap-site/`
 **Output (KB mode):** `{kb_root}/deliverables/{scope}-roadmap-site/`
@@ -80,9 +80,9 @@ Run `Mode Resolution Procedure` above. Locate the source roadmap markdown at the
 Parse the source markdown into:
 
 - **Top-level sections** that actually exist (do NOT assume a fixed shape: see `Version-agnostic section-mapping`).
-- **Experiment items**: each `### N. {Title}` heading, in roadmap order, with its number, title, hypothesis, ICE scores (if present), page targets, disposition, variations, why-this-should-work, win/loss reads, self-critique, and per-experiment asks.
+- **Experiment items**: each `### N. {Title}` heading, in roadmap order, with its number, title, `**Key:**` field (the stable mockup-resolution key; absent on legacy / un-backfilled roadmaps), hypothesis, ICE scores (if present), page targets, disposition, variations, why-this-should-work, win/loss reads, self-critique, and per-experiment asks.
 - **Item dispositions**: detect reframed, held, superseded, and net-new items, not only cleanly scored experiments. Each disposition gets a visible treatment.
-- **Hub-level content**: the measurement-constraint callout, the stat row inputs, the sequencing/run-order grouping, the "what's not here" exclusions, and the "What We Need From {Client}" asks. `{Client}` resolves from the roadmap's own content, never hardcoded.
+- **Hub-level content**: the provenance line (brand / scope / version / date), the run-order spine inputs (the first scheduled moves), the measurement-constraint callout, the sequencing/run-order grouping, the "what's not here" exclusions, and the "What We Need From {Client}" asks. `{Client}` resolves from the roadmap's own content, never hardcoded.
 
 This is a read-and-structure pass. No site files are written yet.
 
@@ -90,12 +90,12 @@ This is a read-and-structure pass. No site files are written yet.
 
 For each experiment heading `### N. {Title}`:
 
-1. Derive the mockup slug by applying `modules/slugify.md` rules to `{Title}`, identical to experiment-mockup `Step 4: Generate Output Directory Slug`, so identical titles resolve to identical slugs. (Apply the Python fallback in `modules/slugify.md` when resolving 3+ slugs.)
-2. Resolve the source mockup directory at the mode's mockup base: KB mode `{kb_root}/deliverables/experiments/{slug}/`; legacy mode `.claude/deliverables/experiments/{slug}/`.
+1. Resolve the source mockup directory name from the experiment's parsed `**Key:**` field, identical to experiment-mockup `Step 4: Generate Output Directory Slug`, so an experiment and its mockup stay linked across title edits. The shared fallback contract: **prefer the `**Key:**` field; when it is absent (a legacy / un-backfilled roadmap), fall back to `slugify({Title})` per `modules/slugify.md` and print a one-line warning** naming the experiment and the missing field, then proceed. (Apply the Python fallback in `modules/slugify.md` when resolving 3+ slugs in fallback mode.) No hard failure on keyless roadmaps.
+2. Resolve the source mockup directory at the mode's mockup base: KB mode `{kb_root}/deliverables/experiments/{key}/`; legacy mode `.claude/deliverables/experiments/{key}/`.
 3. When that directory exists with `mockup.html` plus screenshot(s), mark the experiment `mockup_present: true`. When absent, mark `mockup_present: false`.
-4. Record any experiment with no matching mockup directory (missing) and any mockup directory matching no current experiment title (orphan: signals a title rename between roadmap versions) for the completion message.
+4. Record any experiment with no matching mockup directory (missing) and any mockup directory whose key matches no current experiment key (orphan) for the completion message. With stable keys a title rename no longer orphans a mockup; an orphan now signals a deleted experiment or a key that changed, which should not happen given key immutability.
 
-The slug is used only to locate source artifacts at build time. The in-site asset path is number-keyed (`assets/mockups/experiment-NN/`), so the deployed site never depends on slug stability.
+The key is used only to locate source artifacts at build time. The in-site asset path is number-keyed (`assets/mockups/experiment-NN/`), so the deployed site never depends on key stability.
 
 ### Phase 4: Scaffold the chrome (deterministic)
 
@@ -126,16 +126,23 @@ $PY skills/roadmap-presentation/scripts/scaffold_site.py <manifest.json> --out <
 Fill the script-emitted content slots. Apply the three judgment passes:
 
 - **Curation (pitch-focus principle).** Drop measurement-design detail (target metric, guardrail, threshold cells), inconclusive-protocol detail, and bundled-elements disclosures from the site. These stay markdown-only: the HTML pitches, the markdown remains the analytical record.
+- **Roadmap-first ordering.** This is a roadmap; lead with the roadmap. Order the hub sections so the experiment portfolio and run order come first, before reconciliation, backlog, or exclusions. Never lead with a live-program reconciliation table: each card's disposition badge already carries the reconciliation verdict, so a standalone reconciliation section is redundant. If the source roadmap front-loads a live-program section, demote it: fold its measured results into the run-order section and let the per-card dispositions carry the rest.
+- **Mono data layer (the signature).** Wrap every experiment code (`#N`, `MI-N`, `ES-N`), ICE score, percentage, count, date, and version in `.mono`. Prose stays sans. This is what makes the deliverable read as recorded evidence rather than a brochure; do not skip it.
+- **Link experiment references.** Any `#N` that has a spoke page links to it, including the IDs in the hero run-order spine and any sequencing or legend lists. No bare, dead-looking identifiers.
 - **Version-agnostic section-mapping.** Render the grouping the roadmap actually uses (three tiers, disposition groups, a reconciliation table, preliminary-results cards, a post-rebuild backlog, or any combination). Map each disposition (reframed, held, superseded, net-new) to a visible hub treatment and, where it has a per-experiment page, a spoke. See the design-system classes below.
 - **Humanizer pass.** Run all renderer-authored prose (condensed card hypotheses, mockup annotations, section leads) through `references/ai-writing-signs.md` before write. Passages quoted verbatim from the source roadmap are already deliverable-grade and are exempt; the pass targets only prose you author.
 
 For each experiment's mockup comparison slot: when `mockup_present`, copy the display assets (`mockup.html` screenshots) from the source mockup directory into `{site}/assets/mockups/experiment-NN/` and reference them with relative paths so the site is self-contained. When absent, render labeled placeholder frames (`.mock-pending`).
 
-**Hub page** (`index.html`): hero with stat row and the measurement-constraint callout; grouped experiment index cards (one-line hypothesis, compact ICE, mockup-status indicator, thumbnail strip once mockups exist); sequencing wave diagram with experiment pills linking to spokes; "what's not here" exclusions; a "What We Need From {Client}" asks section (Provide / Confirm / Approve columns, each ask tagged with the experiments it unblocks). Fill the `<!-- NAV-LINKS-SLOT -->` with anchors to the hub sections you render.
+**Hub page** (`index.html`): the hero leads with the plan, not a stat row. Author a one-line mono provenance line (`.provenance`: brand / scope / version / date), a headline that states the first move or the verdict, and a run-order spine (`.hero-seq`) whose chips (`.hs-chip`, with `.lead` on the immediate next move) link to their spoke pages, then the measurement-constraint callout. The experiment portfolio is the first full section after the hero. Then: grouped experiment index cards (one-line hypothesis, compact mono ICE, disposition badge, mockup-status indicator, thumbnail strip once mockups exist); the sequencing wave diagram with experiment pills linking to spokes; "what's not here" exclusions; a "What We Need From {Client}" asks section (Provide / Confirm / Approve columns, each ask tagged with the experiments it unblocks). Fill the `<!-- NAV-LINKS-SLOT -->` with anchors to the hub sections you render, in render order.
 
 **Spoke page** (one per experiment): title / tier / page-chips / hypothesis header with quiet inline ICE; centerpiece control-vs-proposed mockup comparison with per-image change annotations and variation tabs (tabs collapse for single-variation experiments; mobile-scoped experiments render phone-width frames via `.mock-compare.mobile`); why-this-should-work; win/loss panels; self-critique (kept: preempting objections is persuasive); per-experiment before-launch asks. The breadcrumb and prev/next pager are already wired by the script.
 
-**Design-system classes** (emitted by the script, ready to use): `.tier.qw|.sb|.ex`, `.disp.run|.gated|.reframed|.held|.superseded|.net-new`, `.callout-blue|.yellow|.red|.green`, `.stat-row`/`.stat-item`, `.idx-grid`/`.idx-card`, `.seq`/`.wave`/`.w-pill`, `.mock-compare`/`.mock-chrome`/`.mock-pending`/`.annot`, `.var-tabs`/`.var-tab`/`.var-panel`, `.winloss`/`.wl`, `.crit`, `.prereq-grid`/`.prereq-col`, `.excl-list`, `.launch-list`, `.verdict`. No emitted site file carries `kb_layer` frontmatter; the site is a derived view.
+**Design-system classes** (emitted by the script, ready to use): `.mono` (the data layer: wrap every code, score, %, count, date, version), `.provenance` (hero meta line), `.hero-seq`/`.hs-stage`/`.hs-chip` (run-order spine; add `.lead` to the next move), `.recon-bar`/`.recon-legend` (proportion summary; legend `.ids a` link out), `.tier.qw|.sb|.ex`, `.disp.run|.gated|.reframed|.held|.superseded|.net-new`, `.callout-blue|.yellow|.red|.green`, `.idx-grid`/`.idx-card` (disposition shows as a left rail via `.qw-edge|.sb-edge|.ex-edge|.hold-edge`), `.recon-table`, `.prelim`/`.prelim-card` (measured results; `.caveat` for directional ones), `.live-pill`, `.live-status`, `.page-chips`/`.chip`, `.seq`/`.wave`/`.w-pill`, `.mock-compare`/`.mock-chrome`/`.mock-pending`/`.annot`, `.var-tabs`/`.var-tab`/`.var-panel`, `.winloss`/`.wl`, `.crit`, `.prereq-grid`/`.prereq-col`, `.excl-list`, `.launch-list`, `.verdict`.
+
+**Palette discipline** (do not reintroduce a rainbow): blue is the spine, used for active / run / net-new and links; amber is the one caution hue, for gated; green is reserved for measured wins only (`.prelim-card`, `.wl.win`), never for proposals; gray and slate carry reframed / held / superseded. Lead with blue and reach for another hue only when it carries that specific meaning.
+
+No emitted site file carries `kb_layer` frontmatter; the site is a derived view.
 
 ### Phase 6: Write the site and emit the completion message
 
@@ -147,7 +154,7 @@ Re-render is a complete projection of the current markdown (no diffing, no mergi
 
 The full per-experiment resolution steps live in Phase 3. Summary of the invariants:
 
-- Slug is derived from the title via `modules/slugify.md`, identical to experiment-mockup, so identical titles resolve identically.
+- The source-directory name is the experiment's `**Key:**` field (with `slugify(title)` fallback for keyless roadmaps), identical to experiment-mockup's resolution, so an experiment and its mockup stay linked across title edits.
 - Source artifacts are located at the mode's mockup base; copied display assets land at the number-keyed in-site path `{site}/assets/mockups/experiment-NN/` and are referenced relatively (the site is self-contained).
 - Absent source directory renders labeled placeholder frames, not an error and not an empty slot. The comparison slots are populated when experiment-mockup has run for the same mode and scope (it writes to the same mockup base this contract resolves); they show placeholders until then.
 - The completion message reports missing-mockup experiments and orphan mockup directories, surfacing drift rather than hiding it.
@@ -194,7 +201,7 @@ Modules resolve from the repository-root `modules/` directory (a sibling of `ski
 SKILL.md (this file)
   ├── scripts/scaffold_site.py        Deterministic chrome emission
   ├── references/ai-writing-signs.md  Humanizer pass rules
-  └── modules/slugify.md              Title-to-slug rules (mockup resolution, Phase 3)
+  └── modules/slugify.md              Title-to-slug rules: fallback resolver for keyless roadmaps and key-minting basis, not the primary live resolver (Phase 3 reads the persisted **Key:**)
 ```
 
 ## Quality Rules
@@ -209,9 +216,14 @@ SKILL.md (this file)
 8. **Humanizer pass on authored prose only.** Verbatim roadmap quotes are exempt.
 9. **No client names or client content** beyond what the source roadmap itself carries (which the renderer faithfully renders). The skill, script, and references carry no client content.
 10. **No em dashes.** Use commas, colons, semicolons, or parentheses.
+11. **Roadmap-first ordering.** Lead with the experiment portfolio and run order. Never lead with a live-program reconciliation table; carry reconciliation on each card's disposition badge, and demote any front-loaded live-program section (fold its measured results into the run order).
+12. **Mono the data layer.** Every code, ICE score, percentage, count, date, and version renders in `.mono`; prose stays sans. This is the deliverable's signature.
+13. **No dead identifiers, disciplined palette.** Every `#N` that has a spoke links to it (including the hero spine). Keep the disposition palette to blue (active), amber (gated), green (measured wins only), gray/slate (reframed/held/superseded); do not spread color across hues for decoration.
 
 ## Changelog
 
 | Version | Changes |
 |---------|---------|
+| 0.3.0 | Reconciliation-ledger redesign of the emitted chrome. `scripts/scaffold_site.py` `STYLES_CSS` rebuilt: added IBM Plex Mono as a data layer (`.mono` across codes, ICE, percentages, counts, dates, versions), a disciplined disposition palette (blue active, amber gated, green for measured wins only, gray/slate reframed/held/superseded), a hero run-order spine (`.hero-seq`/`.hs-chip`) and `.provenance` line replacing the gradient hero and `.stat-row`/`.stat-item` tiles, lighter borders and reduced shadows, and `.recon-bar`/`.recon-legend` with linked IDs. Both page shells now load IBM Plex Mono. SKILL.md Phase 5 rewritten for a roadmap-first hero and section order; new judgment passes (roadmap-first ordering, mono data layer, link experiment references) and Quality Rules 11-13; design-system class list synced to the real inventory (`.stat-row` removed). No client content added; `scaffold_site.py` emits CSS byte-identical to the verified reference stylesheet. (chg_2026-06-18_reconciliation-ledger-redesign) |
+| 0.2.0 | Key-based mockup resolution: Phase 3 resolves the source mockup directory by the experiment's persisted `**Key:**` field instead of `slugify(title)`, with a `slugify(title)` fallback plus one-line warning for keyless roadmaps. Phase 2 parse now captures the `**Key:**` field. `Mockup-Resolution Contract` and `Module Dependencies` updated (slugify is now the fallback resolver / key-minting basis, not the primary live resolver); orphan-detection reworded (orphan = key with no current experiment, not a title rename). `scripts/scaffold_site.py` docstring synced to key-based resolution (comment-only, zero behavioral change; in-site asset paths stay number-keyed). (chg_2026-06-18_stable-mockup-resolution-key) |
 | 0.1.0 | Initial skill: dual-mode (KB / legacy) render of an experiment-roadmap markdown into a hub-and-spoke static site. Deterministic `scaffold_site.py` chrome (CSS design system, JS behaviors, page shells, pager chain). Mockup-resolution contract (slug-based source location, number-keyed in-site assets, placeholder frames, missing/orphan drift reporting). Version-agnostic section-mapping and pitch-focus curation. Embedded `ai-writing-signs.md` humanizer reference and pass. Companion `--present` chaining flag on hypothesis-generator. |

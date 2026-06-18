@@ -10,6 +10,8 @@ Always derive slugs from a persisted field in a context file, never from convers
 
 For battle cards, the canonical source is the `name` field in each competitor entry in `competitive-landscape.md`.
 
+For experiment mockups, slugify is the **key-minting** function: hypothesis-generator uses it **once** to mint a stable `**Key:**` from the title at first generation, and that persisted key (not a live re-slugify of the title) is the canonical source consumers resolve against. Slugify also serves as the **fallback resolver** for keyless legacy roadmaps. It is not the live mockup-resolution function. This is the `Canonical Source Rule` in practice: the join key is a persisted field, not in-session phrasing.
+
 ---
 
 ## Slugification Steps

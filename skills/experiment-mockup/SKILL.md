@@ -129,6 +129,7 @@ If the file does not exist, STOP per the Preconditions table (roadmap-exists gat
 Find the hypothesis matching the provided number. Hypotheses are numbered sequentially with headings like `### 1. [Experiment Name]`. Extract:
 - Hypothesis number
 - Experiment name (the heading text after the number)
+- **Key:** field (the stable resolution key; absent on legacy / un-backfilled roadmaps)
 - **Page:** field (target URL or path)
 - **What to test:** field (the proposed change description)
 - **Current state:** field
@@ -148,13 +149,14 @@ Extract the URL or path from the hypothesis **Page:** field.
 
 ### Step 4: Generate Output Directory Slug
 
-Derive the hypothesis slug from the experiment name using `modules/slugify.md` rules:
-1. Take the experiment name (text after "### N. " in the heading)
-2. Apply slugify rules: lowercase, strip articles, replace non-alphanumeric with hyphens, collapse consecutive hyphens, strip leading/trailing hyphens
+Resolve the output directory name from the matched hypothesis's persisted `**Key:**` field (the stable mockup-resolution key minted by hypothesis-generator). The shared fallback contract: **prefer the `**Key:**` field; when it is absent (a legacy / un-backfilled roadmap), fall back to `slugify(experiment name)` and print a one-line warning** naming the experiment and the missing `**Key:**` field, then proceed. No hard failure on keyless roadmaps.
+
+1. If the matched hypothesis carries a `**Key:**` field, use its value verbatim as the directory name.
+2. Otherwise, fall back to `slugify(experiment name)` per `modules/slugify.md` (lowercase, strip articles, replace non-alphanumeric with hyphens, collapse consecutive hyphens, strip leading/trailing hyphens) and print the one-line warning.
 
 Output directory (resolved against the mockup output base for the mode from Step 1b):
-- **Legacy mode:** `.claude/deliverables/experiments/<hypothesis-slug>/`
-- **KB mode:** `{kb_root}/deliverables/experiments/<hypothesis-slug>/`
+- **Legacy mode:** `.claude/deliverables/experiments/<key>/`
+- **KB mode:** `{kb_root}/deliverables/experiments/<key>/`
 
 The full resolved output directory path is passed to the phase agent; the phases write to the path the orchestrator computes here (the phase files show the legacy path as the canonical example).
 
@@ -379,5 +381,6 @@ If output files already exist for the same hypothesis slug (within the resolved 
 
 | Version | Changes |
 |---------|---------|
+| Unreleased | Key-based output-directory resolution: `Step 4` now resolves the output directory from the matched hypothesis's persisted `**Key:**` field instead of `slugify(experiment name)`, with a shared fallback contract (prefer `**Key:**`; when absent, fall back to `slugify(title)` and print a one-line warning, no hard failure on keyless roadmaps). `Step 2` now also extracts the `**Key:**` field. Decouples mockup resolution from mutable roadmap heading titles (chg_2026-06-18_stable-mockup-resolution-key). |
 | Unreleased | Dual-mode I/O retrofit (KB / legacy). New `KB Mode (Dual-Mode Output)` section: mode resolution mirrors hypothesis-generator and roadmap-presentation exactly (`--no-kb` forces legacy; a detected `Knowledge Bases` binding plus a valid `--scope` selects KB mode; missing/invalid `--scope` in KB mode is a HARD STOP listing valid scopes; failed detection falls back to legacy loudly). Read side: KB mode reads the gold roadmap at `{kb_root}/deliverables/{scope}-experiment-roadmap.md`; legacy unchanged. Write side: KB mode writes mockups to `{kb_root}/deliverables/experiments/<slug>/` (co-located so roadmap-presentation resolves them; not a KB artifact, no `kb_layer`); legacy unchanged. New `--scope` and `--no-kb` flags; mode-aware roadmap-exists precondition, output-directory resolution (Step 1b, Step 2, Step 4), completion message, and Architecture Notes layer line. Phase path references generalized to the orchestrator-provided output directory (legacy path shown as the canonical example). |
 | 1.2.0 | Playwright browser mode added (screenshot-based iteration) as the secondary detection tier between Chrome DevTools and static. |
