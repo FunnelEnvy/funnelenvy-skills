@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.7.0] - 2026-06-18
 
 ### Added
 - Stable per-experiment `**Key:**` field in the roadmap render: emitted as the first bold field under each `### N. {Title}` heading, minted once via `slugify(title)` and immutable (position-independent, never re-derived from a changed title). New key-minting authoring rule and Quality Rule 18. Regen carry-forward in both modes (legacy `Re-render Behavior` and KB-mode `Prior Work Detection`): before overwrite, build a `prior normalized-title -> **Key:**` map and reuse a prior key on a normalized-title match, mint fresh otherwise; only the key value is carried forward, the rest of the body stays a complete fresh projection. Key-churn reporting in both completion messages (re-minted keys and orphaned prior keys; first-run/no-churn stated explicitly; informational, not a gate). Decouples downstream mockup resolution (experiment-mockup, roadmap-presentation) from mutable heading titles. (chg_2026-06-18_stable-mockup-resolution-key) [stable-mockup-resolution-key]

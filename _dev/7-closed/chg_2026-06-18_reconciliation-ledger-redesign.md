@@ -11,7 +11,7 @@ description: >
 governed_by: change-management/change-document
 status: Closed
 resource_name: [roadmap-presentation]
-resource_version: "TBD"
+resource_version: "0.3.0"
 impact: 3
 confidence: 4
 ease: 4

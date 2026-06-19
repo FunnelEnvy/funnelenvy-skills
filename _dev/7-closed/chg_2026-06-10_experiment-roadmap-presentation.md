@@ -11,7 +11,7 @@ governed_by: change-management/change-document
 status: Closed
 status_note: Closed, unreleased; committed to a branch (no PR yet)
 resource_name: roadmap-presentation
-resource_version: "TBD"
+resource_version: "0.3.0"
 impact: 4
 confidence: 4
 ease: 2
