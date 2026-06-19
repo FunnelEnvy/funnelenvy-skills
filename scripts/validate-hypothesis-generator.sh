@@ -174,8 +174,8 @@ echo "[13] Experiment-history consumption"
 check "Output Format has Evidence From Completed Experiments section" \
   "grep -c '^## Evidence From Completed Experiments' skills/hypothesis-generator/SKILL.md" \
   "1"
-check "Read-side Mapping references experiment-history (gold-experiment-roadmap producer KB)" \
-  "grep -c 'gold-experiment-roadmap. (producer KB)' skills/hypothesis-generator/SKILL.md" \
+check "Read-side Mapping references experiment-history (gold-experiment-index producer KB)" \
+  "grep -c 'gold-experiment-index. (producer KB)' skills/hypothesis-generator/SKILL.md" \
   "1"
 check "experiment_history_available guarded in Deliverable Purity Constraint" \
   "grep -c 'experiment_history_available' skills/hypothesis-generator/SKILL.md" \

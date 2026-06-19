@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+- KB-mode Read-side Mapping: corrected the competitive, audience, and performance silver-input paths to use the canonical producer basenames (`competitive-landscape.md`, `audience-messaging.md`, `performance-profile.md`) instead of the `-analysis.md` artifact-type stems, which were written by no producer and read by no other skill. On a KB-mode regen these three optional silver inputs were silently not found, degrading the roadmap and capping all Confidence scores at 4. Added a table-preamble rule: KB mode changes the directory, never the basename. (chg_2026-06-19_hypothesis-generator-kb-silver-input-basenames)
+- Experiment-history producer-KB binding now actually resolves. The v1.7.0 experiment-history consumption feature described its input as a `gold-experiment-roadmap` at the skill's own output path (the artifact it WRITES) and provided no way to discover the producer KB, so a bound completed-experiment KB was never read: no completed-experiment evidence, no Step 1g triggers, no Step 4 replication modifier, no Step 7 winner-replication sequencing (all silent, since absence is penalty-free). Corrected the Read-side Mapping cell to the producer's `gold-experiment-index` at the producer KB root, and added Mode Resolution Procedure step 5: enumerate declared KBs and bind the non-output KB whose type defines `gold-experiment-index` (keyed exactly as the output KB is keyed on `gold-experiment-roadmap`; no hardcoded KB type or path). Optional and penalty-free: a missing or broken producer never flips mode or hard-stops. Scope mapping: a producer with a disjoint scope vocabulary (a dedicated experiments KB whose program is the consuming scope's experiment history, with records addressed by experiment id rather than the strategy scope) is read whole instead of filtered to an empty set; literal `--scope` filtering applies only when records carry the run scope's vocabulary. Validator [13] updated. (chg_2026-06-19_hypothesis-generator-experiment-history-producer-binding)
+
 ## [1.7.0] - 2026-06-18
 
 ### Added
