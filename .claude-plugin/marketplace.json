@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "AI-powered positioning, competitive research, and CRO skills for Claude Code",
-    "version": "1.3.0",
+    "version": "1.4.0",
     "repository": "https://github.com/FunnelEnvy/funnelenvy-skills"
   },
   "plugins": [

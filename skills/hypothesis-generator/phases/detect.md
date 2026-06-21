@@ -254,13 +254,22 @@ These triggers fire on directly observed page structure. They are field-keyed ag
 
 These triggers fire on completed, measured experiment results read from the producer KB's gold index plus the silver insight records it links (KB mode only), per SKILL.md `KB Mode (Dual-Mode Output)` > `Read-side Mapping`. The index is filtered to the run's `--scope` by default; documented cross-scope reads are allowed where a win on one scope legitimately informs another. Run in parallel with pattern matching (Step 2). Experiment-history-derived opportunities join the opportunity list with `signal_source: experiment-history`.
 
-For each completed **winner** whose insight carries a rollout/replication next-experiment with a target surface present in this scope, emit a replication opportunity:
+**All-outcome, type-aware minting.** Treat the bound experiment history as a backlog to advance, not just evidence to cite. For each in-scope record (filtered to `--scope` per the scope rule above, with the documented whole-index cross-scope read preserved), iterate the record's `next_experiments`; for **each item** whose `surfaces` map into the run scope AND whose `priority` is `recommended_lead` or `high`, emit one experiment-history-derived opportunity, **regardless of the parent record's `outcome`** (winner, loser, or flat). Items with `priority: medium` are emitted only if `--max` budget remains after Phase 4 tiering (the gate is enforced in `phases/score.md` Step 6; Step 1g emits `medium` items tagged for that downstream cut). Losers and flats carry the richest iteration fuel (discriminating tests, intent-segmentation splits, bolder iterations that the loss recommends); they are no longer skipped.
+
+Tag each emitted opportunity:
 - `type: "experiment-history-derived"`
 - `signal_source: experiment-history`
 - ICE baseline **3/3/3** (the same neutral midpoint as context-derived and performance-driven opportunities; the empirical validation provides evidence for the Phase 4 modifiers, never an inflated baseline)
-- carry the source record's target surfaces and priority forward (consumed by `phases/score.md` Step 7 sequencing and the Step 4 replication modifier)
+- `history_type: <rollout | iteration | follow_up | discriminating_test>` (the producer item's `type`)
+- `parent_outcome: <winner | loser | flat>` (the parent record's `outcome`)
+- `source_surfaces: <surfaces>` (the item's in-scope target surfaces)
+- `source_priority: <recommended_lead | high | medium>` (the item's `priority`)
 
-**Boundary (no double-counting).** Experiment-history supplies a replication TARGET and a validated mechanism. It does not re-fire a pattern that another source already fired for the same page; it enriches/merges with that opportunity in Phase 3 Step 8 as usual.
+These provenance fields are the consuming skill's own opportunity-record labels (distinct from the producer's raw silver tokens) and feed `phases/score.md` Step 4 (outcome-aware posture), Step 6 (`--max` within-tier retention), and Step 7 (continuation sequencing). They are analysis-only and are NEVER rendered in the deliverable body (see SKILL.md `Deliverable Purity Constraint`).
+
+**Penalty-free skips.** An `next_experiments` item whose `surfaces` have no in-scope mapping is skipped penalty-free. A record carrying no `next_experiments` at all is skipped penalty-free. Neither skip applies a confidence penalty or a global cap.
+
+**Boundary (same-mechanism merge test).** Experiment-history supplies a continuation TARGET and (for winners) a validated mechanism. An experiment-history-derived opportunity merges with an existing same-page opportunity in Phase 3 Step 8 **only when it is the same mechanism / change-under-test** (a true duplicate); it is emitted as its own first-class hypothesis when the surface is shared but the **test design differs**. **Same surface plus same change = merge. Same surface plus different change-under-test = separate experiment.** Different-design cases that MUST survive dedup: isolation / discriminating arm, intent-segmentation split, dosage / no-default variant, down-funnel-instrumented re-run, and new-surface rollout. The merge itself still executes in Phase 3 Step 8 (`construct.md` `Step 8: Deduplication and Filtering`) as today; only the merge **predicate** narrows from surface-occupancy to mechanism-identity.
 
 **Output:** Experiment-history-derived opportunities added to the opportunity list, tagged `type: "experiment-history-derived"`.
 

@@ -192,6 +192,18 @@ check "transferable_rule guarded in Deliverable Purity Constraint" \
 check "replication_target_surfaces guarded in Deliverable Purity Constraint" \
   "grep -c 'replication_target_surfaces' skills/hypothesis-generator/SKILL.md" \
   "1"
+check "Output Format has Experiment Program Continuity section" \
+  "grep -c '^## Experiment Program Continuity' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "history_type guarded in Deliverable Purity Constraint" \
+  "grep -c 'history_type' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "parent_outcome guarded in Deliverable Purity Constraint" \
+  "grep -c 'parent_outcome' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "source_priority guarded in Deliverable Purity Constraint" \
+  "grep -c 'source_priority' skills/hypothesis-generator/SKILL.md" \
+  "1"
 echo ""
 
 echo "=== Results ==="

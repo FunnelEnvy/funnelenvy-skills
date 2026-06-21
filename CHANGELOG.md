@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.4.0] - 2026-06-21
+
+### hypothesis-generator
+
+#### Added
+- **hypothesis-generator** (1.8.0): all-outcome experiment-history iteration generation in KB mode (mint iteration hypotheses from completed-experiment next-steps across winners, losses, and flats; outcome-aware scoring posture; Experiment Program Continuity output; same-mechanism merge test). Plus two KB-mode input fixes (producer-KB binding resolution, silver-input basenames).
+
 ## [1.3.0] - 2026-06-18
 
 ### roadmap-presentation
