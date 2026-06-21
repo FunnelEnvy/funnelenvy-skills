@@ -3,7 +3,9 @@
 .env.*
 !.env.example
 
-# Development directories (may contain client references)
+# Development directories (may contain client references and sensitive data).
+# NEVER commit change docs / _dev to this PUBLIC repo. Matches root _dev/ and any nested _dev/.
+_dev/
 skills/**/_dev/
 
 # Module bundles accidentally written into a skill dir (shared modules live at repo-root modules/,
