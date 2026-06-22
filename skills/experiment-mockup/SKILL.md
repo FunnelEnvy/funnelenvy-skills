@@ -1,8 +1,20 @@
 ---
 name: experiment-mockup
-version: 1.3.0
+version: 1.3.1
 description: >-
-modes: live (Chrome DevTools MCP, interactive), playwright (Playwright MCP,
+  When the user wants to create a visual mockup of a proposed experiment change.
+  Also use when the user mentions 'experiment mockup,' 'mockup hypothesis,'
+  'inject change,' 'DOM injection,' 'visual mockup,' 'mock up experiment,'
+  'show proposed change,' 'experiment preview,' or 'mockup for hypothesis N.'
+  Takes a hypothesis from an experiment roadmap (KB-mode gold artifact or legacy
+  deliverable), navigates to the target page, injects the proposed change styled
+  to match the site, iterates with the user, and captures the approved state as a
+  standalone HTML artifact with CRO placement rationale. Dual-mode I/O: KB mode
+  reads the scope's gold roadmap and writes mockups under the bound knowledge
+  base; legacy mode reads and writes under .claude/deliverables/. Three browser
+  modes: live (Chrome DevTools MCP, interactive), playwright (Playwright MCP,
+  screenshot-based iteration), and static (HTML extraction fallback,
+  non-interactive).
 updated: 2026-06-18
 ---
 

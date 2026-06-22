@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.4.1] - 2026-06-22
+
+### experiment-mockup
+
+#### Fixed
+- **experiment-mockup** (1.3.1): repair malformed YAML frontmatter introduced in v1.3.0 — the `description` folded scalar had no indented body and a truncated `modes:` fragment was left as a stray key, so `description` parsed empty. An empty/invalid skill description aborted skill enumeration for the entire `funnelenvy-skills` plugin, making all 11 skills (not just experiment-mockup) fail to load. Restored the full description body; no behavioral change.
+
 ## [1.4.0] - 2026-06-21
 
 ### hypothesis-generator
