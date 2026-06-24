@@ -41,6 +41,10 @@ Example: if you test a differentiation-led H1 while the subhead still says "fast
 
 This constraint applies throughout the construction process below. When evaluating opportunities from Phase 2, actively look for opportunities targeting the same page with the same underlying hypothesis and merge them before constructing individual experiments.
 
+**Strategic-unit allowance.** The unit of testing may be a program, offer, audience-motion, or asset, not only a page element. The bundling discipline is unchanged and applies within each lane: bundle the elements (or the asset plus its placement plus its supporting copy) that serve one strategic idea into one experiment; do not bundle two independent strategic ideas. A strategic experiment's "elements" are its intervention components (the asset, where it is published, the routing change), and the same one-nameable-failure-mode test governs whether they are one experiment or several.
+
+- Correct strategic bundling: "A named-client ROI proof asset raises the qualified-demo rate" -> build the ROI one-pager, publish it on the evaluation pages, and add the supporting proof copy that frames it, measured as one experiment via a holdout. The asset, its placement, and its framing serve one idea, and a flat qualified-demo rate is one nameable failure of that idea. Do not fold an unrelated speed-to-lead routing change into the same experiment; that is a second strategic idea with its own failure mode.
+
 **Cross-surface bundling rule.** Bundle elements that serve one idea on the same page or section. Across different surfaces, bundle only if a single failure mode can be named for a combined loss. If a combined loss would list three or more independent things that could have failed on different surfaces, sequence the experiments instead of bundling them. A bundle whose loss-analysis cannot name one failure mode is not one experiment; it is several wearing one name. (This rule is shared verbatim with `modules/hypothesis-interactions.md` > `Same-Page Interaction Analysis Process`; keep the two copies in sync.)
 
 ---
@@ -294,6 +298,29 @@ Before finalizing any hypothesis whose proposed change or causal mechanism refer
 
 **Skip condition:** If the hypothesis does not reference any quantified claims or proof points (e.g., a layout or form experiment), this step produces no output. Set `proof_integrity_passed: true` by default for non-proof-dependent hypotheses.
 
+### Step 4c: Measurement Design (strategic-lane hypotheses)
+
+**This step applies only to `lane: "strategic"` hypotheses.** Tactical hypotheses (pattern-matched and context-derived) skip it; their measurement is the standard on-page A/B handled by Step 5b. A strategic hypothesis carries a candidate `measurement_design` from Phase 2c; here you finalize it.
+
+Select an explicit `measurement_design` from this enum:
+
+- `randomized_ab` (on-page A/B). Still the default when the lever happens to be on-page-testable (e.g., a proof asset placed on a high-traffic evaluation page).
+- `holdout` (a randomized or matched group that does not receive the intervention).
+- `pre_post` (before/after the intervention goes live, same population).
+- `cohort` (compare cohorts defined by entry period or segment).
+- `geo_split` (region split: some regions get the intervention, others do not).
+- `switchback` (alternate the intervention on and off over time windows).
+- `operational_metric` (track an operational metric directly, e.g., speed-to-lead, where the intervention is a process change rather than a page variant).
+
+For the selected design, state all of:
+
+1. **The design**, named in plain terms.
+2. **The business metric it reads** (qualified pipeline, qualified-demo rate, stage progression, retention, speed-to-lead), distinct from a page-level micro-conversion.
+3. **The read condition and window** (how long the design needs to run and what counts as a read).
+4. **The design's honesty limits**: what it can and cannot causally isolate. Name the specific threat (pre/post seasonality and concurrent-change confounds; holdout contamination or matching error; cohort composition shifts; geo heterogeneity). This is the strategic analogue of Step 5a's proxy-guardrail honesty: state the limit, do not hide it.
+
+Record `measurement_design` on the hypothesis record (internal field; it renders in the deliverable as natural language only, per the Deliverable Purity Constraint, e.g., "Measurement: regional holdout, 8-week read"). When the finalized design is `randomized_ab`, the hypothesis proceeds through Step 5b's standard A/B feasibility formula like any tactical hypothesis.
+
 ### Step 5: Target Metric and Audience
 
 **Metric selection:**
@@ -356,6 +383,8 @@ Classify the primary metric selected in Step 5.
 ### Step 5b: Test Feasibility Estimation
 
 **Skip this step entirely if `performance-profile.md` is not present.**
+
+**Non-A/B measurement-design branch (strategic-lane hypotheses).** If the hypothesis carries a non-A/B `measurement_design` (holdout / pre_post / cohort / geo_split / switchback / operational_metric, from Step 4c), do NOT run the two-proportion z-test below and do NOT auto-route it to "What's Not Here" for failing an A/B formula it was never meant to satisfy. Instead, state the design's feasibility in its own terms: data availability for the holdout or baseline, the length of the pre/post window, the instrumentation the operational metric needs, and a defined read window. A measurable strategic lever is feasible if its design can be stood up and read; it routes to a tier, not to "What's Not Here." Keep the A/B formula below intact for `randomized_ab` and for all tactical hypotheses. The 7-day-minimum and 100-conversions-per-variant hard gates apply only to designs that produce per-variant conversion counts (A/B and switchback); for pre/post, cohort, and operational-metric designs, replace those gates with a "sufficient pre-period baseline plus a defined read window" feasibility statement.
 
 For each hypothesis that has a Baseline (from Step 2), estimate whether the target page has enough traffic to run a statistically valid A/B test.
 
@@ -514,7 +543,7 @@ Before deduplication, run every constructed hypothesis through the contrarian tr
 
 Before passing to Phase 4:
 
-1. **Merge overlapping hypotheses.** If two opportunities target the same page with the same mechanism, merge into one hypothesis with both triggering signals noted.
+1. **Merge overlapping hypotheses.** If two opportunities target the same page with the same mechanism, merge into one hypothesis with both triggering signals noted. This intra-list merge is unchanged for tactical-vs-tactical and strategic-vs-strategic pairs. **Cross-lane (strategic vs tactical) reconciliation is NOT done here:** it is governed by the cross-deliverable dedup rule in `detect-strategic.md` Step 3 (same-idea + same-measurement-altitude means the strategic record supersedes the tactical one; same-idea + different-altitude means both stand, one per deliverable). Do not duplicate that rule body here; the two lanes render into separate deliverables.
 
 2. **Remove unsubstantiated hypotheses.** If the current state can't be confirmed or reasonably inferred from any context file, remove entirely. Don't guess.
 

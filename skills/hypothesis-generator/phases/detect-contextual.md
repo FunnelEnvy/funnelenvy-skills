@@ -15,7 +15,7 @@ Every context-derived opportunity MUST pass ALL six criteria. If any criterion f
 
 1. **Specific observable signal.** The opportunity points to a concrete condition in a named context file section. "Messaging could be stronger" fails. "Homepage subhead uses feature language while audience-messaging recommends outcome-first framing for the CTO persona" passes.
 
-2. **Named page and element.** The experiment targets a specific page and a specific element on that page. "A landing page" fails. "Pricing page, tier comparison table" passes.
+2. **Named intervention unit.** The experiment targets a specific named surface (page + element) OR a specific named lever / offer / audience-motion / asset. "A landing page" fails. "Pricing page, tier comparison table" passes; so does "the named-client ROI proof asset." Specificity is required at either altitude.
 
 3. **Falsifiable causal mechanism.** The hypothesis includes a behavioral or UX principle that explains why the change should work. The mechanism must be falsifiable: you can imagine a negative result that disproves it. "This will improve conversions" fails. "Reframing the tier names around outcomes instead of feature counts reduces decision complexity for multi-stakeholder buyers evaluating pricing" passes.
 
@@ -23,7 +23,9 @@ Every context-derived opportunity MUST pass ALL six criteria. If any criterion f
 
 5. **Genuine uncertainty.** The outcome of the experiment is not predetermined. If the change is so obviously correct that no reasonable person would argue against it, it's a "just do it" fix, not a hypothesis. Flag it in "What's Not Here" instead.
 
-   **Untestable-differentiator routing branch.** If a signal points to the company's highest-value differentiator BUT the differentiator cannot be A/B tested (it is entitled-account-only, store-wide-claim-unsupportable, or otherwise structurally untestable at current scope), do NOT discard it and do NOT force it into a hypothesis. Route it to "What's Not Here" as a productization or positioning decision, carrying the demand evidence (who is asking, how often) and the specific blocker (data coverage, entitlement scope, compliance). score.md Step 5b records it under the structurally-untestable-differentiator routing category.
+   **Untestable page-element-differentiator routing branch.** This branch fires ONLY for **page-element-altitude** signals. If a signal points to a page-element-scoped differentiator BUT it cannot be A/B tested (it is entitled-account-only, store-wide-claim-unsupportable, or otherwise structurally untestable at current scope), do NOT discard it and do NOT force it into a hypothesis. Route it to the tactical "What's Not Here" as a productization or positioning decision, carrying the demand evidence (who is asking, how often) and the specific blocker (data coverage, entitlement scope, compliance). score.md Step 5b records it under the structurally-untestable page-element-differentiator routing category.
+
+   **If the untestable signal is a business-level lever (a program, offer, audience-motion, or asset rather than a page element), it is NOT routed here. Phase 2c (`detect-strategic.md`) owns it:** the lever becomes a scored strategic experiment when some design can measure it, or it lands in the strategic deliverable's own "What's Not Here" when no design at any altitude can. Keeping business-altitude levers out of this branch prevents the criterion-5 trip condition (e.g., "entitled-account-only") from competing with Phase 2c, which was the in-tier collision root.
 
 6. **Not a pattern gap.** The signal shouldn't match a pattern that was skipped because of missing data. That's a data gap, handled by Prerequisites (Phase 3, Change 3). Check: could this signal have triggered a pattern if more data were available? If yes, route to Prerequisites instead.
 
