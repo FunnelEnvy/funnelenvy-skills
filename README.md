@@ -11,7 +11,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | [positioning-framework](skills/positioning-framework/SKILL.md) | 1.1.1 | Autonomous positioning and messaging framework from web research. Dual-mode output: legacy `.claude/context/` files, or KB-native artifacts when a CRO knowledge base binding is detected |
 | [ga4-audit](skills/ga4-audit/SKILL.md) | 2.4.0 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, trend analysis, and AI-referrer (LLM) traffic segmentation |
 | [aa-audit](skills/aa-audit/SKILL.md) | 1.1.0 | Adobe Analytics audit with the same output schema as ga4-audit |
-| [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.8.0 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing. Dual-mode I/O: legacy `.claude/context/` files, or KB-native (reads the scope's silver artifacts, writes a typed gold experiment roadmap) when a CRO knowledge base binding is detected. In KB mode with a completed-experiment knowledge base bound, generates net-new iteration experiments from prior test outcomes |
+| [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.9.0 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing. When business-level levers qualify, also produces a separate strategic roadmap deliverable (program/offer/motion/asset-level experiments with non-A/B measurement designs like holdout, pre/post, and operational tracking, each with its own scoring and exclusions) alongside the tactical page-element roadmap. Dual-mode I/O: legacy `.claude/context/` files, or KB-native (reads the scope's silver artifacts, writes a typed gold experiment roadmap) when a CRO knowledge base binding is detected. In KB mode with a completed-experiment knowledge base bound, generates net-new iteration experiments from prior test outcomes |
 | [landing-page-generator](skills/landing-page-generator/SKILL.md) | 2.0.0 | B2B paid landing page generator with brief, copy, design, and QA phases |
 | [positioning-update](skills/positioning-update/SKILL.md) | 1.0.0 | Apply client feedback and corrections to positioning context files |
 | [voice-inference](skills/voice-inference/SKILL.md) | 1.0.0 | Brand voice analysis from website content with scored tone spectrum, vocabulary fingerprint, and actionable voice rules |
@@ -91,7 +91,8 @@ Each depth builds on prior work. Running quick then standard then deep is increm
 |------|-------------|
 | executive-summary.md | Positioning assessment for executives |
 | messaging-guide.md | Persona-by-persona messaging with voice rules |
-| experiment-roadmap.md | Prioritized experiment plan (produced by hypothesis-generator) |
+| experiment-roadmap.md | Prioritized page-element experiment plan (produced by hypothesis-generator) |
+| strategic-roadmap.md | Separate program/offer/motion/asset-level experiment plan with non-A/B measurement designs (produced by hypothesis-generator when business-level levers qualify) |
 | competitive-comparison-matrix.md | Structured comparison grid across competitors |
 | battle-cards/[competitor].md | One-page competitor reference cards |
 | campaigns/[slug]/brief.md | Campaign brief for a landing page |

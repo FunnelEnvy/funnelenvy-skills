@@ -1,7 +1,7 @@
 # ICE Scoring: Calibration Anchors and Rules
 
-Version: 1.1.0
-Last updated: 2026-03-20
+Version: 1.2.0
+Last updated: 2026-06-23
 
 This module defines the scoring calibration for the ICE framework used by the hypothesis generator. Read this before scoring any hypothesis. The purpose of calibration anchors is to prevent score inflation and ensure consistency across runs.
 
@@ -25,7 +25,7 @@ Impact measures the expected effect on conversion, revenue, or strategic learnin
 | 2 | Minor improvement. Affects a secondary metric or low-traffic page. Measurable but not material. |
 | 3 | Moderate improvement. Affects a primary metric on a secondary page, or a secondary metric on a primary page. |
 | 4 | Significant improvement. Affects the primary conversion metric on a high-traffic page. Would change quarterly numbers. |
-| 5 | Transformational. Changes the company's core conversion rate, repositions against competitors, or opens a new revenue path. Reserved for 1-2 hypotheses per roadmap at most. |
+| 5 | Transformational. Changes the company's core conversion rate, repositions against competitors, or opens a new revenue path. (Strategic-deliverable scoring guidance: this anchor also governs the separate strategic roadmap's scoring pass, where Impact-5 includes off-page levers such as a positioning/proof asset, a buying-group motion, or a speed-to-lead/routing change whose business-outcome effect is measured by a non-A/B design like a holdout, before-and-after, or operational tracking. A strategic lever does not score lower on Impact merely because it is not an on-page A/B.) Reserved for 1-2 hypotheses per roadmap at most. |
 
 **Calibration rules:**
 - No more than 2 hypotheses should score Impact 5 in a single roadmap
@@ -55,6 +55,7 @@ Confidence measures how certain you are that the experiment will produce a measu
 - Confidence 5 should only appear when calibration data from evidence modules is present
 - "Before" state based on exact copy from context: no adjustment. "Before" state inferred: Confidence -1.
 - When conversions lack page attribution but variant-level instrumentation is available: Confidence reflects the proxy read's interpretability, not revenue attribution. A high-traffic surface with a variant-instrumented proxy that reads out within the feasibility window earns its Confidence on the proxy. Note the revenue-attribution limitation separately in the hypothesis; do not cap proxy-read Confidence for it.
+- Strategic-deliverable scoring guidance: for a strategic experiment with a non-A/B measurement design (scored on the separate strategic pass, `phases/score.md` Step 6b), Confidence reflects the interpretability of that design (a clean regional holdout with an adequate baseline reads near a well-powered A/B; an uncontrolled before-and-after with confounds reads lower), NOT the absence of an A/B. State the design's read strength in the score rationale. The de-novo no-precedent -1 penalty still applies to strategic levers with no precedent. This clause governs strategic-deliverable scoring only; tactical Confidence scoring is unchanged.
 
 ---
 

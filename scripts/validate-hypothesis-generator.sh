@@ -74,6 +74,7 @@ echo ""
 echo "[1] New skill files exist"
 check_exists "SKILL.md" "skills/hypothesis-generator/SKILL.md"
 check_exists "phases/detect.md" "skills/hypothesis-generator/phases/detect.md"
+check_exists "phases/detect-strategic.md" "skills/hypothesis-generator/phases/detect-strategic.md"
 check_exists "phases/construct.md" "skills/hypothesis-generator/phases/construct.md"
 check_exists "phases/score.md" "skills/hypothesis-generator/phases/score.md"
 check_exists "modules/experiment-patterns.md" "modules/experiment-patterns.md"
@@ -87,9 +88,9 @@ check "has name: hypothesis-generator" \
 echo ""
 
 echo "[3] Phase file count"
-check "phases/ has exactly 4 files" \
+check "phases/ has exactly 5 files" \
   "ls skills/hypothesis-generator/phases/ | wc -l | tr -d ' '" \
-  "4"
+  "5"
 echo ""
 
 echo "[4] Pattern count"
@@ -111,6 +112,10 @@ check "Ease calibration" \
 echo ""
 
 echo "[6] Prohibited content"
+# Block [6] greps recurse skills/hypothesis-generator/ as a directory, so
+# phases/detect-strategic.md (Phase 2c) is already covered by the em-dash and
+# ClickUp greps below; no path addition is needed. modules/ice-scoring.md is in
+# the explicit module list below.
 check "No ClickUp references in new files" \
   "grep -ri 'clickup\|click_up' skills/hypothesis-generator/ modules/experiment-patterns.md modules/ice-scoring.md modules/contrarian-triggers.md modules/hypothesis-interactions.md modules/patterns-procurement.md | head -1" \
   "EMPTY"
@@ -204,6 +209,36 @@ check "parent_outcome guarded in Deliverable Purity Constraint" \
 check "source_priority guarded in Deliverable Purity Constraint" \
   "grep -c 'source_priority' skills/hypothesis-generator/SKILL.md" \
   "1"
+echo ""
+
+echo "[14] Strategic-track surfaces (separate deliverable)"
+check "SKILL.md has Client-Facing Register section" \
+  "grep -c '^## Client-Facing Register' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "Execution Pipeline has Phase 2c" \
+  "grep -c '^### Phase 2c' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "measurement_design guarded in Deliverable Purity Constraint" \
+  "grep -o 'measurement_design' skills/hypothesis-generator/SKILL.md | head -1" \
+  "NONZERO"
+check "strategic-lane lane tag guarded in Deliverable Purity Constraint" \
+  "grep -oE 'strategic-lever|lane' skills/hypothesis-generator/SKILL.md | head -1" \
+  "NONZERO"
+check "SKILL.md has Strategic Roadmap Output Format section" \
+  "grep -c '^## Strategic Roadmap Output Format' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "strategic-roadmap.md deliverable path documented" \
+  "grep -o 'strategic-roadmap.md' skills/hypothesis-generator/SKILL.md | head -1" \
+  "NONZERO"
+check "gold-strategic-roadmap KB artifact type referenced" \
+  "grep -o 'gold-strategic-roadmap' skills/hypothesis-generator/SKILL.md | head -1" \
+  "NONZERO"
+check "Strategic Key risk relabel present" \
+  "grep -o 'Key risk' skills/hypothesis-generator/SKILL.md | head -1" \
+  "NONZERO"
+check "No in-tier render mandate (render in the existing tiers) remains" \
+  "grep -c 'render in the existing tiers' skills/hypothesis-generator/SKILL.md | tr -d ' '" \
+  "0"
 echo ""
 
 echo "=== Results ==="

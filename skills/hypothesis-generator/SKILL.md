@@ -1,8 +1,8 @@
 ---
 name: hypothesis-generator
-version: 1.8.0
+version: 1.9.0
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. In KB mode (see KB Mode (Dual-Mode Output)), reads the scope's silver CRO artifacts from a bound knowledge base and writes a typed gold-experiment-roadmap artifact instead. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
-updated: 2026-06-21
+updated: 2026-06-23
 ---
 
 # Hypothesis Generator
@@ -17,7 +17,7 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 - Your output goes to the deliverable location (legacy: `.claude/deliverables/`; KB mode: the bound KB), never to `.claude/context/`
 - The deliverable BODY is human-readable and stays pure in both modes: no confidence scores inline, no references to agents, skills, context files, schemas, or any system internals. In legacy mode the deliverable carries no frontmatter. In KB mode the deliverable carries the gold artifact frontmatter block (per the gold type def), which is the only system surface permitted; the body remains pure exactly as in legacy mode. See `Deliverable Purity Constraint`.
 
-**Output location:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md` -- see `KB Mode (Dual-Mode Output)`)
+**Output location:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md` -- see `KB Mode (Dual-Mode Output)`). A second, conditional deliverable, `.claude/deliverables/strategic-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-strategic-roadmap.md`, a `gold-strategic-roadmap` artifact), is produced only when a business-level lever qualifies -- see `Strategic Roadmap Output Format`.
 **Token budget:** ~40-60K (reading and analysis only, no web fetches)
 **Runtime:** ~5-8 minutes
 **Agents:** Single agent. No multi-agent pipeline.
@@ -29,8 +29,8 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 
 This skill runs in one of two I/O modes, resolved once at Phase 1 step 0 and held in-session. The analysis is identical in both; only the read/write targets and the deliverable's frontmatter differ.
 
-- **Legacy mode** (default): reads L0 + L1 context from `.claude/context/*.md` and writes the roadmap to `.claude/deliverables/experiment-roadmap.md`. The deliverable carries no frontmatter.
-- **KB mode** (current production): invoked under the KB harness (`governed_by: {kb-type}/gold-experiment-roadmap`). Reads the scope's silver artifacts from the bound knowledge base (resolved via the gold artifact's `depends_on`) and writes a typed gold `experiment-roadmap` artifact into the KB. The gold artifact's frontmatter block (per the bound gold type def) is the only system surface; the body stays free of system internals per the `Deliverable Purity Constraint`, exactly as in legacy mode.
+- **Legacy mode** (default): reads L0 + L1 context from `.claude/context/*.md` and writes the tactical roadmap to `.claude/deliverables/experiment-roadmap.md`. The deliverable carries no frontmatter. When a business-level lever qualifies, it also writes the separate strategic roadmap to `.claude/deliverables/strategic-roadmap.md` (no frontmatter).
+- **KB mode** (current production): invoked under the KB harness (`governed_by: {kb-type}/gold-experiment-roadmap`). Reads the scope's silver artifacts from the bound knowledge base (resolved via the gold artifact's `depends_on`) and writes a typed gold `experiment-roadmap` artifact into the KB. When a business-level lever qualifies, it also writes a separate `gold-strategic-roadmap` artifact (`{kb_root}/deliverables/{scope}-strategic-roadmap.md`). The gold artifact frontmatter block (per the bound gold type def) is the only system surface on either deliverable; the body stays free of system internals per the `Deliverable Purity Constraint`, exactly as in legacy mode.
 
 The full KB-mode contract (mode resolution, read-side mapping, output path, frontmatter contract, validation gate) is documented in `KB Mode (Dual-Mode Output)` below. Sections that name only the legacy `.claude/` paths are labeled "(legacy mode)"; their KB-mode equivalents live in that section.
 
@@ -310,6 +310,14 @@ Evaluate unmatched signals from Phase 2 (Step 6) for novel testable experiments 
 
 Output: Context-derived opportunities appended to the opportunity list. Tagged `type: "context-derived"` for scoring adjustments.
 
+### Phase 2c: Strategic-Lever Detection
+
+Read and follow `phases/detect-strategic.md`.
+
+Read the loaded context for business-level levers (not page elements) via the inline lever-family checklist, apply the relaxed quality gate, and emit strategic opportunities that each carry a measurement design. The phase is default-on and context-gated: when no qualifying lever is present in the loaded context, it emits nothing, no strategic deliverable is produced, and the tactical roadmap is unchanged.
+
+Output: Strategic opportunities route to the strategic construction, scoring, and render path (NOT appended to the Phase 2 / 2b tactical opportunity list); they render into the separate strategic deliverable (`Strategic Roadmap Output Format`) when any qualify. Ordering across detection phases is 2 then 2b then 2c then 3.
+
 ### Phase 3: Hypothesis Construction
 
 Read and follow `phases/construct.md`.
@@ -326,9 +334,9 @@ Read and follow `phases/score.md`.
 
 Score each hypothesis using the ICE framework. Read `modules/ice-scoring.md` for calibration anchors, modifier rules, and scoring discipline.
 
-Sequence hypotheses into Quick Wins, Strategic Bets, and Explorations.
+This phase branches by lane. **Tactical hypotheses** (pattern-matched and context-derived) score and tier as today into Quick Wins, Strategic Bets, and Explorations for the tactical roadmap. **Strategic opportunities** run the separate strategic scoring and tiering path in `phases/score.md` (business-outcome Impact, measurement-rigor Confidence, non-A/B feasibility judgment), producing a separate scored, tiered strategic list for the strategic deliverable. The two never share one ICE table.
 
-Output: Scored, sequenced, tiered hypothesis list.
+Output: a scored, sequenced, tiered tactical hypothesis list, plus (when any strategic lever qualifies) a separately scored and tiered strategic experiment list.
 
 ### Phase 5: Render
 
@@ -351,9 +359,9 @@ For each out-of-scope item (SEO/organic, interlinking):
 
 The "What's Not Here" section must be non-empty when a spec is provided. A roadmap that silently ignores spec items is a failure.
 
-#### Step 5b: Write deliverable
+#### Step 5b: Write tactical deliverable
 
-Write `.claude/deliverables/experiment-roadmap.md` following the Output Format specification below.
+Write `.claude/deliverables/experiment-roadmap.md` following the tactical Output Format specification below. The tactical roadmap is built ONLY from the tactical (pattern-matched and context-derived) hypothesis list; no strategic experiment renders here.
 
 In KB mode: write to `{kb_root}/deliverables/{scope}-experiment-roadmap.md` instead -- same body, with the frontmatter contract prepended and the supersede rule applied (see `KB Mode (Dual-Mode Output)` > `Output Mapping and Frontmatter Contract` and `Prior Work Detection (KB Mode)`). After writing, run the `Post-Write Validation Gate` and use the `KB Mode Completion Message` in place of the summary below.
 
@@ -379,9 +387,21 @@ Review the roadmap and let me know if any hypotheses need adjustment.
 
 Key churn reporting is informational, not a gate -- it lets a human review whether a reworded title produced a fresh key (which would re-orphan its mockup) or whether an experiment was dropped (orphaning its prior key).
 
+#### Step 5c: Write strategic deliverable (conditional)
+
+**Run this step ONLY when the strategic path produced at least one scored strategic experiment.** When no strategic lever qualified, skip this step entirely: write no strategic file (not an empty file, not a stub), and report "No qualifying strategic levers; no strategic roadmap produced" in the completion summary. In that case the tactical `experiment-roadmap.md` is the only output.
+
+When at least one strategic experiment qualifies, write the strategic deliverable following `Strategic Roadmap Output Format`:
+- Legacy mode: `.claude/deliverables/strategic-roadmap.md` (no frontmatter).
+- KB mode: `{kb_root}/deliverables/{scope}-strategic-roadmap.md` as a `gold-strategic-roadmap` artifact with the frontmatter contract from `Strategic Roadmap Output Format`. After writing, run the post-write validation gate and apply the supersede / prior-work rule per that section.
+
+Append the strategic deliverable's path, type, scope (KB mode), version, `depends_on` (KB mode), strategic experiment count, and validation status to the completion summary. The strategic deliverable is a complete fresh projection of current context, scored and rendered independently of the tactical roadmap.
+
 ---
 
 ## Output Format
+
+This is the tactical experiment roadmap: **page-element experiments only**. Business-level levers render in the separate `Strategic Roadmap Output Format` deliverable.
 
 **File:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md` with the KB frontmatter contract prepended; body unchanged)
 
@@ -453,7 +473,7 @@ For messaging-led hypotheses (headline, hero, positioning, value-proposition cat
 **Why this should work:** [causal mechanism, 2-3 sentences, grounded in behavioral principle]
 **Proof status:** [Verified | Needs verification -- see Prerequisites. Only shown when proof points are referenced.]
 
-**Target metric:** [primary metric and expected direction]
+**Target metric:** [primary metric and expected direction.]
 **Expected effect and read threshold:** [direction plus the ship/abandon condition. For proxy-only scopes with no CVR baseline, use the MDE-based form ("ship if the variant proxy beats control by the test's MDE at full sample; abandon if flat at full sample"), not a fabricated point estimate.]
 **Guardrail metric:** [downstream business metric that must not degrade. Only shown when primary is a proxy metric.]
 **Audience:** [persona or segment, if specific]
@@ -480,7 +500,9 @@ For messaging-led hypotheses (headline, hero, positioning, value-proposition cat
 > **Outcome challenge:** [strongest argument a metric win could mask a business loss, or "Covered by guardrail metric above"]
 > **Response:** [rebuttal or acknowledgment, 1-2 sentences]
 
-**Key field (minting rule).** The `**Key:**` value is `slugify(title)` (per `modules/slugify.md`), minted **once** at first generation and then **immutable**. It is **position-independent** (does not embed the roadmap number `N`) and is **never re-derived from the title** on any later run. On a fresh roadmap (no prior to read), every experiment's key is minted fresh as `slugify(title)`. On a re-render, keys are carried forward from the prior roadmap per `Re-render Behavior` (the carry-forward rule), not re-derived. The key is the stable join key downstream skills use to resolve a mockup to its experiment, so it must survive title edits.
+**Key field (minting rule).** The `**Key:**` value is `slugify(title)` (per `modules/slugify.md`), minted **once** at first generation and then **immutable**. It is **position-independent** (does not embed the roadmap number `N`) and is **never re-derived from the title** on any later run. On a fresh roadmap (no prior to read), every experiment's key is minted fresh as `slugify(title)`. On a re-render, keys are carried forward from the prior roadmap per `Re-render Behavior` (the carry-forward rule), not re-derived. The key is the stable join key downstream skills use to resolve a mockup to its experiment, so it must survive title edits. The same minting and carry-forward rule applies to the strategic deliverable's per-experiment `**Key:**` field (see `Strategic Roadmap Output Format`); the two deliverables draw keys from independent title spaces but follow the identical rule.
+
+This roadmap contains **page-element experiments only**. Business-level levers (programs, offers, audience motions, assets) are not rendered here; they have their own deliverable (see `Strategic Roadmap Output Format`). Nothing in this tactical template carries strategic-lane lines.
 
 ---
 
@@ -560,15 +582,128 @@ Each item names specific affected experiments and a concrete collection or verif
 
 ---
 
+## Strategic Roadmap Output Format
+
+This is a **second, separate, conditional deliverable**, distinct from the tactical experiment roadmap above. It holds business-level levers (programs, offers, audience motions, assets) as scored strategic experiments measured by designs fit to the lever. It is produced ONLY when at least one strategic lever survives Phase 2c's quality gate and strategic scoring. The tactical roadmap above is unchanged whether or not this deliverable is produced.
+
+### When this deliverable is produced
+
+Produced only when the strategic path (Phase 2c -> strategic construction -> strategic scoring) yields at least one scored strategic experiment. When no strategic lever qualifies, NO strategic roadmap file is written at all: not an empty file, not a stub. In that case the tactical `experiment-roadmap.md` is the only output and is byte-identical to a run with this feature absent. This mirrors the Phase 2c graceful-degradation contract (`phases/detect-strategic.md` > `Graceful Degradation`).
+
+### Deliverable contract (paths and KB artifact type)
+
+- **Legacy mode:** `.claude/deliverables/strategic-roadmap.md`, written alongside `experiment-roadmap.md`. No frontmatter (same body-purity rule as the tactical roadmap in legacy mode).
+- **KB mode:** `{kb_root}/deliverables/{scope}-strategic-roadmap.md`, written as a **distinct gold artifact type, `gold-strategic-roadmap`** (NOT a reuse of `gold-experiment-roadmap`). Prepend the KB gold frontmatter block:
+
+  `fe-managed: true`, `name: {scope}-strategic-roadmap`, `description` (one line, generated), `kb_layer: gold`, `governed_by: {kb-type}/gold-strategic-roadmap` (composed at runtime; never hardcode a KB type name), `scope`, `data_provenance` (`client` when any consumed silver artifact is `client`-provenance, else `public`), `generated_by: hypothesis-generator`, `depends_on` (KB-root-relative paths of the silver artifacts actually consumed by strategic detection: the strategy-context artifact plus whichever of positioning-scorecard / competitive-landscape / audience-messaging / performance-profile fed a surviving lever; omit missing optionals; gold-to-silver edges only), `tags` (3-7 semantic), `version`, `created`, `updated`.
+
+  The body stays free of all `Deliverable Purity Constraint` prohibited terms exactly as in legacy mode; the gold frontmatter block is the only permitted system surface.
+
+  **Scope boundary:** this skill emits the `gold-strategic-roadmap` artifact with correct frontmatter. Registering the `gold-strategic-roadmap` type in a specific client KB type skill's `artifacts/` directory is a per-client follow-on, NOT part of this skill (the `silver-structural-observation` precedent). A KB-mode run against a client whose type skill has not yet registered the type is that adopter's coordinated dependency. Legacy mode needs no registration.
+
+### Body specification
+
+```markdown
+# [Company Name]: Strategic Experiment Roadmap
+
+## How to Read This Roadmap
+
+These are program-, offer-, audience-motion-, and asset-level experiments: changes one altitude above a single page element. Each is measured by the design that reads its business outcome cleanly (a regional holdout, a before-and-after window against a stable baseline, a cohort comparison, a geographic split, operational tracking, or an on-page A/B when the lever is on-page-testable), and each is scored on the business outcome it moves.
+
+Experiments are scored using the ICE framework:
+- **Impact** (1-5): Expected effect on the business outcome if the experiment wins
+- **Confidence** (1-5): How certain we are the measurement design produces a clean, interpretable read
+- **Ease** (1-5): Effort to stand up the experiment, including any asset or instrumentation it depends on
+
+Experiments are grouped into the same three tiers used across our roadmaps: Quick Wins (fast, high-confidence reads), Strategic Bets (high-impact, higher-effort moves), and Explorations (higher-uncertainty, high-learning bets). Most strategic levers land in Strategic Bets.
+
+## Strategic Roadmap Summary
+
+| # | Experiment | Lever | Measurement | Business metric | I | C | E | ICE |
+|---|-----------|-------|-------------|-----------------|---|---|---|-----|
+| 1 | [name] | [the named program/offer/motion/asset] | [design in plain words] | [outcome + direction] | 4 | 3 | 2 | 9 |
+| 2 | ... | ... | ... | ... | ... | ... | ... | ... |
+
+[If only one or two levers qualify, a flat ranked list under a single `## Strategic Experiments` heading is acceptable in place of sparse tier sections. Render whichever reads cleaner; never pad empty tiers.]
+
+## Strategic Bets
+
+### 1. [Experiment Name]
+
+**Key:** [stable slug minted once from the title; same minting and carry-forward rule as the tactical roadmap]
+**Lever:** [the named program, offer, audience motion, or asset this experiment introduces or changes]
+**What to stand up:** [the concrete intervention: what gets built, published, routed, or changed]
+
+**Measurement:** [the design in natural language, e.g., "a regional holdout read over eight weeks" or "a before-and-after comparison against a stable quarterly baseline." Never a raw design token.]
+**Business metric:** [the outcome it moves and the direction, e.g., "qualified-demo rate, up" or "speed-to-lead, down (faster); downstream qualified-meeting rate, up." This is a business outcome, not a page-level micro-conversion.]
+**Mechanism / Why this should work:** [the causal chain, 2-3 sentences, grounded in a behavioral, economic, or buying-process principle]
+**Stand-up dependency / Requires:** [the asset, operational process, or instrumentation that must exist before the experiment can run, e.g., "a named-client ROI one-pager built and published," or "none."]
+**Read condition and window:** [how long the design runs and what counts as a read; the ship/abandon condition stated as the design's read, e.g., "ship if the holdout group's qualified-demo rate trails the treated group by the test's margin at full read; abandon if the two are flat at full read."]
+
+**Scores:** Impact [X] | Confidence [X] | Ease [X]
+[1 sentence per dimension]
+
+**What a win proves:** [the business learning a positive read unlocks]
+**What a loss teaches:** [what a flat or negative read reveals; the experiment must carry learning either way]
+
+**Key risk:** [the mandatory self-critique, rendered under this client-appropriate heading. Fair thesis, design, and outcome challenges with proportionate evidence language; see Quality Rule 17 and the Client-Facing Register.]
+> **Thesis challenge:** [strongest argument the causal thesis is wrong, 1-3 sentences]
+> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
+>
+> **Design challenge:** [strongest argument the measurement design will not read the outcome cleanly, 1-3 sentences]
+> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
+>
+> **Outcome challenge:** [strongest argument a clean read could still mask a business loss, 1-3 sentences]
+> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
+
+---
+
+### 2. [Experiment Name]
+[Same structure]
+
+## Quick Wins
+
+### [N]. [Experiment Name]
+[Same structure. Present this tier only if a strategic lever qualifies for it.]
+
+## Explorations
+
+### [N]. [Experiment Name]
+[Same structure, with an explicit note on what makes confidence lower.]
+
+## Sequencing Rationale
+
+[A short note ordering the strategic experiments. Stand-up dependencies order the work: an experiment that needs an asset or instrumentation built first runs after that dependency exists. Where two or more experiments share a stand-up dependency, group them so the shared build is done once. Keep the prose neutral and confident per the Client-Facing Register.]
+
+## What's Not Here (and Why)
+
+[Levers that are genuinely NOT measurable by any design at any altitude: no baseline exists for a holdout, no instrumentation is possible, or the lever is out of scope. Frame each as a productization, positioning, or data-coverage decision with its demand evidence (who is asking, how often) and its blocker (data coverage, entitlement scope, compliance). This is NOT a low-traffic A/B infeasibility list: a lever that some design CAN measure is a scored experiment above, not an exclusion here. This exclusions list is distinct from the tactical roadmap's "What's Not Here."]
+
+---
+*Analysis produced by FunnelEnvy | [Date]*
+*Based on positioning analysis across [N] sources*
+```
+
+The strategic deliverable body is held to the `Deliverable Purity Constraint` and the `Client-Facing Register` in full: render every measurement design and lever in natural language (never a raw internal token), present each experiment on its own business terms, and never define a strategic experiment by what a page-element or A/B test cannot do.
+
+### KB-mode validation, prior work, and completion
+
+- **Post-write validation.** After writing the KB strategic artifact, run the same `kb_type_validate.py` post-write gate as the tactical roadmap (resolve `<kb-start-scripts>` the same way; if validation reports errors, fix and re-validate; if the script cannot be resolved, warn, continue, and flag manual validation).
+- **Prior work / supersede.** Glob the strategic deliverable. If present, the run supersedes it in place: preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch on an unchanged re-render), set `updated`, overwrite the body. Apply the **Key carry-forward rule** (`Re-render Behavior`) to the strategic prior, independently of the tactical roadmap's keys.
+- **Completion reporting.** The completion message reports the strategic deliverable's path, type (`gold-strategic-roadmap`), scope, version, `depends_on`, strategic experiment count, and validation status. When no strategic lever qualifies (the produce-only-when-qualify rule), it reports a single line instead: "No qualifying strategic levers; no strategic roadmap produced."
+
+---
+
 ## Deliverable Purity Constraint
 
-The experiment roadmap must contain ZERO references to internal system concepts. In KB mode, the required gold frontmatter block is the sole exception to the markup-artifacts rule below; the rendered body remains free of all prohibited terms in both modes.
+The experiment roadmap must contain ZERO references to internal system concepts. The same constraint governs the strategic roadmap deliverable (`Strategic Roadmap Output Format`): its rendered body is held to every prohibited term below exactly as the tactical roadmap is. In KB mode, the required gold frontmatter block (on either deliverable) is the sole exception to the markup-artifacts rule below; the rendered body remains free of all prohibited terms in both modes.
 
 **Prohibited terms:**
 - Layer references: "L0," "L1," "L2," "Layer 0," "Layer 1," "Layer 2"
 - File references: "company-identity.md," "competitive-landscape.md," "positioning-scorecard.md," "audience-messaging.md," "live-structure.md," "context file," "context directory"
 - Structural observation references: "structural observation artifact," "structural observation," and raw observation field names (e.g., "form_recurs_sitewide," "mobile_render_clean," "named_client_proof_present"). Describe the observed fact in natural language instead ("the demo form renders 13 fields on every page it appears")
 - Experiment-history references: `experiment_history_available`, `prior_winner`, `replication_candidate`, `transferable_rule`, `replication_target_surfaces`, `history_type`, `parent_outcome`, `source_priority`, `source_surfaces`, the producer's raw type/outcome tokens (`discriminating_test`, `recommended_lead`, `winner` / `loser` / `flat`), experiment identifiers / activity numbers, the producer KB's type name. Describe the prior result in natural language instead ("an earlier test on the pricing page lifted demo requests"). NOTE: quantified completed-experiment results (lift percentages, statistical significance, sample sizes) are NOT prohibited; they are permitted and encouraged as natural-language attribution without identifiers (see the allowance below).
+- Strategic-lane internal field references: `lane`, `lane: "strategic"`, `strategic-lever`, `lever_family`, the lever-family enum tokens (`objective-mismatch`, `dominant-off-page-lever`, `proof-gap`, `status-quo-alternative`, `buying-group-motion`, `offer-architecture`), `measurement_design`, and the raw `measurement_design` enum tokens (`randomized_ab`, `holdout`, `geo_split`, `switchback`, `cohort`, `pre_post`, `operational_metric`). The natural-language phrasings ("regional holdout," "pre/post," "operational tracking," "a buying-group motion") remain permitted; only the raw snake_case / hyphenated field tokens are banned. Render the design and lane in natural language instead (e.g., "Measurement: regional holdout, 8-week read").
 - System references: "Agent," "orchestrator," "phase file," "skill file," "SKILL.md," "frontmatter," "schema," "fetch registry"
 - Pattern references: "pattern ID," "HM-01," "FO-02," "experiment-patterns.md," "pattern matching"
 - Process references: "from L0," "per the context file," "the scoring phase determined," "opportunity detection found"
@@ -581,20 +716,44 @@ The experiment roadmap must contain ZERO references to internal system concepts.
 
 ---
 
+## Client-Facing Register
+
+This is a sibling rule to the Deliverable Purity Constraint, distinct from it. Purity bans system internals; this rule governs the tone and self-positioning of the **standalone strategic roadmap deliverable** (`Strategic Roadmap Output Format`). That deliverable must read as a confident, standalone, client-ready strategic roadmap, never as an internal critique of FunnelEnvy's own page-level work. It is a separate document and need not reference the tactical roadmap at all.
+
+**Scope: every line of the strategic deliverable, not only the experiment blocks.** This rule governs every line of the strategic roadmap deliverable. It applies equally to document-level framing that introduces, explains the measurement of, or sequences the strategic experiments: the roadmap overview or "How to Read" note, any measurement preamble, and the Sequencing Rationale. A register breach in a framing sentence is as much a violation as one inside an experiment block.
+
+**Prohibited language (the register's own list, distinct from purity's).** The strategic output must never reference the page-element roadmap's shortcomings. Banned phrasings include: "optimizes the wrong metric," "altitude error," "sits above the page-level work," "exiled to What's Not Here," "what the page-level layer cannot reach," "corrects the page-level approach," and any meta or internal-process framing. The ban covers any paraphrase of these constructions, not only the literal strings. In particular, never define a strategic experiment by what page-element or A/B testing *cannot* do: phrasings like "business outcomes an on-page A/B test cannot reach," "beyond what a page test can measure," or "the page-level work can't get at this" are banned exactly as the literal list above is. If a sentence's point depends on what the tactical approach fails to do, it is a breach regardless of wording.
+
+**Neutral, connective cross-references only.** When the strategic output references the page-element work, the language is neutral and connective ("works alongside," "complements"), never evaluative ("corrects," "fixes the gap in," "rises above").
+
+**Positive measurement framing.** Explain a strategic experiment's non-A/B measurement design on its own terms: the design (holdout, pre/post, cohort, geo split, operational tracking) fits because the change is a program, offer, audience motion, or asset rather than a page element. State why the chosen design reads the business outcome cleanly. Do not justify the design by contrast to what an A/B test cannot do. This is the deliverable-facing companion to the construct phase's rule to state a non-A/B design's feasibility in its own terms.
+
+**Each strategic hypothesis stands on its own business rationale**, not on a comparison to the tactical set. The case for a strategic experiment is the business outcome it moves and the mechanism behind it, not that it is better-aimed than a page-element test.
+
+**Self-critique relabel.** For strategic-lane hypotheses, the mandatory self-critique (Quality Rule 17) renders under the client-appropriate heading "Key risk," never the literal "Self-critique." This is the register reason for the relabel; Quality Rule 17's substance (fair thesis/design/outcome challenges with proportionate evidence language) is unchanged.
+
+**Cold-read test.** Read by a client who never saw the page-element roadmap, the strategic output should look like a deliberate strategic roadmap, not an internal critique of FunnelEnvy's own page-level work. If any line only makes sense as a comparison to the tactical lane, rewrite it.
+
+---
+
 ## Re-render Behavior
+
+This behavior governs BOTH deliverables: the tactical `experiment-roadmap.md` and (when produced) the strategic `strategic-roadmap.md`. Each is overwritten as a complete fresh projection of current context; the Key carry-forward rule applies to each independently.
 
 If `.claude/deliverables/experiment-roadmap.md` already exists:
 - Overwrite with fresh render from current context
 - No diffing, no merging
 - The roadmap is always a complete projection of current context + current patterns
 
-**Key carry-forward rule (the canonical carry-forward rule, referenced from both modes).** The `**Key:**` field is the one body value preserved across a re-render; everything else is a complete fresh projection. Before overwriting an existing roadmap, read it (if it exists) and build a `prior normalized-title -> prior **Key:**` map from every prior experiment that carries a `**Key:**` field. Normalized-title match = case-insensitive comparison after trimming surrounding whitespace (no slugify; the map key is the human title text). During render, for each experiment:
+**Key carry-forward rule (the canonical carry-forward rule, referenced from both modes and both deliverables).** The `**Key:**` field is the one body value preserved across a re-render; everything else is a complete fresh projection. Before overwriting an existing roadmap, read it (if it exists) and build a `prior normalized-title -> prior **Key:**` map from every prior experiment that carries a `**Key:**` field. Normalized-title match = case-insensitive comparison after trimming surrounding whitespace (no slugify; the map key is the human title text). During render, for each experiment:
 - If its normalized title matches a prior entry, **reuse that prior key verbatim**.
 - Otherwise, **mint a fresh `slugify(title)`**.
 
-This keeps the "complete projection, no merging" framing for body content -- only the key value is carried forward, nothing else. The common case (a human edits the displayed title without re-running this skill) needs none of this: the persisted `**Key:**` field is simply left untouched.
+This keeps the "complete projection, no merging" framing for body content -- only the key value is carried forward, nothing else. The common case (a human edits the displayed title without re-running this skill) needs none of this: the persisted `**Key:**` field is simply left untouched. The strategic deliverable applies this same rule against its own prior strategic roadmap, drawing keys from its own title space.
 
-In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope}-experiment-roadmap.md`, with KB versioning -- preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch otherwise), set `updated`, overwrite the body. The same key carry-forward rule applies to the KB-mode prior roadmap. See `Prior Work Detection (KB Mode)`.
+**Strategic deliverable, no-lever case (produce-only-when-qualify).** The strategic deliverable is written only when at least one strategic lever qualifies (`Strategic Roadmap Output Format` > Step 5c). Overwriting a deliverable to an empty body is banned. So when a prior `strategic-roadmap.md` (or `{scope}-strategic-roadmap.md`) exists but the current run yields no qualifying lever, the run does NOT rewrite it to a stale or empty state: it leaves the prior file untouched and reports in the completion message that no current levers qualified (mirroring the graceful-degradation no-write rule). The tactical roadmap is unaffected either way.
+
+In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope}-experiment-roadmap.md` and `{kb_root}/deliverables/{scope}-strategic-roadmap.md`, with KB versioning per deliverable -- preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch otherwise), set `updated`, overwrite the body. The same key carry-forward rule applies to each KB-mode prior roadmap. See `Prior Work Detection (KB Mode)` and `Strategic Roadmap Output Format`.
 
 **`--present` chaining.** When `--present` is set, after the roadmap write completes successfully, invoke the separate `roadmap-presentation` skill against the just-written roadmap, passing the same mode (KB `--scope` or legacy). It renders the roadmap as a client-facing multi-page HTML site. This is a chaining affordance only: it runs a separate skill after write and changes nothing about the roadmap's analytical content. Fires in both modes.
 
@@ -604,7 +763,7 @@ In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope
 
 1. **When a spec is provided, every spec item is accounted for.** CRO/on-page items map to a hypothesis or appear in "What's Not Here" with a reason. Out-of-scope items (SEO/GEO, interlinking, content audit without page content) appear in "What's Not Here" with routing guidance. A roadmap that silently skips spec items is a failure.
 
-2. **Every hypothesis names a specific page and specific change.** "Improve homepage messaging" is a failure. "Replace the homepage H1 from '[current copy]' to '[proposed copy]'" is correct.
+2. **Every hypothesis names a specific, named unit of intervention and a concrete change.** The unit is a page element OR a lever / offer / audience-motion / asset. "Improve homepage messaging" is a failure. "Replace the homepage H1 from '[current copy]' to '[proposed copy]'" is correct; so is "Introduce a named-client ROI proof asset and measure its effect on qualified-demo rate via a holdout." Vagueness fails at either altitude.
 
 3. **Every hypothesis has a causal mechanism.** "This should increase conversions" is a failure. "Outcome-oriented headlines reduce cognitive load for first-time visitors evaluating relevance, which should decrease bounce rate" is correct.
 
@@ -634,7 +793,7 @@ In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope
 
 16. **Quick Wins require fast signal.** Quick Win tier requires estimated test duration <= 6 weeks in addition to Confidence >= 4 and Ease >= 4. A 10-week test labeled Quick Win burns stakeholder trust. If duration data is unavailable, the constraint does not apply but Confidence is already capped by graceful degradation rules.
 
-17. **Self-critique is visible, not hidden.** Every hypothesis, regardless of tier, must include a Self-critique section in the deliverable (Step 10). The counterarguments must be stated fairly, not strawmanned. Evidence-strength language must be proportionate to actual evidence (one data point is a "signal," not a "pattern"). Internal consistency issues must be resolved before emission, not acknowledged and ignored.
+17. **Self-critique is visible, not hidden.** Every hypothesis, regardless of tier, must include a Self-critique section in the deliverable (Step 10). The counterarguments must be stated fairly, not strawmanned. Evidence-strength language must be proportionate to actual evidence (one data point is a "signal," not a "pattern"). Internal consistency issues must be resolved before emission, not acknowledged and ignored. For strategic-lane hypotheses, the self-critique renders under the client-appropriate heading "Key risk" (not the literal "Self-critique"); the substance (fair thesis/design/outcome challenges with proportionate evidence language) is unchanged. See the Client-Facing Register.
 
 18. **Every emitted experiment carries a `**Key:**` field.** The key is minted once via `slugify(title)` and preserved verbatim across regens and title edits; it is never re-derived from a changed title. It is the stable join key downstream skills use to resolve a mockup to its experiment.
 
@@ -648,6 +807,7 @@ Modules resolve from the repository-root `modules/` directory (a sibling of `ski
 SKILL.md (this file)
   ├── phases/detect.md              Phase 2: opportunity detection from context
   ├── phases/detect-contextual.md   Phase 2b: context-derived opportunity detection
+  ├── phases/detect-strategic.md    Phase 2c: strategic-lever detection (business-level levers, non-A/B measurement designs); routes to the separate strategic deliverable, not the tactical opportunity list
   ├── phases/construct.md           Phase 3: hypothesis construction with causal reasoning
   ├── phases/score.md               Phase 4: ICE scoring and sequencing
   ├── modules/experiment-patterns.md   CRO pattern library (32 patterns, 10 categories; the base library)

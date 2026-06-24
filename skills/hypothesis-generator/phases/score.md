@@ -124,13 +124,17 @@ Read the full calibration anchors in `modules/ice-scoring.md` to ground your sco
 
 Before tiering, remove hypotheses marked `feasibility: "infeasible"` from Phase 3 Step 5b. These experiments have insufficient traffic for A/B testing at current levels.
 
+**Strategic experiments are judged by their own design, not the A/B formula.** A strategic experiment with a stand-up-able non-A/B measurement design (holdout / pre/post / cohort / geo split / switchback / operational tracking) is feasible and proceeds to the separate strategic scoring and tiering pass (Step 6b), which renders it into the strategic deliverable. Route a strategic experiment to the strategic deliverable's own "What's Not Here" only if its measurement design cannot be stood up or read at any altitude (no baseline data for a holdout, no instrumentation possible, out of scope), NOT merely because it is not a clean A/B test. The two-proportion A/B formula and the infeasible-removal step above govern tactical hypotheses only.
+
 For each infeasible hypothesis:
 1. Remove from the scoring pipeline (do not compute ICE total or assign a tier)
 2. Record for the "What's Not Here" section: hypothesis name, target page, reason for infeasibility (estimated duration or traffic level), and suggested alternative approach (pre/post analysis, proxy metric, qualitative testing)
 
 Infeasible hypotheses are NOT failures. They are real opportunities that require either more traffic, a different measurement approach, or a different test design. The "What's Not Here" section should present them as future opportunities, not rejects.
 
-**Structurally-untestable-differentiator (distinct from low-traffic infeasibility).** When a signal routed from Phase 2b (detect-contextual.md criterion 5, untestable-differentiator branch) points to the company's highest-value differentiator that cannot be A/B tested at current scope, record it in "What's Not Here" framed as a productization/positioning decision with its demand evidence (who is asking, how often) and blocker (data coverage, entitlement scope, compliance), not as a low-traffic infeasible experiment. The recommendation is a business-model or data-coverage decision, not a test design. Do not assign it a traffic-based infeasibility reason or an alternative measurement approach as if more traffic would unlock it.
+**Structurally-untestable page-element differentiator (distinct from low-traffic infeasibility).** This routing fires ONLY for **page-element-altitude** items. When a signal routed from Phase 2b (detect-contextual.md criterion 5, untestable-differentiator branch) points to a page-element-scoped differentiator that cannot be A/B tested at current scope, record it in the tactical roadmap's "What's Not Here" framed as a productization/positioning decision with its demand evidence (who is asking, how often) and blocker (data coverage, entitlement scope, compliance), not as a low-traffic infeasible experiment. The recommendation is a business-model or data-coverage decision, not a test design. Do not assign it a traffic-based infeasibility reason or an alternative measurement approach as if more traffic would unlock it.
+
+**A business-level lever never lands in the tactical "What's Not Here."** A program-, offer-, audience-motion-, or asset-level lever is Phase 2c's responsibility, not this routing's. It is either a scored strategic experiment (when some design can measure it) in the strategic deliverable, or it lands in the strategic deliverable's own "What's Not Here" (when no design at any altitude can measure it). This altitude split, decided here at the routing site, is the precedence the in-tier design lacked: score.md does not route business-altitude items to the tactical "What's Not Here" at all, so the run-to-run collision between Phase 2b's untestable-differentiator routing and Phase 2c is removed. A page-element differentiator that CAN be A/B tested is a normal tactical hypothesis, not an exclusion.
 
 **Count:** Track the number of infeasible-routed hypotheses for the completion summary.
 
@@ -156,9 +160,25 @@ Add annotation to downgraded hypotheses: "Meets Quick Win scoring but estimated 
 
 Quick Wins exist to build organizational testing momentum. A 10-week test, regardless of implementation ease, does not build momentum. Mislabeling it burns stakeholder trust when the "quick" win takes a full quarter to read out.
 
+The Step 6 tiering above (the tier table, the calendar-duration override, the `--max` cut rules) applies to **tactical hypotheses only**. Strategic experiments are scored and tiered on the separate pass below; they never enter the tactical roadmap's tiers and never share its ICE table.
+
 **Duration not available.** If `estimated_duration_weeks` is absent (no `performance-profile.md`), the duration constraint does not apply. Quick Win eligibility uses only Confidence >= 4 AND Ease >= 4. The absence of performance data already caps Confidence via Phase 3 graceful degradation rules, which naturally limits Quick Win qualification.
 
 If `--max` cap is hit after tiering, cut from the bottom of Explorations first, then Strategic Bets. Never cut Quick Wins (they build organizational confidence in testing). **Within-tier retention for experiment-history continuations:** when cutting within Explorations to satisfy `--max`, drop `source_priority: medium` experiment-history continuations before `recommended_lead` / `high` ones. This is a tiebreaker applied within the Explorations cut set; it composes with (does not replace) the never-cut-Quick-Wins / cut-bottom-of-Explorations-first ordering.
+
+### Step 6b: Strategic Scoring and Tiering (separate pass)
+
+**This pass runs ONLY on strategic opportunities (those from Phase 2c, routed via `detect-strategic.md` > `Output to the strategic path`).** It is a separate pass from the tactical Steps 1-6 above: strategic experiments and tactical hypotheses never share one ICE table, so the tactical Impact/Confidence/Ease anchors are untouched by construction.
+
+**Strategic scoring.** Score each strategic experiment on its own ICE using the strategic-scoped anchors in `modules/ice-scoring.md`: business-outcome Impact (the Impact-5 anchor admits off-page levers measured by a non-A/B design; a lever does not score lower merely because it is not an on-page A/B) and measurement-rigor Confidence (Confidence reflects the interpretability of the chosen design, not the absence of an A/B; a clean holdout with an adequate baseline reads near a well-powered A/B, an uncontrolled before-and-after with confounds reads lower). The de-novo no-precedent Confidence -1 penalty applies, the same as for context-derived opportunities. ICE-range discipline (Quality Rule 4) holds: no blanket Impact-5 for being "strategic"; each score is earned against the anchors.
+
+**Strategic feasibility.** A strategic experiment with a stand-up-able non-A/B measurement design (a holdout, before-and-after window, cohort comparison, geographic split, alternating on/off windows, or operational tracking) is feasible and proceeds to tiering. Route a strategic experiment to the strategic deliverable's own "What's Not Here" (below) only when no measurement design can read it at any altitude (no baseline for a holdout, no possible instrumentation, out of scope), NOT merely because it is not a clean A/B test. This is the carry-forward of the Step 5b non-A/B feasibility judgment, applied to the strategic deliverable's tiering rather than a shared one.
+
+**Strategic tiering.** Tier the strategic experiments into the strategic deliverable's OWN Quick Wins / Strategic Bets / Explorations using the same thresholds as the tactical pass (Quick Win = Confidence >= 4 AND Ease >= 4 [AND <= 6-week read when a duration estimate exists]; Strategic Bet = Impact >= 4 AND ICE Total >= 10 AND not Quick Win; Exploration = everything else with ICE Total >= 7; Cut = ICE Total < 7). Reusing the tier labels keeps the deliverable legible without inventing new vocabulary; most strategic levers land in Strategic Bets. These tiers populate the strategic deliverable (`SKILL.md` > `Strategic Roadmap Output Format`), never the tactical roadmap.
+
+**Optional within-strategic-deliverable asset/instrumentation cluster.** When 2+ strategic experiments in the same strategic tier share a stand-up dependency (an asset or instrumentation that must be built first), they MAY be rendered as a labeled cluster within that tier to make sequencing legible. This is a visual grouping inside the strategic deliverable, not a separate tier; ICE ranking and tier assignment are unchanged.
+
+**Strategic "What's Not Here."** The strategic deliverable has its OWN exclusions list, distinct from the tactical roadmap's. It holds levers not measurable by any design at any altitude, framed as productization / positioning / data-coverage decisions with demand evidence and blocker, NOT as low-traffic A/B infeasibility. A business-level lever is never recorded in the tactical roadmap's "What's Not Here" (per Step 5b's altitude split).
 
 ### Step 7: Sequencing
 
@@ -174,6 +194,8 @@ Render the engagement reasoning in the Sequencing Rationale prose (the "why this
 
 **Layer 1: Interaction dependencies (from Phase 3 Step 9)**
 Multiplicative dependencies are hard constraints. If hypothesis A has `interaction_dependency.depends_on = B`, then B runs before A regardless of tier or LIFT category. Render these dependencies explicitly in the Sequencing Rationale.
+
+Stand-up dependencies are part of this layer: a strategic-lane experiment that needs an asset or instrumentation built first cannot run before that dependency exists, so the stand-up sequences before the experiment that needs it. Render this in the Sequencing Rationale prose alongside the interaction dependencies; do not add a separate sequencing layer for it.
 
 **Layer 2: LIFT-model ordering (from Phase 3 Step 4)**
 Within each tier, after satisfying interaction dependencies, sort by `lift_category` priority: Relevance (1) > Clarity (2) > Anxiety (3) > Distraction (4) > Urgency (5). This ensures upstream conversion barriers are addressed before downstream ones.

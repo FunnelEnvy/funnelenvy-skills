@@ -140,7 +140,7 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 - L2 skill NEVER produces files in `.claude/context/`
 - L2 skill NEVER performs web research, API calls, or data collection
 - L2 deliverables include a footer noting which context files were consumed (provenance)
-- **Exception:** hypothesis-generator reads L0 + L1 context and produces new analytical output (experiment hypotheses) in `.claude/deliverables/`. It is not L2 (it produces new analysis, not just synthesis). It does not perform web research or write to `.claude/context/`.
+- **Exception:** hypothesis-generator reads L0 + L1 context and produces new analytical output in `.claude/deliverables/`: the tactical `experiment-roadmap.md` (page-element experiments) and, when a business-level lever qualifies, a separate `strategic-roadmap.md` (program/offer/motion/asset-level experiments with non-A/B measurement designs; KB mode emits it as a `gold-strategic-roadmap` artifact). It is not L2 (it produces new analysis, not just synthesis). It does not perform web research or write to `.claude/context/`.
 - **Exception:** experiment-mockup reads the experiment roadmap (legacy `.claude/deliverables/experiment-roadmap.md` or KB-mode `{kb_root}/deliverables/{scope}-experiment-roadmap.md`) and makes web requests (DevTools navigation or curl extraction) to build visual mockups in the deliverables tree (`.claude/deliverables/experiments/` in legacy mode, `{kb_root}/deliverables/experiments/` in KB mode). It is not a pure L2 skill (it makes web requests, violating the "L2 never makes web requests" invariant). The violation is contained and documented, following the same pattern as hypothesis-generator.
 
 ### Context Files (L0 + L1)
@@ -164,7 +164,8 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 | `.claude/deliverables/manifest.md` | Index of all deliverables | render-default-deliverables |
 | `.claude/deliverables/executive-summary.md` | Tier 1 | render-default-deliverables |
 | `.claude/deliverables/messaging-guide.md` | Tier 2 | render-default-deliverables |
-| `.claude/deliverables/experiment-roadmap.md` | Analytical deliverable (see Cross-Layer Contracts exception) | hypothesis-generator |
+| `.claude/deliverables/experiment-roadmap.md` | Analytical deliverable, page-element experiments (see Cross-Layer Contracts exception) | hypothesis-generator |
+| `.claude/deliverables/strategic-roadmap.md` | Analytical deliverable, business-level levers with non-A/B measurement designs (conditional: produced only when a lever qualifies; see Cross-Layer Contracts exception). KB mode: `{kb_root}/deliverables/{scope}-strategic-roadmap.md` as a `gold-strategic-roadmap` artifact | hypothesis-generator |
 | `.claude/deliverables/competitive-comparison-matrix.md` | Tier 3 | render-default-deliverables |
 | `.claude/deliverables/battle-cards/[competitor-slug].md` | Tier 3 | render-default-deliverables |
 | `.claude/deliverables/campaigns/[slug]/brief.md` | Campaign brief | landing-page-generator (Phase 1) |
