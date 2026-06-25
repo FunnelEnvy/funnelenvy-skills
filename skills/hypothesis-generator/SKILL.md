@@ -82,7 +82,7 @@ Phase files remain the authority for analytical content. In KB mode, the bound t
 
 ### Read-side Mapping
 
-In KB mode, Phase 1 replaces the `.claude/context/*.md` glob with reads of the scope's artifacts. **KB mode changes the directory (`.claude/context/` -> `reference/cro-{scope}/`), never the basename:** the "KB artifact type" column is a type label, not a filename source, so the "Path under KB root" basename always matches the "Legacy context file" basename.
+In KB mode, Phase 1 replaces the `.claude/context/*.md` glob with reads of the scope's artifacts. **Resolve each input by its KB artifact TYPE** (the type declared in the artifact frontmatter, which the KB type skill defines as the schema authority), NOT by an assumed basename. KB mode always changes the directory (`.claude/context/` -> `reference/cro-{scope}/`); the basename is **KB-type-dependent**. The "Path under KB root" column shows the funnelenvy-default basename, but a KB type may name its artifacts after the type rather than after the legacy context file (for example, writing `performance-analysis.md` / `competitive-analysis.md` / `audience-analysis.md` for `silver-performance-analysis` / `silver-competitive-analysis` / `silver-audience-analysis`). Match on the artifact type within `reference/cro-{scope}/`; do NOT treat a basename that differs from the column as a missing artifact. Reading a basename mismatch as "artifact absent" would wrongly degrade the run, silently dropping every performance-driven trigger and applying the global no-baseline Confidence ceiling when the data is actually present.
 
 | Legacy context file | KB artifact type | Path under KB root | Required |
 |---|---|---|---|
@@ -328,6 +328,14 @@ Filter and deduplicate. Cap at `--max` value.
 
 Output: Internal hypothesis list (not written to disk).
 
+### Phase 3.5: Premise & Measurement Validation
+
+Read and follow `phases/validate.md`.
+
+Validate each hypothesis's premise, metric instrumentation, baseline, control stability, statistical power, and segmentation against the artifacts already loaded (no web research, no disk writes). Emits a per-hypothesis `validation_gates` record (six tri-state gates: `premise_contradicted`, `metric_instrumented`, `baseline_exists`, `control_stable`, `powerable`, `segmentation_satisfied`) that Phase 4 consumes as hard caps on Confidence and as Quick Win / infeasible-routing gates. Each gate is pass / fail / not-assessed; only an affirmative fail caps Confidence, and a not-assessed gate (backing artifact absent) is neutral and never penalizes.
+
+Output: Internal `validation_gates` record per hypothesis (not written to disk), plus Prerequisites and "What's Not Here" routing flags for Phase 4.
+
 ### Phase 4: ICE Scoring and Sequencing
 
 Read and follow `phases/score.md`.
@@ -412,7 +420,7 @@ This is the tactical experiment roadmap: **page-element experiments only**. Busi
 
 Experiments are scored using the ICE framework:
 - **Impact** (1-5): Expected effect on conversion or revenue if the variant wins
-- **Confidence** (1-5): How certain we are this will produce a measurable result
+- **Confidence** (1-5): How certain we are this will produce a measurable result. A high Confidence here means the premise holds against what we measured, the metric is actually tracked, a baseline exists, the current page is verified, and the test has the traffic to read. Where any of those does not hold, Confidence is held down and the experiment carries a launch-readiness note rather than an inflated score.
 - **Ease** (1-5): Implementation effort (5 = trivial, 1 = major engineering)
 
 Experiments are grouped into three tiers:
@@ -477,6 +485,7 @@ For messaging-led hypotheses (headline, hero, positioning, value-proposition cat
 **Expected effect and read threshold:** [direction plus the ship/abandon condition. For proxy-only scopes with no CVR baseline, use the MDE-based form ("ship if the variant proxy beats control by the test's MDE at full sample; abandon if flat at full sample"), not a fabricated point estimate.]
 **Guardrail metric:** [downstream business metric that must not degrade. Only shown when primary is a proxy metric.]
 **Audience:** [persona or segment, if specific]
+**Readiness:** [natural-language launch readiness, shown only when the validation pass surfaced something to act on. Covers: launch-blocking prerequisites in plain terms (e.g., "this metric is not yet tracked; add tracking before running"), a "verify the current page before launch" note when the captured page state may be stale or contested, and the pre-registered read audience when this test reads a specific segment rather than all visitors (e.g., "Read on paid-search arrivals, who are the audience this addresses; site traffic here is mostly direct"). Plain language only: never name a gate field, a metric-inventory term, or any system internal (see Deliverable Purity Constraint). Omit the line entirely when nothing blocks launch, the page state is fresh, and the read is all-visitors.]
 
 **Scores:** Impact [X] | Confidence [X] | Ease [X]
 [1 sentence explaining each score]
@@ -703,6 +712,7 @@ The experiment roadmap must contain ZERO references to internal system concepts.
 - File references: "company-identity.md," "competitive-landscape.md," "positioning-scorecard.md," "audience-messaging.md," "live-structure.md," "context file," "context directory"
 - Structural observation references: "structural observation artifact," "structural observation," and raw observation field names (e.g., "form_recurs_sitewide," "mobile_render_clean," "named_client_proof_present"). Describe the observed fact in natural language instead ("the demo form renders 13 fields on every page it appears")
 - Experiment-history references: `experiment_history_available`, `prior_winner`, `replication_candidate`, `transferable_rule`, `replication_target_surfaces`, `history_type`, `parent_outcome`, `source_priority`, `source_surfaces`, the producer's raw type/outcome tokens (`discriminating_test`, `recommended_lead`, `winner` / `loser` / `flat`), experiment identifiers / activity numbers, the producer KB's type name. Describe the prior result in natural language instead ("an earlier test on the pricing page lifted demo requests"). NOTE: quantified completed-experiment results (lift percentages, statistical significance, sample sizes) are NOT prohibited; they are permitted and encouraged as natural-language attribution without identifiers (see the allowance below).
+- Validation-gate internal field references (Phase 3.5 / premise-rigor): `validation_gates`, `premise_contradicted`, `metric_instrumented`, `baseline_exists`, `control_stable`, `powerable`, `segmentation_satisfied`, `instrumented_metrics`, `dark_metrics`, and `score_effect`. Render the underlying fact in natural language instead: "verify the current page before launch" (not `control_stable`), "this metric is not yet tracked" (not `dark_metrics` / `metric_instrumented`), "primary read: paid-search arrivals" (describe the pre-registered segment in plain language, never a field token).
 - Strategic-lane internal field references: `lane`, `lane: "strategic"`, `strategic-lever`, `lever_family`, the lever-family enum tokens (`objective-mismatch`, `dominant-off-page-lever`, `proof-gap`, `status-quo-alternative`, `buying-group-motion`, `offer-architecture`), `measurement_design`, and the raw `measurement_design` enum tokens (`randomized_ab`, `holdout`, `geo_split`, `switchback`, `cohort`, `pre_post`, `operational_metric`). The natural-language phrasings ("regional holdout," "pre/post," "operational tracking," "a buying-group motion") remain permitted; only the raw snake_case / hyphenated field tokens are banned. Render the design and lane in natural language instead (e.g., "Measurement: regional holdout, 8-week read").
 - System references: "Agent," "orchestrator," "phase file," "skill file," "SKILL.md," "frontmatter," "schema," "fetch registry"
 - Pattern references: "pattern ID," "HM-01," "FO-02," "experiment-patterns.md," "pattern matching"
@@ -809,6 +819,7 @@ SKILL.md (this file)
   ├── phases/detect-contextual.md   Phase 2b: context-derived opportunity detection
   ├── phases/detect-strategic.md    Phase 2c: strategic-lever detection (business-level levers, non-A/B measurement designs); routes to the separate strategic deliverable, not the tactical opportunity list
   ├── phases/construct.md           Phase 3: hypothesis construction with causal reasoning
+  ├── phases/validate.md            Phase 3.5: premise & measurement validation (six tri-state gates, hard caps for Phase 4)
   ├── phases/score.md               Phase 4: ICE scoring and sequencing
   ├── modules/experiment-patterns.md   CRO pattern library (32 patterns, 10 categories; the base library)
   ├── modules/patterns-procurement.md  procurement archetype patterns (loaded by archetype resolver; see Phase 1)

@@ -2,7 +2,9 @@
 
 ## Required Inputs
 
-- Hypothesis list from Phase 3 (construct)
+- Hypothesis list from Phase 3 (construct), including each hypothesis's `self_critique.score_effect` block (Step 10) and Test Feasibility output (Step 5b)
+- The per-hypothesis `validation_gates` record from Phase 3.5 (`phases/validate.md`), consumed by the Step 4d gated Confidence rubric, the Step 5b blocked/unpowerable routing, and the Step 6 Quick Win gate
+- detect's Step 1f FM9 contamination flag (when present), consumed by the FM9 discount in Step 4 before the Impact modifiers
 - `modules/ice-scoring.md` (calibration anchors and scoring rules)
 - `modules/experiment-patterns.md` (for ICE baselines and modifiers)
 - Calibration data from evidence modules (if any were loaded in Phase 2)
@@ -18,7 +20,7 @@ This phase does not vary by depth.
 | No positioning-scorecard.md | Confidence scores capped at 3 for all hypotheses (less certainty about gap severity). |
 | No competitive-landscape.md | Impact scores for competitive-pressure hypotheses capped at 3. |
 | No audience-messaging.md | Confidence scores for persona-based hypotheses capped at 3 (less certainty about messaging fit). |
-| No baseline traffic/conversion data (no performance-profile.md) | Confidence scores capped at 4 globally. Add note to roadmap: "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses." |
+| No baseline traffic/conversion data (no performance-profile.md) | Confidence scores capped at 4 globally. Add note to roadmap: "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses." This global ceiling is a separate mechanism from the per-gate `not-assessed` neutrality in `phases/validate.md` (see that phase's `Boundary: per-gate neutrality vs the global no-performance ceiling`): per-gate absence applies no cap, while whole-profile absence applies this portfolio-wide ceiling. Both can hold in the same run; they do not conflict. |
 | Performance data present but conversions lack page attribution | Cap revenue-attribution confidence only; do NOT apply a blanket Confidence cap. Default the target metric to a variant-instrumented proxy. Emit one measurement-enablement item as a scored prerequisite-experiment (named, with the enablement vehicle and date if engagement-constraints supply one). |
 | Calibration data from evidence modules | Override pattern baselines with calibrated scores where available. Calibrated scores take precedence. |
 
@@ -60,7 +62,6 @@ These adjustments are based on the overall context quality, not individual patte
 - If the hypothesis was triggered by a partial trigger: Confidence -1
 - If audience-messaging.md provided the "after" copy: no adjustment
 - If the "after" copy was derived from L0 value props instead: Confidence -1
-- If `proof_integrity_passed` is false (from Phase 3 Step 4b): Confidence capped at 3 (unverified proof cannot support high confidence)
 - If `metric_classification` is "proxy" (from Phase 3 Step 5a): Confidence -1 (indirect measurement adds uncertainty)
 - If performance-profile.md exists and `traffic_adequacy` is "high": Confidence +1
 - If performance-profile.md exists and target page has conversion data: Confidence +1
@@ -68,6 +69,7 @@ These adjustments are based on the overall context quality, not individual patte
 - If target page has `failure_mode` matching the hypothesis mechanism (e.g., messaging hypothesis + `shallow_engagement`): Confidence +1 (data confirms mechanism)
 - If target page has `failure_mode` contradicting the hypothesis mechanism (e.g., messaging hypothesis + `deep_engagement`): Confidence -1 (data suggests different root cause)
 - If the hypothesis is a validated-mechanism replication (a `prior_winner` from the bound experiment-history input carries a rollout/replication next-experiment that this hypothesis executes, and the replicated mechanism is the dominant change): Confidence +1 (the mechanism is empirically validated, not inferred). This lift applies to the raw Confidence; see the order-of-operations note below.
+- If the Phase 3 Step 10 `self_critique.score_effect` block sets `confidence_delta: -1` (an unmitigated thesis-level counterargument, FM8): Confidence -1. This is a soft modifier on the raw Confidence, applied here before the gated rubric's hard ceiling.
 
 **Impact adjustments:**
 - If the targeted page is the homepage: Impact +1 (highest traffic page for most B2B sites)
@@ -80,6 +82,9 @@ These adjustments are based on the overall context quality, not individual patte
 - If `top_opportunities` lists the target page with impact "large": Impact +1
 - If `top_opportunities` lists the target page with impact "small": no modifier (already accounted for)
 - If `trends` shows the target metric worsening (has `[WORSENING]` tag): Impact +1 (urgency)
+- If the Phase 3 Step 10 `self_critique.score_effect` block sets `impact_delta: -1` (an unmitigated business-outcome counterargument with no guardrail added, FM8): Impact -1. When `guardrail_added` is set instead, apply no Impact modifier (the guardrail is the mitigation).
+
+**FM9 data-hygiene discount (apply BEFORE the Impact modifiers above).** When detect's Step 1f carried an FM9 contamination flag for the target surface (documented bot or synthetic-monitoring traffic), discount the contaminated sessions/bounce figure to its corrected value BEFORE evaluating the session-threshold and bounce-rate Impact modifiers above (the >500 sessions/mo, <100 sessions/mo, and bounce >50% lines all read these figures). A surface whose 600 reported sessions are 70% synthetic-monitoring pings has ~180 real sessions and must score Impact against 180, not 600. Surface the correction in the deliverable in natural language ("traffic figures exclude an estimated [share] of automated monitoring traffic on this page"); never name the internal contamination flag. This discount operates on the inputs to the Impact modifiers, so the modifiers see the corrected figure; it is not itself an Impact modifier.
 
 **Ease adjustments:**
 - If the hypothesis requires only copy changes: Ease +1
@@ -88,7 +93,7 @@ These adjustments are based on the overall context quality, not individual patte
 - If the hypothesis requires changes to third-party embedded elements (forms, chatbots): Ease -1
 - If the hypothesis replicates a proven variant from the experiment-history input (the winning design exists and is being re-applied): Ease +1 (proven variant lowers implementation cost)
 
-**Order of operations (replication modifier).** The replication Confidence +1 above applies to the **raw Confidence** computed by the soft modifiers in this `score.md` Step 4. When the sibling premise-rigor change is present, its **gated Confidence rubric runs as a hard ceiling AFTER all soft Step 4 modifiers** (a gate fail caps Confidence at 3, multiple fails at 2). Therefore the replication +1 **never bypasses an affirmative gate failure**: a replication of a proven mechanism whose primary metric is uninstrumented on the target surface, or whose premise is contradicted by another loaded artifact on the target surface, is still capped by the gate. The replication modifier is a soft lift on raw Confidence, not a gate override. If the premise-rigor change has not yet landed when this builds, the +1 simply applies as a standard soft modifier clamped to 1-5 (the ordering note is forward-compatible). Scores remain clamped to 1-5 after all modifiers (existing Step 2 rule).
+**Order of operations (replication modifier).** The replication Confidence +1 above applies to the **raw Confidence** computed by the soft modifiers in this `score.md` Step 4. The **gated Confidence rubric (Step 4d) runs as a hard ceiling AFTER all soft Step 4 modifiers** (a single affirmative gate fail caps Confidence at 3, multiple fails at 2). Therefore the replication +1 **never bypasses an affirmative gate failure**: a replication of a proven mechanism whose primary metric is uninstrumented on the target surface, or whose premise is contradicted by another loaded artifact on the target surface, is still capped by the gate. The replication modifier is a soft lift on raw Confidence, not a gate override. Scores remain clamped to 1-5 after all modifiers (existing Step 2 rule).
 
 **Outcome-aware experiment-history posture.** When a hypothesis was minted from the experiment-history input (`signal_source: experiment-history`, tagged with `history_type` and `parent_outcome` in `phases/detect.md` Step 1g), score it with the posture matrix below instead of the single winner-rollout case above. The matrix supersedes the winner-rollout line for experiment-history-derived hypotheses; the winner-rollout row reproduces the existing `+1`/`+1` behavior unchanged.
 
@@ -102,17 +107,42 @@ These adjustments are based on the overall context quality, not individual patte
 
 Encode these rules with the table:
 - **Winner-rollout `+1`/`+1` is the ONLY path to a replication-grade Quick Win.** Do NOT extend the Ease `+1` to non-winner iterations: no proven variant exists, so the implementation-cost reduction does not apply. This keeps the existing winner-rollout Quick-Win path (the lines 70/89 behavior) intact and unchanged.
-- **The posture is a soft modifier on raw Confidence and never bypasses an affirmative gate failure.** All existing gate ceilings hold: proof integrity cap (line 63), proxy `-1` (line 64), traffic caps (lines 65-67), failure-mode contradiction `-1` (line 69). The order-of-operations contract above governs: soft modifiers compute the raw Confidence; the premise-rigor gated rubric, when present, is the hard ceiling applied after. When premise-rigor has not landed, the posture modifiers apply as standard soft modifiers clamped to 1-5.
+- **The posture is a soft modifier on raw Confidence and never bypasses an affirmative gate failure.** All soft modifiers in this Step 4 compute the raw Confidence: proxy `-1`, traffic caps, failure-mode contradiction `-1`, the FM8 self-critique `-1`. The order-of-operations contract above governs: soft modifiers compute the raw Confidence; the gated rubric (Step 4d) is the hard ceiling applied after, and it folds in the proof-integrity fail as one of its gate conditions. The posture modifiers are part of the soft layer, clamped to 1-5, then subject to the Step 4d ceiling.
 - **Confidence semantic (explicit).** In this skill, **Confidence means "how certain we are this produces a measurable result," not "probability the variant wins."** This is what lets a discriminating test designed off a loss reasonably carry a `+1` Confidence: a clean-reading isolation test reliably produces an interpretable result even though no winning variant is yet known. (Consistent with the `How to Read This Roadmap` Confidence definition in `SKILL.md`.)
 - Scores remain clamped to 1-5 after all modifiers (existing Step 2 rule).
 
 **Quick Win reachability.** With this Step 4 +1 on Confidence and +1 on Ease, a replication of a proven winner can reach Confidence >= 4 AND Ease >= 4 and clear the Quick Win bar (subject to the <= 6-week duration rule in Step 6 and any gate ceiling). This is the intended outcome: it is what the Step 7 sequencing reorder alone cannot produce.
+
+#### Step 4d: Gated Confidence Rubric (FM5, hard ceiling)
+
+This rubric runs LAST in Step 4, as a hard ceiling applied AFTER all the soft modifiers above have computed a raw Confidence (the proxy `-1`, the traffic caps, the failure-mode `-1`, the replication `+1`, the FM8 `-1`, and all the rest). The soft modifiers decide the raw Confidence; this rubric can only LOWER it, never raise it. Read the per-hypothesis `validation_gates` record from `phases/validate.md` (Phase 3.5).
+
+**Tri-state (Boundary 4, stated verbatim, same as `phases/validate.md`):** *Each gate is pass / fail / not-assessed. Only an affirmative fail caps Confidence. Not-assessed (backing artifact absent) is neutral and never penalizes.*
+
+The rubric phrasing is "Confidence 4-5 requires all gates pass (no affirmative fail)." This MUST be read with the tri-state rule: a `not-assessed` gate (legacy mode, or any run where the backing artifact is absent) does NOT block Confidence 4-5. Only an affirmative `fail` does. A run with every gate `not-assessed` (e.g., no performance profile, no structural artifact) takes NO gate-driven Confidence penalty here; its Confidence is whatever the soft modifiers and the existing graceful-degradation caps produced.
+
+**The six gates** (from `validation_gates`): `premise_contradicted` (an affirmative fail means the premise IS contradicted), `metric_instrumented`, `baseline_exists`, `control_stable`, `powerable`, `segmentation_satisfied`.
+
+**Ceiling rule (apply to the raw Confidence):**
+- Zero affirmative gate fails: no ceiling. Confidence stays at the raw value (a hypothesis with all gates pass or not-assessed can hold Confidence 4 or 5 if the soft modifiers earned it).
+- Exactly one affirmative gate fail: cap Confidence at 3.
+- Two or more affirmative gate fails: cap Confidence at 2.
+
+A cap is a ceiling, not a floor: if the raw Confidence is already at or below the cap, it is unchanged. Not-assessed gates are not counted as fails for either threshold.
+
+**Proof-integrity reconciliation (Boundary 3).** The former standalone "proof_integrity_passed false caps Confidence at 3" rule (previously a soft modifier in this Step 4) is FOLDED INTO this rubric so two rules do not independently cap the same dimension. Treat `proof_integrity_passed: false` (from Phase 3 Step 4b) as an affirmative fail on a premise-integrity condition counted alongside the six gates: it contributes one fail to the count above (one fail caps at 3, and it stacks toward the two-fail cap-at-2 if another gate also fails). This is the single place the proof-integrity cap is applied; it is no longer applied separately as a soft modifier. The cap-at-3 outcome for an isolated proof-integrity failure is identical to the old behavior, so nothing regresses; what changes is that it now composes with the other gate fails instead of running as a parallel independent cap.
 
 ### Step 5: Score Validation
 
 Before finalizing, check for scoring anti-patterns:
 
 **Anti-pattern: Score clustering.** If >70% of hypotheses have ICE totals within 2 points of each other, the scoring is too flat. Re-examine: are you defaulting to safe middle scores? Force differentiation by re-evaluating the strongest and weakest hypotheses first, then spreading the rest.
+
+**Forced-spread procedure (FM10).** The gated rubric (Step 4d) drives more Confidence caps at 3, so across a portfolio Confidence can become effectively pinned (one dimension nearly constant). When one ICE dimension is effectively constant across the portfolio (>70% of hypotheses share the same value on it, or the gated rubric capped most Confidence scores at 3), do not stop at detecting the clustering: remedy it. Require BOTH of the following on the remaining two dimensions:
+- The other two dimensions must each span a minimum range of 2 points across the portfolio (a top and a bottom that differ by at least 2), so the ranking is not flat on every axis at once.
+- At least one hypothesis must land a full tier below the top tier present (if the portfolio has Quick Wins or Strategic Bets, at least one hypothesis sits in Exploration or Cut), so the roadmap is not uniformly "all worth running."
+
+Achieve the spread by re-evaluating the strongest and weakest hypotheses on the two unpinned dimensions first (Impact and Ease when Confidence is the pinned one), then placing the rest between them, exactly as the clustering remedy above does. Do NOT manufacture spread by relaxing a gate cap or inflating Impact past its anchor: the spread comes from honest differentiation on the unpinned dimensions, not from undoing the rubric. This extends the detection above with a remedy; the detection alone offered none.
 
 **Anti-pattern: All high scores.** If no hypothesis scores below 3 on any dimension, you're being too generous. At least one hypothesis should have a low-Confidence or low-Ease score. Real experiment portfolios have range.
 
@@ -130,6 +160,12 @@ For each infeasible hypothesis:
 1. Remove from the scoring pipeline (do not compute ICE total or assign a tier)
 2. Record for the "What's Not Here" section: hypothesis name, target page, reason for infeasibility (estimated duration or traffic level), and suggested alternative approach (pre/post analysis, proxy metric, qualitative testing)
 
+**Blocked / unpowerable routing (FM3 score side).** Beyond the duration-based `feasibility: "infeasible"` removal above, also route to "What's Not Here" any hypothesis whose `validation_gates` (from `phases/validate.md`) carry an affirmative fail that makes the test un-runnable as designed:
+- `powerable: fail` (the thesis metric is unpowerable on the target surface or the segmented denominator). Record the reason as "unpowerable on the thesis metric at current traffic" with the alternative (micro-conversion proxy, pre/post, or a pooled read if the segment was the constraint), exactly as the duration-based infeasible case is framed.
+- `metric_instrumented: fail` on the PRIMARY metric (the primary is dark). Record the reason as "primary metric not instrumented" with the alternative being the instrumentation prerequisite that would unblock it.
+
+These route the same way duration-infeasible hypotheses do (removed from the tactical tiers, presented as future opportunities in "What's Not Here," not rejects). A `metric_instrumented: fail` on the GUARDRAIL only (primary is instrumented) does NOT route to "What's Not Here"; it stays in the roadmap, capped by the Step 4d rubric, with the guardrail-instrumentation gap recorded in Prerequisites.
+
 Infeasible hypotheses are NOT failures. They are real opportunities that require either more traffic, a different measurement approach, or a different test design. The "What's Not Here" section should present them as future opportunities, not rejects.
 
 **Structurally-untestable page-element differentiator (distinct from low-traffic infeasibility).** This routing fires ONLY for **page-element-altitude** items. When a signal routed from Phase 2b (detect-contextual.md criterion 5, untestable-differentiator branch) points to a page-element-scoped differentiator that cannot be A/B tested at current scope, record it in the tactical roadmap's "What's Not Here" framed as a productization/positioning decision with its demand evidence (who is asking, how often) and blocker (data coverage, entitlement scope, compliance), not as a low-traffic infeasible experiment. The recommendation is a business-model or data-coverage decision, not a test design. Do not assign it a traffic-based infeasibility reason or an alternative measurement approach as if more traffic would unlock it.
@@ -146,7 +182,7 @@ Infeasible hypotheses are NOT failures. They are real opportunities that require
 
 | Tier | Criteria | Purpose |
 |------|----------|---------|
-| **Quick Win** | Confidence >= 4 AND Ease >= 4 AND estimated_duration_weeks <= 6 | Build testing momentum. Low risk. Fast signal. |
+| **Quick Win** | Confidence >= 4 AND Ease >= 4 AND estimated_duration_weeks <= 6 AND no affirmative validation-gate fail | Build testing momentum. Low risk. Fast signal. |
 | **Strategic Bet** | Impact >= 4 AND ICE Total >= 10 AND not Quick Win | Move the needle. Worth the effort. |
 | **Exploration** | Everything else with ICE Total >= 7 | Learn something. Run when bandwidth allows. |
 | **Cut** | ICE Total < 7 | Not worth running. Exclude from roadmap. |
@@ -159,6 +195,8 @@ Infeasible hypotheses are NOT failures. They are real opportunities that require
 Add annotation to downgraded hypotheses: "Meets Quick Win scoring but estimated test duration ([N] weeks) exceeds the 6-week Quick Win ceiling. Reclassified as [new tier]."
 
 Quick Wins exist to build organizational testing momentum. A 10-week test, regardless of implementation ease, does not build momentum. Mislabeling it burns stakeholder trust when the "quick" win takes a full quarter to read out.
+
+**Validation-gate requirement for Quick Win.** A hypothesis with ANY affirmative `validation_gates` fail (from `phases/validate.md`) cannot tier as Quick Win regardless of its Confidence and Ease, because Step 4d has already capped its Confidence at 3 (one fail) or 2 (multiple fails), so it cannot meet Confidence >= 4 anyway. The explicit gate condition in the tier table above makes this non-bypassable even if a future modifier were to lift Confidence: a Quick Win must be a hypothesis whose premise, metric, baseline, control, power, and segmentation all hold (gates pass or not-assessed, never an affirmative fail). Not-assessed gates do NOT block Quick Win eligibility (tri-state: only an affirmative fail does).
 
 The Step 6 tiering above (the tier table, the calendar-duration override, the `--max` cut rules) applies to **tactical hypotheses only**. Strategic experiments are scored and tiered on the separate pass below; they never enter the tactical roadmap's tiers and never share its ICE table.
 
