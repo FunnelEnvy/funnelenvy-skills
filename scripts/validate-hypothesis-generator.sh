@@ -76,6 +76,7 @@ check_exists "SKILL.md" "skills/hypothesis-generator/SKILL.md"
 check_exists "phases/detect.md" "skills/hypothesis-generator/phases/detect.md"
 check_exists "phases/detect-strategic.md" "skills/hypothesis-generator/phases/detect-strategic.md"
 check_exists "phases/construct.md" "skills/hypothesis-generator/phases/construct.md"
+check_exists "phases/validate.md" "skills/hypothesis-generator/phases/validate.md"
 check_exists "phases/score.md" "skills/hypothesis-generator/phases/score.md"
 check_exists "modules/experiment-patterns.md" "modules/experiment-patterns.md"
 check_exists "modules/ice-scoring.md" "modules/ice-scoring.md"
@@ -88,9 +89,9 @@ check "has name: hypothesis-generator" \
 echo ""
 
 echo "[3] Phase file count"
-check "phases/ has exactly 5 files" \
+check "phases/ has exactly 6 files" \
   "ls skills/hypothesis-generator/phases/ | wc -l | tr -d ' '" \
-  "5"
+  "6"
 echo ""
 
 echo "[4] Pattern count"
@@ -239,6 +240,46 @@ check "Strategic Key risk relabel present" \
 check "No in-tier render mandate (render in the existing tiers) remains" \
   "grep -c 'render in the existing tiers' skills/hypothesis-generator/SKILL.md | tr -d ' '" \
   "0"
+echo ""
+
+echo "[15] Premise & measurement rigor (tranche 2)"
+check "phases/validate.md gate-record marker present" \
+  "grep -c '^## The validation_gates record' skills/hypothesis-generator/phases/validate.md" \
+  "1"
+# NOTE: the NONZERO checks below use plain grep, NOT grep -c. The check() NONZERO
+# branch tests for non-empty output; grep -c always prints a count (even "0"),
+# which would pass spuriously. Plain grep yields empty output when a term is
+# absent, so an absent term correctly fails.
+check "validate.md emits all six named gates" \
+  "grep -E 'premise_contradicted|metric_instrumented|baseline_exists|control_stable|powerable|segmentation_satisfied' skills/hypothesis-generator/phases/validate.md" \
+  "NONZERO"
+check "validate.md states tri-state semantics" \
+  "grep 'pass / fail / not-assessed' skills/hypothesis-generator/phases/validate.md" \
+  "NONZERO"
+check "detect.md has Step 1f header" \
+  "grep -c '^### Step 1f: Measurement Inventory and Staleness Signals' skills/hypothesis-generator/phases/detect.md" \
+  "1"
+check "score.md has gated-rubric marker (Step 4d)" \
+  "grep -c '^#### Step 4d: Gated Confidence Rubric' skills/hypothesis-generator/phases/score.md" \
+  "1"
+check "score.md states tri-state verbatim in the rubric" \
+  "grep 'pass / fail / not-assessed' skills/hypothesis-generator/phases/score.md" \
+  "NONZERO"
+# Field-name purity: confirm the new internal field names are GUARDED in the
+# Deliverable Purity Constraint so they are prohibited from the rendered body.
+# (Em-dash and ClickUp purity over these files is already covered by block [6],
+#  which recurses skills/hypothesis-generator/. Body-template grep-for-absence is
+#  left to the deliverable-time constraint per the change doc, since the Output
+#  Format body template is not mechanically bounded from the rest of SKILL.md.)
+check "validation_gates guarded in Deliverable Purity Constraint" \
+  "grep 'validation_gates' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+check "instrumented_metrics guarded in Deliverable Purity Constraint" \
+  "grep 'instrumented_metrics' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+check "premise_contradicted guarded in Deliverable Purity Constraint" \
+  "grep 'premise_contradicted' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
 echo ""
 
 echo "=== Results ==="

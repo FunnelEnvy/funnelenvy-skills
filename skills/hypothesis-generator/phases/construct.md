@@ -334,6 +334,23 @@ Record `measurement_design` on the hypothesis record (internal field; it renders
 - If the experiment applies to all visitors, say "all visitors"
 - For personalization experiments, specify both the targeting criteria and the segment
 
+**Segmentation pre-registration (FM6).** Decide the primary read audience HERE, before scoring, not at the post-hoc "if inconclusive" path (Step 6). When the performance profile shows the persuadable audience is a diluted minority of the page's traffic, pre-register the primary read as that segment rather than running all-visitors and hoping to rescue a flat result by segmenting afterward.
+
+Pre-register the segment as the primary read when ANY of these dilution thresholds holds for the target surface (thresholds are one-engagement heuristics per `modules/ice-scoring.md`; treat them as defaults, not constants):
+- Direct traffic > 75% of the surface's sessions (the page is dominated by audience whose intent the experiment is not built for).
+- Bounce rate > 60% on the surface (most arrivals never see the stimulus, so an all-visitors denominator dilutes the effect).
+- New visitors > 80% of the surface's sessions when the mechanism depends on familiarity or return behavior (or, symmetrically, a returning-user mechanism on a >80%-new surface targets a minority).
+- The causal mechanism is sub-audience-only by construction (a returning-user login fix on a page whose audience is overwhelmingly new; a procurement-stage proof asset on a top-of-funnel page).
+
+When a segment is pre-registered:
+- Name the segment as the primary read audience and state the dilution signal that justified it ("primary read: paid-search arrivals; Direct is 81% of this surface and is not the audience this hypothesis addresses").
+- The segmented (not pooled) denominator is what `Step 5b (Test Feasibility)` powers against. Carry the segment forward so Step 5b uses it.
+- A pre-registered segment that CANNOT be isolated or instrumented (no way to deliver the variant to only that segment, or no way to read the metric for that segment alone) becomes an instrumentation block: route it to Prerequisites and carry it forward; `phases/validate.md` `segmentation_satisfied` gate fails on it.
+
+**Viewport / scroll-reach dilution flag.** When the thesis-bearing stimulus sits below the fold (a proof strip, a section heading, a secondary CTA that most visitors never scroll to), flag it: an all-visitors denominator dilutes a below-fold stimulus because most of the denominator never saw it. If structural or element-interaction data shows the stimulus's scroll-reach or view rate, state it; otherwise flag the risk for the feasibility note. This flag does not by itself pre-register a segment, but it feeds the same dilution concern into Step 5b's denominator choice and into the bundle-interpretability check (Step 5c).
+
+This pre-registration adjusts WHERE segmentation is decided (up front, as the primary design) rather than removing the Step 6 inconclusive-path `segment_check`. The Step 6 segment_check stays: it remains the fallback for hypotheses correctly run all-visitors that still come back flat.
+
 ### Step 5a: Proxy Metric Guardrails
 
 Classify the primary metric selected in Step 5.
@@ -401,6 +418,14 @@ Where:
 - `relative_mde` = 0.15 (15% relative minimum detectable effect). Not configurable. Conservative for CRO.
 - `monthly_sessions` = sessions for the target page from performance-profile.md, normalized to 30 days if the profile's date range differs
 
+**Power-check extension (FM3).** The base formula above powers the primary metric on the pooled page denominator. Extend it on three axes so the power determination matches the actual test design:
+
+1. **Guardrail / secondary metric.** When Step 5a named a guardrail metric (proxy-primary hypotheses) or Step 5 named a secondary metric the read depends on, run the same z-test for that metric's base rate. A test that is powerable on the proxy but cannot read its guardrail within the window is not actually decidable: report the guardrail's separate duration, and if the guardrail is unpowerable, say so explicitly ("primary powerable in ~6 weeks; guardrail [metric] unpowerable at this traffic, so a proxy win cannot be validated against it here").
+2. **Segmented (not pooled) denominator.** When Step 5 pre-registered a segment as the primary read (FM6), set `monthly_sessions` to the segment's sessions, NOT the page's pooled sessions. Powering a segmented read on the pooled denominator overstates feasibility. State the denominator used ("powered on paid-search arrivals: ~1,200 sessions/mo, not the 6,400 pooled").
+3. **Explicit MDE or "unpowerable".** Emit a per-variant determination, not just a tier label: either the per-variant MDE achievable in the window ("~6 weeks to detect a 15% relative lift at 5,600 samples/variant") OR an explicit "unpowerable on the thesis metric at current traffic" when no feasible/extended window reaches a readable per-variant sample on the primary metric (or on the segmented denominator). The `phases/validate.md` `powerable` gate consumes this determination: an "unpowerable" thesis metric fails the gate and `score.md` Step 5b routes it to "What's Not Here."
+
+The 100-conversion and 7-day hard gates below stay intact and apply on top of the extension. The extension changes WHAT is powered (guardrail too, segmented denominator) and WHAT is emitted (explicit MDE or unpowerable); it does not relax the hard gates.
+
 **Feasibility tiers:**
 
 | Duration | Label | Action |
@@ -466,6 +491,13 @@ bundled_disclosure:
 ```
 
 **Relationship to the Experiment Scope Rule:** The Scope Rule says "the unit of testing is the hypothesis, not the variable." This disclosure operationalizes that principle by making the bundling rationale explicit. If you cannot articulate a single unified idea that all changed elements serve, the hypothesis may actually be two hypotheses. In that case, split per the Scope Rule, not per this disclosure step.
+
+**Bundle interpretability check (FM7).** Beyond documenting the bundle, verify the bundle can actually be interpreted before emission. The disclosure above documents the tradeoff; this check blocks two specific ways a bundle becomes uninterpretable:
+
+1. **The thesis-bearing element must be the dominant change.** The element that carries the hypothesis's thesis (the specific-claim H1 under a "specificity" thesis, the proof strip under a "trust" thesis) must be the dominant change in the bundle, not a minor one carried along by larger edits. When the thesis element is NOT dominant (e.g., a "specificity" thesis whose H1 carries no specific claim while the bundle's real change is a layout overhaul), a win or loss cannot be attributed to the thesis at all. Restructure so the thesis element is the dominant change, or re-name the hypothesis to the thesis the dominant change actually tests.
+2. **A bundled element must be seen by most visitors.** When a bundled element sits below the fold or is otherwise seen by few visitors (use the Step 5 viewport / scroll-reach flag), a flat result is uninterpretable: did the idea fail, or did most of the denominator never see the element carrying it? When a thesis-bearing element is low-reach, either pre-register the segment that does see it (Step 5 / FM6), move the element into view, or split it out and sequence it.
+
+If neither restructure nor split resolves the interpretability problem, the bundle is not one experiment; flag it for strategist review rather than emitting an uninterpretable bundle. This strengthens the disclosure (which documents but never blocks); it does not change the Experiment Scope Rule's bundling mandate (bundle elements that serve one idea remains correct and required).
 
 ### Step 6: Win/Loss Learning
 
@@ -660,7 +692,21 @@ self_critique:
   counter_outcome_response: "[Rebuttal or acknowledgment + guardrail reference, 1-2 sentences]"
   consistency_issues_found: [true|false]
   evidence_downgrades: ["[claim X downgraded from 'pattern' to 'prior signal'}", ...]
+  score_effect:
+    counter_thesis_unmitigated: [true|false]   # Counter-A still stands after the response
+    counter_outcome_unmitigated: [true|false]  # Counter-C still stands after the response
+    confidence_delta: [0 | -1]                 # -1 when counter_thesis_unmitigated
+    impact_delta: [0 | -1]                     # -1 when counter_outcome_unmitigated AND no guardrail added
+    guardrail_added: "[metric name, or null]"  # when a guardrail is added instead of taking the Impact -1
 ```
+
+**4b. Consequential self-critique (FM8).** A self-critique that names a decisive weakness must CHANGE something. For each counterargument, decide whether the response actually mitigates it (rebutted with evidence, or the design was changed) or merely acknowledges it. An UNMITIGATED counterargument has a consequence, emitted in the `score_effect` block above for `phases/score.md` to apply:
+
+- **Counter-A (thesis-level) unmitigated:** set `counter_thesis_unmitigated: true` and `confidence_delta: -1`. If the thesis itself is materially weaker than the writeup claims, also rewrite the causal mechanism (Step 4) and win/loss learning (Step 6) per fail state 1 below; the Confidence reduction applies regardless.
+- **Counter-C (business-outcome-level) unmitigated:** the hypothesis must EITHER add a guardrail metric that covers the outcome risk (set `guardrail_added` and `impact_delta: 0`) OR take `impact_delta: -1`. Adding a guardrail is the preferred mitigation; the Impact reduction is the fallback when no guardrail can cover the risk.
+- **Counter-B (test-design-level):** if unmitigated and not already covered by Step 5c, it is a design defect, not a score modifier; resolve it by restructuring the test (Step 5b / 5c) or flag for strategist review per fail state 2 below. It does not emit an ICE delta (a broken design is fixed or flagged, not scored down).
+
+The deltas are emitted here and applied by `score.md` Step 4 as soft modifiers on the raw Confidence / Impact (clamped 1-5), upstream of the gated rubric's hard ceiling. This closes the gap where a self-critique named the decisive weakness and left the score unchanged: the named weakness now reduces the relevant ICE component or adds a guardrail, every time it is unmitigated.
 
 **5. Fail states.** If the self-critique reveals:
 

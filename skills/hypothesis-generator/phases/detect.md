@@ -10,6 +10,7 @@
 - `engagement-constraints` input (optional): delivery and governance state, consumed by Step 1d. Absent in most runs; Step 1d is skipped when absent. Never produces opportunities, only constraints.
 - The structural observation artifact body (KB mode only, optional): the scope's `silver-structural-observation` artifact (`live-structure.md`), loaded by the orchestrator per SKILL.md `Read-side Mapping` when present. Consumed by the Step 1 structural extraction stanza and the Step 1e field-keyed triggers.
 - The experiment-history input (KB mode only, optional): the producer KB's gold index plus the silver insight records it links, loaded by the orchestrator per SKILL.md `Read-side Mapping` when bound. Consumed by the Step 1g experiment-history triggers. Absent in most runs; Step 1g is skipped when absent with no confidence consequence.
+- Step 1f draws on two of the inputs already listed above: `performance-profile.md` (measurement inventory and the FM9 contamination flag) and the structural observation artifact (staleness signals). It adds no new input file; both legs skip with no penalty when their backing artifact is absent.
 
 In KB mode the orchestrator supplies the same context bodies, sourced from the scope's silver artifacts per the SKILL.md `KB Mode (Dual-Mode Output)` > `Read-side Mapping`. Trigger and detection logic below is source-agnostic and unchanged, with one addition: the structural observation artifact is KB-native (no legacy equivalent) and is consumed by Step 1 and Step 1e only.
 
@@ -27,6 +28,8 @@ This phase does not vary by depth. All available context is scanned regardless o
 | performance-profile.md | Skip all performance-driven triggers (Step 1c). Confidence capped at 4 globally. Add "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses" to Prerequisites. |
 | Structural observation artifact (live-structure, KB mode) | Skip structural observation triggers (Step 1e). NO confidence penalty and NO global cap: absence means page structure was not assessed, not that structure is sound or broken. Element targeting falls back to context-inferred pages. Add "Run /live-capture for structure-driven triggers and observed current-state documentation" to Prerequisites. |
 | Experiment-history input (not bound, KB mode) | Skip experiment-history triggers (Step 1g). NO confidence penalty and NO global cap: absence means no prior-experiment evidence was available. Add "Connect a completed-experiment knowledge base" to Prerequisites. |
+| performance-profile.md (for Step 1f measurement inventory / FM9 contamination flag) | Skip the Step 1f measurement-inventory and contamination-flag legs. NO confidence penalty beyond the existing performance-profile cap (row above): absence means measurement coverage was not assessed, not that every metric is dark. Validate's `metric_instrumented` and `powerable` gates read not-assessed for the affected hypotheses (neutral, never a fail). |
+| Structural observation artifact (for Step 1f staleness signals) | Skip the Step 1f staleness leg. NO confidence penalty and NO global cap (same rule as the structural-observation row above): absence means current-state freshness was not assessed. Validate's `control_stable` gate reads not-assessed (neutral, never a fail). |
 | All L1 files | Detect from L0 only. Limited to patterns triggered by website copy, proof points, and structural signals. |
 
 ---
@@ -247,6 +250,33 @@ These triggers fire on directly observed page structure. They are field-keyed ag
 - Out of scope by design: personalization patterns (PE-01, PE-02) need cross-session variance a single capture cannot supply; exit-path patterns (NX-03) need behavioral data; value-before-commitment sequencing (NX-05) is deferred.
 
 **Output:** Structure-driven opportunities added to the opportunity list, tagged `type: "structure-driven"`.
+
+### Step 1f: Measurement Inventory and Staleness Signals
+
+This step has two legs, each skipping with no penalty when its backing artifact is absent (mirroring the skip-with-no-penalty pattern of Step 1c and Step 1e):
+
+- **Measurement-inventory leg:** skip with no penalty when `performance-profile.md` is absent.
+- **Staleness leg:** skip with no penalty when the structural observation artifact is absent.
+
+This step produces no opportunities. It produces three internal annotations carried forward to the validation phase (`phases/validate.md`, Phase 3.5) and to `phases/score.md`: a measurement inventory, a set of staleness signals, and (when present) an FM9 contamination flag. Run it after the trigger steps (1c, 1e) so the inventory can reference the same signal sources they read.
+
+**Measurement inventory (performance-profile.md leg).** Derive two lists from the performance profile's tracked-event inventory and documented data gaps (the same signal sources Step 1 already lists at "Conversion event inventory and per-page funnel data" and "Data gaps noted in Key Metrics Summary"):
+
+- `instrumented_metrics`: metrics the profile reports actual data for (events present in the conversion-event inventory, metrics with per-page values). These are safe to propose as a primary or guardrail metric.
+- `dark_metrics`: metrics named in the profile's documented data gaps, or named anywhere in context as a desired metric but absent from the profile's event inventory. These are NOT safe to propose without an instrumentation prerequisite.
+
+A metric appears in exactly one list. When the profile is present but silent on a metric (neither reports data for it nor flags it as a gap), classify it `dark` (the conservative default: unconfirmed instrumentation is treated as not instrumented). Carry both lists forward; `phases/validate.md` `metric_instrumented` gate reads them.
+
+**Staleness signals (structural observation artifact leg).** Detect when the captured current-state may be out of date or contested:
+
+- **Capture-date tagging:** read the structural artifact's capture date (frontmatter capture/observed date). Tag every structural fact with that date so the validation phase can attach a "verify current before launch" prerequisite to any hypothesis whose control depends on a structural fact.
+- **Cross-artifact element-disagreement / redesign-in-progress:** when two loaded artifacts describe the same element differently (e.g., the structural capture records a 13-field form on /demo while the performance profile or audience context describes a short form on the same page), record an element-disagreement signal naming the element and the two sources. This is the redesign-in-progress signal: the page may be mid-change, so the captured control is contested.
+
+Carry the staleness signals forward; `phases/validate.md` `control_stable` gate reads them. Per Boundary 2, a broken-render observation (`mobile_render_clean: false`) is NOT a staleness signal: it is CTR-14's rendering-defect reframe and is owned there. Step 1f records ONLY capture-date and element-disagreement signals; it never emits a `mobile_render_clean` signal as staleness.
+
+**FM9 contamination flag (performance-profile.md leg).** When the performance profile documents bot traffic or synthetic-monitoring (uptime/availability pingers, headless-agent traffic) on a surface, extract a contamination flag for that surface: the surface, the contaminated figure (sessions or bounce), and the profile's stated or estimated contaminated share. This flag is carried forward as an opportunity-list annotation for `phases/score.md` to consume (it discounts the contaminated figure BEFORE the Step 4 Impact modifiers). Step 1f produces no opportunity from the flag itself; it only annotates.
+
+**Output:** measurement inventory (`instrumented_metrics` / `dark_metrics`), staleness signals (capture-date tags + element-disagreement signals), and the FM9 contamination flag (when present), all carried forward to Phase 3.5 (validate) and Phase 4 (score). These are internal annotations, never written to disk and never rendered in the deliverable (see SKILL.md `Deliverable Purity Constraint`).
 
 ### Step 1g: Experiment-History Triggers
 
