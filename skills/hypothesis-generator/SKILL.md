@@ -1,6 +1,6 @@
 ---
 name: hypothesis-generator
-version: 1.9.0
+version: 1.10.0
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. In KB mode (see KB Mode (Dual-Mode Output)), reads the scope's silver CRO artifacts from a bound knowledge base and writes a typed gold-experiment-roadmap artifact instead. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
 updated: 2026-06-24
 ---
@@ -54,7 +54,6 @@ The full KB-mode contract (mode resolution, read-side mapping, output path, fron
 | `--spec` | none | Path to a spec/brief file OR inline text of client-requested items. When provided, every spec item must either map to a hypothesis or be explicitly addressed in "What's Not Here." Out-of-scope items (SEO/GEO, interlinking, content audit) are flagged with routing guidance. |
 | `--scope` | none | KB mode only. Selects which KB scope the run targets (the type skill defines valid scopes). Required in KB mode; warn-and-ignore in legacy mode. See `KB Mode (Dual-Mode Output)`. |
 | `--no-kb` | off | Force legacy `.claude/context/` I/O even when a KB binding is detected. See `KB Mode (Dual-Mode Output)`. |
-| `--present` | off | After a successful roadmap write, invoke the separate `roadmap-presentation` skill to render the roadmap as a client-facing multi-page HTML site, passing the same mode (KB `--scope` or legacy). Pure chaining affordance: adds no analytical behavior and changes no scoring, pattern, or output-content logic. See `Re-render Behavior`. |
 
 ---
 
@@ -764,8 +763,6 @@ This keeps the "complete projection, no merging" framing for body content -- onl
 **Strategic deliverable, no-lever case (produce-only-when-qualify).** The strategic deliverable is written only when at least one strategic lever qualifies (`Strategic Roadmap Output Format` > Step 5c). Overwriting a deliverable to an empty body is banned. So when a prior `strategic-roadmap.md` (or `{scope}-strategic-roadmap.md`) exists but the current run yields no qualifying lever, the run does NOT rewrite it to a stale or empty state: it leaves the prior file untouched and reports in the completion message that no current levers qualified (mirroring the graceful-degradation no-write rule). The tactical roadmap is unaffected either way.
 
 In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope}-experiment-roadmap.md` and `{kb_root}/deliverables/{scope}-strategic-roadmap.md`, with KB versioning per deliverable -- preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch otherwise), set `updated`, overwrite the body. The same key carry-forward rule applies to each KB-mode prior roadmap. See `Prior Work Detection (KB Mode)` and `Strategic Roadmap Output Format`.
-
-**`--present` chaining.** When `--present` is set, after the roadmap write completes successfully, invoke the separate `roadmap-presentation` skill against the just-written roadmap, passing the same mode (KB `--scope` or legacy). It renders the roadmap as a client-facing multi-page HTML site. This is a chaining affordance only: it runs a separate skill after write and changes nothing about the roadmap's analytical content. Fires in both modes.
 
 ---
 

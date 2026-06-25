@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.6.0] - 2026-06-24
+
+### render-program-site
+
+#### Added
+- **render-program-site** (0.1.0): new skill replacing roadmap-presentation. A deterministic Python generator renders a unified two-altitude program site (a hub plus one spoke per strategic bet and one per page test) from two markdown inputs: a strategic experiment layer and a tactical roadmap. The cross-altitude edge contract (edge-type validity, dangling targets, mechanism compatibility, executor-status derivation, version lock) is enforced as a hard build gate that fails closed. The generator owns the gate, the Impact-by-Ease portfolio map, edge typing, and all chrome and data-bound structure; a scoped LLM pass curates the spoke prose and runs a humanizer pass. Per-test mockups from experiment-mockup feed the tactical spokes. Dual-mode I/O (legacy `.claude/deliverables/` or KB-native).
+
+### roadmap-presentation
+
+#### Removed
+- **roadmap-presentation** (was 0.3.0): removed. Superseded by render-program-site, which renders the two-altitude program site (hub plus per-bet and per-test spokes) instead of a single-altitude per-experiment site.
+
+### hypothesis-generator
+
+#### Removed
+- **hypothesis-generator** (1.10.0): retired the `--present` chaining flag, which invoked the now-removed roadmap-presentation skill. Auto-chaining is unsound for render-program-site (it needs two edge-contract-schema inputs a freshly-written roadmap does not yet carry); re-chaining is deferred to a follow-up that has hypothesis-generator emit those schemas.
+
+### experiment-mockup
+
+#### Changed
+- **experiment-mockup** (1.3.2): reference rename roadmap-presentation to render-program-site in the KB-mode and mockup-output prose (the consumer skill was replaced). No behavioral change.
+
 ## [1.5.0] - 2026-06-24
 
 ### hypothesis-generator

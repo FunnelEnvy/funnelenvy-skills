@@ -1,6 +1,6 @@
 # AI Writing Signs (Humanizer Reference)
 
-Lean, portable embed of the signs of AI-generated writing. The roadmap-presentation skill applies these rules in a final pass over renderer-authored prose (condensed card hypotheses, mockup annotations, section leads: anywhere the renderer phrases rather than quotes) before write. Passages quoted verbatim from the source roadmap markdown are already deliverable-grade and are exempt; this pass targets only prose the renderer authors.
+Lean, portable embed of the signs of AI-generated writing. The render-program-site skill applies these rules in a final pass over agent-authored spoke prose (the `<!--PROSE-->` slot contents: lever, move, hypothesis, per-relationship commentary, score narrative) before the site is finalized. Passages quoted verbatim from the source roadmap markdown are already deliverable-grade and are exempt; this pass targets only prose the curation pass authors.
 
 This is a self-contained reference so the skill does not depend on the device-level `humanizer` skill, which is not a declarable plugin dependency.
 
