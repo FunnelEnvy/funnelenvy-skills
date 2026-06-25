@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.10.0] - 2026-06-24
+
+### removed
+- Retired the `--present` chaining flag (Invocation table row + Re-render Behavior chaining note removed). It invoked the now-deleted roadmap-presentation skill; auto-chaining is unsound for its replacement render-program-site, which requires two edge-contract-schema inputs a freshly-written roadmap does not yet carry. Re-chaining is deferred to chg_2026-06-24_hypothesis-generator-edge-contract-schema-emission. (chg_2026-06-24_render-program-site-skill) [render-program-site-skill]
+
 ## [1.9.0] - 2026-06-24
 
 ### Added

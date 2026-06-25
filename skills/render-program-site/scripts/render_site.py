@@ -98,10 +98,19 @@ def _scalar(tok):
 
 
 def _split_flow(body):
-    """Split the inside of a flow collection on top-level commas only."""
-    parts, depth, cur = [], 0, ""
+    """Split the inside of a flow collection on top-level commas only, ignoring
+    commas inside quoted strings or nested brackets/braces."""
+    parts, depth, cur, q = [], 0, "", None
     for ch in body:
-        if ch in "[{":
+        if q:
+            cur += ch
+            if ch == q:
+                q = None
+            continue
+        if ch in "\"'":
+            q = ch
+            cur += ch
+        elif ch in "[{":
             depth += 1
             cur += ch
         elif ch in "]}":
@@ -175,7 +184,29 @@ def _parse_map(lines, idx, indent):
         if not m:
             raise ValueError("expected 'key: value' at line %d: %r" % (idx + 1, raw))
         key, rest = m.group(1).strip(), m.group(2).strip()
-        if rest == "":
+        if rest in (">", "|", ">-", ">+", "|-", "|+"):
+            # block scalar (folded `>` or literal `|`): consume the indented body
+            style = rest[0]
+            block, j = [], idx + 1
+            while j < len(lines):
+                ln = lines[j]
+                if ln.strip() == "":
+                    block.append("")
+                    j += 1
+                    continue
+                if _indent(ln) <= indent:
+                    break
+                block.append(ln)
+                j += 1
+            nonblank = [l for l in block if l.strip()]
+            base = min((_indent(l) for l in nonblank), default=0)
+            dedented = [l[base:] if len(l) >= base else l.strip() for l in block]
+            if style == ">":
+                out[key] = " ".join(s.strip() for s in dedented if s.strip())
+            else:
+                out[key] = "\n".join(dedented).strip("\n")
+            idx = j
+        elif rest == "":
             child, idx = _parse_block(lines, idx + 1, indent)
             out[key] = child
         else:
@@ -223,6 +254,10 @@ def parse_frontmatter(text):
     fm = text[3:end].strip("\n")
     body = text[end + 4:]
     lines = fm.split("\n")
+    for i, ln in enumerate(lines):
+        if ln[:len(ln) - len(ln.lstrip())].find("\t") != -1:
+            raise ValueError("frontmatter line %d uses tab indentation; this parser "
+                             "supports space indentation only" % (i + 1))
     data, _ = _parse_map(lines, 0, 0)
     return data, body
 
@@ -337,9 +372,13 @@ def load_tactical(path):
             "target_page": t.get("target_page", ""),
             "status": t.get("status", "active"),
             "superseded_by": t.get("superseded_by", ""),
-            "mockup": t.get("mockup") or None,
+            "mockup": t.get("mockup") if isinstance(t.get("mockup"), dict) else None,
+            "_mockup_malformed": ("mockup" in t and t["mockup"] is not None
+                                  and not isinstance(t["mockup"], dict)),
             # any inbound/reverse authoring is a gate violation (check 6)
             "_reverse_keys": [k for k in ("edges", "inbound", "expressed_by", "informed_by", "gated_by") if k in t],
+            # intake_only is derived, never authored (check 5)
+            "_authored_intake_keys": [k for k in ("intake_only", "intake") if k in t],
             "section": sections.get(tid, {"title": "", "labels": {}, "paras": []}),
         })
     return {"program_version": pv, "tests": tests}
@@ -406,11 +445,15 @@ def run_gate(strategic, tactical):
     if sv != tv:
         violations.append("[7] program_version mismatch: strategic '%s' != tactical '%s'" % (sv, tv))
 
-    # check 5 (intake_only is derived never authored) is structural: tests carry
-    # no intake field; authoring one shows up as a stray key. Enforce explicitly.
+    # 5. intake_only is derived, never authored: authoring an intake_only/intake
+    # field on a test is a contract violation (the renderer computes it from edges).
     for t in tests:
-        if t["mockup"] is not None and not isinstance(t["mockup"], dict):
-            violations.append("[5] test %s: malformed mockup block" % t["id"])
+        if t["_authored_intake_keys"]:
+            violations.append("[5] test %s: intake_only is derived, never authored "
+                              "(found %s)" % (t["id"], t["_authored_intake_keys"]))
+        if t["_mockup_malformed"]:
+            violations.append("[mockup] test %s: malformed mockup block (expected a mapping)"
+                              % t["id"])
 
     if violations:
         raise GateError(violations)
@@ -535,9 +578,13 @@ def chips(ids, soft, link_spoke):
 
 
 def render(tpl, mapping):
-    for k, v in mapping.items():
-        tpl = tpl.replace("{{%s}}" % k, v)
-    return tpl
+    """Single-pass {{TOKEN}} substitution. One pass (not sequential replaces) so a
+    substituted value that happens to contain a literal {{OTHER}} is never re-scanned
+    -- the deterministic core must not let data content reach into the template."""
+    def sub(m):
+        key = m.group(1)
+        return mapping[key] if key in mapping else m.group(0)
+    return re.sub(r"\{\{([A-Z0-9_]+)\}\}", sub, tpl)
 
 
 def build_map_svg(bets, tests):

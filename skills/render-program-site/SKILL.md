@@ -2,13 +2,13 @@
 name: render-program-site
 version: "0.1.0"
 description: >
-  Render a unified two-altitude program site from two markdown inputs: a strategic
-  experiment layer (bets) and a tactical experiment roadmap (page tests). Produces a
-  hub page plus one spoke per strategic bet and one spoke per page test, with the
-  cross-altitude edge contract enforced as a hard build gate. Trigger on "render program
-  site", "program site", "two-altitude site", "strategic + tactical roadmap site", or the
-  explicit /render-program-site invocation. A deterministic Python generator owns the gate,
-  the Impact-by-Ease map, and all structure; a scoped LLM pass curates spoke prose.
+  Render a two-altitude program site from two markdown inputs (a strategic layer of bets
+  and a tactical roadmap of page tests): a hub plus one spoke per bet and per test, with
+  the cross-altitude edge contract enforced as a hard build gate. Trigger on "render
+  program site", "program site", "strategic + tactical roadmap site", or the explicit
+  /render-program-site invocation. Deterministic generator for the gate, map, and
+  structure; scoped LLM pass curates spoke prose.
+updated: 2026-06-24
 ---
 
 # Render Program Site
@@ -139,7 +139,9 @@ passages are exempt; the pass targets agent-authored prose. No em dashes.
 
 Report: output site path, mode (KB/legacy), bet count, test count, per-test mockup status
 (rendered / placeholder), the gate result, and the deferred-hosting note (the site is a
-self-contained static bundle; deploy is a follow-up, not part of this skill).
+static bundle that embeds its own assets except web fonts, which load from the Google
+Fonts CDN and degrade gracefully to the CSS fallback stack offline; deploy is a follow-up,
+not part of this skill).
 
 ## Scripts
 

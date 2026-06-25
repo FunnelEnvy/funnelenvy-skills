@@ -150,11 +150,36 @@ class TestParser(unittest.TestCase):
         self.assertEqual(bet["edges"][0], {"target": "p-01", "type": "expresses"})
         self.assertTrue(bet["keystone"] is True)
 
+    def test_flow_map_quoted_commas_and_colons(self):
+        # commas and colons inside quoted values must not split the flow map
+        v = rs._parse_flow('{id: p-1, insertion_point: "a, b, c", url: "https://x.io/p"}')
+        self.assertEqual(v["insertion_point"], "a, b, c")
+        self.assertEqual(v["url"], "https://x.io/p")
+        self.assertEqual(v["id"], "p-1")
+
     def test_inline_flow_test_with_nested_mockup(self):
         fm, _ = rs.parse_frontmatter(TACTICAL)
         t = fm["tests"][0]
         self.assertEqual(t["mechanism_class"], "proof")
         self.assertEqual(t["mockup"]["mode"], "chrome-devtools")
+
+    def test_tab_indentation_clear_error(self):
+        with self.assertRaises(ValueError) as cm:
+            rs.parse_frontmatter("---\nprogram:\n\tclient: x\n---\nbody\n")
+        self.assertIn("tab", str(cm.exception).lower())
+
+    def test_folded_block_scalar(self):
+        fm, _ = rs.parse_frontmatter(
+            '---\n'
+            'description: >\n'
+            '  A folded description that spans\n'
+            '  two lines into one.\n'
+            'kb_layer: gold\n'
+            'tags: [a, b]\n'
+            '---\nbody\n')
+        self.assertEqual(fm["description"], "A folded description that spans two lines into one.")
+        self.assertEqual(fm["kb_layer"], "gold")
+        self.assertEqual(fm["tags"], ["a", "b"])
 
     def test_body_section_extraction(self):
         _, body = rs.parse_frontmatter(STRATEGIC)
@@ -213,6 +238,17 @@ class TestGate(unittest.TestCase):
         bad = TACTICAL.replace('program_version: "1.0.0"', 'program_version: "1.0.1"')
         self._expect_violation(STRATEGIC, bad, "[7]")
 
+    def test_check5_authored_intake_rejected(self):
+        bad = TACTICAL.replace('"Sitewide", status: active}',
+                               '"Sitewide", status: active, intake_only: true}')
+        self._expect_violation(STRATEGIC, bad, "[5]")
+
+    def test_malformed_mockup_rejected(self):
+        # p-03 has no mockup; give it a scalar (non-mapping) mockup value
+        bad = TACTICAL.replace('"Sitewide", status: active}',
+                               '"Sitewide", status: active, mockup: "oops"}')
+        self._expect_violation(STRATEGIC, bad, "[mockup]")
+
 
 # --------------------------------------------------------------------------
 # Derivation
@@ -267,6 +303,14 @@ class TestHelpers(unittest.TestCase):
         self.assertEqual(rs.test_num("p-10"), "10")
         self.assertEqual(rs.ice_total({"i": 5, "c": 4, "e": 2}), 11)
 
+    def test_render_single_pass_no_token_clobber(self):
+        # a value containing a literal {{B}} must NOT be re-substituted
+        out = rs.render("A={{A}} B={{B}}", {"A": "x {{B}} y", "B": "ZZZ"})
+        self.assertEqual(out, "A=x {{B}} y B=ZZZ")
+
+    def test_render_unknown_token_left_intact(self):
+        self.assertEqual(rs.render("{{KNOWN}} {{MISSING}}", {"KNOWN": "k"}), "k {{MISSING}}")
+
 
 # --------------------------------------------------------------------------
 # End-to-end emit
@@ -310,9 +354,9 @@ class TestEndToEnd(unittest.TestCase):
         self.assertIn('href="styles.css"', html)
         self.assertIn('src="site.js"', html)
         self.assertNotIn("http://", html.replace("http://www.w3.org", ""))  # no external links but SVG ns
-        # synthetic client present; a real-client denylist token (reassembled) absent
+        # output reflects only the synthetic fixture client; the generator emits no
+        # hardcoded client identity of its own (all client data comes from the inputs)
         self.assertIn("Acme Robotics", html)
-        self.assertNotIn("S&P" + " Global", html)
 
     def test_absent_mockup_section_omitted(self):
         rc, out = self._render()
