@@ -1,0 +1,86 @@
+<div class="hero" id="top">
+  <div class="container">
+    <p class="provenance">{{PROVENANCE}}</p>
+    <h1>{{HERO_H1}}</h1>
+    <p class="sub">{{HERO_SUB}}</p>
+
+    <div class="altitudes">
+      <a class="alt" href="#strategy">
+        <span class="k">Altitude 1</span>
+        <h4>The strategy</h4>
+        <p>{{ALT1}}</p>
+      </a>
+      <div class="alt-join"><span>executes&nbsp;as</span></div>
+      <a class="alt" href="#backlog">
+        <span class="k">Altitude 2</span>
+        <h4>The experiment backlog</h4>
+        <p>{{ALT2}}</p>
+      </a>
+    </div>
+  </div>
+</div>
+
+<section id="map">
+  <div class="container">
+    <span class="eyebrow">How the program fits together</span>
+    <h2>One portfolio, two altitudes</h2>
+    <p class="section-lead">{{MAP_LEAD}}</p>
+
+    <div class="map-shell">
+      <svg id="pf-map" viewBox="0 0 760 470" role="img" aria-label="Portfolio map of strategic moves and page-level tests, plotted by impact against ease.">
+{{MAP_SVG}}
+      </svg>
+
+      <div class="pf-legend">
+        <span class="lg"><span class="sw bet"></span> Strategic move, lifts qualified pipeline across the funnel</span>
+        <span class="lg"><span class="sw test"></span> Page test linked to a move</span>
+        <span class="lg"><span class="sw intake"></span> Page test, intake-only (no strategic parent)</span>
+        <span class="lg"><span class="sw expl"></span> Expresses: a test ships this move</span>
+        <span class="lg"><span class="sw infl"></span> Influences: informs or gates a test</span>
+      </div>
+      <p class="map-note">{{MAP_NOTE}}</p>
+    </div>
+  </div>
+</section>
+
+<section id="strategy">
+  <div class="container">
+    <span class="eyebrow">Altitude 1</span>
+    <h2>The strategy</h2>
+    <p class="section-lead">{{STRATEGY_LEAD}}</p>
+    {{KEYSTONE}}
+    <div class="bet-grid">
+{{BET_CARDS}}
+    </div>
+  </div>
+</section>
+
+<section id="backlog">
+  <div class="container">
+    <span class="eyebrow">Altitude 2</span>
+    <h2>The experiment backlog</h2>
+    <p class="section-lead">{{BACKLOG_LEAD}}</p>
+{{BACKLOG}}
+  </div>
+</section>
+
+<section id="sequence">
+  <div class="container">
+    <span class="eyebrow">Run order</span>
+    <h2>The sequence</h2>
+    <div class="tl">{{SEQUENCE}}</div>
+  </div>
+</section>
+
+<section id="decisions">
+  <div class="container">
+    <span class="eyebrow">What unblocks the program</span>
+    <h2>{{DECISIONS_H2}}</h2>
+    <p class="section-lead">{{DECISIONS_LEAD}}</p>
+    <div class="dec-grid">{{DECISIONS}}</div>
+  </div>
+</section>
+
+<div class="foot">
+  <div class="container">{{FOOT}}</div>
+</div>

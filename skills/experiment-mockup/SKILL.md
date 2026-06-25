@@ -62,7 +62,7 @@ The skill runs in one of two I/O modes, resolved once in the orchestrator (Step 
 - **Legacy mode** (default): reads the roadmap from `.claude/deliverables/experiment-roadmap.md` and writes mockups to `.claude/deliverables/experiments/<slug>/`.
 - **KB mode**: the run resolved a `{scope}`; reads the gold roadmap at `{kb_root}/deliverables/{scope}-experiment-roadmap.md` and writes mockups to `{kb_root}/deliverables/experiments/<slug>/`.
 
-Mode resolution mirrors hypothesis-generator's and roadmap-presentation's `KB Mode (Dual-Mode Output)` exactly, so all three skills behave identically about KB binding and `--scope` semantics. The mockups experiment-mockup writes in KB mode are exactly the source artifacts roadmap-presentation resolves at `{kb_root}/deliverables/experiments/<slug>/`.
+Mode resolution mirrors hypothesis-generator's and render-program-site's `KB Mode (Dual-Mode Output)` exactly, so all three skills behave identically about KB binding and `--scope` semantics. The mockups experiment-mockup writes in KB mode are the artifacts a render-program-site tactical spoke references through its test's `mockup` block at `{kb_root}/deliverables/experiments/<slug>/`.
 
 ### Mode Resolution Procedure (orchestrator, Step 1b)
 
@@ -82,7 +82,7 @@ When KB mode is confirmed, hold this in-session state for the load and write ste
 | Roadmap source (read, hard precondition) | `.claude/deliverables/experiment-roadmap.md` | `{kb_root}/deliverables/{scope}-experiment-roadmap.md` |
 | Mockup output base (write) | `.claude/deliverables/experiments/<slug>/` | `{kb_root}/deliverables/experiments/<slug>/` |
 
-The mockup output is NOT a KB artifact: it carries no `kb_layer` frontmatter. The KB-mode path only co-locates the mockups under the KB deliverables tree so roadmap-presentation can resolve them. The existing `placement.md` / `mockup.html` frontmatter rules are unchanged in both modes.
+The mockup output is NOT a KB artifact: it carries no `kb_layer` frontmatter. The KB-mode path only co-locates the mockups under the KB deliverables tree so render-program-site can resolve them via the tactical `mockup` block. The existing `placement.md` / `mockup.html` frontmatter rules are unchanged in both modes.
 
 ---
 

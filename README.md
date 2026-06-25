@@ -17,7 +17,7 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 | [voice-inference](skills/voice-inference/SKILL.md) | 1.0.0 | Brand voice analysis from website content with scored tone spectrum, vocabulary fingerprint, and actionable voice rules |
 | [live-capture](skills/live-capture/SKILL.md) | 0.2.0 | Live-page structural and copy capture. Navigates selected pages, passively reads the rendered DOM across viewports, and writes two factual artifacts (structure + verbatim copy). Dual-mode: legacy `.claude/context/` files, or KB-native bronze plus a silver structural artifact (in active development) |
 | [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.3.0 | Visual mockup generator for experiment hypotheses. Dual-mode (legacy / KB); resolves mockups by a stable per-experiment Key |
-| [roadmap-presentation](skills/roadmap-presentation/SKILL.md) | 0.3.0 | Renders an experiment roadmap into a client-facing multi-page HTML site (hub overview plus one spoke per experiment) with control-vs-proposed mockup comparisons. Deterministic reconciliation-ledger chrome plus a humanizer pass. Dual-mode: legacy `.claude/deliverables/` or KB-native |
+| [render-program-site](skills/render-program-site/SKILL.md) | 0.1.0 | Renders a unified two-altitude program site (hub plus one spoke per strategic bet and one per page test) from a strategic experiment layer and a tactical roadmap, with the cross-altitude edge contract enforced as a hard build gate. Deterministic generator for the gate, the Impact-by-Ease map, and all structure; a scoped LLM pass curates spoke prose. Dual-mode: legacy `.claude/deliverables/` or KB-native |
 | [render-default-deliverables](skills/render-default-deliverables/SKILL.md) | 1.0.1 | Generates client-ready deliverables from positioning context |
 
 ## Quick Start
@@ -44,8 +44,8 @@ Run a skill:
 /live-capture https://example.com
 /live-capture https://example.com --scope b2c
 /experiment-mockup 1
-/roadmap-presentation
-/roadmap-presentation --scope b2c
+/render-program-site
+/render-program-site --scope b2c
 ```
 
 The `--stage` flag on landing-page-generator controls which phases run: `brief`, `copy`, `design`, `qa`, or `all` (default).
@@ -118,7 +118,7 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 
 **experiment-mockup** (in active development) takes a hypothesis from the experiment roadmap and builds a visual mockup showing the proposed change in the context of the real target page. In live mode (requires Chrome DevTools MCP), it injects the change into the user's browser, matches the site's design system using computed styles, and iterates on placement and styling in real time. In static mode (automatic fallback), it extracts page HTML and builds a standalone mockup file. Both modes produce a CRO placement rationale explaining why the element is positioned where it is, what visual hierarchy strategy it uses, and how the dev team should implement it.
 
-**roadmap-presentation** (in active development) renders the experiment roadmap into a self-contained, multi-page HTML site: a hub overview page (tier- or disposition-grouped experiment index, sequencing diagram, client asks) plus one pitch-focused spoke page per experiment with a control-vs-proposed mockup comparison fed by experiment-mockup outputs. A deterministic scaffolding script emits all chrome (FunnelEnvy design system, page shells, prev/next pager chain) so renders never drift; the skill curates the roadmap for pitch and runs a humanizer pass over authored prose. Chain it directly off hypothesis-generator with `/hypothesis-generator --present`. Dual-mode: legacy `.claude/deliverables/` or KB-native.
+**render-program-site** (in active development) renders a unified two-altitude program site from two markdown inputs: a strategic experiment layer (program-level bets) and a tactical experiment roadmap (page-level tests). It produces a hub page plus one spoke per bet and one per test, with the cross-altitude edge contract (mechanism compatibility, dangling targets, version lock) enforced as a hard build gate that fails closed. A deterministic Python generator owns the gate, the Impact-by-Ease portfolio map, and all structure and chrome, so the strategic layer cannot drift; a scoped LLM pass then curates the spoke prose and runs a humanizer pass. Per-test mockups from experiment-mockup feed the tactical spokes' proposed-change comparison. Dual-mode: legacy `.claude/deliverables/` or KB-native.
 
 **positioning-update** applies client feedback, stakeholder corrections, and new intelligence to existing context files. Paste an email, Slack thread, or meeting notes and it classifies each piece of information, shows you a structured change plan, and executes surgical edits after approval. No web research. Triggers deliverable re-render automatically.
 

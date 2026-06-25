@@ -77,9 +77,11 @@ funnelenvy-skills/
 │   │       ├── capture.md        # Phase 3 (live): screenshot, extract HTML, write mockup.html
 │   │       ├── annotate.md       # Phase 4 (both): CRO placement rationale
 │   │       └── static-build.md   # Fallback: combined extract + build (no DevTools)
-│   ├── roadmap-presentation/
-│   │   ├── SKILL.md              # Orchestrator v0.3.0 (single agent: parse roadmap, scaffold chrome, curate, humanize, write site)
-│   │   ├── scripts/             # scaffold_site.py (deterministic CSS/JS/page-shell/pager-chain emission)
+│   ├── render-program-site/
+│   │   ├── SKILL.md              # Orchestrator v0.1.0 (phased: gate+emit, curate prose, humanize, write)
+│   │   ├── edge-contract.md      # Validated object + 7-check gate + source schemas + type-label map
+│   │   ├── scripts/             # render_site.py (deterministic: parse->gate->derive->emit)
+│   │   ├── templates/           # base/hub/spoke-strategic/spoke-tactical.html + styles.css + site.js
 │   │   └── references/          # ai-writing-signs.md (embedded humanizer rules)
 │   └── render-default-deliverables/
 │       └── SKILL.md              # L2 rendering skill v1.0 (~single agent, no research)
@@ -178,7 +180,7 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 
 **Note:** The `.claude/deliverables/` directory is empty until render-default-deliverables runs. positioning-framework does not produce deliverables.
 
-**Note:** The experiment-mockup paths above are legacy mode. In KB mode, experiment-mockup writes these artifacts under `{kb_root}/deliverables/experiments/<slug>/` instead, co-located with the gold roadmap so roadmap-presentation resolves them.
+**Note:** The experiment-mockup paths above are legacy mode. In KB mode, experiment-mockup writes these artifacts under `{kb_root}/deliverables/experiments/<slug>/` instead, co-located with the gold roadmap so render-program-site resolves them via each test's `mockup` block.
 
 **Migration notes:**
 - Prior to v1.0, competitive and messaging data lived in separate files (`market-landscape.md` + `competitor-profiles.md`, `audience-personas.md` + `messaging-framework.md` + `brand-voice.md`). These were merged into `competitive-landscape.md` and `audience-messaging.md`. Deprecated schema files have been removed.
@@ -280,7 +282,7 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 9. **`/voice-inference <url>`** (optional, standalone brand voice analysis, ~80-120K tokens, ~10-15 min)
 10. **`/live-capture <url>`** (optional, captures live-page structure + copy as factual context; feeds hypothesis-generator and experiment-mockup. Browser-based, dual-mode)
 11. **`/experiment-mockup <hypothesis-number>`** (optional, produces visual mockup + placement rationale for a specific hypothesis)
-12. **`/roadmap-presentation [--scope <slug>]`** (optional, renders the experiment roadmap into a client-facing multi-page HTML site; also chainable via `/hypothesis-generator --present`)
+12. **`/render-program-site [<strategic-md> <tactical-md>] [--scope <slug>]`** (optional, renders a strategic experiment layer + tactical roadmap into a client-facing two-altitude HTML site with a hard edge-contract gate)
 
 **Tip:** Add `--property <ga4_property_id>` to any positioning-framework invocation to use GA4 traffic data for page selection (e.g., `/positioning-framework https://example.com --property properties/123456789`). This runs a single lightweight query before research begins and saves the property ID to `company-identity.md` so downstream skills like ga4-audit can auto-detect it. The full ga4-audit still runs separately.
 
@@ -477,25 +479,25 @@ Visual mockup generator for proposed experiment changes. Takes a hypothesis from
 - Soft: Chrome DevTools MCP (degrades to static mode if unavailable)
 - Does NOT read L0/L1 context files (hypothesis is the single source of truth)
 
-**Dual-mode I/O:** mode resolution mirrors hypothesis-generator and roadmap-presentation (`--scope` required in KB mode, `--no-kb` forces legacy, failed detection falls back to legacy loudly). Legacy mode reads `.claude/deliverables/experiment-roadmap.md` and writes under `.claude/deliverables/experiments/`. KB mode reads `{kb_root}/deliverables/{scope}-experiment-roadmap.md` and writes under `{kb_root}/deliverables/experiments/` (co-located so roadmap-presentation resolves the mockups; not a KB artifact, no `kb_layer`).
+**Dual-mode I/O:** mode resolution mirrors hypothesis-generator and render-program-site (`--scope` required in KB mode, `--no-kb` forces legacy, failed detection falls back to legacy loudly). Legacy mode reads `.claude/deliverables/experiment-roadmap.md` and writes under `.claude/deliverables/experiments/`. KB mode reads `{kb_root}/deliverables/{scope}-experiment-roadmap.md` and writes under `{kb_root}/deliverables/experiments/` (co-located so render-program-site resolves the mockups; not a KB artifact, no `kb_layer`).
 
 **Outputs (dual-mode):** legacy `.claude/deliverables/experiments/<slug>/`; KB mode `{kb_root}/deliverables/experiments/<slug>/` (mockup.html, placement.md, mockup-screenshot.png)
 
 **Runtime:** ~40-80K tokens (live, variable with iteration), ~30-50K tokens (static).
 
-### roadmap-presentation (v0.3.0)
-Renders an experiment roadmap markdown (KB-mode gold or legacy deliverable) into a self-contained, multi-page static HTML site: a hub overview page (tier- or disposition-grouped experiment index, sequencing diagram, "what's not here" exclusions, client asks) plus one pitch-focused spoke page per experiment with a control-vs-proposed mockup comparison fed by experiment-mockup outputs. Single agent, no subagents. A deterministic scaffolding script emits all chrome (FunnelEnvy CSS design system, JS behaviors, page shells, prev/next pager chain) so renders never drift; the agent does the judgment work (curation, version-agnostic section-mapping, humanizer pass). Render skill: no web research, no analysis, no `.claude/context/` writes.
+### render-program-site (v0.1.0)
+Renders a unified two-altitude program site from two markdown inputs: a strategic experiment layer (program-level bets) and a tactical experiment roadmap (page-level tests). Produces a hub page plus one spoke per bet (`sb-NN.html`) and one per test (`p-NN.html`), with the cross-altitude edge contract enforced as a hard build gate (mechanism compatibility, dangling targets, executor-status derivation, version lock) that fails closed with a non-zero exit. Hybrid skill: a deterministic generator (`scripts/render_site.py`) owns the gate, the Impact-by-Ease portfolio map, edge typing, and all chrome and data-bound structure, so the strategic layer cannot drift; a scoped LLM pass then curates the spoke prose slots and runs a humanizer pass. Replaces the former roadmap-presentation skill. No web research, no `.claude/context/` writes.
 
-**Invocation:** `/roadmap-presentation [--scope <slug>] [--no-kb] [--out <dir>]`. Also chainable via `/hypothesis-generator --present`.
+**Invocation:** `/render-program-site [<strategic-md> <tactical-md>] [--scope <slug>] [--no-kb] [--out <dir>]`.
 
-**Phases:** (1) resolve mode + locate source roadmap; (2) parse roadmap into sections/experiments/dispositions; (3) resolve mockups per the slug-based mockup-resolution contract; (4) run `scaffold_site.py` to emit chrome; (5) author per-page content (curation + section-mapping + humanizer) into the slots; (6) write site + completion message (mode, count, per-experiment mockup status, missing/orphan drift, deferred-hosting note).
+**Phases:** (1) resolve inputs + mode; (2) run `render_site.py` to validate the gate and emit all structure/chrome with labeled prose slots; (3) LLM curation pass mapping source body sections -> prose slots (drop-list applied); (4) humanizer pass over authored prose; (5) write site + completion message (mode, bet/test counts, per-test mockup status, gate result, deferred-hosting note).
 
 **Dependencies:**
-- Hard: the source roadmap markdown (produced by hypothesis-generator)
-- Soft: per-experiment mockup artifacts from experiment-mockup (placeholder frames when absent); `modules/slugify.md` (mockup resolution)
-- Does NOT read L0/L1 context files; the roadmap markdown is the single source of truth
+- Hard: the two source markdowns (strategic experiment layer + tactical roadmap) carrying the edge-contract frontmatter; their `program_version` must match
+- Soft: per-test mockup artifacts from experiment-mockup (placeholder frames when absent), referenced via each test's `mockup` block
+- Does NOT read L0/L1 context files; the two roadmap markdowns are the single source of truth
 
-**Outputs (dual-mode):** legacy `.claude/deliverables/roadmap-site/`; KB mode `{kb_root}/deliverables/{scope}-roadmap-site/`. No `kb_layer` frontmatter (derived view). Hosting/deploy deferred to a follow-up (v1 non-goal).
+**Outputs (dual-mode):** legacy `.claude/deliverables/program-site/`; KB mode `{kb_root}/deliverables/{scope}-program-site/` (`styles.css`, `site.js`, `index.html`, `sb-NN.html`, `p-NN.html`, `mockups/<id>/`). No `kb_layer` frontmatter (derived view). Hosting/deploy deferred to a follow-up (v1 non-goal).
 
 ## Development
 
