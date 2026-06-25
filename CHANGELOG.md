@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.0] - 2026-06-24
+
+### hypothesis-generator
+
+#### Added
+- **hypothesis-generator** (1.9.0): premise and measurement rigor made binding. A new validation phase (Phase 3.5) applies six tri-state gates (premise triangulation, instrumentation, baseline, control-stability, power, segmentation) as a hard Confidence ceiling, plus segmentation pre-registration, bundle interpretability, consequential self-critique, a data-hygiene discount for bot/synthetic traffic, and a forced-spread anti-clustering remedy. Absence is neutral (never penalizes); all checks are KB-internal with no new research.
+- **hypothesis-generator** (1.9.0): strategic experiments as a separate, first-class deliverable. A business-level lever detection phase produces a standalone strategic roadmap (program/offer/audience-motion/asset levers with non-A/B measurement designs such as holdout, pre/post, geo split, and operational tracking, each with its own scoring and exclusions) alongside the tactical page-element roadmap, governed by a client-facing register. Context-gated: when no lever qualifies, output is byte-identical to the tactical-only roadmap.
+
 ## [1.4.1] - 2026-06-22
 
 ### experiment-mockup
