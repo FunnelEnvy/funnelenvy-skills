@@ -485,17 +485,17 @@ Visual mockup generator for proposed experiment changes. Takes a hypothesis from
 
 **Runtime:** ~40-80K tokens (live, variable with iteration), ~30-50K tokens (static).
 
-### render-program-site (v0.1.0)
-Renders a unified two-altitude program site from two markdown inputs: a strategic experiment layer (program-level bets) and a tactical experiment roadmap (page-level tests). Produces a hub page plus one spoke per bet (`sb-NN.html`) and one per test (`p-NN.html`), with the cross-altitude edge contract enforced as a hard build gate (mechanism compatibility, dangling targets, executor-status derivation, version lock) that fails closed with a non-zero exit. Hybrid skill: a deterministic generator (`scripts/render_site.py`) owns the gate, the Impact-by-Ease portfolio map, edge typing, and all chrome and data-bound structure, so the strategic layer cannot drift; a scoped LLM pass then curates the spoke prose slots and runs a humanizer pass. Replaces the former roadmap-presentation skill. No web research, no `.claude/context/` writes.
+### render-program-site (v0.2.1)
+Renders a unified two-altitude program site from hypothesis-generator's two gold roadmaps, read in place: the strategic roadmap (`gold-strategic-roadmap`, program-level bets) and the tactical roadmap (`gold-experiment-roadmap`, page-level tests). It derives each item's id, key, title, tier, ICE, and page from the gold structure and authors nothing into those artifacts; the one net-new input is a small render-owned sidecar (`{scope}-program-edges.md`) carrying the cross-altitude edge binding plus the gate-classification fields, keyed by gold `**Key:**`. Produces a hub page plus one spoke per bet (`sb-NN.html`) and one per test (`p-NN.html`), with the cross-altitude edge contract enforced as a hard build gate (mechanism compatibility, dangling targets, executor-status derivation, sidecar-vs-gold version lock, binding completeness) that fails closed with a non-zero exit. Hybrid skill: a deterministic generator (`scripts/render_site.py`) owns the gate, the Impact-by-Ease portfolio map, edge typing, and all chrome and data-bound structure, so the strategic layer cannot drift; a scoped LLM pass then curates the spoke prose slots and runs a humanizer pass. Replaces the former roadmap-presentation skill. No web research, no `.claude/context/` writes.
 
-**Invocation:** `/render-program-site [<strategic-md> <tactical-md>] [--scope <slug>] [--no-kb] [--out <dir>]`.
+**Invocation:** `/render-program-site [<strategic-md> <tactical-md>] [--edges <path>] [--scope <slug>] [--no-kb] [--out <dir>]`.
 
-**Phases:** (1) resolve inputs + mode; (2) run `render_site.py` to validate the gate and emit all structure/chrome with labeled prose slots; (3) LLM curation pass mapping source body sections -> prose slots (drop-list applied); (4) humanizer pass over authored prose; (5) write site + completion message (mode, bet/test counts, per-test mockup status, gate result, deferred-hosting note).
+**Phases:** (1) resolve three inputs + mode (HARD STOP on a missing sidecar); (2) run `render_site.py` to validate the gate and emit all structure/chrome with labeled prose slots; (3) LLM curation pass mapping gold body sections -> prose slots (drop-list applied); (4) humanizer pass over authored prose; (5) write site + completion message (mode, bet/test counts, per-test mockup status, gate result, deferred-hosting note).
 
 **Dependencies:**
-- Hard: the two source markdowns (strategic experiment layer + tactical roadmap) carrying the edge-contract frontmatter; their `program_version` must match
-- Soft: per-test mockup artifacts from experiment-mockup (placeholder frames when absent), referenced via each test's `mockup` block
-- Does NOT read L0/L1 context files; the two roadmap markdowns are the single source of truth
+- Hard: the two gold roadmaps (strategic + tactical) read in place, plus the edge sidecar; the sidecar's `strategic_version`/`tactical_version` must match the live gold roadmaps' frontmatter `version`
+- Soft: per-test mockup artifacts from experiment-mockup (placeholder frames when absent), referenced via each sidecar test's `mockup` block
+- Does NOT read L0/L1 context files; the two gold roadmaps + the edge sidecar are the single source of truth
 
 **Outputs (dual-mode):** legacy `.claude/deliverables/program-site/`; KB mode `{kb_root}/deliverables/{scope}-program-site/` (`styles.css`, `site.js`, `index.html`, `sb-NN.html`, `p-NN.html`, `mockups/<id>/`). No `kb_layer` frontmatter (derived view). Hosting/deploy deferred to a follow-up (v1 non-goal).
 

@@ -263,50 +263,109 @@ def parse_frontmatter(text):
 
 
 # --------------------------------------------------------------------------
-# Markdown body section extraction (per-bet / per-test prose, raw material)
+# Gold-roadmap body parsing (sections, tiers, Key, Scores -- raw material)
 # --------------------------------------------------------------------------
+# render-program-site consumes hypothesis-generator's prose gold roadmaps
+# (gold-experiment-roadmap / gold-strategic-roadmap). Both altitudes use the
+# same body shape: `### N. Title` experiment sections nested under tier H2s
+# (`## Quick Wins` / `## Strategic Bets` / `## Explorations`), each carrying a
+# `**Key:** <slug>` line, a `**Scores:** Impact X | Confidence Y | Ease Z` line,
+# and bold-labeled prose paragraphs. The structured contract data (id, key,
+# title, tier, ICE, page) is DERIVED from this body; only the cross-altitude
+# edge binding is authored, in the sidecar.
 
-def _norm_bet_id(heading):
-    m = re.search(r"sb[-\s]?0*(\d+)", heading, re.I)
-    return "sb-%02d" % int(m.group(1)) if m else None
+# Tier H2 heading text -> tier key. Anything else is a non-tier H2.
+TIER_HEADINGS = (
+    ("quick win", "quick-win"),
+    ("strategic bet", "strategic-bet"),
+    ("exploration", "exploration"),
+)
 
 
-def _norm_test_id(heading):
-    m = re.match(r"\s*0*(\d+)\.", heading)
-    return "p-%02d" % int(m.group(1)) if m else None
+def _tier_key(heading):
+    h = heading.strip().lower()
+    for prefix, key in TIER_HEADINGS:
+        if h.startswith(prefix):
+            return key
+    return None
+
+
+def parse_scores(text):
+    """Parse `Impact X | Confidence Y | Ease Z` (anywhere in `text`) -> {i,c,e}.
+
+    The gold `**Scores:**` line is followed inline by a rationale sentence; the
+    leading triple is matched and the trailing prose ignored. Returns None when
+    no scores triple is present.
+    """
+    if not text:
+        return None
+    m = re.search(r"impact\s+(\d+)\s*\|\s*confidence\s+(\d+)\s*\|\s*ease\s+(\d+)", text, re.I)
+    if not m:
+        return None
+    return {"i": int(m.group(1)), "c": int(m.group(2)), "e": int(m.group(3))}
 
 
 def extract_sections(body, kind):
-    """Split a roadmap body into per-item sections keyed by canonical id.
+    """Split a gold-roadmap body into per-experiment sections keyed by canonical id.
 
-    Returns {id: {"title": str, "labels": {label: text}, "paras": [text]}}.
-    `kind` is "bet" or "test". Sections are H2 (`## SB-N.`) for bets and H3
-    (`### N.`) for tests. Bold-labeled paragraphs (`**Label.** text`) are
-    collected into `labels`; all paragraphs are kept in order in `paras`.
+    Returns {id: {"title", "key", "tier", "labels": {label: text}, "paras": [..]}}.
+    `kind` is "bet" (id prefix `sb`) or "test" (id prefix `p`); the id ordinal is
+    the `### N.` section number. `tier` is the enclosing tier H2. Bold-labeled
+    paragraphs (`**Label:** text` or `**Label.** text`) are collected into
+    `labels` with the trailing `:`/`.` stripped; `**Key:**` is also surfaced as
+    `key`. Numbered sections only appear under tier H2s in the gold format, so a
+    numbered heading reached while no tier is active is still captured (tier None)
+    and the gate reports it.
     """
-    heading_re = re.compile(r"^##\s+(SB-\d+\..*)$" if kind == "bet" else r"^###\s+(\d+\..*)$", re.M)
-    norm = _norm_bet_id if kind == "bet" else _norm_test_id
+    prefix = "sb" if kind == "bet" else "p"
+    lines = body.split("\n")
+    cur_tier = None
+    starts = []  # (line_idx, ordinal, title, tier)
+    for idx, ln in enumerate(lines):
+        if ln.startswith("### "):
+            h3 = re.match(r"^###\s+0*(\d+)\.\s*(.*)$", ln)
+            if h3:
+                starts.append((idx, int(h3.group(1)), h3.group(2).strip(), cur_tier))
+        elif ln.startswith("## "):
+            cur_tier = _tier_key(ln[3:])
     out = {}
-    matches = list(heading_re.finditer(body))
-    for i, m in enumerate(matches):
-        head = m.group(1).strip()
-        cid = norm(head)
-        if not cid:
-            continue
-        start = m.end()
-        end = matches[i + 1].start() if i + 1 < len(matches) else len(body)
-        block = body[start:end].strip()
-        title = re.sub(r"^(SB-\d+|\d+)\.\s*", "", head).strip()
+    for k, (idx, ordn, title, tier) in enumerate(starts):
+        nxt = starts[k + 1][0] if k + 1 < len(starts) else len(lines)
+        block_lines = []
+        for j in range(idx + 1, nxt):
+            ln = lines[j]
+            if ln.startswith("## ") and not ln.startswith("### "):
+                break  # next top-level section ends this experiment's block
+            block_lines.append(ln)
+        cid = "%s-%02d" % (prefix, ordn)
+        # Line-based bold-label extraction. In the gold format several
+        # `**Label:** value` lines sit consecutively in one paragraph (no blank
+        # line between them), so labels are read per line, not per paragraph. A
+        # label's value continues onto following plain lines until the next
+        # label, a blank line, a blockquote (`>`), or a heading.
         labels, paras = {}, []
-        for para in re.split(r"\n\s*\n", block):
-            para = para.strip()
-            if not para or para.startswith("#") or para == "---":
+        cur_label = None
+        for raw in block_lines:
+            stripped = raw.strip()
+            if not stripped:
+                cur_label = None
                 continue
-            paras.append(para)
-            lm = re.match(r"\*\*(.+?)\.?\*\*\s*(.*)$", para, re.S)
+            if stripped.startswith("#") or stripped == "---":
+                cur_label = None
+                continue
+            if stripped.startswith(">"):
+                cur_label = None
+                paras.append(stripped)
+                continue
+            paras.append(stripped)
+            lm = re.match(r"\*\*(.+?)\*\*\s*(.*)$", stripped)
             if lm:
-                labels[lm.group(1).strip().rstrip(".")] = lm.group(2).strip()
-        out[cid] = {"title": title, "labels": labels, "paras": paras}
+                cur_label = lm.group(1).strip().rstrip(":.").strip()
+                labels[cur_label] = lm.group(2).strip()
+            elif cur_label is not None:
+                labels[cur_label] = (labels[cur_label] + " " + stripped).strip()
+        out[cid] = {"title": title, "key": labels.get("Key") or None,
+                    "tier": tier, "labels": labels, "paras": paras}
     return out
 
 
@@ -320,95 +379,182 @@ def _require(d, key, where):
     return d[key]
 
 
-def load_strategic(path):
+_REVERSE_KEYS = ("edges", "inbound", "expressed_by", "informed_by", "gated_by")
+_INTAKE_KEYS = ("intake_only", "intake")
+
+
+def load_sidecar(path):
+    """Load the render-owned edge sidecar ({scope}-program-edges.md).
+
+    Carries the program/hero block plus the cross-altitude edge binding and the
+    gate-classification fields the prose gold roadmaps cannot encode. Bets and
+    tests are keyed by the gold `**Key:**` slug. Returns {"program", "bets",
+    "tests"} where bets/tests are dicts keyed by gold Key.
+    """
     with open(path, encoding="utf-8") as fh:
-        text = fh.read()
-    fm, body = parse_frontmatter(text)
-    program = _require(fm, "program", "strategic frontmatter")
-    bets_raw = _require(fm, "bets", "strategic frontmatter")
-    sections = extract_sections(body, "bet")
-    bets = []
-    for b in bets_raw:
-        bid = _require(b, "id", "bet")
-        ice = _require(b, "ice", "bet %s" % bid)
-        edges = b.get("edges") or []
-        norm_edges = []
-        for e in edges:
-            norm_edges.append({"target": _require(e, "target", "edge in %s" % bid),
-                               "type": _require(e, "type", "edge in %s" % bid)})
-        bets.append({
-            "id": bid,
-            "title": _require(b, "title", "bet %s" % bid),
-            "lever": b.get("lever", ""),
-            "decided_on": b.get("decided_on", ""),
-            "run_tag": b.get("run_tag", ""),
+        fm, _ = parse_frontmatter(fh.read())
+    program = _require(fm, "program", "sidecar frontmatter")
+    bets = {}
+    for b in (fm.get("bets") or []):
+        key = _require(b, "key", "sidecar bet")
+        edges = []
+        for e in (b.get("edges") or []):
+            edges.append({"target_key": _require(e, "target", "edge in sidecar bet %s" % key),
+                          "type": _require(e, "type", "edge in sidecar bet %s" % key)})
+        bets[key] = {
             "delivery_surface": b.get("delivery_surface") or [],
-            "executor_status": _require(b, "executor_status", "bet %s" % bid),
-            "ice": {"i": ice["i"], "c": ice["c"], "e": ice["e"]},
+            "executor_status": _require(b, "executor_status", "sidecar bet %s" % key),
             "keystone": bool(b.get("keystone", False)),
-            "edges": norm_edges,
-            "section": sections.get(bid, {"title": "", "labels": {}, "paras": []}),
-        })
-    return {"program": program, "bets": bets}
-
-
-def load_tactical(path):
-    with open(path, encoding="utf-8") as fh:
-        text = fh.read()
-    fm, body = parse_frontmatter(text)
-    pv = _require(fm, "program_version", "tactical frontmatter")
-    tests_raw = _require(fm, "tests", "tactical frontmatter")
-    sections = extract_sections(body, "test")
-    tests = []
-    for t in tests_raw:
-        tid = _require(t, "id", "test")
-        ice = _require(t, "ice", "test %s" % tid)
-        tests.append({
-            "id": tid,
-            "title": _require(t, "title", "test %s" % tid),
-            "mechanism_class": _require(t, "mechanism_class", "test %s" % tid),
-            "tier": _require(t, "tier", "test %s" % tid),
-            "ice": {"i": ice["i"], "c": ice["c"], "e": ice["e"]},
-            "target_page": t.get("target_page", ""),
+            "run_tag": b.get("run_tag", ""),
+            "decided_on": b.get("decided_on", ""),
+            "edges": edges,
+            "_reverse_keys": [k for k in _REVERSE_KEYS if k in b and k != "edges"],
+        }
+    tests = {}
+    for t in (fm.get("tests") or []):
+        key = _require(t, "key", "sidecar test")
+        tests[key] = {
+            "mechanism_class": t.get("mechanism_class"),
             "status": t.get("status", "active"),
             "superseded_by": t.get("superseded_by", ""),
             "mockup": t.get("mockup") if isinstance(t.get("mockup"), dict) else None,
             "_mockup_malformed": ("mockup" in t and t["mockup"] is not None
                                   and not isinstance(t["mockup"], dict)),
-            # any inbound/reverse authoring is a gate violation (check 6)
-            "_reverse_keys": [k for k in ("edges", "inbound", "expressed_by", "informed_by", "gated_by") if k in t],
-            # intake_only is derived, never authored (check 5)
-            "_authored_intake_keys": [k for k in ("intake_only", "intake") if k in t],
-            "section": sections.get(tid, {"title": "", "labels": {}, "paras": []}),
+            # tests author no edges/inbound/reverse references (gate check 6)
+            "_reverse_keys": [k for k in _REVERSE_KEYS if k in t],
+            # intake_only is derived, never authored (gate check 5)
+            "_authored_intake_keys": [k for k in _INTAKE_KEYS if k in t],
+        }
+    return {"program": program, "bets": bets, "tests": tests}
+
+
+def load_strategic(path, sidecar):
+    """Load the strategic gold roadmap, deriving bets from the body and merging
+    the sidecar's per-bet edge binding + classification (keyed by gold Key)."""
+    with open(path, encoding="utf-8") as fh:
+        fm, body = parse_frontmatter(fh.read())
+    gold_version = str(fm.get("version", ""))
+    sections = extract_sections(body, "bet")
+    sc_bets = sidecar["bets"]
+    bets = []
+    for cid in sorted(sections, key=lambda c: int(c.split("-")[1])):
+        sec = sections[cid]
+        if not sec["key"]:
+            raise ValueError("strategic %s ('%s'): missing **Key:** line in gold body" % (cid, sec["title"]))
+        ice = parse_scores(sec["labels"].get("Scores"))
+        if not ice:
+            raise ValueError("strategic %s: missing or unparseable **Scores:** line" % cid)
+        sb = sc_bets.get(sec["key"])
+        bets.append({
+            "id": cid,
+            "key": sec["key"],
+            "title": sec["title"],
+            "lever": sec["labels"].get("Lever", ""),
+            "decided_on": (sb["decided_on"] if sb else ""),
+            "run_tag": (sb["run_tag"] if sb else ""),
+            "delivery_surface": (sb["delivery_surface"] if sb else []),
+            "executor_status": (sb["executor_status"] if sb else None),
+            "ice": ice,
+            "keystone": bool(sb["keystone"]) if sb else False,
+            "edges_raw": (sb["edges"] if sb else []),
+            "_bound": sb is not None,
+            "section": sec,
         })
-    return {"program_version": pv, "tests": tests}
+    return {"program": sidecar["program"], "bets": bets, "gold_version": gold_version}
+
+
+def load_tactical(path, sidecar):
+    """Load the tactical gold roadmap, deriving tests from the body and merging
+    the sidecar's per-test mechanism_class + status (keyed by gold Key)."""
+    with open(path, encoding="utf-8") as fh:
+        fm, body = parse_frontmatter(fh.read())
+    gold_version = str(fm.get("version", ""))
+    sections = extract_sections(body, "test")
+    sc_tests = sidecar["tests"]
+    tests = []
+    for cid in sorted(sections, key=lambda c: int(c.split("-")[1])):
+        sec = sections[cid]
+        if not sec["key"]:
+            raise ValueError("tactical %s ('%s'): missing **Key:** line in gold body" % (cid, sec["title"]))
+        ice = parse_scores(sec["labels"].get("Scores"))
+        if not ice:
+            raise ValueError("tactical %s: missing or unparseable **Scores:** line" % cid)
+        st = sc_tests.get(sec["key"])
+        tests.append({
+            "id": cid,
+            "key": sec["key"],
+            "title": sec["title"],
+            "mechanism_class": (st["mechanism_class"] if st else None),
+            "tier": sec["tier"],
+            "ice": ice,
+            "target_page": sec["labels"].get("Page", ""),
+            "status": (st["status"] if st else "active"),
+            "superseded_by": (st["superseded_by"] if st else ""),
+            "mockup": (st["mockup"] if st else None),
+            "_mockup_malformed": (st["_mockup_malformed"] if st else False),
+            "_bound": st is not None,
+            "section": sec,
+        })
+    return {"tests": tests, "gold_version": gold_version}
+
+
+def link_edges(strategic, tactical):
+    """Resolve each bet edge's target (a tactical gold Key) to a `p-NN` id.
+
+    Sets `b["edges"]` = [{target, type, target_key, _resolved}]; an unresolved
+    target keeps the raw key string so the gate names it. Reverse edges stay
+    derived (see `derive`); the strategic side is the only authored end."""
+    key2id = {t["key"]: t["id"] for t in tactical["tests"] if t["key"]}
+    for b in strategic["bets"]:
+        edges = []
+        for e in b["edges_raw"]:
+            tid = key2id.get(e["target_key"])
+            edges.append({"target": tid if tid else e["target_key"],
+                          "type": e["type"],
+                          "target_key": e["target_key"],
+                          "_resolved": tid is not None})
+        b["edges"] = edges
 
 
 # --------------------------------------------------------------------------
 # The gate (7 checks, fail-closed)
 # --------------------------------------------------------------------------
 
-def run_gate(strategic, tactical):
+def run_gate(strategic, tactical, sidecar):
     violations = []
     bets, tests = strategic["bets"], tactical["tests"]
     live_ids = {t["id"] for t in tests if t["status"] != "superseded"}
     test_by_id = {t["id"]: t for t in tests}
+    gold_bet_keys = {b["key"] for b in bets}
+    gold_test_keys = {t["key"] for t in tests}
 
-    # 3 prep: count expresses targeting each test (for reverse-edge checks)
+    # Bind: every gold bet must have a sidecar entry (its edges + classification),
+    # and every sidecar key must resolve to a gold Key (no orphan bindings).
     for b in bets:
-        # 1. edge.type in {expresses, informs, gates}
+        if not b["_bound"]:
+            violations.append("[bind] strategic bet %s (key '%s') has no entry in the edge sidecar"
+                              % (b["id"], b["key"]))
+    for key in sidecar["bets"]:
+        if key not in gold_bet_keys:
+            violations.append("[bind] sidecar bet key '%s' resolves to no strategic gold Key" % key)
+    for key in sidecar["tests"]:
+        if key not in gold_test_keys:
+            violations.append("[bind] sidecar test key '%s' resolves to no tactical gold Key" % key)
+
+    for b in bets:
         for e in b["edges"]:
+            # 1. edge.type in {expresses, informs, gates}
             if e["type"] not in EDGE_TYPES:
-                violations.append("[1] bet %s: edge type '%s' not in %s (target %s)"
-                                  % (b["id"], e["type"], list(EDGE_TYPES), e["target"]))
-            # 2. edge.target resolves to a live test id
-            if e["target"] not in live_ids:
-                violations.append("[2] bet %s: edge target '%s' resolves to no live test id"
-                                  % (b["id"], e["target"]))
+                violations.append("[1] bet %s: edge type '%s' not in %s (target key '%s')"
+                                  % (b["id"], e["type"], list(EDGE_TYPES), e["target_key"]))
+            # 2. edge.target (a tactical Key) resolves to a live test id
+            if not e["_resolved"] or e["target"] not in live_ids:
+                violations.append("[2] bet %s: edge target key '%s' resolves to no live test"
+                                  % (b["id"], e["target_key"]))
             # 3. mechanism gate on `expresses`
-            if e["type"] == "expresses" and e["target"] in test_by_id:
+            if e["type"] == "expresses" and e["_resolved"] and e["target"] in test_by_id:
                 t = test_by_id[e["target"]]
-                if t["mechanism_class"] not in b["delivery_surface"]:
+                if t["mechanism_class"] and t["mechanism_class"] not in b["delivery_surface"]:
                     violations.append(
                         "[3] mechanism mismatch: bet %s expresses test %s, but test mechanism "
                         "'%s' is not in bet delivery_surface %s (lever: %s)"
@@ -432,28 +578,37 @@ def run_gate(strategic, tactical):
                               "and at least one on-page surface (got expresses=%s, surfaces=%s)"
                               % (b["id"], has_expr, surfaces))
 
-    # 6. tactical file authors no inbound / reverse references
-    for t in tests:
+    # 5/6. the tactical side authors no reverse references and never authors the
+    # derived intake_only flag. The gold tactical roadmap is prose (cannot carry
+    # them); the only authorable tactical surface is the sidecar test entry.
+    for key, t in sidecar["tests"].items():
         if t["_reverse_keys"]:
-            violations.append("[6] test %s: tactical file must not author inbound/reverse references "
-                              "(found %s); reverse edges are derived from the strategic file"
-                              % (t["id"], t["_reverse_keys"]))
-
-    # 7. program_version matches across both inputs
-    sv = str(strategic["program"].get("program_version", ""))
-    tv = str(tactical["program_version"])
-    if sv != tv:
-        violations.append("[7] program_version mismatch: strategic '%s' != tactical '%s'" % (sv, tv))
-
-    # 5. intake_only is derived, never authored: authoring an intake_only/intake
-    # field on a test is a contract violation (the renderer computes it from edges).
-    for t in tests:
+            violations.append("[6] sidecar test '%s': must not author inbound/reverse references "
+                              "(found %s); reverse edges are derived from the strategic edges"
+                              % (key, t["_reverse_keys"]))
         if t["_authored_intake_keys"]:
-            violations.append("[5] test %s: intake_only is derived, never authored "
-                              "(found %s)" % (t["id"], t["_authored_intake_keys"]))
+            violations.append("[5] sidecar test '%s': intake_only is derived, never authored "
+                              "(found %s)" % (key, t["_authored_intake_keys"]))
         if t["_mockup_malformed"]:
-            violations.append("[mockup] test %s: malformed mockup block (expected a mapping)"
-                              % t["id"])
+            violations.append("[mockup] sidecar test '%s': malformed mockup block (expected a mapping)" % key)
+
+    # mechanism_class is required on every live test (the mechanism gate input).
+    for t in tests:
+        if t["status"] != "superseded" and not t["mechanism_class"]:
+            violations.append("[mech] test %s (key '%s'): no mechanism_class in the edge sidecar "
+                              "(required for the `expresses` mechanism gate)" % (t["id"], t["key"]))
+
+    # 7. version lock: the sidecar records the gold roadmap versions it was
+    # authored against; both must match the live gold roadmaps' frontmatter.
+    prog = sidecar["program"]
+    sv = str(prog.get("strategic_version", ""))
+    tv = str(prog.get("tactical_version", ""))
+    if sv != strategic["gold_version"]:
+        violations.append("[7] strategic version lock: sidecar strategic_version '%s' != strategic "
+                          "gold roadmap version '%s'" % (sv, strategic["gold_version"]))
+    if tv != tactical["gold_version"]:
+        violations.append("[7] tactical version lock: sidecar tactical_version '%s' != tactical "
+                          "gold roadmap version '%s'" % (tv, tactical["gold_version"]))
 
     if violations:
         raise GateError(violations)
@@ -526,6 +681,14 @@ def derive(strategic, tactical):
 
 def bet_label(bid):  # sb-02 -> SB-2
     return "SB-%d" % int(bid.split("-")[1])
+
+
+def join_and(items):  # ["A","B","C"] -> "A, B, and C"
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return "%s and %s" % (items[0], items[1])
+    return "%s, and %s" % (", ".join(items[:-1]), items[-1])
 
 
 def test_num(tid):  # p-03 -> 3
@@ -655,10 +818,10 @@ def build_bet_cards(bets):
             '<div class="exec"><span class="x-tag %s">%s</span>%s<p class="x-note">%s</p></div>'
             '</div>'
             % (b["id"], bet_label(b["id"]), run, b["id"], esc(b["title"]), decided,
-               slot(b["id"], "card-body", b["section"]["labels"].get("The lever", b["lever"])),
+               slot(b["id"], "card-body", b["section"]["labels"].get("Lever", b["lever"])),
                ice_total(b["ice"]), b["ice"]["i"], b["ice"]["c"], b["ice"]["e"],
                tag_cls, tag_txt, "".join(rels),
-               slot(b["id"], "exec-note", b["section"]["labels"].get("How this connects to the page-level roadmap", ""))))
+               slot(b["id"], "exec-note", b["section"]["labels"].get("What a win proves", ""))))
     return "\n".join(cards)
 
 
@@ -740,10 +903,16 @@ def build_hub(strategic, tactical, derived, templates):
     keystone_html = ""
     if any(b["keystone"] for b in bets):
         ks = [bet_label(b["id"]) for b in bets if b["keystone"]]
-        ks_txt = ", ".join(ks)
+        # Neutral, count-correct seed: name the keystone bet(s), assert no
+        # relationship. The curation pass authors the actual rationale from the
+        # bet's source, so the prefill only needs to be grammatical seed text.
+        if len(ks) == 1:
+            ks_seed = "%s is the keystone bet." % ks[0]
+        else:
+            ks_seed = "%s are the keystone bets." % join_and(ks)
         keystone_html = ('<div class="keystone"><span class="ks-mark">The keystone</span>'
                          '<p>%s</p></div>'
-                         % slot("program", "keystone", "%s converge on a shared asset." % ks_txt))
+                         % slot("program", "keystone", ks_seed))
 
     seq_src = extract_named_section(strategic_body_cache.get("strategic", ""), "Sequencing")
     main = render(templates["hub"], {
@@ -813,11 +982,11 @@ def build_spoke_strategic(b, program, templates):
                   % (client, bet_label(b["id"]))),
         "META": meta,
         "TITLE_H1": esc(b["title"]),
-        "LEAD": slot(b["id"], "lead", lab.get("The lever", b["lever"])),
-        "LEVER": slot(b["id"], "lever", lab.get("The lever", "")),
-        "MOVE": slot(b["id"], "move", lab.get("The experiment / program", lab.get("The experiment", ""))),
+        "LEAD": slot(b["id"], "lead", lab.get("Lever", b["lever"])),
+        "LEVER": slot(b["id"], "lever", lab.get("Lever", "")),
+        "MOVE": slot(b["id"], "move", lab.get("What to stand up", "")),
         "CONNECTIONS": "".join(conn),
-        "EVIDENCE": slot(b["id"], "evidence", lab.get("What must be stood up", "")),
+        "EVIDENCE": slot(b["id"], "evidence", lab.get("Stand-up dependency / Requires", lab.get("What to stand up", ""))),
         "FOOT_ID": "%s &middot; %s" % (bet_label(b["id"]), esc(program.get("name", ""))),
     })
     return _spoke_base(templates, "%s %s | %s" % (bet_label(b["id"]), esc(b["title"]), esc(program.get("name", ""))),
@@ -871,11 +1040,11 @@ def build_spoke_tactical(t, program, templates, out_dir):
                   % (client, test_num(t["id"]))),
         "META": meta,
         "TITLE_H1": esc(t["title"]),
-        "LEAD": slot(t["id"], "lead", lab.get("The hypothesis", "")),
-        "HYPOTHESIS": slot(t["id"], "hypothesis", lab.get("The hypothesis", "")),
+        "LEAD": slot(t["id"], "lead", lab.get("What to test", "")),
+        "HYPOTHESIS": slot(t["id"], "hypothesis", lab.get("Why this should work", lab.get("What to test", ""))),
         "MOCKUP": mockup_html,
         "LADDER": "".join(conn),
-        "SCORE": slot(t["id"], "score", lab.get("Score and feasibility",
+        "SCORE": slot(t["id"], "score", lab.get("Test Feasibility",
                       "Scored ICE %d (%s)." % (ice_total(t["ice"]), ice_str(t["ice"])))),
         "FOOT_ID": "#%s &middot; %s" % (test_num(t["id"]), esc(program.get("name", ""))),
     })
@@ -893,8 +1062,9 @@ strategic_body_cache = {}  # stash strategic body for hub sequence extraction
 def copy_mockup_assets(t, mk, out_dir):
     """Copy a test's mockup assets into out/mockups/<id>/. Return relative
     screenshot path if a screenshot resolved, else ''. Source paths are taken
-    relative to the tactical file's directory."""
-    src_base = strategic_body_cache.get("tactical_dir", "")
+    relative to the edge sidecar's directory (co-located with experiment-mockup
+    output under the deliverables tree)."""
+    src_base = strategic_body_cache.get("sidecar_dir", "")
     dest = os.path.join(out_dir, "mockups", t["id"])
     shot_rel = ""
     for key, fname in (("screenshot", "screenshot.png"), ("html", "mockup.html")):
@@ -954,8 +1124,9 @@ def write_site(strategic, tactical, derived, out_dir, tpl_dir):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Deterministic two-altitude program-site generator.")
-    ap.add_argument("--strategic", required=True, help="path to the strategic experiment-layer markdown")
-    ap.add_argument("--tactical", required=True, help="path to the tactical experiment-roadmap markdown")
+    ap.add_argument("--strategic", required=True, help="path to the strategic gold roadmap markdown")
+    ap.add_argument("--tactical", required=True, help="path to the tactical gold roadmap markdown")
+    ap.add_argument("--edges", required=True, help="path to the edge sidecar ({scope}-program-edges.md)")
     ap.add_argument("--out", required=True, help="output site root directory")
     ap.add_argument("--templates", default=None, help="templates dir (default: ../templates next to this script)")
     args = ap.parse_args(argv)
@@ -963,16 +1134,18 @@ def main(argv=None):
     tpl_dir = args.templates or os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates")
     tpl_dir = os.path.abspath(tpl_dir)
 
-    strategic = load_strategic(args.strategic)
-    tactical = load_tactical(args.tactical)
+    sidecar = load_sidecar(args.edges)
+    strategic = load_strategic(args.strategic, sidecar)
+    tactical = load_tactical(args.tactical, sidecar)
+    link_edges(strategic, tactical)
     # stash bodies/paths for hub sequence extraction + mockup asset resolution
     with open(args.strategic, encoding="utf-8") as fh:
         _, sbody = parse_frontmatter(fh.read())
     strategic_body_cache["strategic"] = sbody
-    strategic_body_cache["tactical_dir"] = os.path.dirname(os.path.abspath(args.tactical))
+    strategic_body_cache["sidecar_dir"] = os.path.dirname(os.path.abspath(args.edges))
 
     try:
-        run_gate(strategic, tactical)
+        run_gate(strategic, tactical, sidecar)
     except GateError as ge:
         sys.stderr.write("EDGE-CONTRACT GATE FAILED (%d violation%s):\n"
                          % (len(ge.violations), "" if len(ge.violations) == 1 else "s"))

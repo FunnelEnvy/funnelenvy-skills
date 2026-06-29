@@ -1,6 +1,6 @@
 ---
 name: render-program-site
-version: "0.1.0"
+version: "0.2.1"
 description: >
   Render a two-altitude program site from two markdown inputs (a strategic layer of bets
   and a tactical roadmap of page tests): a hub plus one spoke per bet and per test, with
@@ -36,28 +36,32 @@ is code; only prose wording is agent-authored.
 ## Invocation
 
 ```
-/render-program-site [<strategic-md> <tactical-md>] [--scope <slug>] [--no-kb] [--out <site-root>]
+/render-program-site [<strategic-md> <tactical-md>] [--edges <path>] [--scope <slug>] [--no-kb] [--out <site-root>]
 ```
 
-- Two explicit positional paths render those files directly (override mode resolution).
-- `--scope <slug>` selects KB mode (see below).
+- Two explicit positional paths render those gold roadmaps directly (override mode resolution); pair them with `--edges <path>` for the sidecar.
+- `--scope <slug>` selects KB mode and resolves all three inputs from the scope (see below).
+- `--edges <path>` supplies the edge sidecar (required; resolved from the scope in KB mode).
 - `--no-kb` forces legacy mode.
 - `--out <dir>` overrides the computed output directory in either mode.
 
 ## Preconditions
 
-- A strategic experiment-layer markdown and a tactical experiment-roadmap markdown,
-  both carrying the edge-contract frontmatter (see `edge-contract.md`). In KB mode these
-  are resolved from the scope; in legacy mode they are explicit paths or the legacy paths.
-- The two `program_version` values match (the gate halts otherwise).
+- The two gold roadmaps hypothesis-generator produces, read in place: a strategic gold
+  roadmap (`gold-strategic-roadmap`) and a tactical gold roadmap (`gold-experiment-roadmap`).
+  This skill derives per-item data from their structure and authors nothing into them.
+- The edge sidecar (`{scope}-program-edges.md`), the one net-new authored input, carrying the
+  cross-altitude edge binding and the gate-classification fields (see `edge-contract.md`).
+- The sidecar's `strategic_version` / `tactical_version` match the live gold roadmaps'
+  frontmatter `version` (the version-lock gate halts otherwise).
 - Python available (probe-then-run per repo conventions).
 - This skill does NOT read L0/L1 `.claude/context/` files and does NOT perform web research.
 
 ## Inputs
 
-The two markdown inputs and the validated edge contract are defined in
-[`edge-contract.md`](edge-contract.md) (input schemas, the 7-check gate, derived data,
-and the verbatim type-label map). Read it before authoring or migrating source files.
+The three inputs (two gold roadmaps + the edge sidecar) and the validated edge contract are
+defined in [`edge-contract.md`](edge-contract.md) (derived-field map, the sidecar schema, the
+gate, derived data, and the verbatim type-label map). Read it before authoring the sidecar.
 
 Per-test mockup assets map one-to-one onto `/experiment-mockup` output
 (`mockup-screenshot.png`, `mockup.html`, `placement.md` + HTML-comment metadata): when a
@@ -76,12 +80,17 @@ Mode resolution mirrors hypothesis-generator and experiment-mockup:
    consumes roadmaps, it does not produce KB artifacts).
 3. KB mode with a missing or invalid `--scope` is a HARD STOP that lists the valid scopes.
 4. Failed binding detection falls back to legacy mode loudly (no `--kb` force flag).
-5. Explicit positional input paths override the mode-resolved inputs in either mode.
+5. Explicit positional input paths override the mode-resolved inputs in either mode (pair them
+   with `--edges` for the sidecar).
 
-| | Strategic input | Tactical input | Output site |
-|---|---|---|---|
-| **KB mode** | `{kb_root}/deliverables/{scope}-strategic-experiment-layer.md` | `{kb_root}/deliverables/{scope}-experiment-roadmap.md` | `{kb_root}/deliverables/{scope}-program-site/` |
-| **Legacy** | explicit path, or `.claude/deliverables/strategic-experiment-layer.md` | explicit path, or `.claude/deliverables/experiment-roadmap.md` | `.claude/deliverables/program-site/` |
+| | Strategic input | Tactical input | Edge sidecar | Output site |
+|---|---|---|---|---|
+| **KB mode** | `{kb_root}/deliverables/{scope}-strategic-roadmap.md` | `{kb_root}/deliverables/{scope}-experiment-roadmap.md` | `{kb_root}/deliverables/{scope}-program-edges.md` | `{kb_root}/deliverables/{scope}-program-site/` |
+| **Legacy** | explicit path, or `.claude/deliverables/strategic-roadmap.md` | explicit path, or `.claude/deliverables/experiment-roadmap.md` | `--edges`, or `.claude/deliverables/program-edges.md` | `.claude/deliverables/program-site/` |
+
+The strategic and tactical inputs are hypothesis-generator's gold roadmaps, read in place (no
+separate hand-authored format; the tactical-path collision with the gold output is resolved by
+reading the gold artifact directly). The sidecar is render-program-site's own authored input.
 
 `--out` overrides the output site path in both modes. No emitted file carries `kb_layer`
 frontmatter -- the site is a derived view, not a KB artifact.
@@ -94,16 +103,17 @@ phase before starting phase 1. Mark each complete as you finish it. In Claude Co
 
 ### Phase 1 -- Resolve inputs + mode
 
-Resolve the two input paths and the output site root per [KB Mode](#kb-mode-dual-mode-io).
-HARD STOP on a missing/invalid `--scope` in KB mode (list valid scopes). Confirm both input
-files exist before proceeding.
+Resolve the three input paths (strategic gold roadmap, tactical gold roadmap, edge sidecar) and
+the output site root per [KB Mode](#kb-mode-dual-mode-io). HARD STOP on a missing/invalid
+`--scope` in KB mode (list valid scopes), and on a missing edge sidecar (it is the one input
+this skill cannot derive). Confirm all three input files exist before proceeding.
 
 ### Phase 2 -- Validate the gate and emit structure
 
 Run the generator:
 
 ```
-render_site.py --strategic <strategic-md> --tactical <tactical-md> --out <site-root>
+render_site.py --strategic <strategic-md> --tactical <tactical-md> --edges <sidecar-md> --out <site-root>
 ```
 
 The script validates the 7-check edge contract and, on success, emits `styles.css`,
@@ -147,7 +157,7 @@ not part of this skill).
 
 | Script | Description | Use when |
 |---|---|---|
-| [`scripts/render_site.py`](scripts/render_site.py) | Deterministic generator: parse two markdown inputs -> validate the 7-check edge contract (fail-closed, non-zero exit) -> derive reverse edges, intake flags, Impact-by-Ease coordinates, edge classes, tier groups -> emit `styles.css` + `site.js` + `index.html` + `sb-NN`/`p-NN` spokes from `templates/`, with labeled prose slots. CLI: `render_site.py --strategic <path> --tactical <path> --out <dir> [--templates <dir>]`. Stdlib only. | Phase 2 (every render) |
+| [`scripts/render_site.py`](scripts/render_site.py) | Deterministic generator: parse the two gold roadmaps + the edge sidecar, derive per-item data (id/key/title/tier/ICE/page) from the gold bodies -> validate the edge contract (fail-closed, non-zero exit) -> derive reverse edges, intake flags, Impact-by-Ease coordinates, edge classes, tier groups -> emit `styles.css` + `site.js` + `index.html` + `sb-NN`/`p-NN` spokes from `templates/`, with labeled prose slots. CLI: `render_site.py --strategic <path> --tactical <path> --edges <path> --out <dir> [--templates <dir>]`. Stdlib only. | Phase 2 (every render) |
 
 ## References
 
@@ -181,4 +191,5 @@ not part of this skill).
 
 | Version | Changes |
 |---|---|
+| 0.2.0 | Inputs reconciled with hypothesis-generator's actual output: the generator now reads the two prose gold roadmaps (`gold-experiment-roadmap`, `gold-strategic-roadmap`) in place and derives per-item data (id from `### N.` ordinal, key from `**Key:**`, title, tier from the enclosing tier H2, ICE from `**Scores:**`, page) from the gold bodies. The cross-altitude edge binding plus the gate-classification fields (`delivery_surface`, `executor_status`, per-test `mechanism_class`, optional `status`/`run_tag`/`keystone`/`mockup`) move to a new render-owned sidecar `{scope}-program-edges.md` keyed by gold Key. KB-mode strategic input renamed `{scope}-strategic-experiment-layer.md` -> `{scope}-strategic-roadmap.md`; tactical collision resolved by reading the gold artifact directly. Gate check 7 redefined as a sidecar-vs-gold version lock; new binding checks (every gold bet bound, every sidecar Key resolves, every live test has a `mechanism_class`). `render_site.py` gains `--edges`. Replaces the bespoke hand-authored `bets:`/`tests:`/`edges:` frontmatter that no deliverable carried. |
 | 0.1.0 | Initial skill: deterministic two-altitude program-site generator (`render_site.py`) with a 7-check edge-contract gate, Impact-by-Ease map, dual-mode I/O, and a scoped LLM curation + humanizer pass over spoke prose slots. Replaces roadmap-presentation. |
