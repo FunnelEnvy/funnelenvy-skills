@@ -1,6 +1,6 @@
 ---
 name: experiment-mockup
-version: 1.3.2
+version: 1.4.0
 description: >-
   When the user wants to create a visual mockup of a proposed experiment change.
   Also use when the user mentions 'experiment mockup,' 'mockup hypothesis,'
@@ -331,7 +331,8 @@ Browser mode: [chrome-devtools|playwright|static]
 Output: [resolved output directory: .claude/deliverables/experiments/<slug>/ or {kb_root}/deliverables/experiments/<slug>/]
   - mockup.html (standalone, open in any browser)
   - placement.md (CRO rationale + implementation notes)
-  - mockup-screenshot.png (live mode only)
+  - control-screenshot.png (before / unmodified state; live & playwright modes only)
+  - mockup-screenshot.png (after / injected state; live & playwright modes only)
 
 [If static mode: "Note: Static mockup was built from HTML extraction. For interactive mockups with real computed styles, configure Chrome DevTools MCP (recommended) or Playwright MCP."]
 
@@ -346,7 +347,8 @@ Output: [resolved output directory: .claude/deliverables/experiments/<slug>/ or 
 |------|--------|----------|
 | `mockup.html` | HTML (self-contained, inline CSS) | Approved mockup state with surrounding page context, styled to match the target site |
 | `placement.md` | Markdown (YAML frontmatter) | CRO placement rationale, attention strategy, content distillation, alternatives, implementation notes, risk flags |
-| `mockup-screenshot.png` | PNG (live mode only) | Browser viewport screenshot of injected state |
+| `control-screenshot.png` | PNG (live & playwright modes only) | Browser viewport screenshot of the unmodified "before" state, framed identically to the after shot. Consumed by render-program-site to render a Before/After pair. |
+| `mockup-screenshot.png` | PNG (live & playwright modes only) | Browser viewport screenshot of the injected "after" state |
 
 ---
 
@@ -382,6 +384,7 @@ If output files already exist for the same hypothesis slug (within the resolved 
 
 | Version | Changes |
 |---------|---------|
+| 1.4.0 | Control ("before") screenshot capture. `capture.md` Step 1 now captures a Before/After pair from the same scroll position and viewport: it restores the original state (removes the injected element, restores any modified originals), screenshots the unmodified viewport as `control-screenshot.png`, then re-injects and screenshots the after as `mockup-screenshot.png`. `inject.md` Step 5 now hands off the injected element's class/id and any modified-original markup so capture can restore the control. New live/playwright-only output `control-screenshot.png` added to agent-header Section 2, SKILL.md Output Files, and the Step 7 completion summary. Static mode writes no control (documented in `static-build.md`). Pairs with render-program-site's optional `control_screenshot` to render a Before/After comparison; absence is backward compatible (after-only). |
 | 1.3.2 | Reference rename: roadmap-presentation -> render-program-site across the KB-mode and mockup-output prose (the consumer skill was replaced). No behavioral change. |
 | 1.3.0 | Key-based output-directory resolution: `Step 4` now resolves the output directory from the matched hypothesis's persisted `**Key:**` field instead of `slugify(experiment name)`, with a shared fallback contract (prefer `**Key:**`; when absent, fall back to `slugify(title)` and print a one-line warning, no hard failure on keyless roadmaps). `Step 2` now also extracts the `**Key:**` field. Decouples mockup resolution from mutable roadmap heading titles (chg_2026-06-18_stable-mockup-resolution-key). |
 | 1.3.0 | Dual-mode I/O retrofit (KB / legacy). New `KB Mode (Dual-Mode Output)` section: mode resolution mirrors hypothesis-generator and roadmap-presentation exactly (`--no-kb` forces legacy; a detected `Knowledge Bases` binding plus a valid `--scope` selects KB mode; missing/invalid `--scope` in KB mode is a HARD STOP listing valid scopes; failed detection falls back to legacy loudly). Read side: KB mode reads the gold roadmap at `{kb_root}/deliverables/{scope}-experiment-roadmap.md`; legacy unchanged. Write side: KB mode writes mockups to `{kb_root}/deliverables/experiments/<slug>/` (co-located so roadmap-presentation resolves them; not a KB artifact, no `kb_layer`); legacy unchanged. New `--scope` and `--no-kb` flags; mode-aware roadmap-exists precondition, output-directory resolution (Step 1b, Step 2, Step 4), completion message, and Architecture Notes layer line. Phase path references generalized to the orchestrator-provided output directory (legacy path shown as the canonical example). |

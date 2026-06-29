@@ -10,6 +10,7 @@
 
 - Final injection HTML and CSS (from Phase 2)
 - Final insertion point / DOM path (from Phase 2)
+- The injected element's class/id (from Phase 2, e.g. `proposed-change-block`)
 - Hypothesis number, name, target URL (from orchestrator)
 - Output directory path (from orchestrator)
 
@@ -17,26 +18,34 @@
 
 Written to the output directory the orchestrator passes (legacy `.claude/deliverables/experiments/<slug>/`; KB mode `{kb_root}/deliverables/experiments/<slug>/`):
 
+- `<output-dir>/control-screenshot.png` (browser viewport screenshot of the unmodified "before" state)
 - `<output-dir>/mockup.html` (standalone self-contained HTML)
-- `<output-dir>/mockup-screenshot.png` (browser viewport screenshot)
+- `<output-dir>/mockup-screenshot.png` (browser viewport screenshot of the injected "after" state)
 
 ---
 
 ## Steps
 
-### Step 1: Capture Screenshot
+### Step 1: Capture the Before/After Screenshot Pair
 
-Use the browser MCP to capture a screenshot of the current viewport showing the injected change.
+Capture two screenshots from the same scroll position and viewport width so they are directly comparable: the unmodified control ("before") and the injected state ("after"). The injected element is currently present in the DOM (Phase 2 left it injected). Capture in this order so the control is the genuine pre-change state:
 
-- Chrome DevTools mode: use DevTools screenshot tool
-- Playwright mode: use browser_take_screenshot (scroll to center the injected element if needed)
+1. **Frame the region.** Scroll so the injected element is centered (or fully visible) in the viewport. Do NOT change the scroll position or viewport width again until both screenshots are taken. Both shots must frame the same region.
+2. **Restore the original state.** Remove the injected element using the class/id from Phase 2.
+   - Chrome DevTools mode: remove the element via DevTools DOM manipulation.
+   - Playwright mode: `browser_evaluate('document.querySelector(".proposed-change-block").remove()')` (use the actual class/id Phase 2 used).
+   If Phase 2 also modified or replaced existing elements (not just inserted one), restore those originals too, so the control shows the true unmodified page.
+3. **Capture the control.** Screenshot the current viewport (now unmodified) and write it to the output directory as `control-screenshot.png`. Full viewport width, PNG.
+4. **Re-apply the change.** Re-inject the final injection HTML at the same insertion point, exactly as Phase 2 left it. Verify it rendered.
+5. **Capture the after.** Screenshot the current viewport (now showing the injected change) and write it to the output directory as `mockup-screenshot.png`. Full viewport width, PNG.
+
+- Chrome DevTools mode: use the DevTools screenshot tool.
+- Playwright mode: use browser_take_screenshot.
 
 Requirements:
-- The injected element must be visible in the viewport. If needed, scroll to center it.
-- Capture the full viewport width (desktop resolution)
-- Save as PNG
-
-Write the screenshot to the output directory as `mockup-screenshot.png`.
+- The injected element must be visible in the "after" shot, and its (now empty) location visible in the "before" shot, at the same scroll position.
+- Both screenshots frame the same region at the same viewport width so the pair is comparable.
+- Save both as PNG.
 
 ### Step 2: Extract Modified Section HTML
 
@@ -125,5 +134,5 @@ Requirements:
 
 1. Create the orchestrator-provided output directory if it doesn't exist (legacy `.claude/deliverables/experiments/<slug>/`; KB mode `{kb_root}/deliverables/experiments/<slug>/`)
 2. Write `mockup.html` to the output directory
-3. Write `mockup-screenshot.png` to the output directory (already saved in Step 1)
-4. Confirm both files are written: "Mockup captured. Files written to [output directory]."
+3. Write `control-screenshot.png` and `mockup-screenshot.png` to the output directory (already saved in Step 1)
+4. Confirm the files are written: "Mockup captured (before + after). Files written to [output directory]."

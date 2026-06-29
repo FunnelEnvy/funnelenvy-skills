@@ -29,7 +29,8 @@ Read/write paths resolve against the orchestrator-provided roadmap source and ou
 | `.claude/context/brand-design-system.md` | Visual reference | Read (if exists): authoritative design tokens, color palette, typography, spacing |
 | `.claude/context/brand-components.html` | Visual reference | Read (if exists): ready-to-use HTML/CSS component patterns |
 | `<output-dir>/mockup.html` | Deliverable | Write: standalone HTML mockup |
-| `<output-dir>/mockup-screenshot.png` | Deliverable | Write: browser screenshot (live mode only) |
+| `<output-dir>/control-screenshot.png` | Deliverable | Write: browser screenshot of the unmodified "before" state (live/playwright mode only; absent in static mode) |
+| `<output-dir>/mockup-screenshot.png` | Deliverable | Write: browser screenshot of the injected "after" state (live/playwright mode only) |
 | `<output-dir>/placement.md` | Deliverable | Write: CRO placement rationale |
 
 ---

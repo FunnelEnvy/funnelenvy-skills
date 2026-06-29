@@ -88,11 +88,11 @@ tests:                        # one per tactical gold test, keyed by its **Key:*
     superseded_by: "v2.1"
   - key: proof-block-on-pricing
     mechanism_class: proof
-    mockup: {screenshot: "experiments/proof-block-on-pricing/screenshot.png",
-             html: "experiments/proof-block-on-pricing/mockup.html",
-             mode: "chrome-devtools", target_url: "...",
-             insertion_point: "...", placement_summary: "..."}
+    mockup: {control_screenshot: "experiments/proof-block-on-pricing/control-screenshot.png", screenshot: "experiments/proof-block-on-pricing/mockup-screenshot.png", html: "experiments/proof-block-on-pricing/mockup.html", mode: "chrome-devtools", target_url: "...", insertion_point: "...", placement_summary: "..."}
 ```
+
+The `mockup` value above is shown on one line: the sidecar parser supports only
+single-line inline flow maps `{k: v, ...}`. Do not wrap it across lines.
 
 - `edge.type` in `{expresses, informs, gates}`; `edge.target` is a tactical Key,
   resolved to a `p-NN` id by the generator.
@@ -105,6 +105,13 @@ tests:                        # one per tactical gold test, keyed by its **Key:*
   change" section. Asset paths resolve relative to the sidecar's directory and
   are copied into `<site>/mockups/<id>/`. Maps one-to-one onto `/experiment-mockup`
   output, keyed by the same Key.
+- `mockup.control_screenshot` is optional and maps one-to-one onto
+  experiment-mockup's `control-screenshot.png` (the unmodified "before" state).
+  When present, the spoke renders a labeled Before/After pair; when absent, the
+  spoke renders the after screenshot alone (unchanged, backward compatible). It
+  resolves relative to the sidecar directory like the other assets; a path that
+  points at a missing file degrades to after-only (no error). A present-but-non-string
+  `control_screenshot` is rejected by the binding checks.
 - The sidecar's test entries MUST NOT author `edges`/`inbound`/`expressed_by`/
   `informed_by`/`gated_by`/`intake_only`/`intake` (gate checks 5 and 6) -- reverse
   edges and intake are derived.
@@ -132,7 +139,8 @@ Run over the derived data:
 
 Binding checks (alongside the seven): every strategic gold bet has a sidecar
 entry; every sidecar Key resolves to a gold Key; every live test has a
-`mechanism_class`. A malformed `mockup` (non-mapping) is rejected.
+`mechanism_class`. A malformed `mockup` (non-mapping) is rejected. A `mockup`
+carrying a non-string `control_screenshot` is rejected.
 
 Acceptance probe: feeding `sb-01 expresses p-06` where `sb-01` is a `routing` bet
 and the target test's mechanism is `cta` must exit non-zero with a message naming
