@@ -51,7 +51,7 @@ Emit one `validation_gates` record per hypothesis with six named gates. Each gat
 ```
 validation_gates:
   premise_contradicted: <pass | fail | not-assessed>   # an affirmative FAIL means the premise IS contradicted by another loaded artifact
-  metric_instrumented:  <pass | fail | not-assessed>   # FAIL = a primary or guardrail metric is not in instrumented_metrics
+  metric_instrumented:  <pass | fail | not-assessed>   # FAIL = a primary or guardrail metric is genuinely dark (not documented live anywhere in loaded context); a live-elsewhere metric PASSES with a per-surface confirmation note
   baseline_exists:      <pass | fail | not-assessed>   # FAIL = an expected baseline is genuinely absent on an instrumented surface
   control_stable:       <pass | fail | not-assessed>   # FAIL = capture is stale or two artifacts contest the same element
   powerable:            <pass | fail | not-assessed>   # FAIL = the thesis metric is unpowerable (from construct.md Step 5b)
@@ -92,11 +92,11 @@ A `fail` here means the hypothesis cannot reach Confidence 4-5 (`score.md` Step 
 
 Check the hypothesis's primary metric AND its guardrail metric (from `construct.md` Step 5 / 5a) against detect's Step 1f `instrumented_metrics` list.
 
-- Both primary and guardrail in `instrumented_metrics`: `pass`.
-- Either the primary or the guardrail is in `dark_metrics` (or absent from the inventory and therefore dark by the conservative default): `fail`. Route the dark metric to Prerequisites (the instrumentation it needs), and the hypothesis cannot reach Confidence 4-5. A hypothesis whose PRIMARY metric is dark is additionally routed by `score.md` Step 5b (Infeasible Routing) to "What's Not Here" until instrumentation lands.
-- No performance profile (no inventory exists): `not-assessed`. Neutral.
+- No performance profile (no inventory exists): `not-assessed`. Neutral. This precedence is unchanged and comes first: a run with no performance profile reads `not-assessed` regardless of any `live-elsewhere` entries the live-capability leg may have produced.
+- Both primary and guardrail in `instrumented_metrics`: `pass`. When a metric is in `instrumented_metrics` via the `live-elsewhere` tag (detect Step 1f: documented live / in production / already reporting in a non-performance-profile artifact, not natively in the profile), the gate still `pass`es, and attaches a per-surface **confirmation** readiness note ("confirm the live [capability] fires on this surface / form before launch"), NOT an instrumentation-build prerequisite. The capability exists; the only residual is confirming it fires on this specific surface. This is verification, not a build, and it must never be routed to Prerequisites as tracking to stand up.
+- A primary or guardrail metric in `dark_metrics`, or absent from `instrumented_metrics` entirely: before treating it as dark, check the loaded context for a statement that this metric or its measurement capability is live / in production / already reporting (the same status-reading the live-capability leg performs; this is the enforcement backstop in case the leg missed it). If found: treat it as `live-elsewhere` instrumented -> `pass` with the per-surface confirmation note above. Only when NO loaded artifact documents the capability as live (the genuine-dark case, which is what `dark_metrics` now means after detect Step 1f's live-capability leg): `fail`. Route the genuinely-dark metric to Prerequisites (the instrumentation it needs, stated as a build), and the hypothesis cannot reach Confidence 4-5. A hypothesis whose PRIMARY metric is genuinely dark is additionally routed by `score.md` Step 5b (Infeasible Routing) to "What's Not Here" until instrumentation lands.
 
-This is the gate that catches the pilot failure where the roadmap named element-click, scroll-section, qualified-lead, and homepage analytics as read metrics while its own Prerequisites listed them as missing.
+This is the gate that catches the pilot failure where the roadmap named element-click, scroll-section, qualified-lead, and homepage analytics as read metrics while its own Prerequisites listed them as missing. The inverse failure is equally a defect and equally caught here: do not route a capability documented live in production (per any loaded artifact, not only the performance profile) to Prerequisites as something to stand up. The `live-elsewhere` path above prevents that overstatement.
 
 ### Gate 3: baseline_exists
 
@@ -138,4 +138,4 @@ When `construct.md` Step 5 pre-registered the primary read as a segment (because
 
 ## Output
 
-**Output to Phase 4 (score):** one `validation_gates` record per hypothesis, plus any Prerequisites additions (dark metrics, "verify current before launch" notes, non-isolable-segment instrumentation blocks) and any "What's Not Here" routing flags (unpowerable thesis metric, dark primary metric) for `score.md` Step 5b to apply. The records are internal; `score.md` Step 4 applies them as hard caps on the raw Confidence the soft modifiers compute, per the order-of-operations contract in `score.md` Step 4.
+**Output to Phase 4 (score):** one `validation_gates` record per hypothesis, plus any Prerequisites additions (genuinely-dark metrics, "verify current before launch" notes, non-isolable-segment instrumentation blocks), any per-surface confirmation note for a `live-elsewhere` metric (a readiness/verification note, NOT a Prerequisites build entry; rendered via the SKILL.md `Readiness` field), and any "What's Not Here" routing flags (unpowerable thesis metric, genuinely-dark primary metric) for `score.md` Step 5b to apply. The records are internal; `score.md` Step 4 applies them as hard caps on the raw Confidence the soft modifiers compute, per the order-of-operations contract in `score.md` Step 4.
