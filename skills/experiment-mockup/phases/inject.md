@@ -172,6 +172,8 @@ When the user approves:
 1. Confirm: "Locking this version. I'll capture it as a standalone file and write the placement rationale."
 2. Note the final state for Phase 3:
    - Final HTML of the injected element (including inline CSS)
+   - The injected element's class/id (the selector Phase 3 uses to remove then re-inject it for the control screenshot, e.g. `proposed-change-block`)
    - Final insertion point (may have changed during iteration)
    - Final DOM path
+   - If the change modified or replaced existing elements (not just inserted one), the original markup of those elements (so Phase 3 can restore the true unmodified control)
    - Iteration history: what was tried and what feedback led to each change (for placement.md)

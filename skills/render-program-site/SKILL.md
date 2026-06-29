@@ -1,6 +1,6 @@
 ---
 name: render-program-site
-version: "0.2.1"
+version: "0.3.0"
 description: >
   Render a two-altitude program site from two markdown inputs (a strategic layer of bets
   and a tactical roadmap of page tests): a hub plus one spoke per bet and per test, with
@@ -68,6 +68,10 @@ Per-test mockup assets map one-to-one onto `/experiment-mockup` output
 test carries a `mockup` block, the generator copies the assets into `<site>/mockups/<id>/`
 and renders the tactical "Proposed change" section (screenshot inline, link out to the
 interactive `mockup.html` -- never iframed). Tests without a `mockup` block omit the section.
+The `mockup` block also accepts an optional `control_screenshot` (experiment-mockup's
+`control-screenshot.png`, the unmodified "before" state): when present, the spoke renders a
+labeled Before/After pair instead of a single after screenshot; when absent (or its file is
+missing), it renders after-only, unchanged.
 
 ## KB Mode (Dual-Mode I/O)
 
@@ -175,7 +179,7 @@ not part of this skill).
 | `<site>/index.html` | Hub: hero, portfolio map, strategy cards, backlog, sequence, decisions |
 | `<site>/sb-NN.html` | One spoke per strategic bet |
 | `<site>/p-NN.html` | One spoke per page test (superseded tests omitted) |
-| `<site>/mockups/<id>/` | Copied `screenshot.png` + `mockup.html` for tests with a mockup block |
+| `<site>/mockups/<id>/` | Copied `screenshot.png` + `mockup.html` for tests with a mockup block; also `control.png` when the block carries a resolvable `control_screenshot` |
 
 ## Quality Rules
 
@@ -191,5 +195,6 @@ not part of this skill).
 
 | Version | Changes |
 |---|---|
+| 0.3.0 | Optional Before/After mockup render. The `mockup` block accepts an optional `control_screenshot` (experiment-mockup's `control-screenshot.png`): when present and resolvable, the tactical spoke's "Proposed change" section renders a labeled two-frame Before/After comparison (responsive grid, stacks under 760px) instead of a single after screenshot. `copy_mockup_assets` now copies `control.png` alongside `screenshot.png` and returns a dict of resolved paths; the gate rejects a non-string `control_screenshot`; a missing control file degrades to after-only. Output is byte-identical to 0.2.x for any `mockup` block without a resolvable `control_screenshot`. New `.mockup-compare` / `.mockup-label` CSS. |
 | 0.2.0 | Inputs reconciled with hypothesis-generator's actual output: the generator now reads the two prose gold roadmaps (`gold-experiment-roadmap`, `gold-strategic-roadmap`) in place and derives per-item data (id from `### N.` ordinal, key from `**Key:**`, title, tier from the enclosing tier H2, ICE from `**Scores:**`, page) from the gold bodies. The cross-altitude edge binding plus the gate-classification fields (`delivery_surface`, `executor_status`, per-test `mechanism_class`, optional `status`/`run_tag`/`keystone`/`mockup`) move to a new render-owned sidecar `{scope}-program-edges.md` keyed by gold Key. KB-mode strategic input renamed `{scope}-strategic-experiment-layer.md` -> `{scope}-strategic-roadmap.md`; tactical collision resolved by reading the gold artifact directly. Gate check 7 redefined as a sidecar-vs-gold version lock; new binding checks (every gold bet bound, every sidecar Key resolves, every live test has a `mechanism_class`). `render_site.py` gains `--edges`. Replaces the bespoke hand-authored `bets:`/`tests:`/`edges:` frontmatter that no deliverable carried. |
 | 0.1.0 | Initial skill: deterministic two-altitude program-site generator (`render_site.py`) with a 7-check edge-contract gate, Impact-by-Ease map, dual-mode I/O, and a scoped LLM curation + humanizer pass over spoke prose slots. Replaces roadmap-presentation. |

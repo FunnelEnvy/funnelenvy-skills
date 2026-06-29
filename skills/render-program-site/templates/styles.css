@@ -239,6 +239,10 @@ section:first-of-type{border-top:none}
 .mockup-ph{aspect-ratio:16/9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;background:repeating-linear-gradient(135deg,#fafbfc,#fafbfc 12px,#f4f6f8 12px,#f4f6f8 24px);color:var(--faint)}
 .mockup-ph .lab{font-family:var(--mono);font-size:12px;color:var(--muted)}
 .mockup-ph .sub{font-size:11px}
+.mockup-compare{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+.mockup-compare .mockup-frame{max-width:none}
+.mockup-label{font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+@media(max-width:760px){.mockup-compare{grid-template-columns:1fr}}
 .mockup-meta{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:14px}
 .mm{font-size:12.5px;color:var(--body)}
 .mm .mm-k{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);margin-right:7px}

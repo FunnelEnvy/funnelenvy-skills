@@ -591,6 +591,9 @@ def run_gate(strategic, tactical, sidecar):
                               "(found %s)" % (key, t["_authored_intake_keys"]))
         if t["_mockup_malformed"]:
             violations.append("[mockup] sidecar test '%s': malformed mockup block (expected a mapping)" % key)
+        mk = t["mockup"]
+        if mk and "control_screenshot" in mk and not isinstance(mk["control_screenshot"], str):
+            violations.append("[mockup] sidecar test '%s': control_screenshot must be a string path" % key)
 
     # mechanism_class is required on every live test (the mechanism gate input).
     for t in tests:
@@ -1004,22 +1007,43 @@ def build_spoke_tactical(t, program, templates, out_dir):
     mockup_html = ""
     mk = t["mockup"]
     if mk:
-        shot_rel = copy_mockup_assets(t, mk, out_dir)
-        if shot_rel:
-            preview = '<img class="mockup-shot" src="%s" alt="Mockup of %s">' % (esc(shot_rel), esc(t["title"]))
+        rels = copy_mockup_assets(t, mk, out_dir)
+        ctrl_rel = rels.get("control_screenshot")
+        shot_rel = rels.get("screenshot")
+        url = esc(mk.get("target_url", ""))
+
+        def _img(rel, alt):
+            if rel:
+                return '<img class="mockup-shot" src="%s" alt="%s">' % (esc(rel), esc(alt))
+            return ('<div class="mockup-ph"><span class="lab">Mockup preview</span>'
+                    '<span class="sub">no screenshot resolved for this hypothesis</span></div>')
+
+        if ctrl_rel:
+            # Before/After pair: two labeled figures in a responsive compare grid.
+            def _frame(label, img_html):
+                return ('<figure class="mockup-frame"><figcaption class="mockup-label">%s</figcaption>'
+                        '<div class="mockup-bar"><span class="dot"></span><span class="dot"></span>'
+                        '<span class="dot"></span><span class="url">%s</span></div>%s</figure>'
+                        % (esc(label), url, img_html))
+            preview = ('<div class="mockup-compare">%s%s</div>'
+                       % (_frame("Before / Control", _img(ctrl_rel, "Control: %s" % t["title"])),
+                          _frame("After / Proposed", _img(shot_rel, "Proposed: %s" % t["title"]))))
         else:
-            preview = ('<div class="mockup-ph"><span class="lab">Mockup preview</span>'
-                       '<span class="sub">no screenshot resolved for this hypothesis</span></div>')
+            # After-only: markup byte-identical to pre-control output.
+            inner = _img(shot_rel, "Mockup of %s" % t["title"])
+            preview = ('<div class="mockup-frame"><div class="mockup-bar"><span class="dot"></span>'
+                       '<span class="dot"></span><span class="dot"></span><span class="url">%s</span></div>%s</div>'
+                       % (url, inner))
+
         view = ('<a class="btn-mock" href="mockups/%s/mockup.html">View live mockup &#8599;</a>' % t["id"]) \
             if mk.get("html") else ""
         mockup_html = (
             '<section class="sec"><div class="container"><h2>Proposed change</h2>'
-            '<div class="mockup-frame"><div class="mockup-bar"><span class="dot"></span>'
-            '<span class="dot"></span><span class="dot"></span><span class="url">%s</span></div>%s</div>'
+            '%s'
             '<div class="mockup-meta"><span class="mm"><span class="mm-k">Insertion</span>%s</span>'
             '<span class="mm"><span class="mm-k">Mode</span>%s</span>%s</div>'
             '<p class="cx">%s</p></div></section>'
-            % (esc(mk.get("target_url", "")), preview, esc(mk.get("insertion_point", "")),
+            % (preview, esc(mk.get("insertion_point", "")),
                esc(mk.get("mode", "")), view,
                slot(t["id"], "placement", mk.get("placement_summary", ""))))
 
@@ -1060,14 +1084,18 @@ strategic_body_cache = {}  # stash strategic body for hub sequence extraction
 
 
 def copy_mockup_assets(t, mk, out_dir):
-    """Copy a test's mockup assets into out/mockups/<id>/. Return relative
-    screenshot path if a screenshot resolved, else ''. Source paths are taken
-    relative to the edge sidecar's directory (co-located with experiment-mockup
-    output under the deliverables tree)."""
+    """Copy a test's mockup assets into out/mockups/<id>/. Return a dict of
+    resolved relative image paths keyed by source key ('control_screenshot',
+    'screenshot') for whichever resolved to an on-disk file. A control_screenshot
+    whose path is missing is silently skipped (degrades to after-only). Source
+    paths are taken relative to the edge sidecar's directory (co-located with
+    experiment-mockup output under the deliverables tree)."""
     src_base = strategic_body_cache.get("sidecar_dir", "")
     dest = os.path.join(out_dir, "mockups", t["id"])
-    shot_rel = ""
-    for key, fname in (("screenshot", "screenshot.png"), ("html", "mockup.html")):
+    rels = {}
+    for key, fname in (("control_screenshot", "control.png"),
+                       ("screenshot", "screenshot.png"),
+                       ("html", "mockup.html")):
         rel = mk.get(key)
         if not rel:
             continue
@@ -1076,9 +1104,9 @@ def copy_mockup_assets(t, mk, out_dir):
             os.makedirs(dest, exist_ok=True)
             with open(src, "rb") as r, open(os.path.join(dest, fname), "wb") as w:
                 w.write(r.read())
-            if key == "screenshot":
-                shot_rel = "mockups/%s/%s" % (t["id"], fname)
-    return shot_rel
+            if key in ("control_screenshot", "screenshot"):
+                rels[key] = "mockups/%s/%s" % (t["id"], fname)
+    return rels
 
 
 def load_templates(tpl_dir):

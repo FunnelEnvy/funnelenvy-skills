@@ -21,7 +21,7 @@
 - `<output-dir>/mockup.html` (standalone self-contained HTML; output dir is orchestrator-provided: legacy `.claude/deliverables/experiments/<slug>/`, KB mode `{kb_root}/deliverables/experiments/<slug>/`)
 - Working state for Phase 4 (annotate.md): insertion point, design tokens, placement rationale
 
-**No screenshot in static mode** (no browser to screenshot).
+**No screenshots in static mode** (no browser to screenshot). Static mode writes neither `mockup-screenshot.png` nor `control-screenshot.png`. A consuming render-program-site spoke degrades to after-only (no Before/After pair) for static mockups.
 
 ---
 
