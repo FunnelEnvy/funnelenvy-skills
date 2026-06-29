@@ -1,87 +1,120 @@
 # Cross-altitude edge contract
 
 The contract that binds the strategic layer (bets) to the tactical layer (page
-tests) and lets `render_site.py` validate the two inputs as a single program
-before any HTML is written. The gate is mechanical and fails closed: any
-violation halts the build with a non-zero exit and prints the offending records.
+tests) and lets `render_site.py` validate the inputs as a single program before
+any HTML is written. The gate is mechanical and fails closed: any violation
+halts the build with a non-zero exit and prints the offending records.
 
-The strategic file is the only place edges are authored. The tactical file
-authors no inbound or reverse references; every test's inbound edges are
-**derived** by inverting the bet edges. Authoring only one end keeps the two
-ends from drifting.
+render-program-site consumes the **gold roadmap artifacts** hypothesis-generator
+produces, in place. It derives every per-item field from the gold structure and
+authors nothing into those artifacts. The one net-new input is a small
+render-owned **sidecar** that carries the cross-altitude edge binding plus the
+gate-classification fields the prose gold roadmaps cannot encode.
 
-## Input schemas
+The sidecar's strategic (bet) entries are the only place edges are authored. The
+sidecar's tactical (test) entries author no inbound or reverse references; every
+test's inbound edges are **derived** by inverting the bet edges. Authoring only
+one end keeps the two ends from drifting.
 
-Both inputs are markdown files: YAML frontmatter (the structured contract data)
-plus a body whose per-item sections supply the prose the curation pass rewrites.
+## Inputs
 
-The frontmatter is authored in a **constrained block-YAML subset** that
-`render_site.py`'s built-in parser supports: nested block mappings, block
-sequences, single-line inline flow maps `{k: v, ...}` and flow sequences
-`[a, b]`, quoted/plain scalars, ints, floats, and booleans. Multi-line flow is
-not supported. Anything the parser cannot read raises, fail-loud.
+Three files, all markdown:
 
-### Strategic (program narrative + bets + edges)
+| Input | Role | Authored by |
+|---|---|---|
+| tactical gold roadmap | `gold-experiment-roadmap`, read in place | hypothesis-generator |
+| strategic gold roadmap | `gold-strategic-roadmap`, read in place | hypothesis-generator |
+| edge sidecar | the edge binding + classification + program/hero block | render-program-site (curation) |
+
+### Derived from each gold roadmap body (never authored)
+
+Both gold roadmaps share the same body shape: `### N. Title` experiment sections
+nested under tier H2s (`## Quick Wins` / `## Strategic Bets` / `## Explorations`),
+each carrying a `**Key:**` line, a `**Scores:**` line, and bold-labeled prose.
+`render_site.py` derives:
+
+- `id` — from the `### N.` section ordinal: strategic `### N.` -> `sb-NN`,
+  tactical `### N.` -> `p-NN`. (The Key is the stable human-facing join key; the
+  id is the deterministic positional handle used for anchors, filenames, and
+  map nodes.)
+- `key` — the `**Key:** <slug>` value. Stable and immutable across re-renders
+  (hypothesis-generator's Key carry-forward rule). The sidecar binds by Key.
+- `title` — the `### N. Title` heading text.
+- `tier` — the enclosing tier H2 (`quick-win` / `strategic-bet` / `exploration`).
+- `ice` — parsed from `**Scores:** Impact X | Confidence Y | Ease Z` (trailing
+  rationale on the line is ignored).
+- `target_page` — the tactical `**Page:**` label.
+- prose slots — the bold-labeled paragraphs, mapped to spoke prose regions and
+  rewritten by the curation pass.
+
+The gold frontmatter `version` of each roadmap is read for the version lock
+(gate check 7).
+
+### Edge sidecar schema (`{scope}-program-edges.md`)
+
+Frontmatter only (a body is optional documentation). Authored in the same
+constrained block-YAML subset `render_site.py`'s parser supports (nested block
+mappings, block sequences, single-line inline flow maps `{k: v}` and sequences
+`[a, b]`, quoted/plain scalars, ints, floats, booleans; multi-line flow is not
+supported; anything unparseable raises, fail-loud).
 
 ```yaml
 program:
-  client: "..."            # rendered in nav + provenance + foot
-  name: "..."              # program name
-  program_version: "X.Y.Z" # MUST match the tactical file (gate check 7)
-  date: "YYYY-MM-DD"        # provenance + foot date (authored, never Date.now)
+  client: "..."              # rendered in nav + provenance + foot
+  name: "..."                # program name (hub title)
+  date: "YYYY-MM-DD"          # provenance + foot date (authored, never Date.now)
+  strategic_version: "X.Y.Z"  # MUST match the strategic gold roadmap's version (gate 7)
+  tactical_version: "X.Y.Z"   # MUST match the tactical gold roadmap's version (gate 7)
   hero:
     eyebrow: "..."
-    headline: "..."         # hub H1
-    headline_num: "..."     # optional: a substring of headline to highlight
-    subhead: "..."          # raw material for the hero-subhead prose slot
-bets:
-  - id: sb-01               # canonical id; anchor, filename, edge target key
-    title: "..."
-    lever: "..."            # short lever phrase
-    decided_on: "..."       # optional: the metric the bet is decided on (card)
-    run_tag: "..."          # optional badge: "Run first" | "Keystone" | "Long game"
-    delivery_surface: [proof, copy]   # surfaces the bet can ship on
-    executor_status: on-page          # on-page | off-page | unexpressed (gate 4)
-    ice: {i: 5, c: 4, e: 2}           # 1-5 each; ICE total = i + c + e
-    keystone: true|false
+    headline: "..."           # hub H1
+    headline_num: "..."       # optional: a substring of headline to highlight
+    subhead: "..."            # raw material for the hero-subhead prose slot
+bets:                         # one per strategic gold bet, keyed by its **Key:**
+  - key: speed-to-first-value
+    delivery_surface: [routing]       # surfaces the bet can ship on
+    executor_status: off-page         # on-page | off-page | unexpressed (gate 4)
+    decided_on: "trial-to-paid"       # optional: the metric the bet is decided on (card)
+    run_tag: "Run first"              # optional badge: "Run first" | "Keystone" | "Long game"
+    keystone: false
     edges:
-      - {target: p-10, type: expresses}   # type in {expresses, informs, gates}
-      - {target: p-03, type: informs}
+      - {target: conversational-signup-form, type: informs}   # target is a tactical Key
+tests:                        # one per tactical gold test, keyed by its **Key:**
+  - key: conversational-signup-form
+    mechanism_class: form             # required (the gate-3 input)
+  - key: old-form-test
+    mechanism_class: form
+    status: superseded                # OPTIONAL render-side program state (default active)
+    superseded_by: "v2.1"
+  - key: proof-block-on-pricing
+    mechanism_class: proof
+    mockup: {screenshot: "experiments/proof-block-on-pricing/screenshot.png",
+             html: "experiments/proof-block-on-pricing/mockup.html",
+             mode: "chrome-devtools", target_url: "...",
+             insertion_point: "...", placement_summary: "..."}
 ```
 
-Body: one `## SB-N. Title` section per bet, with bold-labeled paragraphs
-(`**The lever.**`, `**The experiment / program.**`, `**What must be stood up.**`,
-`**How this connects to the page-level roadmap.**`, ...). The generator maps
-these to spoke prose slots; the curation pass rewrites them.
+- `edge.type` in `{expresses, informs, gates}`; `edge.target` is a tactical Key,
+  resolved to a `p-NN` id by the generator.
+- `mechanism_class` is required on every live test (the mechanism gate input).
+- `status: superseded` drops the test from the map and spokes and dims its
+  backlog card. It is render-side program state (a test that has since shipped or
+  been replaced), authored here because the gold roadmaps carry no per-test
+  supersede marker (hypothesis-generator supersedes whole roadmaps, not tests).
+- `mockup` is optional; only tests that carry it render the tactical "Proposed
+  change" section. Asset paths resolve relative to the sidecar's directory and
+  are copied into `<site>/mockups/<id>/`. Maps one-to-one onto `/experiment-mockup`
+  output, keyed by the same Key.
+- The sidecar's test entries MUST NOT author `edges`/`inbound`/`expressed_by`/
+  `informed_by`/`gated_by`/`intake_only`/`intake` (gate checks 5 and 6) -- reverse
+  edges and intake are derived.
 
-### Tactical (tests + mechanism + optional mockup)
+## Build gate (hard fail, non-zero exit)
 
-```yaml
-program_version: "X.Y.Z"   # MUST match the strategic file (gate check 7)
-tests:
-  - {id: p-01, title: "...", mechanism_class: copy, tier: quick-win,
-     ice: {i: 3, c: 4, e: 4}, target_page: "Homepage", status: active}
-  - {id: p-04, title: "...", mechanism_class: form, tier: strategic-bet,
-     ice: {i: 4, c: 3, e: 3}, target_page: "Demo", status: superseded, superseded_by: "MI-2.1"}
-  - {id: p-10, title: "...", mechanism_class: proof, tier: exploration,
-     ice: {i: 3, c: 3, e: 3}, target_page: "...", status: active,
-     mockup: {screenshot: "mockups/p-10/screenshot.png", html: "mockups/p-10/mockup.html",
-              mode: "chrome-devtools", target_url: "...",
-              insertion_point: "...", placement_summary: "..."}}
-```
-
-- `tier` in `{quick-win, strategic-bet, exploration}` (drives backlog grouping + badge).
-- `status: superseded` drops the test from the map and spokes and dims its backlog card.
-- `mockup` is optional; only tests that carry it render the tactical "Proposed change"
-  section. Asset paths are resolved relative to the tactical file's directory and
-  copied into `<site>/mockups/<id>/`. Maps one-to-one onto `/experiment-mockup` output.
-- The tactical file MUST NOT author `edges`/`inbound`/`expressed_by`/`informed_by`/
-  `gated_by` (gate check 6) -- reverse edges are derived.
-
-## Build gate (7 checks, hard fail, non-zero exit)
+Run over the derived data:
 
 1. Every `edge.type` is in `{expresses, informs, gates}`.
-2. Every `edge.target` resolves to a live (non-superseded) test id.
+2. Every `edge.target` Key resolves to a live (non-superseded) test.
 3. Every `expresses` edge passes the mechanism gate: `test.mechanism_class in
    bet.delivery_surface`. On failure, prints bet id, test id, lever, mechanism,
    and delivery_surface.
@@ -90,13 +123,20 @@ tests:
    - `off-page` -> no `expresses` edge AND every `delivery_surface` is off-page-only
      (off-page surfaces: `{routing}`).
    - `unexpressed` -> no `expresses` edge AND at least one on-page surface.
-5. `intake_only` is derived, never authored (a test with zero inbound edges).
-6. The tactical file authors no inbound / reverse references.
-7. `program_version` matches across both inputs.
+5. `intake_only` is derived, never authored (a sidecar test authoring it is a
+   violation).
+6. The sidecar's test entries author no inbound / reverse references.
+7. The version lock holds: the sidecar's `strategic_version` / `tactical_version`
+   match the live gold roadmaps' frontmatter `version` (catches edges authored
+   against a since-revised roadmap).
 
-Acceptance probe: feeding `sb-01 expresses p-06` (a `routing` bet expressing a
-`cta` test) must exit non-zero with a message naming the `routing` vs `cta`
-mismatch.
+Binding checks (alongside the seven): every strategic gold bet has a sidecar
+entry; every sidecar Key resolves to a gold Key; every live test has a
+`mechanism_class`. A malformed `mockup` (non-mapping) is rejected.
+
+Acceptance probe: feeding `sb-01 expresses p-06` where `sb-01` is a `routing` bet
+and the target test's mechanism is `cta` must exit non-zero with a message naming
+the `routing` vs `cta` mismatch.
 
 ## Derived data (computed, never authored)
 
