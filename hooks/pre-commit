@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# client-reference guard: block client-identifying strings from entering this PUBLIC repo.
+# Adopted via `git config core.hooksPath hooks` (run scripts/install-hooks.sh).
+# Contains no client data; the denylist it reads is gitignored (see CONTRIBUTING.md).
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+# probe-then-run: pick a working interpreter once, run once with errors un-suppressed.
+PY=$(python3 --version >/dev/null 2>&1 && echo python3 || echo python)
+exec "$PY" "$ROOT/scripts/client_ref_guard.py" scan-staged

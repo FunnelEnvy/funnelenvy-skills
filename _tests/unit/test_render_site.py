@@ -9,6 +9,7 @@ fixtures here are synthetic (non-client).
 """
 import importlib.util
 import os
+import re
 import tempfile
 import unittest
 
@@ -175,6 +176,62 @@ tests:
 """
 
 
+# --------------------------------------------------------------------------
+# Synthetic account-program fixture (non-client). The account-program deliverable
+# is an off-store altitude: plays carry no **Key:** / **Scores:**, and there is a
+# cohort-taxonomy table plus a cohort-rosters block (whose `### <name>` headings
+# must NOT parse as plays). The plays live under `## The Account-Level Plays`.
+# --------------------------------------------------------------------------
+
+ACCOUNT = """---
+kb_layer: gold
+generated_by: hypothesis-generator
+version: "1.0.0"
+---
+# Acme: Account Program
+
+## How to Read This Program
+Off-store plays measured by account-level designs, not on-store splits.
+
+## The Account-Cohort Taxonomy
+
+| Cohort | Approximate size | Behavior |
+|---|---|---|
+| **Dormant enterprise** | ~180 accounts | Signed up, never activated a seat. |
+| **Expansion-ready** | ~60 accounts | High usage on a single team, no expansion. |
+| **At-risk renewal** | ~40 accounts | Usage decline in the last quarter. |
+
+## Cohort Rosters
+
+### Dormant enterprise
+Northwind, Contoso, Example Corp.
+
+### Expansion-ready
+The client's two largest teams.
+
+## The Account-Level Plays
+
+### 1. Dormant reactivation sequence
+**Cohort:** Dormant enterprise.
+**The play:** A guided reactivation offer routed to dormant admins.
+**Rationale:** Dormant accounts already carry intent; reactivation is cheaper than net-new.
+**How it is measured:** Reactivated-account rate over a matched control window.
+**Dependencies:** Admin contact list and an offline offer channel.
+**Relationship to the roadmaps:** Feeds the activation bet without an on-store split.
+
+### 2. Expansion motion for high-usage teams
+**Cohort:** Expansion-ready.
+**The play:** An account-level expansion motion for concentrated high-usage teams.
+**Rationale:** Concentrated usage is the strongest expansion signal in the base.
+**How it is measured:** Seat-expansion rate against a holdout cohort.
+**Dependencies:** Usage-by-team read and a sales-assist handoff.
+**Relationship to the roadmaps:** Informs the proof bet with expansion evidence.
+
+## Boundaries
+These plays run off-store and are not A/B tests.
+"""
+
+
 def _write_triple(strategic=STRATEGIC, tactical=TACTICAL, sidecar=SIDECAR):
     d = tempfile.mkdtemp()
     sp = os.path.join(d, "strategic.md")
@@ -184,6 +241,16 @@ def _write_triple(strategic=STRATEGIC, tactical=TACTICAL, sidecar=SIDECAR):
         with open(path, "w") as f:
             f.write(text)
     return d, sp, tp, ep
+
+
+def _write_quad(strategic=STRATEGIC, tactical=TACTICAL, sidecar=SIDECAR, account=ACCOUNT):
+    """Like _write_triple, but also writes the optional account-program file.
+    Returns (dir, strategic_path, tactical_path, edges_path, account_path)."""
+    d, sp, tp, ep = _write_triple(strategic, tactical, sidecar)
+    ap = os.path.join(d, "account.md")
+    with open(ap, "w") as f:
+        f.write(account)
+    return d, sp, tp, ep, ap
 
 
 def _load_all(strategic=STRATEGIC, tactical=TACTICAL, sidecar=SIDECAR):
@@ -483,6 +550,136 @@ class TestEndToEnd(unittest.TestCase):
             self.assertNotIn("Proposed change", f.read())
         with open(os.path.join(out, "p-04.html")) as f:
             self.assertIn("Proposed change", f.read())
+
+
+# --------------------------------------------------------------------------
+# Account-program altitude
+# --------------------------------------------------------------------------
+
+class TestAccountParser(unittest.TestCase):
+    def test_plays_parse_as_ap_ids_no_tier_no_key(self):
+        _, body = rs.parse_frontmatter(ACCOUNT)
+        plays_slice = rs.extract_named_section(body, "The Account-Level Plays")
+        secs = rs.extract_sections(plays_slice, "play")
+        self.assertIn("ap-01", secs)
+        self.assertIn("ap-02", secs)
+        self.assertEqual(secs["ap-01"]["title"], "Dormant reactivation sequence")
+        # plays carry no tier (no `## ` tier heading in the slice) and no Key
+        self.assertIsNone(secs["ap-01"]["tier"])
+        self.assertIsNone(secs["ap-01"]["key"])
+        # the six bold labels are present
+        for lbl in ("Cohort", "The play", "Rationale", "How it is measured",
+                    "Dependencies", "Relationship to the roadmaps"):
+            self.assertIn(lbl, secs["ap-01"]["labels"])
+
+    def test_roster_headings_outside_slice_not_parsed_as_plays(self):
+        _, body = rs.parse_frontmatter(ACCOUNT)
+        plays_slice = rs.extract_named_section(body, "The Account-Level Plays")
+        secs = rs.extract_sections(plays_slice, "play")
+        # exactly the two ordinal plays; the `### <name>` roster headings are
+        # outside the slice and are not ordinal form, so they never appear
+        self.assertEqual(sorted(secs.keys()), ["ap-01", "ap-02"])
+
+
+class TestAccountLoader(unittest.TestCase):
+    def test_load_account_none_when_no_path(self):
+        self.assertIsNone(rs.load_account(None))
+        self.assertIsNone(rs.load_account(""))
+
+    def test_load_account_plays_and_cohorts(self):
+        _, _, _, _, ap = _write_quad()
+        acct = rs.load_account(ap)
+        self.assertEqual([p["id"] for p in acct["plays"]], ["ap-01", "ap-02"])
+        # plays derive without requiring Key/Scores
+        self.assertNotIn("Key", acct["plays"][0]["labels"])
+        self.assertNotIn("Scores", acct["plays"][0]["labels"])
+        # taxonomy table parsed: name (bold stripped) + size + behavior
+        self.assertEqual(len(acct["cohorts"]), 3)
+        self.assertEqual(acct["cohorts"][0]["name"], "Dormant enterprise")
+        self.assertEqual(acct["cohorts"][0]["size"], "~180 accounts")
+        self.assertIn("never activated", acct["cohorts"][0]["behavior"])
+
+
+class TestAccountGate(unittest.TestCase):
+    def _expect_account_violation(self, account_text):
+        s, t, sc = _load_all()
+        d = tempfile.mkdtemp()
+        ap = os.path.join(d, "account.md")
+        with open(ap, "w") as f:
+            f.write(account_text)
+        acct = rs.load_account(ap)
+        with self.assertRaises(rs.GateError) as cm:
+            rs.run_gate(s, t, sc, acct)
+        self.assertTrue(any("[account]" in v for v in cm.exception.violations),
+                        "expected an [account] violation, got: %s" % cm.exception.violations)
+
+    def test_valid_account_passes(self):
+        s, t, sc = _load_all()
+        _, _, _, _, ap = _write_quad()
+        rs.run_gate(s, t, sc, rs.load_account(ap))  # should not raise
+
+    def test_missing_required_label_fails(self):
+        bad = ACCOUNT.replace("**How it is measured:** Reactivated-account rate over a matched control window.\n", "")
+        self._expect_account_violation(bad)
+
+    def test_empty_plays_block_fails(self):
+        bad = ACCOUNT.replace(
+            "### 1. Dormant reactivation sequence", "#### not-a-play").replace(
+            "### 2. Expansion motion for high-usage teams", "#### also-not")
+        self._expect_account_violation(bad)
+
+    def test_duplicate_ordinals_fail(self):
+        bad = ACCOUNT.replace("### 2. Expansion motion for high-usage teams",
+                              "### 1. Expansion motion for high-usage teams")
+        self._expect_account_violation(bad)
+
+
+class TestAccountEndToEnd(unittest.TestCase):
+    def test_no_account_byte_identical_seam(self):
+        d, sp, tp, ep = _write_triple()
+        out = os.path.join(d, "site")
+        self.assertEqual(rs.main(["--strategic", sp, "--tactical", tp,
+                                  "--edges", ep, "--out", out]), 0)
+        with open(os.path.join(out, "index.html")) as f:
+            html = f.read()
+        # the seam between #backlog close and #sequence open is byte-identical to
+        # the pre-change render (empty {{ACCOUNT_PROGRAM}} reproduces the blank line)
+        self.assertIn('</section>\n\n<section id="sequence">', html)
+        self.assertNotIn("account-program", html)
+        # no ap-*.html emitted
+        self.assertFalse(any(f.startswith("ap-") for f in os.listdir(out)))
+
+    def test_with_account_renders(self):
+        d, sp, tp, ep, ap = _write_quad()
+        out = os.path.join(d, "site")
+        self.assertEqual(rs.main(["--strategic", sp, "--tactical", tp, "--edges", ep,
+                                  "--out", out, "--account-program", ap]), 0)
+        with open(os.path.join(out, "index.html")) as f:
+            html = f.read()
+        self.assertIn('id="account-program"', html)
+        self.assertIn('href="#account-program">Account program</a>', html)
+        # one cohort card per taxonomy row, one play card per play
+        self.assertEqual(html.count('class="cohort"'), 3)
+        self.assertEqual(html.count('class="test off"'), 2)
+        # one ap-NN.html per play, each linking back to the account section
+        files = set(os.listdir(out))
+        self.assertIn("ap-01.html", files)
+        self.assertIn("ap-02.html", files)
+        with open(os.path.join(out, "ap-01.html")) as f:
+            spoke = f.read()
+        self.assertIn('href="index.html#account-program"', spoke)
+        self.assertIn("Dormant reactivation sequence", spoke)
+
+    def test_account_plays_not_on_map(self):
+        d, sp, tp, ep, ap = _write_quad()
+        out = os.path.join(d, "site")
+        rs.main(["--strategic", sp, "--tactical", tp, "--edges", ep,
+                 "--out", out, "--account-program", ap])
+        with open(os.path.join(out, "index.html")) as f:
+            html = f.read()
+        m = re.search(r'<svg id="pf-map".*?</svg>', html, re.S)
+        self.assertIsNotNone(m)
+        self.assertNotIn("ap-", m.group(0))
 
 
 if __name__ == "__main__":

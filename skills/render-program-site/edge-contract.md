@@ -169,3 +169,48 @@ the `routing` vs `cta` mismatch.
 | `expresses` | Expressed on-page by | Expresses |
 | `informs` | Informs | Informed by |
 | `gates` | Gates | Gated by |
+
+## Account program (optional off-store altitude)
+
+The account-program deliverable (`--account-program <path>`, a `gold-strategy-deliverable`
+of the account-program shape) is a THIRD input, parsed standalone. It has **no sidecar
+binding, no cross-altitude edge, and no place on the portfolio map**. Its plays carry no
+`**Key:**`, no `**Scores:**`, no ICE, and no on-page mechanism: each is measured by an
+account-level design (cohort reactivation, offline-conversion gap closure, account-level
+reads, program delivery) rather than by splitting on-store traffic, so the plays cannot
+enter any of the seven edge checks or receive map coordinates. The input is optional; a
+missing file simply omits the altitude, and output is byte-identical to a two-altitude render.
+
+### Parsed standalone (never authored)
+
+- The plays block is sliced with `extract_named_section("The Account-Level Plays")` and the
+  taxonomy with `extract_named_section("The Account-Cohort Taxonomy")` BEFORE parsing. Slicing
+  first means the `## Cohort Rosters` block (whose children are `### <descriptive name>`
+  headings, not `### N.` ordinals) is never reached; even unsliced it would be inert, because
+  `extract_sections` keys strictly on the ordinal `### N.` form (validated against a live
+  reference deliverable).
+- Each play: `id` from the `### N.` ordinal -> `ap-NN`; `title` from the heading; `labels`
+  from the bold-labeled paragraphs (`Cohort`, `The play`, `Rationale`, `How it is measured`,
+  `Dependencies`, `Relationship to the roadmaps`). `tier` is `None` (no tier H2 in the slice);
+  `key` is `None` (plays carry no `**Key:**`).
+- Each cohort: parsed from the taxonomy markdown table (skip the header row and the `|---|`
+  separator; strip `**` bold from the name) into `{name, size, behavior}`. Name + size are
+  data-bound facts; the behavior flows through a prose slot.
+
+### Account-binding checks (separate leg, runs only when an account program is present)
+
+These append to the same violation list and fail closed (non-zero exit), but are wholly
+separate from the seven edge checks (which never see account data):
+
+1. At least one play exists under `The Account-Level Plays`.
+2. Play ordinals are unique (a duplicate `### N.` is named; the `ap-NN` keying would otherwise
+   silently collapse it).
+3. Every play carries the required labels `Cohort`, `The play`, and `How it is measured`.
+
+Message style matches the edge gate, e.g. `[account] play ap-02 ('...'): missing required
+label 'How it is measured'`.
+
+Synthetic example (non-client): a taxonomy table of two or three cohorts plus two `### N.`
+plays each carrying the six labels, no `**Key:**`/`**Scores:**`, renders a `#account-program`
+hub section (cohort cards + one play card per play) and one `ap-NN.html` spoke per play, each
+linking back to `index.html#account-program`.

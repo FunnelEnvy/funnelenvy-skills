@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# client-reference guard: block client-identifying strings from commit messages in this PUBLIC repo.
+# Adopted via `git config core.hooksPath hooks` (run scripts/install-hooks.sh).
+# $1 is the path to the commit-message file. Contains no client data.
+set -euo pipefail
+
+ROOT="$(git rev-parse --show-toplevel)"
+PY=$(python3 --version >/dev/null 2>&1 && echo python3 || echo python)
+exec "$PY" "$ROOT/scripts/client_ref_guard.py" scan-msg "$1"
