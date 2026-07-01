@@ -2,6 +2,15 @@
 
 AI-powered marketing and CRO skills for Claude Code. Built for practitioners who run real experiments, not just theorize about them.
 
+## Public Repo: No Client References (HARD RULE)
+
+This repository is **public**. Never write a real company or client name, engagement codename, or account identifier into any file or commit message here. Use a generic placeholder (`Acme`, `Example Corp`, `the client`, `a private consumer engagement`) or omit it entirely. This binds everyone, including AI agents editing the repo, and it is applied by inference: if you recognize a string as a real company name, do not write it.
+
+- Do not maintain or rely on a list of names. The rule is categorical: no real company names, ever.
+- A self-contained guard backstops it: `hooks/pre-commit` and `hooks/commit-msg` (installed via `scripts/install-hooks.sh`) plus a CI job run `scripts/client_ref_guard.py`, which flags the shape of client data (a capitalized entity run followed by a corporate legal suffix) and blocks the commit. It reports locations only, never the matched text.
+- The guard is a backstop, not the control. It cannot recognize a bare codename or an unsuffixed name; the rule and review are what actually prevent those. Author clean in the first place.
+- `_dev/` and other dev surfaces are gitignored, but treat the rule as applying everywhere regardless.
+
 ## Repo Structure
 
 ```
@@ -485,10 +494,10 @@ Visual mockup generator for proposed experiment changes. Takes a hypothesis from
 
 **Runtime:** ~40-80K tokens (live, variable with iteration), ~30-50K tokens (static).
 
-### render-program-site (v0.2.1)
-Renders a unified two-altitude program site from hypothesis-generator's two gold roadmaps, read in place: the strategic roadmap (`gold-strategic-roadmap`, program-level bets) and the tactical roadmap (`gold-experiment-roadmap`, page-level tests). It derives each item's id, key, title, tier, ICE, and page from the gold structure and authors nothing into those artifacts; the one net-new input is a small render-owned sidecar (`{scope}-program-edges.md`) carrying the cross-altitude edge binding plus the gate-classification fields, keyed by gold `**Key:**`. Produces a hub page plus one spoke per bet (`sb-NN.html`) and one per test (`p-NN.html`), with the cross-altitude edge contract enforced as a hard build gate (mechanism compatibility, dangling targets, executor-status derivation, sidecar-vs-gold version lock, binding completeness) that fails closed with a non-zero exit. Hybrid skill: a deterministic generator (`scripts/render_site.py`) owns the gate, the Impact-by-Ease portfolio map, edge typing, and all chrome and data-bound structure, so the strategic layer cannot drift; a scoped LLM pass then curates the spoke prose slots and runs a humanizer pass. Replaces the former roadmap-presentation skill. No web research, no `.claude/context/` writes.
+### render-program-site (v0.4.0)
+Renders a unified two-altitude program site from hypothesis-generator's two gold roadmaps, read in place: the strategic roadmap (`gold-strategic-roadmap`, program-level bets) and the tactical roadmap (`gold-experiment-roadmap`, page-level tests). It derives each item's id, key, title, tier, ICE, and page from the gold structure and authors nothing into those artifacts; the one net-new input is a small render-owned sidecar (`{scope}-program-edges.md`) carrying the cross-altitude edge binding plus the gate-classification fields, keyed by gold `**Key:**`. Produces a hub page plus one spoke per bet (`sb-NN.html`) and one per test (`p-NN.html`), with the cross-altitude edge contract enforced as a hard build gate (mechanism compatibility, dangling targets, executor-status derivation, sidecar-vs-gold version lock, binding completeness) that fails closed with a non-zero exit. An optional third input, an account-program deliverable (`--account-program`), renders a distinct off-store altitude: account plays carry no ICE, no on-page mechanism, and no cross-altitude edge, so they bypass the edge gate and the portfolio map and are validated by a separate account-binding leg (>=1 play, unique ordinals, required labels); the hub gains an `#account-program` section and one `ap-NN.html` spoke per play. When no account program is supplied the render is byte-identical to a two-altitude site. Hybrid skill: a deterministic generator (`scripts/render_site.py`) owns the gate, the Impact-by-Ease portfolio map, edge typing, and all chrome and data-bound structure, so the strategic layer cannot drift; a scoped LLM pass then curates the spoke prose slots and runs a humanizer pass. Replaces the former roadmap-presentation skill. No web research, no `.claude/context/` writes.
 
-**Invocation:** `/render-program-site [<strategic-md> <tactical-md>] [--edges <path>] [--scope <slug>] [--no-kb] [--out <dir>]`.
+**Invocation:** `/render-program-site [<strategic-md> <tactical-md>] [--edges <path>] [--account-program <path>] [--scope <slug>] [--no-kb] [--out <dir>]`.
 
 **Phases:** (1) resolve three inputs + mode (HARD STOP on a missing sidecar); (2) run `render_site.py` to validate the gate and emit all structure/chrome with labeled prose slots; (3) LLM curation pass mapping gold body sections -> prose slots (drop-list applied); (4) humanizer pass over authored prose; (5) write site + completion message (mode, bet/test counts, per-test mockup status, gate result, deferred-hosting note).
 
@@ -497,7 +506,7 @@ Renders a unified two-altitude program site from hypothesis-generator's two gold
 - Soft: per-test mockup artifacts from experiment-mockup (placeholder frames when absent), referenced via each sidecar test's `mockup` block
 - Does NOT read L0/L1 context files; the two gold roadmaps + the edge sidecar are the single source of truth
 
-**Outputs (dual-mode):** legacy `.claude/deliverables/program-site/`; KB mode `{kb_root}/deliverables/{scope}-program-site/` (`styles.css`, `site.js`, `index.html`, `sb-NN.html`, `p-NN.html`, `mockups/<id>/`). No `kb_layer` frontmatter (derived view). Hosting/deploy deferred to a follow-up (v1 non-goal).
+**Outputs (dual-mode):** legacy `.claude/deliverables/program-site/`; KB mode `{kb_root}/deliverables/{scope}-program-site/` (`styles.css`, `site.js`, `index.html`, `sb-NN.html`, `p-NN.html`, `ap-NN.html` when an account program is supplied, `mockups/<id>/`). No `kb_layer` frontmatter (derived view). Hosting/deploy deferred to a follow-up (v1 non-goal).
 
 ## Development
 

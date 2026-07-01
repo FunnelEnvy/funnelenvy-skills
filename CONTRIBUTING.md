@@ -24,6 +24,37 @@ Each skill lives in `skills/<skill-name>/` with a `SKILL.md` as the entry point.
 
 **Skill format reference:** Look at any existing `SKILL.md` for the expected structure.
 
+## No client references (hard rule)
+
+This repo is **public**. Never write a real company or client name, engagement codename, or account
+identifier in any file or commit message. Use a generic placeholder (`Acme`, `Example Corp`,
+`the client`, `a private consumer engagement`) or omit it. This applies to everyone, including AI
+agents working in the repo, and it is applied by inference: you already know a real company name when
+you write one, so don't.
+
+A mechanical guard backstops the rule. Install it once per clone:
+
+```
+./scripts/install-hooks.sh
+```
+
+That points `core.hooksPath` at the tracked `hooks/` dir. There is nothing else to set up: the guard
+is self-contained (no list to maintain, no secret).
+
+How it works:
+
+- `hooks/pre-commit` scans staged content and `hooks/commit-msg` scans your commit message. It flags
+  the shape of client data (a run of capitalized words followed by a corporate legal suffix, e.g.
+  `Acme Corp` or `Example GmbH` if those were not placeholders) and blocks the commit, reporting the
+  file and line but never the matched text (CI logs can be public).
+- It does not detect bare money figures (this repo cites them constantly as instructional examples) or
+  bare codenames with no company shape. Those are on you and review to catch, per the rule above.
+- False positives are intentionally tolerated. If a legitimate line trips the guard, rephrase it or use
+  a placeholder token.
+- CI (`.github/workflows/client-ref-guard.yml`) runs `scripts/client_ref_guard.py scan-tree` as a
+  backstop for commits made without the local hooks installed.
+- Manual audit any time: `python scripts/client_ref_guard.py scan-tree`.
+
 ## Submitting Changes
 
 1. Create a branch: `yourname_description`

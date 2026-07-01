@@ -309,15 +309,16 @@ def extract_sections(body, kind):
     """Split a gold-roadmap body into per-experiment sections keyed by canonical id.
 
     Returns {id: {"title", "key", "tier", "labels": {label: text}, "paras": [..]}}.
-    `kind` is "bet" (id prefix `sb`) or "test" (id prefix `p`); the id ordinal is
-    the `### N.` section number. `tier` is the enclosing tier H2. Bold-labeled
+    `kind` is "bet" (id prefix `sb`), "test" (id prefix `p`), or "play" (id prefix
+    `ap`, the account-program altitude); the id ordinal is the `### N.` section
+    number. `tier` is the enclosing tier H2. Bold-labeled
     paragraphs (`**Label:** text` or `**Label.** text`) are collected into
     `labels` with the trailing `:`/`.` stripped; `**Key:**` is also surfaced as
     `key`. Numbered sections only appear under tier H2s in the gold format, so a
     numbered heading reached while no tier is active is still captured (tier None)
     and the gate reports it.
     """
-    prefix = "sb" if kind == "bet" else "p"
+    prefix = {"bet": "sb", "test": "p", "play": "ap"}[kind]
     lines = body.split("\n")
     cur_tier = None
     starts = []  # (line_idx, ordinal, title, tier)
@@ -498,6 +499,66 @@ def load_tactical(path, sidecar):
     return {"tests": tests, "gold_version": gold_version}
 
 
+def _parse_cohort_table(slice_text):
+    """Parse the account-cohort taxonomy markdown table into cohort dicts.
+
+    Columns are: cohort name | approximate size | behavior description. The
+    header row and the `|---|` separator row are skipped; `**` bold is stripped
+    from the cohort name. Returns [{"name", "size", "behavior"}] in table order.
+    """
+    cohorts = []
+    seen_header = False
+    for raw in slice_text.split("\n"):
+        line = raw.strip()
+        if not line.startswith("|"):
+            continue
+        cells = [c.strip() for c in line.strip("|").split("|")]
+        # separator row: every cell is dashes (optionally with :)
+        if cells and all(set(c) <= set("-: ") and c for c in cells):
+            continue
+        if not seen_header:
+            seen_header = True  # first pipe row is the header; skip it
+            continue
+        if len(cells) < 3:
+            continue
+        name = re.sub(r"\*\*(.+?)\*\*", r"\1", cells[0]).strip()
+        cohorts.append({"name": name, "size": cells[1], "behavior": cells[2]})
+    return cohorts
+
+
+def load_account(path):
+    """Load the optional account-program deliverable (a `gold-strategy-deliverable`
+    of the account-program shape). Returns None when `path` is falsy.
+
+    Account plays are off-store: they carry no `**Key:**`, no `**Scores:**`, no
+    on-page mechanism, and no cross-altitude edge, so they never enter the edge
+    gate or the portfolio map. The plays block is sliced with
+    `extract_named_section("The Account-Level Plays")` and the taxonomy with
+    `extract_named_section("The Account-Cohort Taxonomy")` before parsing, so
+    `## Cohort Rosters` (`### <name>` headings) is never reached. Returns
+    {"plays": [...], "cohorts": [...]} where each play is
+    {"id": "ap-NN", "title", "labels", "section"}.
+    """
+    if not path:
+        return None
+    with open(path, encoding="utf-8") as fh:
+        _, body = parse_frontmatter(fh.read())
+    plays_slice = extract_named_section(body, "The Account-Level Plays")
+    taxonomy_slice = extract_named_section(body, "The Account-Cohort Taxonomy")
+    secs = extract_sections(plays_slice, "play")
+    plays = []
+    for cid in sorted(secs, key=lambda c: int(c.split("-")[1])):
+        sec = secs[cid]
+        plays.append({"id": cid, "title": sec["title"], "labels": sec["labels"], "section": sec})
+    cohorts = _parse_cohort_table(taxonomy_slice)
+    # Raw ordinals as authored (before dict-keying collapses duplicates). The
+    # `ap-NN` keying dedupes by construction, so a genuine duplicate `### N.`
+    # would silently vanish; the raw list lets the gate name the collision.
+    raw_ordinals = [int(m.group(1)) for m in
+                    re.finditer(r"^###\s+0*(\d+)\.", plays_slice, re.M)]
+    return {"plays": plays, "cohorts": cohorts, "_raw_ordinals": raw_ordinals}
+
+
 def link_edges(strategic, tactical):
     """Resolve each bet edge's target (a tactical gold Key) to a `p-NN` id.
 
@@ -520,7 +581,7 @@ def link_edges(strategic, tactical):
 # The gate (7 checks, fail-closed)
 # --------------------------------------------------------------------------
 
-def run_gate(strategic, tactical, sidecar):
+def run_gate(strategic, tactical, sidecar, account=None):
     violations = []
     bets, tests = strategic["bets"], tactical["tests"]
     live_ids = {t["id"] for t in tests if t["status"] != "superseded"}
@@ -613,6 +674,30 @@ def run_gate(strategic, tactical, sidecar):
         violations.append("[7] tactical version lock: sidecar tactical_version '%s' != tactical "
                           "gold roadmap version '%s'" % (tv, tactical["gold_version"]))
 
+    # Account-binding leg (separate from the seven edge checks; account plays carry
+    # no edges, no mechanism, no ICE, so they never enter checks 1-7). Runs only
+    # when an account program is present. Validates the plays on their own terms.
+    if account is not None:
+        plays = account["plays"]
+        if not plays:
+            violations.append("[account] the account program has no plays "
+                              "(expected at least one `### N.` play under 'The Account-Level Plays')")
+        # ordinal uniqueness: the `ap-NN` keying dedupes silently, so compare the
+        # raw authored ordinals (from the plays slice) against their unique set.
+        raw = account.get("_raw_ordinals", [ int(p["id"].split("-")[1]) for p in plays ])
+        seen = set()
+        for ordn in raw:
+            if ordn in seen:
+                violations.append("[account] duplicate play ordinal %d "
+                                  "(two `### %d.` headings under 'The Account-Level Plays')"
+                                  % (ordn, ordn))
+            seen.add(ordn)
+        for p in plays:
+            for req in ("Cohort", "The play", "How it is measured"):
+                if req not in p["labels"] or not p["labels"][req]:
+                    violations.append("[account] play %s ('%s'): missing required label '%s'"
+                                      % (p["id"], p["title"], req))
+
     if violations:
         raise GateError(violations)
 
@@ -696,6 +781,10 @@ def join_and(items):  # ["A","B","C"] -> "A, B, and C"
 
 def test_num(tid):  # p-03 -> 3
     return str(int(tid.split("-")[1]))
+
+
+def play_label(pid):  # ap-02 -> AP-2
+    return "AP-%d" % int(pid.split("-")[1])
 
 
 def ice_total(ice):
@@ -884,7 +973,47 @@ def extract_named_section(body, name):
 # Emit: hub + spokes
 # --------------------------------------------------------------------------
 
-def build_hub(strategic, tactical, derived, templates):
+def build_account_section(account, program):
+    """Build the `<section id="account-program">` off-store altitude, or '' when
+    `account` is None. Mirrors build_bet_cards/build_backlog: data-bound structure,
+    prose through slots. Cohort name + size are data-bound facts; the behavior and
+    the intro flow through slots so curation/humanizer own the prose. Each play is
+    a `.test` card in a `.test-grid`, linking to `ap-NN.html`, with an off-store
+    badge and its measured-by drawn from the `How it is measured` label."""
+    if account is None:
+        return ""
+    cohort_cards = []
+    for i, c in enumerate(account["cohorts"], start=1):
+        cohort_cards.append(
+            '<div class="cohort"><div class="c-top"><span class="c-name">%s</span>'
+            '<span class="c-size mono">%s</span></div><p class="c-behavior">%s</p></div>'
+            % (esc(c["name"]), esc(c["size"]),
+               slot("program", "cohort-%d" % i, c["behavior"])))
+    cohort_block = ('<div class="cohort-grid">%s</div>' % "".join(cohort_cards)) if cohort_cards else ""
+
+    play_cards = []
+    for p in account["plays"]:
+        measured = p["labels"].get("How it is measured", "")
+        play_cards.append(
+            '<div class="test off" id="%s"><div class="t-top"><span class="t-n">%s</span>'
+            '<span class="x-tag off">Off-store</span></div>'
+            '<h4><a href="%s.html">%s</a></h4><p class="t-page">%s</p></div>'
+            % (p["id"], play_label(p["id"]), p["id"], esc(p["title"]), esc(measured)))
+    plays_block = ('<div class="test-grid">%s</div>' % "".join(play_cards)) if play_cards else ""
+
+    return (
+        '<section id="account-program">\n  <div class="container">\n'
+        '    <span class="eyebrow">Off-store work</span>\n'
+        '    <h2>The account program</h2>\n'
+        '    <p class="section-lead">%s</p>\n'
+        '    %s\n    %s\n  </div>\n</section>'
+        % (slot("program", "account-lead",
+                "Account-level plays that run off-store, measured by account-level "
+                "designs rather than by splitting on-store traffic."),
+           cohort_block, plays_block))
+
+
+def build_hub(strategic, tactical, derived, templates, account=None):
     program = strategic["program"]
     bets, tests = strategic["bets"], tactical["tests"]
     hero = program.get("hero") or {}
@@ -932,6 +1061,7 @@ def build_hub(strategic, tactical, derived, templates):
         "BET_CARDS": build_bet_cards(bets),
         "BACKLOG_LEAD": slot("program", "backlog-lead", ""),
         "BACKLOG": build_backlog(derived["tier_groups"], derived["superseded"]),
+        "ACCOUNT_PROGRAM": build_account_section(account, program),
         "SEQUENCE": slot("program", "sequence", seq_src),
         "DECISIONS_H2": "Decisions we need from %s" % client,
         "DECISIONS_LEAD": slot("program", "decisions-lead", ""),
@@ -939,13 +1069,15 @@ def build_hub(strategic, tactical, derived, templates):
         "FOOT": "%s (%s) &middot; prepared by FunnelEnvy &middot; <span class=\"mono\">%s</span>"
                 % (client, name, date),
     })
+    account_nav = '<a href="#account-program">Account program</a>' if account is not None else ""
+    nav_links = ('<a href="#map">Portfolio map</a><a href="#strategy">The strategy</a>'
+                 '<a href="#backlog">Experiment backlog</a>%s<a href="#sequence">Sequence</a>'
+                 '<a href="#decisions">Decisions</a>' % account_nav)
     return render(templates["base"], {
         "TITLE": "%s | FunnelEnvy" % esc(name),
         "BRAND_HREF": "#top",
         "CLIENT": client,
-        "NAV_LINKS": ('<a href="#map">Portfolio map</a><a href="#strategy">The strategy</a>'
-                      '<a href="#backlog">Experiment backlog</a><a href="#sequence">Sequence</a>'
-                      '<a href="#decisions">Decisions</a>'),
+        "NAV_LINKS": nav_links,
         "SCRIPT_SRC": "site.js",
         "MAIN": main,
     })
@@ -1076,6 +1208,32 @@ def build_spoke_tactical(t, program, templates, out_dir):
                        client, main)
 
 
+def build_spoke_account(play, account, program, templates):
+    """Build one `ap-NN.html` off-store play spoke. Mirrors build_spoke_strategic
+    and reuses _spoke_base. The hero meta stays data-light (the off-store tag
+    only, no truncated client prose in chrome); the cohort, measurement,
+    dependencies, and roadmap relationship are full prose-slot sections below."""
+    client = esc(program.get("client", ""))
+    lab = play["labels"]
+    meta = '<span class="x-tag off">Off-store</span>'
+    main = render(templates["spoke_account"], {
+        "CRUMB": ('<span class="mono">FunnelEnvy</span> / %s / <span class="mono">Account play %s</span>'
+                  % (client, play_label(play["id"]))),
+        "META": meta,
+        "TITLE_H1": esc(play["title"]),
+        "LEAD": slot(play["id"], "play-lead", lab.get("The play", "")),
+        "PLAY": slot(play["id"], "play", lab.get("The play", "")),
+        "COHORT": slot(play["id"], "play-cohort", lab.get("Cohort", "")),
+        "RATIONALE": slot(play["id"], "play-rationale", lab.get("Rationale", "")),
+        "MEASURE": slot(play["id"], "play-measure", lab.get("How it is measured", "")),
+        "DEPENDS": slot(play["id"], "play-depends", lab.get("Dependencies", "")),
+        "RELATIONSHIP": slot(play["id"], "play-relationship", lab.get("Relationship to the roadmaps", "")),
+        "FOOT_ID": "%s &middot; %s" % (play_label(play["id"]), esc(program.get("name", ""))),
+    })
+    return _spoke_base(templates, "%s %s | %s" % (play_label(play["id"]), esc(play["title"]), esc(program.get("name", ""))),
+                       client, main)
+
+
 # --------------------------------------------------------------------------
 # Asset handling + write
 # --------------------------------------------------------------------------
@@ -1111,7 +1269,8 @@ def copy_mockup_assets(t, mk, out_dir):
 
 def load_templates(tpl_dir):
     names = {"base": "base.html", "hub": "hub.html",
-             "spoke_strategic": "spoke-strategic.html", "spoke_tactical": "spoke-tactical.html"}
+             "spoke_strategic": "spoke-strategic.html", "spoke_tactical": "spoke-tactical.html",
+             "spoke_account": "spoke-account.html"}
     out = {}
     for key, fname in names.items():
         with open(os.path.join(tpl_dir, fname), encoding="utf-8") as fh:
@@ -1119,7 +1278,7 @@ def load_templates(tpl_dir):
     return out
 
 
-def write_site(strategic, tactical, derived, out_dir, tpl_dir):
+def write_site(strategic, tactical, derived, out_dir, tpl_dir, account=None):
     os.makedirs(out_dir, exist_ok=True)
     # copy static assets
     for asset in ("styles.css", "site.js"):
@@ -1131,7 +1290,7 @@ def write_site(strategic, tactical, derived, out_dir, tpl_dir):
     program = strategic["program"]
     written = []
     with open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8") as fh:
-        fh.write(build_hub(strategic, tactical, derived, templates))
+        fh.write(build_hub(strategic, tactical, derived, templates, account))
     written.append("index.html")
     for b in strategic["bets"]:
         with open(os.path.join(out_dir, "%s.html" % b["id"]), "w", encoding="utf-8") as fh:
@@ -1143,6 +1302,11 @@ def write_site(strategic, tactical, derived, out_dir, tpl_dir):
         with open(os.path.join(out_dir, "%s.html" % t["id"]), "w", encoding="utf-8") as fh:
             fh.write(build_spoke_tactical(t, program, templates, out_dir))
         written.append("%s.html" % t["id"])
+    if account is not None:
+        for p in account["plays"]:
+            with open(os.path.join(out_dir, "%s.html" % p["id"]), "w", encoding="utf-8") as fh:
+                fh.write(build_spoke_account(p, account, program, templates))
+            written.append("%s.html" % p["id"])
     return written
 
 
@@ -1156,6 +1320,9 @@ def main(argv=None):
     ap.add_argument("--tactical", required=True, help="path to the tactical gold roadmap markdown")
     ap.add_argument("--edges", required=True, help="path to the edge sidecar ({scope}-program-edges.md)")
     ap.add_argument("--out", required=True, help="output site root directory")
+    ap.add_argument("--account-program", default=None,
+                    help="optional path to the account-program deliverable ({scope}-account-program.md); "
+                         "when present, renders the off-store account altitude (hub section + ap-NN spokes)")
     ap.add_argument("--templates", default=None, help="templates dir (default: ../templates next to this script)")
     args = ap.parse_args(argv)
 
@@ -1165,6 +1332,7 @@ def main(argv=None):
     sidecar = load_sidecar(args.edges)
     strategic = load_strategic(args.strategic, sidecar)
     tactical = load_tactical(args.tactical, sidecar)
+    account = load_account(args.account_program)
     link_edges(strategic, tactical)
     # stash bodies/paths for hub sequence extraction + mockup asset resolution
     with open(args.strategic, encoding="utf-8") as fh:
@@ -1173,7 +1341,7 @@ def main(argv=None):
     strategic_body_cache["sidecar_dir"] = os.path.dirname(os.path.abspath(args.edges))
 
     try:
-        run_gate(strategic, tactical, sidecar)
+        run_gate(strategic, tactical, sidecar, account)
     except GateError as ge:
         sys.stderr.write("EDGE-CONTRACT GATE FAILED (%d violation%s):\n"
                          % (len(ge.violations), "" if len(ge.violations) == 1 else "s"))
@@ -1182,11 +1350,12 @@ def main(argv=None):
         return 2
 
     derived = derive(strategic, tactical)
-    written = write_site(strategic, tactical, derived, args.out, tpl_dir)
+    written = write_site(strategic, tactical, derived, args.out, tpl_dir, account)
     bets, tests = len(strategic["bets"]), sum(1 for t in tactical["tests"] if t["status"] != "superseded")
     mockups = sum(1 for t in tactical["tests"] if t.get("mockup"))
-    sys.stdout.write("OK gate passed. Wrote %d pages to %s (%d bets, %d tests, %d with mockups).\n"
-                     % (len(written), args.out, bets, tests, mockups))
+    plays_note = (" (%d account plays)" % len(account["plays"])) if account is not None else ""
+    sys.stdout.write("OK gate passed. Wrote %d pages to %s (%d bets, %d tests, %d with mockups).%s\n"
+                     % (len(written), args.out, bets, tests, mockups, plays_note))
     return 0
 
 

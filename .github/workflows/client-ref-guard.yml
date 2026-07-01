@@ -1,0 +1,22 @@
+name: client-ref-guard
+
+# Backstop for the local pre-commit / commit-msg hooks: scans all tracked content for the shape of
+# client data (a capitalized entity run followed by a corporate legal suffix). The scanner is
+# self-contained (no list, no secret) -- it enforces the repo rule "never write a real company name".
+# The local hooks are the primary guard (they stop a leak before it leaves the machine); this job
+# catches commits made without the hooks installed, failing the PR before merge.
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Scan tracked content for client references
+        run: python scripts/client_ref_guard.py scan-tree

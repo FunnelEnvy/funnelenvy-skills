@@ -1,6 +1,6 @@
 ---
 name: render-program-site
-version: "0.3.0"
+version: "0.4.0"
 description: >
   Render a two-altitude program site from two markdown inputs (a strategic layer of bets
   and a tactical roadmap of page tests): a hub plus one spoke per bet and per test, with
@@ -8,7 +8,7 @@ description: >
   program site", "program site", "strategic + tactical roadmap site", or the explicit
   /render-program-site invocation. Deterministic generator for the gate, map, and
   structure; scoped LLM pass curates spoke prose.
-updated: 2026-06-24
+updated: 2026-06-30
 ---
 
 # Render Program Site
@@ -36,12 +36,13 @@ is code; only prose wording is agent-authored.
 ## Invocation
 
 ```
-/render-program-site [<strategic-md> <tactical-md>] [--edges <path>] [--scope <slug>] [--no-kb] [--out <site-root>]
+/render-program-site [<strategic-md> <tactical-md>] [--edges <path>] [--account-program <path>] [--scope <slug>] [--no-kb] [--out <site-root>]
 ```
 
 - Two explicit positional paths render those gold roadmaps directly (override mode resolution); pair them with `--edges <path>` for the sidecar.
-- `--scope <slug>` selects KB mode and resolves all three inputs from the scope (see below).
+- `--scope <slug>` selects KB mode and resolves all three required inputs (and the optional account program) from the scope (see below).
 - `--edges <path>` supplies the edge sidecar (required; resolved from the scope in KB mode).
+- `--account-program <path>` supplies the optional account-program deliverable (the off-store altitude). When present, the hub gains an "account program" section and one `ap-NN.html` spoke per play; when absent, output is byte-identical to a two-altitude render.
 - `--no-kb` forces legacy mode.
 - `--out <dir>` overrides the computed output directory in either mode.
 
@@ -54,6 +55,11 @@ is code; only prose wording is agent-authored.
   cross-altitude edge binding and the gate-classification fields (see `edge-contract.md`).
 - The sidecar's `strategic_version` / `tactical_version` match the live gold roadmaps'
   frontmatter `version` (the version-lock gate halts otherwise).
+- Optional third input: an account-program deliverable (a `gold-strategy-deliverable` of the
+  account-program shape) holding off-store account plays. It is parsed standalone (no sidecar
+  binding, no edge participation, not on the map); see `edge-contract.md`. In KB mode it resolves
+  to `{kb_root}/deliverables/{scope}-account-program.md`; it is optional per scope, and a missing
+  file simply omits the account altitude (mirrors how a per-test `mockup` block is optional).
 - Python available (probe-then-run per repo conventions).
 - This skill does NOT read L0/L1 `.claude/context/` files and does NOT perform web research.
 
@@ -87,10 +93,14 @@ Mode resolution mirrors hypothesis-generator and experiment-mockup:
 5. Explicit positional input paths override the mode-resolved inputs in either mode (pair them
    with `--edges` for the sidecar).
 
-| | Strategic input | Tactical input | Edge sidecar | Output site |
-|---|---|---|---|---|
-| **KB mode** | `{kb_root}/deliverables/{scope}-strategic-roadmap.md` | `{kb_root}/deliverables/{scope}-experiment-roadmap.md` | `{kb_root}/deliverables/{scope}-program-edges.md` | `{kb_root}/deliverables/{scope}-program-site/` |
-| **Legacy** | explicit path, or `.claude/deliverables/strategic-roadmap.md` | explicit path, or `.claude/deliverables/experiment-roadmap.md` | `--edges`, or `.claude/deliverables/program-edges.md` | `.claude/deliverables/program-site/` |
+| | Strategic input | Tactical input | Edge sidecar | Account program (optional) | Output site |
+|---|---|---|---|---|---|
+| **KB mode** | `{kb_root}/deliverables/{scope}-strategic-roadmap.md` | `{kb_root}/deliverables/{scope}-experiment-roadmap.md` | `{kb_root}/deliverables/{scope}-program-edges.md` | `{kb_root}/deliverables/{scope}-account-program.md` (optional per scope; missing = omit) | `{kb_root}/deliverables/{scope}-program-site/` |
+| **Legacy** | explicit path, or `.claude/deliverables/strategic-roadmap.md` | explicit path, or `.claude/deliverables/experiment-roadmap.md` | `--edges`, or `.claude/deliverables/program-edges.md` | `--account-program <path>` (optional; missing = omit) | `.claude/deliverables/program-site/` |
+
+When the account program is present, the site also emits `spoke-account.html`-derived `ap-NN.html`
+spokes (one per play) and the hub gains an `#account-program` section; when absent, neither appears
+and the render is byte-identical to a two-altitude site.
 
 The strategic and tactical inputs are hypothesis-generator's gold roadmaps, read in place (no
 separate hand-authored format; the tactical-path collision with the gold output is resolved by
@@ -117,13 +127,20 @@ this skill cannot derive). Confirm all three input files exist before proceeding
 Run the generator:
 
 ```
-render_site.py --strategic <strategic-md> --tactical <tactical-md> --edges <sidecar-md> --out <site-root>
+render_site.py --strategic <strategic-md> --tactical <tactical-md> --edges <sidecar-md> --out <site-root> [--account-program <account-md>]
 ```
 
 The script validates the 7-check edge contract and, on success, emits `styles.css`,
 `site.js`, `index.html` (hub), and one `sb-NN.html` / `p-NN.html` spoke per bet/test, plus
 `mockups/<id>/` assets. Spoke prose regions are emitted as labeled `<!--PROSE ...-->` slots,
 pre-filled with the verbatim source body text as raw material.
+
+When `--account-program` is supplied, a separate account-binding leg validates the plays
+(at least one play, unique ordinals, required labels; see `edge-contract.md`) -- account plays
+never enter the seven edge checks or the portfolio map. On success the hub gains a conditional
+`#account-program` section (cohort cards + one play card per play) and one `ap-NN.html` spoke is
+emitted per play. When the flag is absent the account altitude is skipped entirely and the render
+is byte-identical to a two-altitude site.
 
 If the script exits non-zero, the gate failed: surface its printed violations verbatim and
 STOP. Do not edit inputs to "make it pass" without the user -- a gate failure is a real
@@ -143,6 +160,12 @@ emitted by the script and are never agent-authored. The hub `sequence` and `deci
 are assembled from the source `## Sequencing` / decisions sections into the `.tl` / `.dec-grid`
 structures the comps use.
 
+When an account program is present, its prose slots are curated the same way: the hub
+`account-lead` and `cohort-<n>` behavior slots map from the taxonomy, and each `ap-NN` spoke's
+`play-lead`, `play`, `play-cohort`, `play-rationale`, `play-measure`, `play-depends`, and
+`play-relationship` slots map from the play's `The play` / `Cohort` / `Rationale` /
+`How it is measured` / `Dependencies` / `Relationship to the roadmaps` source labels.
+
 ### Phase 4 -- Humanizer pass
 
 Run the curated prose (slot contents only) through one humanizer pass applying
@@ -151,7 +174,8 @@ passages are exempt; the pass targets agent-authored prose. No em dashes.
 
 ### Phase 5 -- Completion message
 
-Report: output site path, mode (KB/legacy), bet count, test count, per-test mockup status
+Report: output site path, mode (KB/legacy), bet count, test count, account-play count (when an
+account program was rendered), per-test mockup status
 (rendered / placeholder), the gate result, and the deferred-hosting note (the site is a
 static bundle that embeds its own assets except web fonts, which load from the Google
 Fonts CDN and degrade gracefully to the CSS fallback stack offline; deploy is a follow-up,
@@ -161,7 +185,7 @@ not part of this skill).
 
 | Script | Description | Use when |
 |---|---|---|
-| [`scripts/render_site.py`](scripts/render_site.py) | Deterministic generator: parse the two gold roadmaps + the edge sidecar, derive per-item data (id/key/title/tier/ICE/page) from the gold bodies -> validate the edge contract (fail-closed, non-zero exit) -> derive reverse edges, intake flags, Impact-by-Ease coordinates, edge classes, tier groups -> emit `styles.css` + `site.js` + `index.html` + `sb-NN`/`p-NN` spokes from `templates/`, with labeled prose slots. CLI: `render_site.py --strategic <path> --tactical <path> --edges <path> --out <dir> [--templates <dir>]`. Stdlib only. | Phase 2 (every render) |
+| [`scripts/render_site.py`](scripts/render_site.py) | Deterministic generator: parse the two gold roadmaps + the edge sidecar, derive per-item data (id/key/title/tier/ICE/page) from the gold bodies -> validate the edge contract (fail-closed, non-zero exit) -> derive reverse edges, intake flags, Impact-by-Ease coordinates, edge classes, tier groups -> emit `styles.css` + `site.js` + `index.html` + `sb-NN`/`p-NN` spokes from `templates/`, with labeled prose slots. When `--account-program` is given, additionally validates the account-binding leg and emits the `#account-program` hub section + one `ap-NN` spoke per play (never on the edge gate or map). CLI: `render_site.py --strategic <path> --tactical <path> --edges <path> --out <dir> [--account-program <path>] [--templates <dir>]`. Stdlib only. | Phase 2 (every render) |
 
 ## References
 
@@ -179,6 +203,7 @@ not part of this skill).
 | `<site>/index.html` | Hub: hero, portfolio map, strategy cards, backlog, sequence, decisions |
 | `<site>/sb-NN.html` | One spoke per strategic bet |
 | `<site>/p-NN.html` | One spoke per page test (superseded tests omitted) |
+| `<site>/ap-NN.html` | One spoke per account play (only when an account program is supplied) |
 | `<site>/mockups/<id>/` | Copied `screenshot.png` + `mockup.html` for tests with a mockup block; also `control.png` when the block carries a resolvable `control_screenshot` |
 
 ## Quality Rules
@@ -186,6 +211,9 @@ not part of this skill).
 - The render path is a hybrid: the gate, map coordinates, edge typing, chrome, and all
   data-bound structure are deterministic code; only prose-slot wording is agent-authored.
 - A gate failure halts the build -- never paper over a contract violation.
+- Account plays never enter the edge gate or the portfolio map: they carry no ICE, no on-page
+  mechanism, and no cross-altitude edge, so they are validated only by the separate
+  account-binding leg and rendered as a distinct off-store altitude.
 - The LLM pass edits only `<!--PROSE-->` slot contents; structure is never agent-touched.
 - No client content in the skill, generator, templates, or references (client data lives in
   the input files the generator reads, never in this skill directory).
@@ -195,6 +223,7 @@ not part of this skill).
 
 | Version | Changes |
 |---|---|
+| 0.4.0 | Optional account-program altitude. New `--account-program <path>` renders an off-store account layer: `load_account` parses the deliverable standalone (plays sliced from `## The Account-Level Plays`, cohorts from the `## The Account-Cohort Taxonomy` table; no `**Key:**`/`**Scores:**` required), a separate account-binding gate leg validates the plays (>=1 play, unique ordinals, required `Cohort`/`The play`/`How it is measured` labels), the hub gains a conditional `#account-program` section + nav link, and one `ap-NN.html` spoke is emitted per play. Account plays never enter the 7-check edge gate or the Impact-by-Ease map. `extract_sections` id-prefix generalized to `{bet:sb, test:p, play:ap}`. New `templates/spoke-account.html` + `#account-program`/`.cohort`/`.x-tag.off` CSS. Output is byte-identical to 0.3.x for any program supplying no account program (empty `{{ACCOUNT_PROGRAM}}` reproduces the hub seam; no `ap-*.html`; no nav link). Also corrects the stale `0.2.1` version pin in README.md / in-repo CLAUDE.md. |
 | 0.3.0 | Optional Before/After mockup render. The `mockup` block accepts an optional `control_screenshot` (experiment-mockup's `control-screenshot.png`): when present and resolvable, the tactical spoke's "Proposed change" section renders a labeled two-frame Before/After comparison (responsive grid, stacks under 760px) instead of a single after screenshot. `copy_mockup_assets` now copies `control.png` alongside `screenshot.png` and returns a dict of resolved paths; the gate rejects a non-string `control_screenshot`; a missing control file degrades to after-only. Output is byte-identical to 0.2.x for any `mockup` block without a resolvable `control_screenshot`. New `.mockup-compare` / `.mockup-label` CSS. |
 | 0.2.0 | Inputs reconciled with hypothesis-generator's actual output: the generator now reads the two prose gold roadmaps (`gold-experiment-roadmap`, `gold-strategic-roadmap`) in place and derives per-item data (id from `### N.` ordinal, key from `**Key:**`, title, tier from the enclosing tier H2, ICE from `**Scores:**`, page) from the gold bodies. The cross-altitude edge binding plus the gate-classification fields (`delivery_surface`, `executor_status`, per-test `mechanism_class`, optional `status`/`run_tag`/`keystone`/`mockup`) move to a new render-owned sidecar `{scope}-program-edges.md` keyed by gold Key. KB-mode strategic input renamed `{scope}-strategic-experiment-layer.md` -> `{scope}-strategic-roadmap.md`; tactical collision resolved by reading the gold artifact directly. Gate check 7 redefined as a sidecar-vs-gold version lock; new binding checks (every gold bet bound, every sidecar Key resolves, every live test has a `mechanism_class`). `render_site.py` gains `--edges`. Replaces the bespoke hand-authored `bets:`/`tests:`/`edges:` frontmatter that no deliverable carried. |
 | 0.1.0 | Initial skill: deterministic two-altitude program-site generator (`render_site.py`) with a 7-check edge-contract gate, Impact-by-Ease map, dual-mode I/O, and a scoped LLM curation + humanizer pass over spoke prose slots. Replaces roadmap-presentation. |
