@@ -68,13 +68,24 @@ Evaluate the loaded context against each of the six generic B2B lever families b
 
 6. **Offer architecture.** The commitment level of the offers themselves, not the copy of one CTA (an offer ladder, alternative commitment tiers). Source: L0 offers / CTAs plus `competitive-landscape.md`. Generic example: the only offer is a high-commitment "Request a demo" while solution-aware visitors have no lower-commitment entry; the lever is to introduce a lower-commitment offer tier and measure its effect on qualified-pipeline contribution, not just clicks.
 
+### Catch-All Leg (family-agnostic detection)
+
+After walking the six families, perform one full-body read of the loaded context for any business-level lever (a program, offer, audience motion, asset, or operational motion that moves a business outcome) the context AFFIRMATIVELY names and that fits no family. The families are lenses, not the recall boundary: a lever is not disqualified for fitting none of them. This leg licenses what a generous read finds anyway, so detection does not depend on one run reading past the checklist while the next walks it literally.
+
+- **Raised signal bar (the leg's only extra requirement).** A catch-all candidate must derive from signals in TWO independent loaded artifacts (e.g., a dormant capability named in the strategy context AND the commercial concentration that makes it valuable named in a performance or segmentation artifact). One artifact's mention is not enough: with no family template constraining the read, the two-artifact bar replaces the family's structural constraint. Record both sources in `signal_source`.
+- **Same gate, verbatim.** Every catch-all candidate runs the identical quality gate above, all seven criteria including criterion 7's tri-state. No relaxation anywhere.
+- **Zero-survivor expectation.** The catch-all is expected to produce zero survivors on most runs. It is not a quota; a run whose six families already cover the context's levers correctly emits nothing here.
+- **Anti-patterns.** "Strengthen the brand," "improve go-to-market," "invest in community," and any lever whose intervention unit or mechanism cannot be stated specifically fail criteria 1-3 exactly as family candidates do. The leg must not become a strategic-sounding dumping ground.
+- **Family precedence.** A candidate that matches a family routes through that family, never through this leg. The leg only ever ADDS candidates the families cannot see; it never re-routes or re-scores a family candidate.
+- **Record shape.** Survivors mint the standard opportunity record (Step 2) with `lever_family: catch-all`, the same `ice_baseline: 3/3/3`, and the de-novo `confidence_penalty: -1` PLUS one additional -1 for family-less structural uncertainty (applied in `phases/score.md` Step 6b; both are soft modifiers, not a ceiling). Catch-all survivors flow through the identical construction, gate, scoring, and render path; in the rendered deliverable a catch-all experiment is indistinguishable from a family one.
+
 ---
 
 ## Process
 
 ### Step 1: Lever Triage
 
-Walk the six lever families against the loaded context. For each candidate lever:
+Walk the six lever families, then the Catch-All Leg, against the loaded context. For each candidate lever:
 
 1. Evaluate against all quality gate criteria.
 2. If any criterion fails, discard with a brief note on which criterion failed (mechanism not falsifiable, unit not specific, before-state invented, etc.).
@@ -91,7 +102,7 @@ Opportunity:
   pattern: strategic-lever
   type: "strategic"
   lane: "strategic"
-  lever_family: [one of: objective-mismatch | dominant-off-page-lever | proof-gap | status-quo-alternative | buying-group-motion | offer-architecture]
+  lever_family: [one of: objective-mismatch | dominant-off-page-lever | proof-gap | status-quo-alternative | buying-group-motion | offer-architecture | catch-all]
   trigger_signal: [the specific signal from context]
   signal_source: [which context file and section]
   measurement_design: [candidate design from the enum: randomized_ab | holdout | pre_post | cohort | geo_split | switchback | operational_metric -- this is a CANDIDATE; construct.md Step 4c finalizes it]
@@ -144,5 +155,6 @@ Mapping:
 | No qualifying business-level lever in context | Emit nothing. Behavior is byte-identical to pre-change output: no strategic hypotheses, no padding, no new sections. |
 | A lever family's source context file is absent | That family degrades independently and emits nothing. Other families still evaluate. No penalty. |
 | Optional soft field absent | Lever families derive from the standard context files. No penalty, no cap, no mode change. |
+| Fewer than two loaded artifacts bear on any catch-all candidate | The two-artifact signal bar is unmeetable, not failed: the Catch-All Leg emits nothing, penalty-free. Family detection is unaffected. |
 
 **Output to the strategic path:** Strategic opportunities do NOT join the tactical opportunity list. They flow to the strategic construction and scoring path: strategic-lane construction in `phases/construct.md` (Experiment Scope Rule unit allowance, Step 4c measurement design, Step 5b non-A/B feasibility branch), then strategic-lane scoring and tiering in `phases/score.md` (non-A/B feasibility judgment, separate strategic scoring/tiering, within-tier asset/ops clustering), then render into the separate strategic deliverable defined in `SKILL.md` > `Strategic Roadmap Output Format`. The tactical roadmap is built entirely from the Phase 2 / 2b opportunity list and is untouched by this phase. Detection ordering across phases stays 2 then 2b then 2c then 3.

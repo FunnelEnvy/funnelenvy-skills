@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0] - 2026-07-02
+
+### Added
+- Catch-All Leg in Phase 2c (`phases/detect-strategic.md`): after the six lever families, a licensed family-agnostic full-body read for business-level levers the context affirmatively names that fit no family. The six families stop being the recall boundary (field evidence: the lane's best-grounded production bet fit no family and was found only by an unlicensed generous read; channel/motion-conflict, merchandising-program, lifecycle-reactivation, and pricing-policy levers had no family home). Design: raised two-artifact signal bar (a catch-all candidate must derive from signals in two independent loaded artifacts; the bar replaces the family template's structural constraint), the identical 7-criterion quality gate verbatim (incl. criterion 7 tri-state), explicit zero-survivor expectation (mirroring Phase 2b's framing), named anti-patterns, and family precedence (a candidate matching a family routes through the family; the leg only adds, never re-routes). Survivors mint `lever_family: catch-all` (token added to the Deliverable Purity banned enum) with the standard 3/3/3 baseline and take one additional -1 raw-Confidence soft modifier beyond the de-novo -1 (stacking with the confirm-first contingency when both apply; soft modifiers, never a ceiling - a hard cap would make a well-evidenced catch-all lever permanently second-class, and the 1.11.x Strategic Lane Gates already provide hard enforcement). Identical construction, gate, scoring, and render path; rendered output indistinguishable from family levers. Graceful degradation: under two bearing artifacts, the leg emits nothing penalty-free. Byte-inert when it finds nothing. Sequenced deliberately after the 1.11.x validation lane existed to receive its output. [hypothesis-generator-strategic-catchall-leg]
+
+RELEASE GATE: bound-KB regression in a consumer repo before release, with four named assertions: (1) recall - on a scope whose context names an out-of-family business lever with two-artifact support, the leg mints it, gated, with the extra -1 visible in the scoring arithmetic; (2) precision - on a scope with no such lever, zero catch-all survivors and output byte-identical to 1.11.1; (3) no family cannibalization - every lever a 1.11.1 run minted via a family still mints via the same family; (4) purity - the `catch-all` token absent from rendered bodies.
+
 ## [1.11.1] - 2026-07-02
 
 ### Fixed

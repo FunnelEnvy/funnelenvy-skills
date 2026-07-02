@@ -340,6 +340,33 @@ check "baseline_reliable guarded in Deliverable Purity Constraint" \
   "NONZERO"
 echo ""
 
+echo "[17] Strategic catch-all leg"
+check "detect-strategic.md has Catch-All Leg heading" \
+  "grep -c '^### Catch-All Leg (family-agnostic detection)' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "1"
+check "catch-all requires two independent artifacts" \
+  "grep 'TWO independent loaded artifacts' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "catch-all states zero-survivor expectation" \
+  "grep 'zero survivors on most runs' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "catch-all states family precedence" \
+  "grep 'routes through that family' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "lever_family enum includes catch-all" \
+  "grep 'offer-architecture | catch-all' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "score.md Step 6b names the catch-all modifier" \
+  "grep 'lever_family: catch-all' skills/hypothesis-generator/phases/score.md" \
+  "NONZERO"
+check "ice-scoring.md names the catch-all additional -1" \
+  "grep 'Catch-All Leg' modules/ice-scoring.md" \
+  "NONZERO"
+check "catch-all token guarded in Deliverable Purity Constraint" \
+  "grep 'offer-architecture., .catch-all' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+echo ""
+
 echo "=== Results ==="
 echo "  PASS: $PASS"
 echo "  FAIL: $FAIL"
