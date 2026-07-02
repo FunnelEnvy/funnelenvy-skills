@@ -342,7 +342,7 @@ Positioning dimensions use categorical ratings (Strong / Needs Work / Missing) i
 
 ## Available Skills
 
-### positioning-framework (v1.0.0)
+### positioning-framework (v1.1.1)
 Consolidated positioning, competitive research, and messaging framework. Feed it a company URL with a depth level and it researches, analyzes, and produces structured L0 + L1 context files.
 
 **Depth levels:**
@@ -369,7 +369,7 @@ Runs up to 4 sequential agents depending on depth (Research+L0, Competitive, Mes
 
 Four modes: Autonomous Research (default), Guided Interview, Audit & Update, Reconciliation (compare research against client's manual worksheet).
 
-### render-default-deliverables (v1.0.0)
+### render-default-deliverables (v1.0.1)
 L2 rendering skill. Consumes L0 + L1 context files and produces human-readable deliverables. No research, no analysis. Pure synthesis and formatting.
 
 Auto-invoked by positioning-framework at standard/deep depth. Also available standalone via `/render-default-deliverables` for re-rendering after context updates.
@@ -381,7 +381,7 @@ Auto-invoked by positioning-framework at standard/deep depth. Also available sta
 
 **Output:** `.claude/deliverables/` with manifest
 
-### ga4-audit (v2.1.0)
+### ga4-audit (v2.4.0)
 GA4 analytics audit. Pulls 10-15 targeted reports from a GA4 property via analytics-mcp, classifies conversion events, discovers element-level interactions (CTA clicks, link text, custom parameters), and produces a v2.1 `performance-profile.md` L1 context file with page grouping, opportunity sizing, trend analysis, element interaction data, and optional L0 enrichment. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
 
 **Invocation:** `/ga4-audit [property_id] [--days 90] [--date-range "YYYY-MM-DD:YYYY-MM-DD"] [--no-compare]`
@@ -398,7 +398,7 @@ Standalone CRO hypothesis engine. Reads positioning context (L0 + L1) plus optio
 32 experiment patterns across 10 categories plus performance-driven triggers, and produces a prioritized experiment
 roadmap with ICE scoring, test feasibility estimation, contrarian filtering (14 triggers that reframe or suppress standard CRO advice in B2B and context-specific scenarios), interaction-effect modeling (AND/OR/XOR gates between same-page hypotheses, 7 empirical interaction effects), LIFT-model sequencing (Relevance > Clarity > Anxiety > Distraction > Urgency within tiers), empirical tiebreakers (winner replication, proximity-to-conversion ordering), and inconclusive test guidance per experiment including post-deployment causal impact validation and directional significance soft-coding. Premise and measurement validation (Phase 3.5) emits per-hypothesis tri-state gates consumed as hard Confidence ceilings, covering both lanes: six tactical gates, plus strategic gates (baseline reliability with a design-forcing branch, business-metric instrumentation, premise contradiction). When a business-level lever qualifies (Phase 2c, six lever families with a 7-criterion quality gate whose gap-is-still-open criterion is tri-state: documented-live discards, documented-absent mints a build, context-silence about a client-side system mints only confirm-first), also produces a separate strategic roadmap deliverable with non-A/B measurement designs and an unscored Measurement Foundation section for instrumentation prerequisites (never scored as experiments). When `performance-profile.md` is present, produces data-calibrated scores with empirical benchmarks and B2B SaaS calibration anchors, traffic-driven hypotheses, and per-experiment feasibility notes. Infeasible experiments (insufficient traffic) are routed to "What's Not Here" with alternative approaches. Dual-mode I/O: when the working repo declares a CRO knowledge base binding, reads the scope's silver artifacts from the KB and writes typed gold-experiment-roadmap / gold-strategic-roadmap artifacts (`--scope` required; `--no-kb` forces legacy), with schema-tolerant performance trigger evaluation for profiles lacking `schema_version`. Manually invoked: /hypothesis-generator
 
-### landing-page-generator (v1.0.0)
+### landing-page-generator (v2.0.0)
 B2B paid landing page generator. Four-phase pipeline: Brief Builder, Copy Agent, Design Agent, QA Validator. Consumes L0+L1 context files and produces campaign-specific landing page deliverables. Each phase produces a file consumed by the next phase. Human review gates between phases when running the full pipeline.
 
 **Invocation:** `/landing-page-generator <company> <campaign-slug> [--stage brief|copy|design|qa|all] [--depth standard|deep]`
@@ -454,7 +454,7 @@ Brand voice analysis from website content. Extracts 12-15 pages across content t
 
 **Runtime:** ~80-120K tokens. ~10-15 minutes.
 
-### live-capture (v0.1.0, in active development)
+### live-capture (v0.2.0, in active development)
 Live-page structural and copy capture. Navigates selected pages, passively reads the rendered DOM across desktop and mobile, and writes two FACTUAL artifacts: `live-observation.md` (page structure) and `live-copy.md` (verbatim copy). Facts and two permitted mechanical derivations only; no judgments (consumers compute the interpretation). Reuses experiment-mockup's browser stack (Chrome DevTools / Playwright / static fallback, with the configured-but-broken = STOP rule) and positioning-framework's dual-mode KB write contract.
 
 **Invocation:** `/live-capture <url> [--scope <slug>] [--no-kb] [--static] [--urls <comma-list>] [--viewports desktop,mobile]`
@@ -471,7 +471,7 @@ Live-page structural and copy capture. Navigates selected pages, passively reads
 
 **Note:** KB-mode silver enrichment depends on the client type skill registering `silver-structural-observation` (Phase A Change B). Legacy mode is independent. Authoritative artifact schema inlined in `phases/write.md`; reference copies in `schemas/`.
 
-### experiment-mockup (v1.3.0)
+### experiment-mockup (v1.4.0)
 Visual mockup generator for proposed experiment changes. Takes a hypothesis from `experiment-roadmap.md`, navigates to the target page, injects the proposed change styled to match the site's design, iterates with the user in real time, then captures the approved state as a standalone HTML artifact with CRO placement rationale. Two modes: live (Chrome DevTools MCP, interactive, ~90% visual fidelity) and static (HTML extraction fallback, non-interactive, ~70% fidelity).
 
 **Invocation:** `/experiment-mockup <hypothesis-number> [--url <override-url>] [--static] [--scope <slug>] [--no-kb]`
