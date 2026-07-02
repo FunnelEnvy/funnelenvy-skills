@@ -32,7 +32,13 @@ Every strategic-lever opportunity MUST pass ALL criteria below. If any criterion
 
 6. **Not a pattern gap.** The lever should not be a page-element pattern that was skipped only for missing data. If a richer data load would have triggered a Phase 2 pattern at the page-element altitude, route it to Prerequisites rather than minting a strategic lever.
 
-7. **Gap is still open.** The named intervention must not already be implemented, live, or solved according to the loaded context. If any loaded artifact documents that the capability, instrumentation, routing, asset, or measurement the lever proposes is already in place (live in production, shipped, or operating), the lever is closed: discard it, and note it in "What's Not Here" as an existing capability rather than minting it. Read the before-state (criterion 4) for *current status*, not just current shape -- a documented "live"/"in production"/"already reporting" status fails this criterion. The only residual experiment a closed gap can support is a *usage/adoption* test of the existing capability, which must be minted on its own merits, never as "stand up" the capability.
+7. **Gap is still open.** Assess the named intervention's current status against the loaded context, distinguishing three states:
+
+   - **Documented live.** Any loaded artifact documents the capability, instrumentation, routing, asset, or measurement as implemented, live in production, shipped, or operating. The gap is closed: discard the lever and note it in "What's Not Here" as an existing capability. The only residual experiment a closed gap supports is a usage/adoption test of the existing capability, minted on its own merits, never as "stand up" the capability. Read the before-state (criterion 4) for *current status*, not just current shape: a documented "live" / "in production" / "already reporting" status lands here.
+   - **Documented absent.** A loaded artifact affirmatively states the capability does not exist (a named data gap, a documented missing asset class, an explicitly absent instrumentation). The gap is open and evidenced: the lever may be minted as a build, subject to the remaining criteria.
+   - **Context is silent.** No loaded artifact bears on the capability's status, AND the capability lives in a client-side system the loaded context does not cover (CRM, sales operations, marketing automation, data warehouse, internal reporting). Silence about a system the context was never positioned to observe is NOT evidence of absence. The lever may still be minted, but ONLY in the confirm-first shape: the first sequenced step of the experiment is verifying whether the capability already exists, not building it, and the record carries `absence_verified: false` (see the opportunity-record addition below). A lever whose before-state rests on silence and that is minted as an unconditional build fails this criterion.
+
+   The prior binary reading (documented-live fails, everything else passes) is superseded: silence and documented absence are no longer the same state.
 
 State, as with Phase 2b, that most candidate levers are expected to fail this gate. A surviving lever is a genuine business-altitude experiment with a measurable design, not an aspiration.
 
@@ -42,7 +48,15 @@ State, as with Phase 2b, that most candidate levers are expected to fail this ga
 
 Evaluate the loaded context against each of the six generic B2B lever families below. Each family is a lens, not a quota: a run may surface several from one family and none from another, or nothing at all. For each candidate, capture the one-line definition fit, the context source it derives from, and a mechanism sketch, then run it through the Quality Gate above.
 
-1. **Objective mismatch.** The stated business objective differs from what the page funnel actually optimizes (e.g., the objective is qualified-lead rate or pipeline quality, but the funnel optimizes raw form submits). Source: the stated objective plus `performance-profile.md` conversion definitions. Generic example: the brief names "qualified pipeline" as the goal while the only instrumented conversion is an ungated contact-form submit, so the optimized metric and the business goal diverge; the lever is to define and instrument a qualified-lead event and measure interventions against it. Before minting: confirm the qualified-lead (or down-funnel) event is **not already instrumented** in the loaded context. If a performance/measurement/attribution artifact documents that per-arm qualified-lead or down-funnel measurement is already live, the objective-mismatch gap is closed -- route to "What's Not Here" (existing capability), do not mint a lever. The objective-mismatch lever exists only where the qualified outcome is genuinely un-instrumented.
+1. **Objective mismatch.** The stated business objective differs from what the page funnel actually optimizes (e.g., the objective is qualified-lead rate or pipeline quality, but the funnel optimizes raw form submits). Source: the stated objective plus `performance-profile.md` conversion definitions.
+
+   **This family produces two distinct object types, never one conflated bet:**
+
+   a. **A Measurement Foundation entry (unscored prerequisite).** Defining and instrumenting the qualified event is a stand-up, not an experiment: no reasonable stakeholder disputes its value, so it fails criterion 5 as a scored bet by construction. It routes to the strategic deliverable's Measurement Foundation section (see SKILL.md `Strategic Roadmap Output Format`), carrying what gets instrumented, which system does the work, and which scored experiments depend on it. It carries no ICE scores. Apply criterion 7's tri-state to the Foundation entry itself: documented-live discards it; silence about a client-side system gives it the confirm-first shape.
+
+   b. **A scored strategic experiment (optional).** ONLY an intervention measured against the newly instrumented metric can be minted as a scored bet: a routing change, an offer change, an asset, a motion, read on the qualified outcome once the Foundation entry lands. Such a bet carries the Foundation entry as its stand-up dependency and sequences after it. If the context names no such intervention, family 1 emits the Foundation entry alone, and that is a complete, correct output.
+
+   Generic example: the brief names "qualified pipeline" as the goal while the only instrumented conversion is an ungated contact-form submit. Family 1 emits (a) a Foundation entry to define and instrument the qualified-lead event, in confirm-first shape if the context is silent on whether the CRM already holds a usable qualified-lead view; and (b), only if the context names one, a scored intervention (e.g., a same-day follow-up routing change) measured against the new event. It never emits "instrument the event" as a scored experiment with an Impact score, because Impact anchors measure conversion effects, not value-of-information.
 
 2. **Stakeholder-named dominant off-page lever.** A lever the client or stakeholders explicitly name as the dominant driver, living off the page (speed-to-lead, lead routing, follow-up cadence). Source: the stated objective, the optional soft field, or `audience-messaging.md` / competitive notes. Generic example: the prospecting team names same-day follow-up as the single biggest determinant of conversion, yet inbound routing currently replies in two-plus days; the lever is a routing/cadence change measured by speed-to-lead and downstream qualified-meeting rate.
 
@@ -83,8 +97,12 @@ Opportunity:
   measurement_design: [candidate design from the enum: randomized_ab | holdout | pre_post | cohort | geo_split | switchback | operational_metric -- this is a CANDIDATE; construct.md Step 4c finalizes it]
   ice_baseline: 3/3/3
   confidence_penalty: -1
+  absence_verified: [true | false]   # true when a loaded artifact affirmatively documents the gap; false when the before-state rests on context silence about a client-side system
+  confirm_first: [true | false]      # true when absence_verified is false; the experiment's first sequenced step is the existence check, not the build
   notes: [quality gate evaluation summary, causal mechanism sketch, stand-up dependency]
 ```
+
+`absence_verified: false` forces `confirm_first: true`. A confirm-first record's stand-up dependency begins with the verification step, its rendered sequencing names the check as step one, and its Confidence carries the contingency (see `phases/score.md` Step 6b and `modules/ice-scoring.md`). Confirm-first is the ONLY shape available for silence-based levers; routing a standalone client question in place of minting is not an alternative here, because unminted questions do not survive into the deliverable.
 
 Key differences from pattern-matched opportunities:
 

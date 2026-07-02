@@ -136,6 +136,36 @@ When `construct.md` Step 5 pre-registered the primary read as a segment (because
 
 ---
 
+## Strategic Lane Gates
+
+Strategic-lane hypotheses (from Phase 2c, carrying `lane: "strategic"`) now pass through this phase. They receive a strategic gate subset, not the full tactical six: the tactical gates `powerable` and `segmentation_satisfied` are A/B-formula constructs and read `not-assessed` for non-A/B designs (they still apply when the finalized design is `randomized_ab`). Tri-state semantics are identical to the tactical gates: pass / fail / not-assessed; only an affirmative fail caps; not-assessed is neutral and never penalizes.
+
+Emit a `validation_gates` record per strategic hypothesis with these gates:
+
+### Strategic Gate 1: baseline_reliable
+
+Applies when the finalized `measurement_design` is `pre_post`, `cohort`, or a matched (non-randomized) `holdout` whose matching depends on historical data.
+
+- The loaded performance context carries an affirmative unreliable-baseline statement bearing on the design's comparison window (a documented tracking discontinuity, a period-over-period comparison the profile itself flags as unreliable, a conversion event documented as having stopped firing, or an unreconciled contradiction in the baseline data the design would read against): `fail`. A `fail` here does two things: (a) it triggers the design-forcing branch in `construct.md` Step 4c (re-finalize toward a forward-only read, a randomized holdout, or another design that does not consume the disqualified baseline); and (b) if no alternative design exists, Confidence is capped at 2 by the Step 6b ceiling and the rendered read condition must state that the comparison window is directional only.
+- The performance context is present and does not disqualify the baseline: `pass`.
+- No performance context, or the design consumes no historical baseline (`operational_metric`, forward-only reads, randomized designs): `not-assessed`. Neutral.
+
+The gate reads what the skill already writes: a run that discloses "treat the pre-change window as directional only" in prose while scoring Confidence 3 on that same window is the defect this gate closes. Disclosure without enforcement is the failure mode.
+
+### Strategic Gate 2: metric_instrumented (strategic application)
+
+Reuse tactical Gate 2's logic in full, including the live-elsewhere posture and the no-performance-profile precedence, applied to the strategic experiment's business metric. One strategic-specific extension: when the primary business metric's instrumentation IS the run's own Measurement Foundation entry (the metric becomes readable only after a Foundation stand-up in this same deliverable), the gate reads `fail` for read-today purposes, the hypothesis cannot reach Confidence 4-5, and the dependency is rendered as the stand-up (this is expected and correct for Foundation-dependent bets; the cap prices the dependency honestly rather than routing the bet out).
+
+### Strategic Gate 3: premise_contradicted (strategic application)
+
+Reuse tactical Gate 1's triangulation procedure and authority order unchanged. The strategic-specific note: an unresolved quantitative contradiction in the loaded data that the bet's scoping depends on (e.g., a measured average order value wildly inconsistent with the segment the bet targets, disclosed but unreconciled) is an affirmative `fail`, not a risk footnote. Disclosing the contradiction in the Key risk block does not clear the gate; reconciling it or re-scoping the bet does.
+
+### Confirm-first Confidence treatment
+
+A hypothesis carrying `confirm_first: true` (from `phases/detect-strategic.md`) takes a Confidence contingency: the raw Confidence computed by the soft modifiers is reduced by 1 for the unverified existence assumption. This is a soft modifier, not a gate, and it is lifted only when the verification step lands (a later run with the capability's status documented re-scores without it). Record it in the gate-record notes so Step 6b applies it.
+
+---
+
 ## Output
 
-**Output to Phase 4 (score):** one `validation_gates` record per hypothesis, plus any Prerequisites additions (genuinely-dark metrics, "verify current before launch" notes, non-isolable-segment instrumentation blocks), any per-surface confirmation note for a `live-elsewhere` metric (a readiness/verification note, NOT a Prerequisites build entry; rendered via the SKILL.md `Readiness` field), and any "What's Not Here" routing flags (unpowerable thesis metric, genuinely-dark primary metric) for `score.md` Step 5b to apply. The records are internal; `score.md` Step 4 applies them as hard caps on the raw Confidence the soft modifiers compute, per the order-of-operations contract in `score.md` Step 4.
+**Output to Phase 4 (score):** one `validation_gates` record per hypothesis, plus any Prerequisites additions (genuinely-dark metrics, "verify current before launch" notes, non-isolable-segment instrumentation blocks), any per-surface confirmation note for a `live-elsewhere` metric (a readiness/verification note, NOT a Prerequisites build entry; rendered via the SKILL.md `Readiness` field), and any "What's Not Here" routing flags (unpowerable thesis metric, genuinely-dark primary metric) for `score.md` Step 5b to apply. The records are internal; `score.md` Step 4 applies them as hard caps on the raw Confidence the soft modifiers compute, per the order-of-operations contract in `score.md` Step 4. Strategic-lane gate records (from `Strategic Lane Gates` above) flow to `score.md` Step 6b instead, which applies the same ceiling rule to the strategic scoring pass.

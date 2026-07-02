@@ -1,8 +1,8 @@
 ---
 name: hypothesis-generator
-version: 1.10.2
+version: 1.11.0
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. In KB mode (see KB Mode (Dual-Mode Output)), reads the scope's silver CRO artifacts from a bound knowledge base and writes a typed gold-experiment-roadmap artifact instead. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
-updated: 2026-06-29
+updated: 2026-07-02
 ---
 
 # Hypothesis Generator
@@ -333,6 +333,8 @@ Read and follow `phases/validate.md`.
 
 Validate each hypothesis's premise, metric instrumentation, baseline, control stability, statistical power, and segmentation against the artifacts already loaded (no web research, no disk writes). Emits a per-hypothesis `validation_gates` record (six tri-state gates: `premise_contradicted`, `metric_instrumented`, `baseline_exists`, `control_stable`, `powerable`, `segmentation_satisfied`) that Phase 4 consumes as hard caps on Confidence and as Quick Win / infeasible-routing gates. Each gate is pass / fail / not-assessed; only an affirmative fail caps Confidence, and a not-assessed gate (backing artifact absent) is neutral and never penalizes.
 
+Strategic-lane hypotheses pass through this phase via the Strategic Lane Gates subset (`baseline_reliable`, `metric_instrumented`, `premise_contradicted`; tri-state, non-A/B-aware); Step 6b consumes the record as a hard Confidence ceiling.
+
 Output: Internal `validation_gates` record per hypothesis (not written to disk), plus Prerequisites and "What's Not Here" routing flags for Phase 4.
 
 ### Phase 4: ICE Scoring and Sequencing
@@ -634,6 +636,10 @@ Experiments are grouped into the same three tiers used across our roadmaps: Quic
 
 [If only one or two levers qualify, a flat ranked list under a single `## Strategic Experiments` heading is acceptable in place of sparse tier sections. Render whichever reads cleaner; never pad empty tiers.]
 
+## Measurement Foundation
+
+[Present ONLY when at least one instrumentation or measurement stand-up was identified as a prerequisite for the experiments below. Omit entirely otherwise. Entries here are not scored experiments: they carry no ICE scores and no tier. Each entry names, in natural language: what gets defined or instrumented, the system where the work happens, whether the first step is confirming an existing capability (the confirm-first case) or building one (the documented-absence case), and which experiments below depend on it. Audience note: these entries are actionable by the client's analytics or operations team independently of the experiment program; write them so that team can execute without reading the rest of the document.]
+
 ## Strategic Bets
 
 ### 1. [Experiment Name]
@@ -645,7 +651,7 @@ Experiments are grouped into the same three tiers used across our roadmaps: Quic
 **Measurement:** [the design in natural language, e.g., "a regional holdout read over eight weeks" or "a before-and-after comparison against a stable quarterly baseline." Never a raw design token.]
 **Business metric:** [the outcome it moves and the direction, e.g., "qualified-demo rate, up" or "speed-to-lead, down (faster); downstream qualified-meeting rate, up." This is a business outcome, not a page-level micro-conversion.]
 **Mechanism / Why this should work:** [the causal chain, 2-3 sentences, grounded in a behavioral, economic, or buying-process principle]
-**Stand-up dependency / Requires:** [the asset, operational process, or instrumentation that must exist before the experiment can run, e.g., "a named-client ROI one-pager built and published," or "none."]
+**Stand-up dependency / Requires:** [the asset, operational process, or instrumentation that must exist before the experiment can run, e.g., "a named-client ROI one-pager built and published," or "none." For a confirm-first experiment, this line begins with the existence check in natural language, e.g., "Step one: confirm whether [capability] already exists in [system class]; if it does, this becomes a connection task and the build below is skipped." Neutral phrasing only, per the Client-Facing Register: "confirm whether X exists" is correct; a critique of prior instrumentation work is a breach.]
 **Read condition and window:** [how long the design runs and what counts as a read; the ship/abandon condition stated as the design's read, e.g., "ship if the holdout group's qualified-demo rate trails the treated group by the test's margin at full read; abandon if the two are flat at full read."]
 
 **Scores:** Impact [X] | Confidence [X] | Ease [X]
@@ -694,6 +700,8 @@ Experiments are grouped into the same three tiers used across our roadmaps: Quic
 
 The strategic deliverable body is held to the `Deliverable Purity Constraint` and the `Client-Facing Register` in full: render every measurement design and lever in natural language (never a raw internal token), present each experiment on its own business terms, and never define a strategic experiment by what a page-element or A/B test cannot do.
 
+The Measurement Foundation section is part of the strategic deliverable, never a third deliverable or a new artifact type. It adds no KB type registration and no governance surface. It is held to the Deliverable Purity Constraint and Client-Facing Register in full.
+
 ### KB-mode validation, prior work, and completion
 
 - **Post-write validation.** After writing the KB strategic artifact, run the same `kb_type_validate.py` post-write gate as the tactical roadmap (resolve `<kb-start-scripts>` the same way; if validation reports errors, fix and re-validate; if the script cannot be resolved, warn, continue, and flag manual validation).
@@ -712,7 +720,7 @@ The experiment roadmap must contain ZERO references to internal system concepts.
 - Structural observation references: "structural observation artifact," "structural observation," and raw observation field names (e.g., "form_recurs_sitewide," "mobile_render_clean," "named_client_proof_present"). Describe the observed fact in natural language instead ("the demo form renders 13 fields on every page it appears")
 - Experiment-history references: `experiment_history_available`, `prior_winner`, `replication_candidate`, `transferable_rule`, `replication_target_surfaces`, `history_type`, `parent_outcome`, `source_priority`, `source_surfaces`, the producer's raw type/outcome tokens (`discriminating_test`, `recommended_lead`, `winner` / `loser` / `flat`), experiment identifiers / activity numbers, the producer KB's type name. Describe the prior result in natural language instead ("an earlier test on the pricing page lifted demo requests"). NOTE: quantified completed-experiment results (lift percentages, statistical significance, sample sizes) are NOT prohibited; they are permitted and encouraged as natural-language attribution without identifiers (see the allowance below).
 - Validation-gate internal field references (Phase 3.5 / premise-rigor): `validation_gates`, `premise_contradicted`, `metric_instrumented`, `baseline_exists`, `control_stable`, `powerable`, `segmentation_satisfied`, `instrumented_metrics`, `dark_metrics`, and `score_effect`. Render the underlying fact in natural language instead: "verify the current page before launch" (not `control_stable`), "this metric is not yet tracked" (not `dark_metrics` / `metric_instrumented`) for a genuinely-dark metric, "the [capability] is live; confirm it fires on this surface before launch" (the `live-elsewhere` verification note, distinct from the dark-metric build phrasing and never written as tracking to stand up), "primary read: paid-search arrivals" (describe the pre-registered segment in plain language, never a field token).
-- Strategic-lane internal field references: `lane`, `lane: "strategic"`, `strategic-lever`, `lever_family`, the lever-family enum tokens (`objective-mismatch`, `dominant-off-page-lever`, `proof-gap`, `status-quo-alternative`, `buying-group-motion`, `offer-architecture`), `measurement_design`, and the raw `measurement_design` enum tokens (`randomized_ab`, `holdout`, `geo_split`, `switchback`, `cohort`, `pre_post`, `operational_metric`). The natural-language phrasings ("regional holdout," "pre/post," "operational tracking," "a buying-group motion") remain permitted; only the raw snake_case / hyphenated field tokens are banned. Render the design and lane in natural language instead (e.g., "Measurement: regional holdout, 8-week read").
+- Strategic-lane internal field references: `lane`, `lane: "strategic"`, `strategic-lever`, `lever_family`, the lever-family enum tokens (`objective-mismatch`, `dominant-off-page-lever`, `proof-gap`, `status-quo-alternative`, `buying-group-motion`, `offer-architecture`), `measurement_design`, the raw `measurement_design` enum tokens (`randomized_ab`, `holdout`, `geo_split`, `switchback`, `cohort`, `pre_post`, `operational_metric`), the confirm-first field tokens (`absence_verified`, `confirm_first`), the strategic gate token (`baseline_reliable`), and internal-routing vocabulary around the Foundation slot ("Measurement Foundation entry" as routing language, e.g., "routes to the Foundation slot"; the rendered section heading "Measurement Foundation" itself is permitted). The natural-language phrasings ("regional holdout," "pre/post," "operational tracking," "a buying-group motion," "the first step is confirming whether the capability already exists") remain permitted; only the raw snake_case / hyphenated field tokens and routing vocabulary are banned. Render the design and lane in natural language instead (e.g., "Measurement: regional holdout, 8-week read").
 - System references: "Agent," "orchestrator," "phase file," "skill file," "SKILL.md," "frontmatter," "schema," "fetch registry"
 - Pattern references: "pattern ID," "HM-01," "FO-02," "experiment-patterns.md," "pattern matching"
 - Process references: "from L0," "per the context file," "the scoring phase determined," "opportunity detection found"
