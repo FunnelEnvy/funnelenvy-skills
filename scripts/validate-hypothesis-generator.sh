@@ -282,6 +282,64 @@ check "premise_contradicted guarded in Deliverable Purity Constraint" \
   "NONZERO"
 echo ""
 
+echo "[16] Strategic rigor (gates + criterion-7 tri-state + Measurement Foundation)"
+check "validate.md has Strategic Lane Gates heading" \
+  "grep -c '^## Strategic Lane Gates' skills/hypothesis-generator/phases/validate.md" \
+  "1"
+check "validate.md defines baseline_reliable gate" \
+  "grep 'baseline_reliable' skills/hypothesis-generator/phases/validate.md" \
+  "NONZERO"
+check "validate.md has strategic metric_instrumented application" \
+  "grep -c '^### Strategic Gate 2: metric_instrumented (strategic application)' skills/hypothesis-generator/phases/validate.md" \
+  "1"
+check "validate.md has strategic premise_contradicted application" \
+  "grep -c '^### Strategic Gate 3: premise_contradicted (strategic application)' skills/hypothesis-generator/phases/validate.md" \
+  "1"
+check "detect-strategic.md criterion 7 has Documented live state" \
+  "grep -c 'Documented live.' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "1"
+check "detect-strategic.md criterion 7 has Documented absent state" \
+  "grep -c 'Documented absent.' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "1"
+check "detect-strategic.md criterion 7 has Context is silent state" \
+  "grep -c 'Context is silent.' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "1"
+check "detect-strategic.md record carries absence_verified" \
+  "grep 'absence_verified' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "detect-strategic.md record carries confirm_first" \
+  "grep 'confirm_first' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "detect-strategic.md family 1 routes to Measurement Foundation" \
+  "grep 'Measurement Foundation' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "detect-strategic.md no longer conflates instrument-and-measure in family 1" \
+  "grep -c 'and measure interventions against it' skills/hypothesis-generator/phases/detect-strategic.md | tr -d ' '" \
+  "0"
+check "score.md Step 6b has Strategic gated-Confidence ceiling" \
+  "grep 'Strategic gated-Confidence ceiling' skills/hypothesis-generator/phases/score.md" \
+  "NONZERO"
+check "score.md Step 6b has Dependency-count ordering" \
+  "grep 'Dependency-count ordering' skills/hypothesis-generator/phases/score.md" \
+  "NONZERO"
+check "SKILL.md strategic body spec has Measurement Foundation section" \
+  "grep -c '^## Measurement Foundation' skills/hypothesis-generator/SKILL.md" \
+  "1"
+# Purity: the new internal field tokens must be GUARDED in the Deliverable
+# Purity Constraint (present in SKILL.md as prohibited terms). Em-dash and
+# ClickUp coverage over all edited files is already provided by block [6],
+# which recurses skills/hypothesis-generator/ and lists modules/ice-scoring.md.
+check "absence_verified guarded in Deliverable Purity Constraint" \
+  "grep 'absence_verified' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+check "confirm_first guarded in Deliverable Purity Constraint" \
+  "grep 'confirm_first' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+check "baseline_reliable guarded in Deliverable Purity Constraint" \
+  "grep 'baseline_reliable' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+echo ""
+
 echo "=== Results ==="
 echo "  PASS: $PASS"
 echo "  FAIL: $FAIL"
