@@ -152,6 +152,8 @@ Applies when the finalized `measurement_design` is `pre_post`, `cohort`, or a ma
 
 The gate reads what the skill already writes: a run that discloses "treat the pre-change window as directional only" in prose while scoring Confidence 3 on that same window is the defect this gate closes. Disclosure without enforcement is the failure mode.
 
+**Record semantics after re-finalization.** The gate evaluates the FINAL design (post construct.md Step 4c). When the Step 4c baseline-reliability design check already re-finalized the design so it no longer consumes the disqualified baseline (a forward-only read, a randomized design), the gate reads `pass` (or `not-assessed` when the final design consumes no historical baseline at all), with a note that the design was re-finalized away from the disqualified window. `fail` is reserved for a final design that still consumes the disqualified baseline (the no-alternative case), which is what triggers the Confidence-2 cap and the directional-only read condition.
+
 ### Strategic Gate 2: metric_instrumented (strategic application)
 
 Reuse tactical Gate 2's logic in full, including the live-elsewhere posture and the no-performance-profile precedence, applied to the strategic experiment's business metric. One strategic-specific extension: when the primary business metric's instrumentation IS the run's own Measurement Foundation entry (the metric becomes readable only after a Foundation stand-up in this same deliverable), the gate reads `fail` for read-today purposes, the hypothesis cannot reach Confidence 4-5, and the dependency is rendered as the stand-up (this is expected and correct for Foundation-dependent bets; the cap prices the dependency honestly rather than routing the bet out).

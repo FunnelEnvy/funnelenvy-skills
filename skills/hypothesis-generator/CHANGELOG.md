@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1] - 2026-07-02
+
+### Fixed
+- Five defects surfaced by the 1.11.0 release-gate regression (bound-KB dossier-free strategic-lane run in a consumer repo, plus a counterfactual/inertness pass; all three named gate assertions PASSED, these are the route-backs): (1) the ice-scoring Impact-anchor guard is lane-scoped to the strategic pass; its prior "(or any Impact anchor)" phrasing contradicted the tactical lane's v1.6.0 variant-instrumented measurement-enablement prerequisite-experiment, which remains a scored tactical object; (2) a Foundation-entry-only strategic output now has a rendering path: Step 5c and the Output Format produce-condition fire on "at least one scored strategic experiment OR at least one Measurement Foundation entry" (family 1 already declared Foundation-only output complete and correct, but the old Step 5c condition silently dropped it); (3) Strategic Gate 1 record semantics after re-finalization: the gate evaluates the FINAL design, reads pass/not-assessed when construct.md Step 4c already moved the design off the disqualified baseline, and reserves fail for a final design that still consumes it (the no-alternative case); (4) the strategic "What's Not Here" spec now explicitly holds the existing-capability notes that criterion 7's documented-live routing sends there, resolving a conflict with its measurable-by-no-design framing; (5) criterion 7 boundary clarifier: comprehensive-inventory silence on a surface the context DOES cover (the site's offer set, its event inventory) reads as documented absence, not context-silence; the confirm-first state is reserved for systems the context was never positioned to observe. Content-only. [hypothesis-generator-strategic-rigor]
+
+RELEASE GATE (1.11.0) RESULT: PASSED 2026-07-02 in a consumer repo. Assertion 1 (baseline re-finalization): both surviving levers' candidate designs (pre/post, cohort) were re-finalized away from the documented-unreliable baseline (forward-only windows; randomized concurrent control). Assertion 2 (Measurement Foundation): the qualified-lead instrumentation emerged as an unscored Foundation entry, never a scored bet. Assertion 3 (confirm-first): the client-side-system-silence case rendered with the existence check as step one in neutral register. Byte-inertness: all 1.11.0 additions verified inert on a no-lever run (the one conditional leak found is fix 1 above). Deliverable purity held.
+
 ## [1.11.0] - 2026-07-02
 
 ### Added
