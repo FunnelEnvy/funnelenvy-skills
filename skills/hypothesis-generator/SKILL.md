@@ -1,6 +1,6 @@
 ---
 name: hypothesis-generator
-version: 1.11.0
+version: 1.11.1
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. In KB mode (see KB Mode (Dual-Mode Output)), reads the scope's silver CRO artifacts from a bound knowledge base and writes a typed gold-experiment-roadmap artifact instead. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
 updated: 2026-07-02
 ---
@@ -398,9 +398,9 @@ Key churn reporting is informational, not a gate -- it lets a human review wheth
 
 #### Step 5c: Write strategic deliverable (conditional)
 
-**Run this step ONLY when the strategic path produced at least one scored strategic experiment.** When no strategic lever qualified, skip this step entirely: write no strategic file (not an empty file, not a stub), and report "No qualifying strategic levers; no strategic roadmap produced" in the completion summary. In that case the tactical `experiment-roadmap.md` is the only output.
+**Run this step ONLY when the strategic path produced at least one scored strategic experiment OR at least one Measurement Foundation entry.** A Foundation-entry-only output is complete and correct (per `phases/detect-strategic.md` family 1) and IS rendered: the deliverable then carries the Measurement Foundation section without tier sections. When neither exists, skip this step entirely: write no strategic file (not an empty file, not a stub), and report "No qualifying strategic levers; no strategic roadmap produced" in the completion summary. In that case the tactical `experiment-roadmap.md` is the only output.
 
-When at least one strategic experiment qualifies, write the strategic deliverable following `Strategic Roadmap Output Format`:
+When at least one strategic experiment or Foundation entry qualifies, write the strategic deliverable following `Strategic Roadmap Output Format`:
 - Legacy mode: `.claude/deliverables/strategic-roadmap.md` (no frontmatter).
 - KB mode: `{kb_root}/deliverables/{scope}-strategic-roadmap.md` as a `gold-strategic-roadmap` artifact with the frontmatter contract from `Strategic Roadmap Output Format`. After writing, run the post-write validation gate and apply the supersede / prior-work rule per that section.
 
@@ -598,7 +598,7 @@ This is a **second, separate, conditional deliverable**, distinct from the tacti
 
 ### When this deliverable is produced
 
-Produced only when the strategic path (Phase 2c -> strategic construction -> strategic scoring) yields at least one scored strategic experiment. When no strategic lever qualifies, NO strategic roadmap file is written at all: not an empty file, not a stub. In that case the tactical `experiment-roadmap.md` is the only output and is byte-identical to a run with this feature absent. This mirrors the Phase 2c graceful-degradation contract (`phases/detect-strategic.md` > `Graceful Degradation`).
+Produced only when the strategic path (Phase 2c -> strategic construction -> strategic scoring) yields at least one scored strategic experiment or at least one Measurement Foundation entry. When neither qualifies, NO strategic roadmap file is written at all: not an empty file, not a stub. In that case the tactical `experiment-roadmap.md` is the only output and is byte-identical to a run with this feature absent. This mirrors the Phase 2c graceful-degradation contract (`phases/detect-strategic.md` > `Graceful Degradation`).
 
 ### Deliverable contract (paths and KB artifact type)
 
@@ -691,7 +691,7 @@ Experiments are grouped into the same three tiers used across our roadmaps: Quic
 
 ## What's Not Here (and Why)
 
-[Levers that are genuinely NOT measurable by any design at any altitude: no baseline exists for a holdout, no instrumentation is possible, or the lever is out of scope. Frame each as a productization, positioning, or data-coverage decision with its demand evidence (who is asking, how often) and its blocker (data coverage, entitlement scope, compliance). This is NOT a low-traffic A/B infeasibility list: a lever that some design CAN measure is a scored experiment above, not an exclusion here. This exclusions list is distinct from the tactical roadmap's "What's Not Here."]
+[Levers that are genuinely NOT measurable by any design at any altitude: no baseline exists for a holdout, no instrumentation is possible, or the lever is out of scope. Frame each as a productization, positioning, or data-coverage decision with its demand evidence (who is asking, how often) and its blocker (data coverage, entitlement scope, compliance). This section ALSO holds short existing-capability notes: levers discarded by the quality gate's documented-live state (the capability already exists and operates) are noted here as existing capabilities, per `phases/detect-strategic.md` criterion 7, framed neutrally and without a build recommendation. This is NOT a low-traffic A/B infeasibility list: a lever that some design CAN measure is a scored experiment above, not an exclusion here. This exclusions list is distinct from the tactical roadmap's "What's Not Here."]
 
 ---
 *Analysis produced by FunnelEnvy | [Date]*
@@ -768,7 +768,7 @@ If `.claude/deliverables/experiment-roadmap.md` already exists:
 
 This keeps the "complete projection, no merging" framing for body content -- only the key value is carried forward, nothing else. The common case (a human edits the displayed title without re-running this skill) needs none of this: the persisted `**Key:**` field is simply left untouched. The strategic deliverable applies this same rule against its own prior strategic roadmap, drawing keys from its own title space.
 
-**Strategic deliverable, no-lever case (produce-only-when-qualify).** The strategic deliverable is written only when at least one strategic lever qualifies (`Strategic Roadmap Output Format` > Step 5c). Overwriting a deliverable to an empty body is banned. So when a prior `strategic-roadmap.md` (or `{scope}-strategic-roadmap.md`) exists but the current run yields no qualifying lever, the run does NOT rewrite it to a stale or empty state: it leaves the prior file untouched and reports in the completion message that no current levers qualified (mirroring the graceful-degradation no-write rule). The tactical roadmap is unaffected either way.
+**Strategic deliverable, no-lever case (produce-only-when-qualify).** The strategic deliverable is written only when at least one scored strategic experiment or Measurement Foundation entry qualifies (`Strategic Roadmap Output Format` > Step 5c). Overwriting a deliverable to an empty body is banned. So when a prior `strategic-roadmap.md` (or `{scope}-strategic-roadmap.md`) exists but the current run yields no qualifying lever, the run does NOT rewrite it to a stale or empty state: it leaves the prior file untouched and reports in the completion message that no current levers qualified (mirroring the graceful-degradation no-write rule). The tactical roadmap is unaffected either way.
 
 In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope}-experiment-roadmap.md` and `{kb_root}/deliverables/{scope}-strategic-roadmap.md`, with KB versioning per deliverable -- preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch otherwise), set `updated`, overwrite the body. The same key carry-forward rule applies to each KB-mode prior roadmap. See `Prior Work Detection (KB Mode)` and `Strategic Roadmap Output Format`.
 
