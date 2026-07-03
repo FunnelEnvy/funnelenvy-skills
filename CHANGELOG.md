@@ -6,6 +6,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### render-program-site
+
+#### Added
+- **render-program-site** (0.4.0 -> 0.5.0): Measurement Foundation rendering. `render_site.py` now parses the strategic gold roadmap's optional `## Measurement Foundation` section (hypothesis-generator SKILL.md > Strategic Roadmap Output Format) into a new item class: foundation entries, the unscored, keyless instrumentation prerequisites hypothesis-generator 1.11.0+ can emit (bold-labeled items; no ICE, no tier, no portfolio-map presence, no cross-altitude edges, no spokes). Previously the section was silently ignored, so the stand-up work the scored bets name as their dependency never appeared on the client-facing site. The hub gains a conditional `#measurement-foundation` section between the strategy cards and the experiment backlog (one card per entry: the bold label as the data-bound title, prose through `foundation-lead`/`foundation-<n>` curation slots, no score chips) plus a nav link; new `#measurement-foundation`/`.mf-grid`/`.mf` CSS. Foundation entries are excluded from every sidecar-related gate check (binding completeness, dangling targets, executor-status derivation, version-lock scope) and require no sidecar entries; a sidecar edge whose target names a foundation entry fails as a dangling target (check 2). Composes with the optional account-program altitude (both present, either alone, or neither). Output is byte-identical to 0.4.0 for any strategic roadmap without the section (empty `{{MEASUREMENT_FOUNDATION}}` reproduces the hub seam; no nav link). Also adds an edge-direction semantics note for `informs` to `edge-contract.md` (every edge is authored on the bet and points bet -> test; codifies what the type-label map already implied, no behavior change).
+
 ## [1.7.0] - 2026-07-02
 
 ### Repo tooling
@@ -73,7 +78,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 ### experiment-mockup
 
 #### Fixed
-- **experiment-mockup** (1.3.1): repair malformed YAML frontmatter introduced in v1.3.0 — the `description` folded scalar had no indented body and a truncated `modes:` fragment was left as a stray key, so `description` parsed empty. An empty/invalid skill description aborted skill enumeration for the entire `funnelenvy-skills` plugin, making all 11 skills (not just experiment-mockup) fail to load. Restored the full description body; no behavioral change.
+- **experiment-mockup** (1.3.1): repair malformed YAML frontmatter introduced in v1.3.0 -- the `description` folded scalar had no indented body and a truncated `modes:` fragment was left as a stray key, so `description` parsed empty. An empty/invalid skill description aborted skill enumeration for the entire `funnelenvy-skills` plugin, making all 11 skills (not just experiment-mockup) fail to load. Restored the full description body; no behavioral change.
 
 ## [1.4.0] - 2026-06-21
 
@@ -92,7 +97,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 ### experiment-mockup
 
 #### Added
-- **experiment-mockup**: dual-mode I/O (KB / legacy) — reads the scope's gold roadmap and writes mockups under the bound knowledge base; new `--scope` and `--no-kb` flags (v1.3.0)
+- **experiment-mockup**: dual-mode I/O (KB / legacy) -- reads the scope's gold roadmap and writes mockups under the bound knowledge base; new `--scope` and `--no-kb` flags (v1.3.0)
 
 #### Changed
 - **experiment-mockup**: output directory now resolves by the roadmap's persisted `**Key:**` field (with `slugify(title)` fallback plus warning) instead of `slugify(title)`, decoupling mockups from mutable heading titles (v1.3.0)

@@ -195,6 +195,13 @@ section:first-of-type{border-top:none}
 .dec-col li::before{content:"\2610";position:absolute;left:0;color:var(--faint);font-size:13px}
 .dec-col li .b{display:block;font-family:var(--mono);font-size:10px;color:var(--blue-deep);margin-top:3px;letter-spacing:.02em}
 
+/* measurement foundation (unscored stand-up work; no ICE chips, no tier badges) */
+#measurement-foundation{background:var(--bg-section);border-bottom:1px solid var(--line)}
+.mf-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+.mf{border:1px solid var(--line);border-left:3px solid var(--blue);border-radius:var(--r-lg);background:#fff;padding:16px 17px;box-shadow:var(--shadow)}
+.mf h3{font-size:14px;line-height:1.35;margin:0 0 7px}
+.mf .mf-body{font-size:12.5px;color:var(--body);line-height:1.55;margin:0}
+
 /* account program (off-store altitude) */
 #account-program{background:var(--bg-section);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .cohort-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin:6px 0 26px}
@@ -268,7 +275,7 @@ section:first-of-type{border-top:none}
 .foot-id{font-family:var(--mono);font-size:11px;color:var(--faint)}
 
 @media (max-width:860px){
-  .bet-grid,.test-grid,.dec-grid,.cohort-grid{grid-template-columns:1fr}
+  .bet-grid,.test-grid,.dec-grid,.cohort-grid,.mf-grid{grid-template-columns:1fr}
   .hero h1{font-size:34px}
   .nav-links{display:none}
   .altitudes{flex-direction:column}

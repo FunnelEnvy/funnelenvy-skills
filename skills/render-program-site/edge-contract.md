@@ -33,18 +33,18 @@ nested under tier H2s (`## Quick Wins` / `## Strategic Bets` / `## Explorations`
 each carrying a `**Key:**` line, a `**Scores:**` line, and bold-labeled prose.
 `render_site.py` derives:
 
-- `id` — from the `### N.` section ordinal: strategic `### N.` -> `sb-NN`,
+- `id` -- from the `### N.` section ordinal: strategic `### N.` -> `sb-NN`,
   tactical `### N.` -> `p-NN`. (The Key is the stable human-facing join key; the
   id is the deterministic positional handle used for anchors, filenames, and
   map nodes.)
-- `key` — the `**Key:** <slug>` value. Stable and immutable across re-renders
+- `key` -- the `**Key:** <slug>` value. Stable and immutable across re-renders
   (hypothesis-generator's Key carry-forward rule). The sidecar binds by Key.
-- `title` — the `### N. Title` heading text.
-- `tier` — the enclosing tier H2 (`quick-win` / `strategic-bet` / `exploration`).
-- `ice` — parsed from `**Scores:** Impact X | Confidence Y | Ease Z` (trailing
+- `title` -- the `### N. Title` heading text.
+- `tier` -- the enclosing tier H2 (`quick-win` / `strategic-bet` / `exploration`).
+- `ice` -- parsed from `**Scores:** Impact X | Confidence Y | Ease Z` (trailing
   rationale on the line is ignored).
-- `target_page` — the tactical `**Page:**` label.
-- prose slots — the bold-labeled paragraphs, mapped to spoke prose regions and
+- `target_page` -- the tactical `**Page:**` label.
+- prose slots -- the bold-labeled paragraphs, mapped to spoke prose regions and
   rewritten by the curation pass.
 
 The gold frontmatter `version` of each roadmap is read for the version lock
@@ -169,6 +169,33 @@ the `routing` vs `cta` mismatch.
 | `expresses` | Expressed on-page by | Expresses |
 | `informs` | Informs | Informed by |
 | `gates` | Gates | Gated by |
+
+Edge direction: every edge is authored on the bet and points bet -> test, so an
+`informs` edge means the bet's strategic work supplies input the target test
+consumes (the bet informs the test; the test is informed by the bet). Author it
+on the informing bet, never inverted on the test.
+
+## Measurement Foundation (optional, unscored, keyless)
+
+The strategic gold roadmap may carry a `## Measurement Foundation` section
+(hypothesis-generator SKILL.md > Strategic Roadmap Output Format): unscored,
+keyless instrumentation prerequisites authored as bold-labeled entries, not
+`### N.` sections. `render_site.py` parses them as **foundation entries**, a
+class outside the item model:
+
+- No `**Key:**`, no `**Scores:**`, no ICE, no tier, no id, no map coordinates,
+  no spokes. They render only as the hub's `#measurement-foundation` section
+  (label as title, prose through curation slots, no score chips).
+- They never enter the gate. They need no sidecar entries and are excluded by
+  construction from binding completeness, dangling-target resolution,
+  executor-status derivation, and the version-lock scope (the lock still covers
+  the whole gold file's `version`; the entries just are not gate inputs).
+- A sidecar edge whose `target` names a foundation entry is a **dangling target**
+  (check 2): edge targets resolve against tactical test Keys only, and
+  foundation entries carry no keys.
+- A strategic roadmap without the section renders byte-identically to a render
+  before this class existed (empty `{{MEASUREMENT_FOUNDATION}}` reproduces the
+  hub seam; no nav link).
 
 ## Account program (optional off-store altitude)
 
