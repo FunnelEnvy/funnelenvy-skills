@@ -323,6 +323,8 @@ For the selected design, state all of:
 
 **Confirm-first sequencing shape.** When the hypothesis record carries `confirm_first: true` (from `phases/detect-strategic.md` criterion 7, the context-is-silent state), the stand-up dependency list begins with the existence check: verifying whether the capability already exists in the named client-side system is sequenced as step one, the build is conditional on that check finding nothing, and the read window starts only after the check resolves. Render the check in natural language per the SKILL.md template line, never as a field token.
 
+**Two-stage reads.** When a lever honestly reads at two stages (a randomized on-page read available now, plus an operational or qualified-layer read that becomes available once a Measurement Foundation stand-up lands), finalize the single `measurement_design` token for the readable-today primary leg and describe the second leg in prose as a Foundation-gated enrichment of the read; never invent a second design token.
+
 Record `measurement_design` on the hypothesis record (internal field; it renders in the deliverable as natural language only, per the Deliverable Purity Constraint, e.g., "Measurement: regional holdout, 8-week read"). When the finalized design is `randomized_ab`, the hypothesis proceeds through Step 5b's standard A/B feasibility formula like any tactical hypothesis.
 
 ### Step 5: Target Metric and Audience
