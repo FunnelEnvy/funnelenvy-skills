@@ -370,6 +370,37 @@ def extract_sections(body, kind):
     return out
 
 
+def parse_foundation(slice_text):
+    """Parse the strategic roadmap's optional `## Measurement Foundation` slice
+    into foundation entries: [{"label", "text"}] in source order.
+
+    Foundation entries (hypothesis-generator SKILL.md > Strategic Roadmap Output
+    Format) are unscored, keyless prerequisites: bold-labeled paragraphs or
+    bullets (`**Label:** text` / `- **Label:** text`), each naming what gets
+    defined or instrumented, the system, confirm-first vs build, and the
+    dependent experiments. They carry no `### N.` heading, no `**Key:**`, no
+    `**Scores:**`, no tier -- so they never become items, never enter the edge
+    gate or the portfolio map, and get no spokes. An entry's text continues
+    across following plain lines (including across blank lines) until the next
+    bold-labeled entry or the end of the slice."""
+    entries = []
+    if not slice_text:
+        return entries
+    for raw in slice_text.split("\n"):
+        stripped = raw.strip()
+        if not stripped or stripped.startswith("#") or stripped == "---":
+            continue
+        # tolerate bullet form: strip a leading list marker before the label
+        content = re.sub(r"^[-*]\s+", "", stripped)
+        lm = re.match(r"\*\*(.+?)\*\*\s*(.*)$", content)
+        if lm:
+            entries.append({"label": lm.group(1).strip().rstrip(":.").strip(),
+                            "text": lm.group(2).strip()})
+        elif entries:
+            entries[-1]["text"] = (entries[-1]["text"] + " " + content).strip()
+    return entries
+
+
 # --------------------------------------------------------------------------
 # Load + normalize inputs
 # --------------------------------------------------------------------------
@@ -431,10 +462,13 @@ def load_sidecar(path):
 
 def load_strategic(path, sidecar):
     """Load the strategic gold roadmap, deriving bets from the body and merging
-    the sidecar's per-bet edge binding + classification (keyed by gold Key)."""
+    the sidecar's per-bet edge binding + classification (keyed by gold Key).
+    Also extracts the optional `## Measurement Foundation` section as foundation
+    entries (unscored, keyless; see `parse_foundation`)."""
     with open(path, encoding="utf-8") as fh:
         fm, body = parse_frontmatter(fh.read())
     gold_version = str(fm.get("version", ""))
+    foundation = parse_foundation(extract_named_section(body, "Measurement Foundation"))
     sections = extract_sections(body, "bet")
     sc_bets = sidecar["bets"]
     bets = []
@@ -461,7 +495,8 @@ def load_strategic(path, sidecar):
             "_bound": sb is not None,
             "section": sec,
         })
-    return {"program": sidecar["program"], "bets": bets, "gold_version": gold_version}
+    return {"program": sidecar["program"], "bets": bets, "gold_version": gold_version,
+            "foundation": foundation}
 
 
 def load_tactical(path, sidecar):
@@ -582,6 +617,12 @@ def link_edges(strategic, tactical):
 # --------------------------------------------------------------------------
 
 def run_gate(strategic, tactical, sidecar, account=None):
+    # Measurement Foundation entries never enter this gate: they are keyless and
+    # unscored, so they need no sidecar entries and are excluded by construction
+    # from every sidecar-related check (binding completeness, dangling targets,
+    # executor-status derivation, version-lock scope). A sidecar edge that names
+    # a foundation entry as its target is a dangling target (check 2), because
+    # edge targets resolve against tactical test Keys only.
     violations = []
     bets, tests = strategic["bets"], tactical["tests"]
     live_ids = {t["id"] for t in tests if t["status"] != "superseded"}
@@ -1013,6 +1054,33 @@ def build_account_section(account, program):
            cohort_block, plays_block))
 
 
+def build_foundation_section(foundation):
+    """Build the `<section id="measurement-foundation">` hub section, or '' when
+    the strategic gold roadmap carries no `## Measurement Foundation` section.
+    Foundation entries are unscored, keyless prerequisites: the cards carry no
+    ICE chips, no tier badge, no edges, and link to no spokes. The bold label is
+    the data-bound entry title; the prose flows through slots for curation."""
+    if not foundation:
+        return ""
+    cards = []
+    for i, entry in enumerate(foundation, start=1):
+        cards.append(
+            '<div class="mf" id="mf-%d"><h3>%s</h3><p class="mf-body">%s</p></div>'
+            % (i, esc(entry["label"]),
+               slot("program", "foundation-%d" % i, entry["text"])))
+    return (
+        '<section id="measurement-foundation">\n  <div class="container">\n'
+        '    <span class="eyebrow">Stand-up work</span>\n'
+        '    <h2>The measurement foundation</h2>\n'
+        '    <p class="section-lead">%s</p>\n'
+        '    <div class="mf-grid">%s</div>\n  </div>\n</section>'
+        % (slot("program", "foundation-lead",
+                "Definition and instrumentation work the experiments below depend on. "
+                "These are not scored experiments; they are prerequisites the analytics "
+                "or operations team can stand up independently of the program."),
+           "".join(cards)))
+
+
 def build_hub(strategic, tactical, derived, templates, account=None):
     program = strategic["program"]
     bets, tests = strategic["bets"], tactical["tests"]
@@ -1061,6 +1129,7 @@ def build_hub(strategic, tactical, derived, templates, account=None):
         "BET_CARDS": build_bet_cards(bets),
         "BACKLOG_LEAD": slot("program", "backlog-lead", ""),
         "BACKLOG": build_backlog(derived["tier_groups"], derived["superseded"]),
+        "MEASUREMENT_FOUNDATION": build_foundation_section(strategic.get("foundation") or []),
         "ACCOUNT_PROGRAM": build_account_section(account, program),
         "SEQUENCE": slot("program", "sequence", seq_src),
         "DECISIONS_H2": "Decisions we need from %s" % client,
@@ -1069,10 +1138,12 @@ def build_hub(strategic, tactical, derived, templates, account=None):
         "FOOT": "%s (%s) &middot; prepared by FunnelEnvy &middot; <span class=\"mono\">%s</span>"
                 % (client, name, date),
     })
+    foundation_nav = ('<a href="#measurement-foundation">Measurement foundation</a>'
+                      if strategic.get("foundation") else "")
     account_nav = '<a href="#account-program">Account program</a>' if account is not None else ""
     nav_links = ('<a href="#map">Portfolio map</a><a href="#strategy">The strategy</a>'
-                 '<a href="#backlog">Experiment backlog</a>%s<a href="#sequence">Sequence</a>'
-                 '<a href="#decisions">Decisions</a>' % account_nav)
+                 '%s<a href="#backlog">Experiment backlog</a>%s<a href="#sequence">Sequence</a>'
+                 '<a href="#decisions">Decisions</a>' % (foundation_nav, account_nav))
     return render(templates["base"], {
         "TITLE": "%s | FunnelEnvy" % esc(name),
         "BRAND_HREF": "#top",
@@ -1353,9 +1424,11 @@ def main(argv=None):
     written = write_site(strategic, tactical, derived, args.out, tpl_dir, account)
     bets, tests = len(strategic["bets"]), sum(1 for t in tactical["tests"] if t["status"] != "superseded")
     mockups = sum(1 for t in tactical["tests"] if t.get("mockup"))
+    fnd = strategic.get("foundation") or []
+    fnd_note = (" (%d foundation %s)" % (len(fnd), "entry" if len(fnd) == 1 else "entries")) if fnd else ""
     plays_note = (" (%d account plays)" % len(account["plays"])) if account is not None else ""
-    sys.stdout.write("OK gate passed. Wrote %d pages to %s (%d bets, %d tests, %d with mockups).%s\n"
-                     % (len(written), args.out, bets, tests, mockups, plays_note))
+    sys.stdout.write("OK gate passed. Wrote %d pages to %s (%d bets, %d tests, %d with mockups).%s%s\n"
+                     % (len(written), args.out, bets, tests, mockups, fnd_note, plays_note))
     return 0
 
 

@@ -682,5 +682,132 @@ class TestAccountEndToEnd(unittest.TestCase):
         self.assertNotIn("ap-", m.group(0))
 
 
+# --------------------------------------------------------------------------
+# Measurement Foundation (unscored, keyless foundation entries)
+# --------------------------------------------------------------------------
+# The strategic gold roadmap may carry a `## Measurement Foundation` section
+# (hypothesis-generator's Strategic Roadmap Output Format): bold-labeled
+# entries, no `### N.` headings, no **Key:** / **Scores:**. Entries render as a
+# hub section only: no spokes, no map presence, no gate participation.
+
+STRATEGIC_MF = STRATEGIC.replace(
+    "## Strategic Bets",
+    """## Measurement Foundation
+
+**Qualified-lead definition:** Define the qualified-lead event in the analytics
+property. Step one: confirm whether the existing lead event already carries the
+qualifying fields. Experiments 1 and 2 below depend on it.
+
+- **Form-step instrumentation:** Instrument per-step form abandonment in the tag
+manager; no step-level events exist today. Experiment 2 depends on it.
+
+## Strategic Bets""", 1)
+
+
+class TestFoundationParser(unittest.TestCase):
+    def test_foundation_parsed_two_entries(self):
+        s, _, _ = _load_all(strategic=STRATEGIC_MF)
+        fnd = s["foundation"]
+        self.assertEqual(len(fnd), 2)
+        self.assertEqual(fnd[0]["label"], "Qualified-lead definition")
+        self.assertIn("qualifying fields", fnd[0]["text"])
+        # bullet form parses the same as paragraph form
+        self.assertEqual(fnd[1]["label"], "Form-step instrumentation")
+        self.assertIn("per-step form abandonment", fnd[1]["text"])
+        # entries are keyless and unscored: label + text only, no item fields
+        self.assertEqual(sorted(fnd[0].keys()), ["label", "text"])
+
+    def test_no_foundation_section_empty_list(self):
+        s, _, _ = _load_all()
+        self.assertEqual(s["foundation"], [])
+
+    def test_bets_unaffected_by_foundation_section(self):
+        s, _, _ = _load_all(strategic=STRATEGIC_MF)
+        self.assertEqual([b["id"] for b in s["bets"]], ["sb-01", "sb-02", "sb-03"])
+        self.assertEqual(s["bets"][0]["key"], "speed-to-first-value")
+
+
+class TestFoundationGate(unittest.TestCase):
+    def test_foundation_entries_need_no_sidecar_binding(self):
+        # The unchanged sidecar has no entries for the foundation entries; the
+        # gate must pass (foundation entries are excluded from binding checks).
+        s, t, sc = _load_all(strategic=STRATEGIC_MF)
+        rs.run_gate(s, t, sc)  # should not raise
+
+    def test_sidecar_edge_naming_foundation_entry_dangles(self):
+        # An edge target naming a foundation entry is a dangling target (check
+        # 2): foundation entries carry no keys, so nothing resolves.
+        bad = SIDECAR.replace("{target: conversational-signup-form, type: gates}",
+                              "{target: qualified-lead-definition, type: gates}")
+        s, t, sc = _load_all(strategic=STRATEGIC_MF, sidecar=bad)
+        with self.assertRaises(rs.GateError) as cm:
+            rs.run_gate(s, t, sc)
+        self.assertTrue(any("[2]" in v and "qualified-lead-definition" in v
+                            for v in cm.exception.violations),
+                        "expected a [2] dangling-target violation naming the foundation "
+                        "entry, got: %s" % cm.exception.violations)
+
+
+class TestFoundationEndToEnd(unittest.TestCase):
+    def _render(self, strategic=STRATEGIC, account=None):
+        d, sp, tp, ep = _write_triple(strategic=strategic)
+        out = os.path.join(d, "site")
+        argv = ["--strategic", sp, "--tactical", tp, "--edges", ep, "--out", out]
+        if account is not None:
+            ap = os.path.join(d, "account.md")
+            with open(ap, "w") as f:
+                f.write(account)
+            argv += ["--account-program", ap]
+        rc = rs.main(argv)
+        return rc, out
+
+    def test_hub_foundation_section_between_strategy_and_backlog(self):
+        rc, out = self._render(strategic=STRATEGIC_MF)
+        self.assertEqual(rc, 0)
+        with open(os.path.join(out, "index.html")) as f:
+            html = f.read()
+        self.assertIn('id="measurement-foundation"', html)
+        self.assertIn('href="#measurement-foundation">Measurement foundation</a>', html)
+        self.assertEqual(html.count('class="mf"'), 2)
+        self.assertIn("Qualified-lead definition", html)
+        self.assertIn("Form-step instrumentation", html)
+        # placed between the strategy section and the backlog section
+        self.assertLess(html.index('id="strategy"'), html.index('id="measurement-foundation"'))
+        self.assertLess(html.index('id="measurement-foundation"'), html.index('id="backlog"'))
+        # no score chips inside the foundation section
+        mf = re.search(r'<section id="measurement-foundation">.*?</section>', html, re.S).group(0)
+        self.assertNotIn("ICE", mf)
+        # entries get no spokes and no map presence
+        self.assertFalse(any(f.startswith("mf-") for f in os.listdir(out)))
+        svg = re.search(r'<svg id="pf-map".*?</svg>', html, re.S).group(0)
+        self.assertNotIn("mf-", svg)
+
+    def test_no_foundation_byte_identical_seam(self):
+        rc, out = self._render()
+        self.assertEqual(rc, 0)
+        with open(os.path.join(out, "index.html")) as f:
+            html = f.read()
+        # the seam between #strategy close and #backlog open is byte-identical
+        # to the pre-change render (empty {{MEASUREMENT_FOUNDATION}} reproduces
+        # the blank line), and no foundation chrome appears anywhere
+        self.assertIn('</section>\n\n<section id="backlog">', html)
+        self.assertNotIn("measurement-foundation", html)
+        self.assertNotIn('class="mf"', html)
+
+    def test_foundation_composes_with_account_program(self):
+        rc, out = self._render(strategic=STRATEGIC_MF, account=ACCOUNT)
+        self.assertEqual(rc, 0)
+        with open(os.path.join(out, "index.html")) as f:
+            html = f.read()
+        self.assertIn('id="measurement-foundation"', html)
+        self.assertIn('id="account-program"', html)
+        # ordering: strategy -> foundation -> backlog -> account program
+        self.assertLess(html.index('id="measurement-foundation"'), html.index('id="backlog"'))
+        self.assertLess(html.index('id="backlog"'), html.index('id="account-program"'))
+        # both conditional nav links present
+        self.assertIn('href="#measurement-foundation">Measurement foundation</a>', html)
+        self.assertIn('href="#account-program">Account program</a>', html)
+
+
 if __name__ == "__main__":
     unittest.main()
