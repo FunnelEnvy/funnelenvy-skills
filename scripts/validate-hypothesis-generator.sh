@@ -365,6 +365,21 @@ check "ice-scoring.md names the catch-all additional -1" \
 check "catch-all token guarded in Deliverable Purity Constraint" \
   "grep 'offer-architecture., .catch-all' skills/hypothesis-generator/SKILL.md" \
   "NONZERO"
+check "catch-all defines evidence-origin independence" \
+  "grep 'evidence-origin level' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "catch-all anti-patterns cover channel-scale programs" \
+  "grep 'generative/AI-search optimization' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "family precedence matches on definition, not name" \
+  "grep 'DEFINITION sentence, not its name' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "catch-all measurement-shaped finds route to Foundation" \
+  "grep -c '^- \*\*Measurement-shaped finds' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "1"
+check "criterion 7 names the built-but-disabled state" \
+  "grep 'Built-but-disabled is this state' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
 echo ""
 
 echo "=== Results ==="
