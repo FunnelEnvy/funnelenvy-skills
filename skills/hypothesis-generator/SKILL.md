@@ -1,6 +1,6 @@
 ---
 name: hypothesis-generator
-version: 1.13.0
+version: 1.13.1
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. In KB mode (see KB Mode (Dual-Mode Output)), reads the scope's silver CRO artifacts from a bound knowledge base and writes a typed gold-experiment-roadmap artifact instead. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
 updated: 2026-07-02
 ---
@@ -514,7 +514,7 @@ For messaging-led hypotheses (headline, hero, positioning, value-proposition cat
 
 **Key field (minting rule).** The `**Key:**` value is `slugify(title)` (per `modules/slugify.md`), minted **once** at first generation and then **immutable**. It is **position-independent** (does not embed the roadmap number `N`) and is **never re-derived from the title** on any later run. On a fresh roadmap (no prior to read), every experiment's key is minted fresh as `slugify(title)`. On a re-render, keys are carried forward from the prior roadmap per `Re-render Behavior` (the carry-forward rule), not re-derived. The key is the stable join key downstream skills use to resolve a mockup to its experiment, so it must survive title edits. The same minting and carry-forward rule applies to the strategic deliverable's per-experiment `**Key:**` field (see `Strategic Roadmap Output Format`); the two deliverables draw keys from independent title spaces but follow the identical rule.
 
-This roadmap contains **page-element experiments only**. Business-level levers (programs, offers, audience motions, assets) are not rendered here; they have their own deliverable (see `Strategic Roadmap Output Format`). Nothing in this tactical template carries strategic-lane lines.
+This roadmap contains **page-element experiments only**. Business-level levers (programs, offers, audience motions, assets) are not rendered here; they have their own deliverable (see `Strategic Roadmap Output Format`). Nothing in this tactical template carries strategic-lane fields or per-experiment strategic content; the one permitted cross-reference is the neutral scheduling line in the Sequencing Rationale for a different-measurement-altitude dedup pair (detect-strategic.md Step 3 case 2).
 
 ---
 
