@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1] - 2026-07-02
+
+### Fixed
+- Three text pins from the 1.13.0 release-gate regression (all three gate assertions PASSED; these close low-severity determinacy gaps the run flagged): (1) the R6 case-2 pair predicate is now the explicit conjunction of same underlying idea AND shared read surface, with a multiple-pair rule (the strategic line names each qualifying tactical test; each qualifying test carries its own converse); (2) a regeneration-only strategic run never writes the tactical deliverable: its side of a case-2 line (and any case-1 drop) lands on the tactical roadmap's next re-render, with the pending tactical-side annotation noted in the completion message; (3) the tactical template's "no strategic-lane lines" sentence is scoped to fields and per-experiment content, naming the case-2 Sequencing Rationale scheduling line as the one permitted cross-reference (removing a literal reading that would suppress it). Content-only change to `phases/detect-strategic.md` and `SKILL.md`. [hypothesis-generator-strategic-lane-text-clarifiers]
+
+RELEASE GATE (1.13.0) RESULT: PASSED 2026-07-02 in a consumer repo. Assertion 1: detection replay produced zero survivor-set or family-routing drift vs the 1.12.1 baseline (same 3 bets, same 2 Foundation entries, same discards), and the R6 scheduling lines rendered register-clean on the one case-2 pair. Assertion 2: the pre-flight elicitation question correctly did not fire with the engagement-context soft input present, fires at most once on an interactive no-soft-input run, and never penalizes non-interactive or unanswered runs. Assertion 3: the archetype family extension is inert with no archetype strategic families defined, and the purity list covers archetype-defined tokens.
+
 ## [1.13.0] - 2026-07-02
 
 ### Added
