@@ -1,7 +1,7 @@
 # ICE Scoring: Calibration Anchors and Rules
 
-Version: 1.2.0
-Last updated: 2026-06-23
+Version: 1.3.0
+Last updated: 2026-07-02
 
 This module defines the scoring calibration for the ICE framework used by the hypothesis generator. Read this before scoring any hypothesis. The purpose of calibration anchors is to prevent score inflation and ensure consistency across runs.
 
@@ -32,6 +32,7 @@ Impact measures the expected effect on conversion, revenue, or strategic learnin
 - At least 1 hypothesis should score Impact 2 or below
 - Homepage experiments default to Impact 3+ (highest-traffic page). Secondary pages default to Impact 2-3 unless evidence suggests otherwise.
 - Impact scores should NOT all cluster in the 3-4 range. If they do, force differentiation.
+- The portfolio spread rules (the Impact spread, the at-least-one-low rule above, and the forced-spread remedy in `phases/score.md`) are tactical-portfolio rules: on the strategic pass (`phases/score.md` Step 6b) they apply proportionally and are never used to force artificial variance at three or fewer experiments.
 
 ---
 
@@ -80,6 +81,7 @@ Ease measures implementation effort. Higher = easier.
 - Form changes on owned forms: Ease 3-4
 - Form changes on embedded third-party (Marketo, HubSpot): Ease 2-3
 - If implementation requires stakeholder approval beyond the testing team (e.g., pricing changes): Ease -1
+- Strategic-deliverable scoring guidance: for strategic-lane stand-ups (scored on the separate strategic pass, `phases/score.md` Step 6b), anchor Ease on stand-up scope rather than page-implementation effort: 4-5 for content or configuration-level work, 3 for a cross-team operational definition (an offer scoped and delivered by existing staff), 2 for a new-capability build on contended engineering capacity, 1 for a business-model, compliance, or channel change. This clause governs strategic-deliverable scoring only; tactical Ease anchors are unchanged.
 
 ---
 

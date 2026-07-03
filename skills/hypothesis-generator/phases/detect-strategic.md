@@ -42,13 +42,15 @@ Every strategic-lever opportunity MUST pass ALL criteria below. If any criterion
 
 State, as with Phase 2b, that most candidate levers are expected to fail this gate. A surviving lever is a genuine business-altitude experiment with a measurable design, not an aspiration.
 
+**Blocked-pending-decision routing.** A lever that passes all seven criteria but is documented as blocked pending an explicit client decision routes to the strategic "What's Not Here" as a decision-blocked item, carrying its demand evidence and the decision that unblocks it. It is re-evaluated on the next run and is never minted while blocked.
+
 ---
 
 ## Lever Families (inline checklist)
 
 Evaluate the loaded context against each of the six generic B2B lever families below. Each family is a lens, not a quota: a run may surface several from one family and none from another, or nothing at all. For each candidate, capture the one-line definition fit, the context source it derives from, and a mechanism sketch, then run it through the Quality Gate above.
 
-1. **Objective mismatch.** The stated business objective differs from what the page funnel actually optimizes (e.g., the objective is qualified-lead rate or pipeline quality, but the funnel optimizes raw form submits). Source: the stated objective plus `performance-profile.md` conversion definitions.
+1. **Objective mismatch.** The stated business objective differs from what the page funnel actually optimizes (e.g., the objective is qualified-lead rate or pipeline quality, but the funnel optimizes raw form submits). Source: the stated objective plus `performance-profile.md` conversion definitions. An INFERRED objective (derived from the loaded strategy context plus the performance profile's own conversion definitions) suffices for this family's mismatch read when those conversion definitions make the mismatch observable without the inference doing the work; the elicited soft input (per `Optional Soft Input` below) is always preferred when present.
 
    **This family produces two distinct object types, never one conflated bet:**
 
@@ -67,6 +69,10 @@ Evaluate the loaded context against each of the six generic B2B lever families b
 5. **Buying-group / multi-stakeholder motion.** The decision involves a buying group, not a single visitor, and the funnel speaks to one role. Source: `audience-messaging.md` personas (multiple decision roles). Generic example: personas list an economic buyer, a technical evaluator, and an end user, but the page addresses only the end user; the lever is a buying-group orchestration motion (role-specific content paths or a shareable business-case asset) measured by multi-threaded-opportunity rate.
 
 6. **Offer architecture.** The commitment level of the offers themselves, not the copy of one CTA (an offer ladder, alternative commitment tiers). Source: L0 offers / CTAs plus `competitive-landscape.md`. Generic example: the only offer is a high-commitment "Request a demo" while solution-aware visitors have no lower-commitment entry; the lever is to introduce a lower-commitment offer tier and measure its effect on qualified-pipeline contribution, not just clicks.
+
+### Archetype Family Extension
+
+When Phase 1's archetype resolver (SKILL.md Phase 1 step 7) loaded an archetype pattern module that defines a `## Strategic Lever Families` section, those families load additively as families 7+ for this run: same quality gate, same opportunity-record shape (Step 2), with `lever_family` taking the module-defined token. Archetype families count as families for family precedence: they are checked before the Catch-All Leg, and a candidate matching one routes through it, never through the leg. This extension point is inert today: no archetype module defines strategic families, and a module without the section contributes nothing, penalty-free.
 
 ### Catch-All Leg (family-agnostic detection)
 
@@ -131,10 +137,10 @@ Strategic opportunities do NOT merge into the Phase 2 / 2b tactical opportunity 
 For each strategic opportunity, check whether a tactical opportunity already targets the same underlying idea via a page-element proxy:
 
 1. **Same idea AND same measurement altitude:** the strategic record supersedes and absorbs the tactical one (merge the tactical detail into the strategic record's notes, and drop the tactical opportunity from the tactical list). This is the case where the page-element test and the strategic measurement are really the same experiment, so it belongs in one place: the strategic deliverable.
-2. **Same idea BUT different measurement altitude:** both stand. They are complementary, not duplicate: the page-element A/B stays in the tactical opportunity list and renders in the tactical roadmap; the strategic measurement renders in the strategic deliverable. A page-element A/B and a strategic holdout on the same idea are genuinely different experiments that teach different things.
+2. **Same idea BUT different measurement altitude:** both stand. They are complementary, not duplicate: the page-element A/B stays in the tactical opportunity list and renders in the tactical roadmap; the strategic measurement renders in the strategic deliverable. A page-element A/B and a strategic holdout on the same idea are genuinely different experiments that teach different things. Both records carry a scheduling-constraint annotation, and each deliverable renders it as ONE natural-language line: the strategic experiment's "Read condition and window" line states that the page-level test on the shared surface must not run overlapping the strategic read window (or must be accounted for in the read), and the tactical roadmap's Sequencing Rationale states the converse. Register rules apply in full: the line is neutral and connective, never evaluative, and carries no internal tokens.
 3. **No overlap:** the strategic opportunity passes alone to the strategic path.
 
-This carries forward the Phase 2b dedup logic (detect-contextual.md Step 3) in substance; the only change is framing, from "merge into one list" to "reconcile across two deliverables" by measurement altitude.
+This carries forward the Phase 2b dedup logic (detect-contextual.md Step 3) in substance; the only change is framing, from "merge into one list" to "reconcile across two deliverables" by measurement altitude. A regeneration-only strategic run (no tactical phases executed this run) performs this reconciliation against the on-disk tactical roadmap, read after detection completes.
 
 ## Optional Soft Input
 
@@ -147,7 +153,9 @@ An optional soft field may strengthen detection when present: the business objec
 Mapping:
 
 - **Legacy mode:** an optional field in `.claude/context/` (e.g., a stated business objective / real alternative / dominant lever note).
-- **KB mode:** maps to the relevant silver artifact / objective field for the scope.
+- **KB mode:** maps to the relevant silver artifact / objective field for the scope. When the bound KB defines an engagement-context / engagement-constraints reference artifact for the scope, that artifact IS the soft input and MUST be read when it exists: strategy-context artifacts that reference such a document for lever status make it load-bearing, and skipping it reproduces the already-solved-gap defect class (minting as a build a lever the engagement context documents as live or blocked).
+
+**Active elicitation (interactive runs only).** When the run is INTERACTIVE and no soft input is present in any loaded source, ask the user ONE consolidated pre-flight question before Phase 2c detection, covering the three fields: the stated business objective; the dominant conversion driver as the client names it; and the real alternative buyers weigh. The question is asked at most once per run and never blocks a non-interactive run. Non-interactive or automated runs, and an unanswered question, proceed exactly as today, penalty-free: the absence semantics above are unchanged.
 
 ## Graceful Degradation
 

@@ -382,6 +382,29 @@ check "criterion 7 names the built-but-disabled state" \
   "NONZERO"
 echo ""
 
+echo "[18] 1.13.0: soft-input elicitation, archetype family extension, strategic-lane clarifiers"
+# NONZERO checks use plain grep, not grep -c, per the block [15] note (grep -c
+# prints "0" on absence, which would pass spuriously).
+check "detect-strategic.md has the soft-input elicitation rule" \
+  "grep 'ONE consolidated pre-flight question' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "detect-strategic.md has Archetype Family Extension heading" \
+  "grep -c '^### Archetype Family Extension' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "1"
+check "detect-strategic.md has blocked-pending-decision routing" \
+  "grep 'Blocked-pending-decision routing' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "ice-scoring.md has the strategic Ease clause" \
+  "grep 'anchor Ease on stand-up scope' modules/ice-scoring.md" \
+  "NONZERO"
+check "detect-strategic.md Step 3 covers regeneration-only runs" \
+  "grep 'regeneration-only strategic run' skills/hypothesis-generator/phases/detect-strategic.md" \
+  "NONZERO"
+check "purity covers archetype-defined lever-family tokens" \
+  "grep 'any archetype-defined lever-family token' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+echo ""
+
 echo "=== Results ==="
 echo "  PASS: $PASS"
 echo "  FAIL: $FAIL"
