@@ -6,6 +6,19 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-07-02
+
+### hypothesis-generator
+
+#### Added
+- **hypothesis-generator** (1.11.1 -> 1.12.0): Catch-All Leg in Phase 2c. After the six lever families, a licensed family-agnostic full-body read detects business-level levers the loaded context affirmatively names that fit no family, so the six families stop being the strategic lane's recall boundary (field evidence: the lane's best-grounded production bet fit no family). A catch-all candidate must derive from signals in two independent loaded artifacts, passes the identical 7-criterion quality gate, and takes one additional -1 raw-Confidence soft modifier beyond the de-novo -1. Family precedence means the leg only adds, never re-routes, and it is byte-inert when it finds nothing.
+- **hypothesis-generator** (1.13.0): three strategic-lane additions. R5 active soft-input elicitation: an engagement-context reference artifact in the bound KB is a first-class soft-input source that MUST be read, and an interactive run with no soft input present asks one consolidated pre-flight question (at most once, never blocking, penalty-free when unanswered). R6 cross-deliverable scheduling note: when the same idea stands at both measurement altitudes, each deliverable carries one natural-language scheduling-constraint line so the page-level test and the strategic read window are reconciled. R7 archetype strategic-family extension point, shipped inert: an archetype pattern module defining strategic lever families loads them additively as families 7+ under the same gate and record shape.
+
+#### Fixed
+- **hypothesis-generator** (1.12.1): seven text-determinacy route-backs from the 1.12.0 release-gate regression (both consumer-repo legs PASSED all four gate assertions). Highlights: two-artifact independence is defined at the evidence-origin level, channel-scale programs (SEO, AI-search, paid-media strategy) join the catch-all anti-patterns, family precedence matches on a family's definition sentence with no consume-and-discard on near-misses, and criterion 7 names the built-but-disabled middle state (documented-live with an enablement gap, minting only the enablement shape). Content-only change to `phases/detect-strategic.md`.
+- **hypothesis-generator** (1.13.0): ten strategic-lane text-determinacy clarifiers accumulated from the 1.11.0 release-gate regression and two production regenerations, pinning judgment calls the runs resolved defensibly but the text left open. Highlights: demotion-not-key-churn semantics for a scored bet regenerated as a Foundation entry, a primary-metric framing preference in Strategic Gate 2, a strategic Ease anchor clause in ice-scoring.md, blocked-pending-decision routing to "What's Not Here", and the two-stage read pattern blessed with a single `measurement_design` token.
+- **hypothesis-generator** (1.13.1): three text pins from the 1.13.0 release-gate regression (all three gate assertions PASSED). The R6 case-2 pair predicate is now the explicit conjunction of same underlying idea AND shared read surface with a multiple-pair rule; a regeneration-only strategic run never writes the tactical deliverable (its side of a case-2 line lands on the tactical roadmap's next re-render); and the tactical template's "no strategic-lane lines" sentence is scoped so the one permitted case-2 scheduling cross-reference is not suppressed. Content-only.
+
 ### render-program-site
 
 #### Added
