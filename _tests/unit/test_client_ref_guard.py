@@ -38,6 +38,12 @@ class TestDetectors(unittest.TestCase):
                   "Globex N.V.", "Initech LLC", "Wingtip Toys Holdings"):
             self.assertTrue(_hits("we onboarded %s last quarter" % s), s)
 
+    def test_comma_before_suffix_flagged(self):
+        # "Name, Inc." is the dominant US legal-name style; the comma form must fire too
+        for s in ("Contoso, Inc.", "Northwind Traders, LLC", "Globex, Ltd",
+                  "Initech Systems, Corp."):
+            self.assertTrue(_hits("we onboarded %s last quarter" % s), s)
+
     def test_detector_name_recorded(self):
         h = _hits("Contoso Corporation signed the SOW\n")
         self.assertEqual({d for _, _, d in h}, {"corporate-suffix"})

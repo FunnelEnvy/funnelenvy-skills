@@ -1,8 +1,8 @@
 ---
 name: positioning-framework
-version: 1.1.1
+version: 1.1.2
 description: "When the user wants to build, audit, or update a positioning and messaging framework for a company or product. Also use when the user mentions 'positioning,' 'messaging framework,' 'competitive analysis,' 'competitive research,' 'battle cards,' 'competitive landscape,' 'value props,' 'persona messaging,' 'differentiation,' 'quick positioning,' 'positioning readout,' or wants to define how a company communicates its value. Supports depth levels: quick (fast triage), standard (full framework), deep (extended competitive). Produces structured context files (.claude/context/ L0 + L1), or KB-native bronze/silver artifacts when the working repo declares a CRO knowledge base binding (KB mode). Runs autonomous research by default. Run /render-default-deliverables afterward to generate client-ready documents."
-updated: 2026-06-11
+updated: 2026-07-05
 ---
 
 # Positioning & Messaging Framework
@@ -112,6 +112,8 @@ The skill runs in one of two output modes, resolved ONCE during pre-flight (Orch
 - **KB mode:** outputs become typed medallion artifacts written into a knowledge base declared by the working repo. Only read/write targets and output document shape change. Agent count, ordering, depth gating, research instructions, intake, checkpoints, and analysis quality rules are identical in both modes.
 
 ### Mode Resolution Procedure
+
+> Canonical contract: `modules/kb-mode.md`. When KB-mode semantics change, edit that module first, then re-sync every dual-mode skill it lists. The procedure below is this skill's runtime copy.
 
 Run during pre-flight, before Prior Work Detection:
 
@@ -229,153 +231,9 @@ Mark non-assessable dimensions as `[NEEDS STANDARD DEPTH]`.
 - No competitive context to rate against (Agent 2 was skipped)
 - Differentiation rating uses only the limited competitive context from Agent 1's web searches
 
-#### Quick Depth Health Check Template
+#### Quick Depth Output
 
-The orchestrator produces a single output containing two parts: a terminal summary and a lightweight context file.
-
-**Terminal output (shown to user):**
-
-```markdown
-# Quick Positioning Readout: [Company Name]
-
-**URL:** [url]
-**Category:** [what shelf this sits on in the buyer's mind]
-**Date:** [YYYY-MM-DD]
-
----
-
-## 1. What They Say (Current Positioning)
-
-[2-3 sentences summarizing how the company positions itself. Use their exact H1 and key claims. Note the category they claim vs. the category buyers actually use.]
-
-**H1:** "[exact headline]"
-**Claimed category:** [what they call themselves]
-**Buyer's category:** [what buyers actually search for]
-**Gap:** [mismatch between the two, if any]
-
-**What users actually say:** [Pull 2-3 testimonial snippets from homepage or pricing page. Note whether testimonials reinforce or contradict the H1 positioning. If users praise X but the H1 claims Y, flag the disconnect.]
-
----
-
-## 2. Competitive Context
-
-[Who are the top 3 competitors and how do they position? One line each. Then: does this company show up when buyers search? Is it on review sites? Is it in listicles?]
-
-| Competitor | Their H1/Positioning | Key Differentiator |
-|-----------|---------------------|-------------------|
-| | | |
-| | | |
-| | | |
-
-**Discoverability:** [Found in search? On Clutch/G2? In "best X" lists? Be blunt.]
-
----
-
-## 3. What's Actually Different (Top 3 Value Themes)
-
-**Before writing this section, cross-reference the features page against the homepage claims. Look for:**
-- Capabilities listed on the features page that the homepage doesn't lead with. Under-marketed features are often the strongest differentiators.
-- Capabilities present on the features page that do NOT appear on any competitor's feature list. These outrank shared capabilities, even if the company buries them.
-- Pricing tier gates. Features locked to higher tiers signal what the company considers premium value, which is often the real differentiator.
-
-If you find a product capability that no listed competitor offers, it ranks above any narrative-level differentiator ("built by experts," "decade of experience") regardless of how prominently the company markets it.
-
-| # | Differentiator | Proof | Strength |
-|---|---------------|-------|----------|
-| 1 | | | Strong / Moderate / Weak |
-| 2 | | | Strong / Moderate / Weak |
-| 3 | | | Strong / Moderate / Weak |
-
----
-
-## 4. Positioning Health Check
-
-| Dimension | Rating | Signal |
-|-----------|--------|--------|
-| Clarity | Strong / Needs Work / Missing | [one phrase] |
-| Differentiation | Strong / Needs Work / Missing | [one phrase] |
-| Proof | Strong / Needs Work / Missing | [one phrase] |
-| Specificity | Strong / Needs Work / Missing | [one phrase] |
-| Consistency | Strong / Needs Work / Missing | [one phrase] |
-| Category Fit | Strong / Needs Work / Missing | [one phrase] |
-
-**Overall: X Strong, Y Needs Work, Z Missing**
-
----
-
-## 5. Top 3 Fixes (What to Do First)
-
-[Three specific, actionable recommendations ranked by impact. Not generic advice. Tied to what you found in the research.]
-
-1. **[Fix name]** - [What's wrong] -> [What to do] -> [Expected impact]
-2. **[Fix name]** - [What's wrong] -> [What to do] -> [Expected impact]
-3. **[Fix name]** - [What's wrong] -> [What to do] -> [Expected impact]
-
----
-
-*Quick readout by positioning-framework --depth quick. For the full framework with battle cards, copy briefs, persona messaging, and structured data layer, run: /positioning-framework <url> --depth standard*
-```
-
-#### Quick Depth Tips
-
-- If the company has public pricing, that's a goldmine. Pricing structure reveals positioning more than any About page.
-- The gap between "claimed category" and "buyer's category" is often the #1 finding. If nobody searches for the category term the company uses, that's the headline.
-- When rating Proof, check for third-party validation (review sites, rankings, press). Self-published testimonials are weaker than independent reviews.
-- The most useful output from a quick readout is often "here's what you're NOT saying that you should be." Whitespace identification in 3 sentences.
-
-#### Quick Depth Quality Rules
-
-1. **Be opinionated.** This is not a research report. It's an assessment. Say what's good, what's bad, and what to fix. Don't hedge with "could potentially consider."
-2. **No filler.** Every sentence must contain information. Delete any sentence that says "it's important to" or "in today's competitive landscape" or anything that could apply to any company.
-3. **Proof hierarchy is strict.** Named customer + specific metric = Strong. Named customer + general praise = Moderate. Unattributed aggregate claim = Weak. If every value theme scores "Weak," say so.
-4. **The health check must be honest.** Most companies land at Needs Work on most dimensions. Strong requires genuine evidence. Missing means effectively absent. If everything is Strong, something is wrong.
-5. **Fixes must be specific.** "Improve your messaging" is not a fix. "Replace homepage H1 'We help businesses grow' with '[Specific category] for [specific audience] that [specific outcome]'" is a fix.
-6. **Distinguish product reality from marketing reality.** If the features page shows capabilities the homepage doesn't lead with, note the gap explicitly. The scorecard should assess what the company markets, but the differentiator section should assess what the product actually does. A product with unique capabilities that are poorly marketed is a different diagnosis than a product with nothing unique. One needs better marketing; the other needs a better product.
-7. **Never recommend building what already exists.** Before recommending "build X feature," verify the feature doesn't already exist on the features page, docs, or integrations list. If a capability exists but is poorly marketed, the fix is "surface X" not "build X."
-
-#### Quick Depth Context Files
-
-At quick depth, produce two context files:
-
-**1. `company-identity.md`** - Produced by Agent 1 as normal, but with `depth: "quick"` and confidence capped at 3.
-
-**2. `positioning-scorecard.md`** - Minimal version with `depth: "quick"`:
-
-```yaml
----
-schema: positioning-scorecard
-schema_version: "2.0"
-generated_by: positioning-framework
-depth: quick
-last_updated: YYYY-MM-DD
-last_updated_by: positioning-framework
-confidence: 2  # max 3 at quick depth
-company: "Company Name"
-
-ratings:
-  clarity: "needs_work"
-  differentiation: "strong"
-  proof: "missing"
-  specificity: "needs_work"
-  consistency: "needs_work"
-  category_fit: "strong"
-strong_count: 2
-needs_work_count: 3
-missing_count: 1
-top_gap: "proof"
-top_opportunity: "clarity"
----
-
-## Quick Reference
-
-[Abbreviated quick reference - positioning statement, top 3 differentiators, top 3 fixes]
-
-## Positioning Health Check
-
-[6-dimension table from the terminal output with Rating + Signal columns]
-```
-
-No messaging gap analysis section. No section confidence table. The full health check is produced at standard/deep depth.
+Read and follow `phases/quick-readout.md` (orchestrator-inline; read it only on quick-depth runs). It carries the terminal readout template, the quick-depth tips and quality rules, and the quick-depth context file spec (company-identity capped at confidence 3 + minimal positioning-scorecard). If the file cannot be read, STOP and report -- do not produce the readout from memory.
 
 ---
 
@@ -767,24 +625,6 @@ Dependency implications of skipping agents:
 - Agent 3 failure: Agent 4 proceeds with L0 + competitive data. Messaging sections in deliverables are omitted.
 - Agent 4 failure: All context files exist. Deliverables render without health check data. Executive summary omits ratings.
 
-### Orchestrator Quality Checks (after all agents complete)
-
-At standard/deep depth, after Agent 4 returns and before presenting the completion message, the orchestrator verifies (in KB mode, apply the first two checks to the KB artifacts at their Output Mapping paths instead; the Post-Write Validation Gate has already validated frontmatter per type):
-
-- [ ] All 4 context files exist in `.claude/context/` with valid YAML frontmatter
-- [ ] `_research-extractions.md` exists in `.claude/context/`. Check `total_pages` in frontmatter matches actual entry count (count `## N.` headers). Log warning on mismatch, proceed. Check `total_words` in frontmatter against sanity-check ceiling for depth (Quick: 8K, Standard: 20K, Deep: 35K). Log warning if exceeded, do not trim.
-- [ ] Tier 0 (local project data) checked if running inside a codebase. If unavailable, noted in Section Confidence.
-- [ ] Tier 1 sources (website, LinkedIn, reviews, competitors, category) all attempted
-- [ ] Tier 2 sources (Reddit/forums, financial data, job postings, Google Trends) attempted
-- [ ] Competitor list validated against at least 2 buyer-perspective sources
-- [ ] Regulatory/compliance constraints checked with client (or flagged as unknown)
-- [ ] Pricing & engagement model documented (or flagged as unknown)
-- [ ] Pre-Flight intake questions asked (or gaps documented)
-
-Content-level quality checks (battle card completeness, proof ID consistency, no system internals) are performed by Agent 4. See scoring.md > Cross-File Integrity Verification.
-
-If any check fails: note the gap in the completion message. Do not re-run agents for minor gaps. Flag for user review.
-
 ## Agent Launch Protocol
 
 Before launching each agent, the orchestrator does NOT pre-check inputs. Agents own their own precondition checks. If an agent reports [PRECONDITION FAILED]:
@@ -1052,3 +892,23 @@ Token totals for standard/deep include render-default-deliverables, which auto-r
 | Quick | `company-identity.md` (depth: "quick", confidence max 3) + `positioning-scorecard.md` (depth: "quick", categorical ratings, confidence max 3) |
 | Standard | All 4 files (depth: "standard") |
 | Deep | All 4 files (`competitive-landscape.md` gets depth: "deep", others get "standard" unless extended) |
+
+---
+
+## Orchestrator Quality Checks (after all agents complete)
+
+At standard/deep depth, after Agent 4 returns and before presenting the completion message, the orchestrator verifies (in KB mode, apply the first two checks to the KB artifacts at their Output Mapping paths instead; the Post-Write Validation Gate has already validated frontmatter per type):
+
+- [ ] All 4 context files exist in `.claude/context/` with valid YAML frontmatter
+- [ ] `_research-extractions.md` exists in `.claude/context/`. Check `total_pages` in frontmatter matches actual entry count (count `## N.` headers). Log warning on mismatch, proceed. Check `total_words` in frontmatter against sanity-check ceiling for depth (Quick: 8K, Standard: 20K, Deep: 35K). Log warning if exceeded, do not trim.
+- [ ] Tier 0 (local project data) checked if running inside a codebase. If unavailable, noted in Section Confidence.
+- [ ] Tier 1 sources (website, LinkedIn, reviews, competitors, category) all attempted
+- [ ] Tier 2 sources (Reddit/forums, financial data, job postings, Google Trends) attempted
+- [ ] Competitor list validated against at least 2 buyer-perspective sources
+- [ ] Regulatory/compliance constraints checked with client (or flagged as unknown)
+- [ ] Pricing & engagement model documented (or flagged as unknown)
+- [ ] Pre-Flight intake questions asked (or gaps documented)
+
+Content-level quality checks (battle card completeness, proof ID consistency, no system internals) are performed by Agent 4. See scoring.md > Cross-File Integrity Verification.
+
+If any check fails: note the gap in the completion message. Do not re-run agents for minor gaps. Flag for user review.

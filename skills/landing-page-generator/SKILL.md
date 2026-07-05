@@ -1,15 +1,27 @@
 ---
 name: landing-page-generator
-version: 2.0.0
+version: 2.0.1
+updated: 2026-07-05
 description: "When the user wants to generate a B2B paid landing page from existing positioning context. Also use when the user mentions 'landing page,' 'LP generator,' 'campaign page,' 'paid landing page,' 'landing page copy,' 'hero section,' or 'conversion page.' Four-phase pipeline with signal-driven section assembly: brief builder, copy agent (composable section selection), design agent, QA validator. Consumes L0+L1 context files from .claude/context/ and produces campaign deliverables in .claude/deliverables/campaigns/."
 ---
 
 # Landing Page Generator
 
-> **Version:** 2.0.0
+> **Version:** 2.0.1
 > **Type:** Multi-phase pipeline with human review gates
 > **Model:** opus (all phases)
 > **Depends on:** modules/conversion-playbook.md, modules/campaign-brief-template.md, modules/lp-audit-taxonomy.md (construct mode), modules/section-taxonomy.md, templates/section-catalog.html
+
+## Agent Model Selection
+
+| Agent | Phase | Runs as | Model |
+|-------|-------|---------|-------|
+| Brief Builder | 1 | Subagent (Task tool) | opus |
+| Copy Agent | 2 | Subagent (Task tool) | opus |
+| Design Agent | 3 | Subagent (Task tool) | opus |
+| QA Validator | 4 | Inline in orchestrator | opus (session model) |
+
+Sonnet was tested repo-wide and produced worse output (hallucinated facts, inflated claims) for marginal savings; all agents stay on Opus per the repo convention.
 
 Generates B2B paid landing pages from existing positioning context. Four phases: Brief Builder, Copy Agent, Design Agent, QA Validator. Each phase produces a file that the next phase consumes.
 
@@ -183,3 +195,19 @@ The brand component library contains client-specific HTML/CSS patterns that must
 
 **Why is component matching semantic rather than explicit mapping fields?**
 Brand design system files are produced by a separate skill that extracts from Figma, Brandfetch, and other sources. Adding taxonomy mapping fields would couple that skill's output format to the LP generator's section taxonomy. Semantic matching (the copy agent reads component names, capabilities, and constraints, then infers which taxonomy sections each serves) is more resilient and doesn't require cross-skill coordination.
+
+---
+
+## Quality Checks
+
+Before reporting any phase (or the pipeline) complete, verify:
+
+- [ ] Every phase output exists at its declared path under `.claude/deliverables/campaigns/<slug>/` with valid frontmatter
+- [ ] Preconditions were checked before each phase ran (hard: company-identity confidence >= 3; per-phase input file exists)
+- [ ] Prior work detection asked before any overwrite; nothing was silently overwritten
+- [ ] Every claim, proof point, and differentiator in the copy traces to the brief or a loaded context file; nothing invented
+- [ ] Stage isolation held: the Design agent read only `copy.md` plus the section catalog / brand design files, never context files or the brief
+- [ ] Section selection and ordering satisfy the section-taxonomy constraints (no duplicate section types, ordering rules respected)
+- [ ] CTA copy, form fields, and page structure follow `modules/conversion-playbook.md` rules or the deviation is flagged in the QA report
+- [ ] QA report scores all 10 lp-audit-taxonomy dimensions and lists every flagged issue with location
+- [ ] Gaps, soft-dependency degradations, and human inputs used are listed in the completion summary

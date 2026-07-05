@@ -381,14 +381,6 @@ Exact copy extracted from the homepage hero and top landing pages, with source a
 - CTA: "[button text]" / "[button text]" [source: website-confirmed]
 - Format: [Static / Carousel (N slides) / Video / etc.] [source: user-confirmed]
 - Nav taglines (reference only): "[any positioning-sounding taglines found in navigation]"
-
-### Top Landing Pages
-
-| Page URL | H1 | Source |
-|----------|----|--------|
-| [url]    | "[H1 text]" | website-confirmed |
-| [url]    | "[H1 text]" | website-confirmed |
-| [url]    | "[H1 text]" | website-confirmed |
 ```
 
 **Source attribution tags:**

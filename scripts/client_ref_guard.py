@@ -42,10 +42,12 @@ import sys
 # Corporate legal suffixes. Matched only after a contiguous run of Capitalized words, so real
 # company names ("Example GmbH", "Sample N.V.") fire but ordinary prose that merely contains a
 # word like "Limited" or "Holdings" does not (that word won't be preceded by a capitalized run).
+# Each capitalized token may carry a trailing comma so the dominant US legal style
+# ("Acme, Inc.", "Acme Traders, LLC") is caught, not just the comma-less form.
 _SUFFIX = (r"Inc|Incorporated|LLC|L\.L\.C|Ltd|Limited|Corp|Corporation|Co|GmbH|AG|PLC|"
            r"N\.V\.|S\.A\.|S\.p\.A|A/S|S\.?[àa]\.?r\.?l|Sarl|Aktiengesellschaft|Holdings?")
 CORP_SUFFIX_RX = re.compile(
-    r"\b(?:[A-Z][\w.&'À-ſ\-]*\s+){1,5}(?:%s)\.?(?![A-Za-z0-9])" % _SUFFIX)
+    r"\b(?:[A-Z][\w.&'À-ſ\-]*,?\s+){1,5}(?:%s)\.?(?![A-Za-z0-9])" % _SUFFIX)
 
 DETECTORS = (("corporate-suffix", CORP_SUFFIX_RX),)
 

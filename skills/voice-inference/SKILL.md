@@ -1,6 +1,7 @@
 ---
 name: voice-inference
-version: 1.0.0
+version: 1.0.1
+updated: 2026-07-05
 description: "When the user wants to analyze a company's brand voice from its website content. Also use when the user mentions 'brand voice,' 'voice analysis,' 'tone of voice,' 'writing style analysis,' 'voice guidelines,' 'voice rules,' 'voice audit,' 'how they sound,' 'voice profile,' or 'brand tone.' Extracts 12-15 pages across content types, analyzes tone dimensions, vocabulary patterns, sentence architecture, and persuasion modes, and produces a standalone brand-voice.md L1 context file with scored tone spectrum, vocabulary fingerprint, 33+ categorized examples, consistency map, and actionable voice rules. Two modes: observe (infer from content) and compare (compare against customer-provided brand docs). Auto-detects brand docs in context directory. Does NOT require positioning-framework to have been run first."
 ---
 
@@ -143,6 +144,15 @@ Glob `.claude/context/brand-voice.md`. If exists:
 ## Orchestration: 2-Agent Architecture
 
 Each agent reads `agent-header.md` (shared rules) plus its specific phase instruction file. Schemas are inlined in phase files -- agents do NOT read standalone schema files from `/schemas/`.
+
+### Agent Model Selection
+
+| Agent | Phase | Model |
+|-------|-------|-------|
+| Agent 1: Extract | Page discovery + extraction | opus |
+| Agent 2: Analyze | Voice analysis + rule derivation | opus |
+
+Specify `model` on each Task tool call per the repo convention (Opus for all agents).
 
 ### Agent 1: Extract
 

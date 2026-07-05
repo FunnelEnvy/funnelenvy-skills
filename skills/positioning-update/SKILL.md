@@ -1,6 +1,7 @@
 ---
 name: positioning-update
-version: 1.0.0
+version: 1.0.1
+updated: 2026-07-05
 description: >-
   When the user wants to apply client feedback, stakeholder corrections, or
   new intelligence to existing positioning context files. Also use when the
@@ -309,7 +310,7 @@ Positioning update complete.
 
 ## Confidence Rules (Client Feedback)
 
-Client feedback follows a modified confidence protocol. The standard rules from `agent-header.md` apply with these additions:
+Client feedback follows a modified confidence protocol. The standard rules from `skills/positioning-framework/agent-header.md` (the shared agent rules governing the context files this skill amends) apply with these additions:
 
 **Authority hierarchy:** `client` > `tier-0` > `research`
 
@@ -323,7 +324,7 @@ Client data is the highest authority source. When client feedback contradicts re
 **Corrections are upgrades:**
 - Replacing wrong research data with correct client data does NOT lower confidence
 - The section now has more accurate information from a higher-authority source, which is inherently higher quality
-- This differs from agent-header.md's "contradictions can lower confidence" rule because that rule covers research-vs-research conflicts (genuine uncertainty). Client corrections are authoritative by definition -- there is no uncertainty about which version is correct.
+- This differs from that file's "contradictions can lower confidence" rule because that rule covers research-vs-research conflicts (genuine uncertainty). Client corrections are authoritative by definition -- there is no uncertainty about which version is correct.
 - Exception: if a correction empties a REQUIRED field (e.g., "we don't actually have any case studies"), confidence CAN decrease
 
 **Removals:**

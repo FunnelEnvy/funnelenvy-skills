@@ -59,6 +59,6 @@ Consuming agents should verify their output against this table.
 | Stark Industries LLP | stark-industries |
 | DUNDER | dunder |
 | Vandelay Partners | vandelay-partners |
-| Ernst & Young LLP | ernst-young |
-| McKinsey & Company, Inc. | mckinsey-company |
-| The Boston Consulting Group | boston-consulting-group |
+| Barley & Vine LLP | barley-vine |
+| Vandelay & Widget Company, Inc. | vandelay-widget-company |
+| The Bluth Consulting Group | bluth-consulting-group |

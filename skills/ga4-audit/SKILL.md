@@ -1,8 +1,8 @@
 ---
 name: ga4-audit
-version: 2.4.0
+version: 2.4.1
 description: "When the user wants to audit GA4 analytics data for a property. Also use when the user mentions 'GA4 audit,' 'analytics audit,' 'traffic analysis,' 'page performance,' 'conversion audit,' 'bounce rate analysis,' or 'performance profile.' Pulls 11-15 targeted reports from GA4 via direct API or analytics-mcp fallback (including element-level interaction discovery and AI-referrer traffic segmentation), classifies events, and produces a structured performance-profile.md context file (.claude/context/ L1). Single agent, no depth flag. Works with any GA4 property."
-updated: 2026-06-11
+updated: 2026-07-05
 ---
 
 # GA4 Audit
@@ -866,41 +866,6 @@ Step 11 adds a new section to the performance profile body: "L0 Enrichment Notes
 
 ---
 
-## Quality Checks
-
-Before writing the final file, verify:
-
-1. [ ] All 10 REQUIRED body sections are present (populated or gap-marked), including Element-Level Interactions and Measurement Integrity. OPTIONAL section (L0 Enrichment Notes) present when applicable.
-2. [ ] YAML frontmatter has all required fields. `schema_version` is `"2.3"`.
-3. [ ] Sampling status is reported accurately
-4. [ ] Conversion events are classified and confirmed by user
-5. [ ] High-Bounce callout table uses >50% bounce / >100 sessions thresholds. Underperforming table uses <50% of group average CVR / >200 sessions.
-6. [ ] Landing Page section uses `landingPage` dimension (not `pagePath`)
-7. [ ] Key Metrics Summary cites specific numbers from other sections
-8. [ ] Confidence score reflects actual data quality assessment
-9. [ ] No fabricated or estimated data. Every number comes from a GA4 report response.
-10. [ ] Date range is explicit in both frontmatter and Property Overview
-11. [ ] Page grouping covers >90% of sessions (no more than 10% in "Long Tail")
-12. [ ] Opportunity sizing uses impact buckets (small/medium/large), not point estimates
-13. [ ] Every opportunity has a sizing_note disclaiming conservatism factors
-14. [ ] Every event is classified into exactly one category (Conversion: KEY EVENT | heuristic | L0-mapped, OR Engagement, OR Noise/Ignored). No unclassified events.
-15. [ ] If --no-compare not set: trends section present with all four trend metrics
-16. [ ] If L0 consumed: l0_available is true and enrichment notes section exists
-17. [ ] Underperforming pages use group-relative benchmarks (not site-wide)
-18. [ ] New vs Returning section present with signal classification
-19. [ ] Source x Landing Page Mismatches uses >15pp bounce / <50% CVR thresholds
-20. [ ] Element-Level Interactions section present (REQUIRED): `element_instrumentation_state` (`present` | `partial` | `absent`) emitted in frontmatter; when `present`/`partial` the 3 subsections are populated; when `absent`/`partial` the section LEADS with the gap statement, `missing_element_classes` is populated, and `instrumentation_ask` is non-null (no silent skip)
-21. [ ] Autotrack enumerated: `linkText`/`linkUrl` queried even when no custom event-scoped parameters exist
-22. [ ] Measurement Integrity section present (REQUIRED): `event_liveness` covers configured/key events; dead bindings flagged; with comparison, dark/spiked zero-crossings surfaced; `friction_interactions` populated (or "None detected")
-23. [ ] Scope frontmatter present (`scope_applied`, `scope_method`, `scope_note`); when a scope flag is set, the `dimensionFilter` was applied to every `run_report` call and confidence capped when scope is approximate
-24. [ ] AI-referrer frontmatter fields populated (all 7 fields). When `ai_sessions_count == 0`, `ai_conversion_rate` is `null` and `top_ai_sources` is an empty list.
-25. [ ] AI-Referrer Traffic body subsection present inside Section 4 (Channel Performance). Collapsed one-liner when `ai_sessions_count < 20`, full breakdown otherwise.
-26. [ ] Queries in Step 6b use `PARTIAL_REGEXP` (not `FULL_REGEXP`). If `FULL_REGEXP` was used by mistake, `chatgpt.com` will not match the `chatgpt` token and results will be empty or wrong.
-27. [ ] Source normalization applied (chatgpt/perplexity/copilot/gemini/claude/mistral variants collapsed into canonical map). Raw rows preserved in appendix.
-28. [ ] `ai_not_set_landing_pct > 15%` surfaces as a Tracking Gap entry in the Data Quality section.
-
----
-
 ## Data Source Routing
 
 Step 1 sets `data_source` to either `"api"` or `"mcp"`. Use this table for ALL queries in Steps 2-8:
@@ -942,3 +907,38 @@ When using `ga4_client.py run-report`, pass the request body as a JSON string vi
 **Filtering for specific events:** Use `dimensionFilter` on `eventName` dimension to isolate specific conversion events when pulling per-page conversion data.
 
 **PARTIAL_REGEXP filtering:** For AI-referrer segmentation in Step 6b, set the dimensionFilter `matchType` to `PARTIAL_REGEXP` (substring match) rather than `FULL_REGEXP` (whole-string match). The AI_REGEX lists fragments, not full source strings.
+
+## Quality Checks
+
+Before writing the final file, verify:
+
+1. [ ] All 10 REQUIRED body sections are present (populated or gap-marked), including Element-Level Interactions and Measurement Integrity. OPTIONAL section (L0 Enrichment Notes) present when applicable.
+2. [ ] YAML frontmatter has all required fields. `schema_version` is `"2.3"`.
+3. [ ] Sampling status is reported accurately
+4. [ ] Conversion events are classified and confirmed by user
+5. [ ] High-Bounce callout table uses >50% bounce / >100 sessions thresholds. Underperforming table uses <50% of group average CVR / >200 sessions.
+6. [ ] Landing Page section uses `landingPage` dimension (not `pagePath`)
+7. [ ] Key Metrics Summary cites specific numbers from other sections
+8. [ ] Confidence score reflects actual data quality assessment
+9. [ ] No fabricated or estimated data. Every number comes from a GA4 report response.
+10. [ ] Date range is explicit in both frontmatter and Property Overview
+11. [ ] Page grouping covers >90% of sessions (no more than 10% in "Long Tail")
+12. [ ] Opportunity sizing uses impact buckets (small/medium/large), not point estimates
+13. [ ] Every opportunity has a sizing_note disclaiming conservatism factors
+14. [ ] Every event is classified into exactly one category (Conversion: KEY EVENT | heuristic | L0-mapped, OR Engagement, OR Noise/Ignored). No unclassified events.
+15. [ ] If --no-compare not set: trends section present with all four trend metrics
+16. [ ] If L0 consumed: l0_available is true and enrichment notes section exists
+17. [ ] Underperforming pages use group-relative benchmarks (not site-wide)
+18. [ ] New vs Returning section present with signal classification
+19. [ ] Source x Landing Page Mismatches uses >15pp bounce / <50% CVR thresholds
+20. [ ] Element-Level Interactions section present (REQUIRED): `element_instrumentation_state` (`present` | `partial` | `absent`) emitted in frontmatter; when `present`/`partial` the 3 subsections are populated; when `absent`/`partial` the section LEADS with the gap statement, `missing_element_classes` is populated, and `instrumentation_ask` is non-null (no silent skip)
+21. [ ] Autotrack enumerated: `linkText`/`linkUrl` queried even when no custom event-scoped parameters exist
+22. [ ] Measurement Integrity section present (REQUIRED): `event_liveness` covers configured/key events; dead bindings flagged; with comparison, dark/spiked zero-crossings surfaced; `friction_interactions` populated (or "None detected")
+23. [ ] Scope frontmatter present (`scope_applied`, `scope_method`, `scope_note`); when a scope flag is set, the `dimensionFilter` was applied to every `run_report` call and confidence capped when scope is approximate
+24. [ ] AI-referrer frontmatter fields populated (all 7 fields). When `ai_sessions_count == 0`, `ai_conversion_rate` is `null` and `top_ai_sources` is an empty list.
+25. [ ] AI-Referrer Traffic body subsection present inside Section 4 (Channel Performance). Collapsed one-liner when `ai_sessions_count < 20`, full breakdown otherwise.
+26. [ ] Queries in Step 6b use `PARTIAL_REGEXP` (not `FULL_REGEXP`). If `FULL_REGEXP` was used by mistake, `chatgpt.com` will not match the `chatgpt` token and results will be empty or wrong.
+27. [ ] Source normalization applied (chatgpt/perplexity/copilot/gemini/claude/mistral variants collapsed into canonical map). Raw rows preserved in appendix.
+28. [ ] `ai_not_set_landing_pct > 15%` surfaces as a Tracking Gap entry in the Data Quality section.
+
+---

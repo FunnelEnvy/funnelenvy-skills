@@ -22,7 +22,63 @@ Each skill lives in `skills/<skill-name>/` with a `SKILL.md` as the entry point.
 - Include quality checks
 - Test against a real company URL before submitting
 
-**Skill format reference:** Look at any existing `SKILL.md` for the expected structure.
+**Skill format reference:** Look at any existing `SKILL.md` for the expected structure, or start from the scaffold below.
+
+### SKILL.md scaffold
+
+Every element below is required unless marked optional. `scripts/registry_check.py` (run in CI) enforces registration and changelog consistency, so skipping the checklist fails the PR.
+
+```markdown
+---
+name: my-skill                    # must equal the directory name
+version: 0.1.0                    # semver; bump on every content change
+description: "When the user wants to <job>. Also use when the user mentions '<trigger>,' '<trigger>,' or '<trigger>.' <One-paragraph summary of what it reads, does, and produces.>"
+updated: YYYY-MM-DD
+---
+
+# My Skill
+
+<One-paragraph role statement: what the agent is and what it produces.>
+
+**Output location:** <where artifacts land>
+**Token budget:** ~<range>
+**Runtime:** ~<estimate>
+**Agents:** <single agent | N sequential agents | orchestrator + phase agents>
+**Model:** Opus
+
+## Invocation
+
+/my-skill <args> [--flag]
+<Flag table: flag, default, description.>
+
+## Preconditions
+
+**Hard requirements (fail or stop if missing):** ...
+**Soft requirements (degrade if missing):** ...
+**Reads:** <L0/L1 context files or KB artifacts consumed>
+**Writes:** <files produced; declare prior-work behavior: extend vs overwrite>
+**Concurrency:** do not run alongside another producing skill (no locking).
+
+## <Workflow sections: phases or steps>
+
+## Agent Model Selection          # required when the skill spawns subagents
+
+| Agent | Phase | Model |
+|-------|-------|-------|
+| ...   | ...   | opus  |
+
+## Quality Checks                 # keep as the last substantive section
+
+- [ ] <verifiable check tied to this skill's output contract>
+- [ ] Every claim in the output traces to a loaded input; nothing invented
+- [ ] Output landed at the declared path with valid frontmatter
+```
+
+**Changelog:** add a `CHANGELOG.md` next to SKILL.md (Keep-a-Changelog style, `## [x.y.z] - YYYY-MM-DD` entries). The top entry must match the frontmatter version.
+
+**Registration is a package deal.** A new or version-bumped skill must update, in the same PR: the skill's changelog, `README.md` (skills table + Quick Start example if user-facing), `CLAUDE.md` (repo structure tree + Available Skills entry), and `.claude-plugin/marketplace.json` (skills list + count in the plugin description).
+
+**Dual-mode (KB) skills:** if the skill reads or writes knowledge-base artifacts, follow the canonical contract in `modules/kb-mode.md` and add the skill to that module's table. The registry check enforces the invariant sentences.
 
 ## No client references (hard rule)
 

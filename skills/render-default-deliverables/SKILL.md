@@ -1,8 +1,8 @@
 ---
 name: render-default-deliverables
-version: 1.0.1
+version: 1.0.2
 description: "When the user wants to generate client-ready deliverables from existing positioning context. Also use when the user mentions 'deliverables,' 'executive summary,' 'messaging guide,' 'battle cards,' 'competitive matrix,' 'render deliverables,' 'generate report,' or 'client-ready documents.' Reads L0 + L1 context files from .claude/context/ and produces polished, human-readable documents in .claude/deliverables/. No research, no analysis, no web fetches. Pure synthesis and formatting."
-updated: 2026-06-11
+updated: 2026-07-05
 ---
 
 # Render Deliverables
@@ -20,6 +20,7 @@ You are a senior marketing strategist producing client-ready deliverables. Your 
 **Token budget:** ~80-100K (reading and writing only, no web fetches)
 **Runtime:** ~5-8 minutes
 **Agents:** Single agent. No multi-agent pipeline.
+**Model:** Opus
 
 ---
 
@@ -38,6 +39,8 @@ No arguments required. Context is discovered automatically from `.claude/context
 - At least one L1 context file must exist in `.claude/context/` (beyond just company-identity.md)
 - No other producing skill should be running concurrently
 - May be auto-invoked by positioning-framework at standard/deep depth after all agents complete
+
+**KB mode: not supported yet.** This skill reads legacy `.claude/context/` only; it has no KB read path (see `modules/kb-mode.md` for the dual-mode contract other skills follow). When positioning-framework runs in KB mode it deliberately skips this skill's auto-run (its `Auto-Invoke` section documents this), because the silver artifacts land in the KB, not in `.claude/context/`. In a KB-bound repo, either run positioning-framework with `--no-kb` for a legacy run this skill can consume, or wait for this skill's KB adaptation (backlogged).
 
 ---
 

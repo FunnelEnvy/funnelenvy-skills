@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.0.2] - 2026-07-05
+
+### Fixed
+- Repo-audit contract completion, no behavior change: added the Model declaration (Opus; previously the only skill besides render-program-site with no model line anywhere). Preconditions now state the KB-mode position explicitly: no KB read path yet, positioning-framework skips the auto-run in KB mode, and the legacy workaround is `--no-kb` (this was documented on the positioning-framework side only).
+
 ## [1.0.1] - 2026-06-11
 
 ### Fixed

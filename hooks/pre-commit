@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # client-reference guard: block client-identifying strings from entering this PUBLIC repo.
 # Adopted via `git config core.hooksPath hooks` (run scripts/install-hooks.sh).
-# Contains no client data; the denylist it reads is gitignored (see CONTRIBUTING.md).
+# Contains no client data and reads no denylist: the guard flags the structural shape of
+# client references (capitalized entity run + corporate legal suffix). See scripts/client_ref_guard.py.
 set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
