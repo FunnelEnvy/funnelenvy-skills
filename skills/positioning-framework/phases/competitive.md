@@ -598,7 +598,7 @@ Search for competitor CEO/founder appearances:
 These sources contain high-value competitive intelligence but cannot be reliably accessed by automated tools. Generate specific follow-up tasks for the user in the Post-Research Questionnaire.
 
 - **Hacker News:** Specific search queries for hn.algolia.com (e.g., "Search hn.algolia.com for '[competitor name]' sorted by date").
-- **Wayback Machine:** Specific URLs to compare at web.archive.org (e.g., "Compare typeform.com snapshots from Jan 2024 vs Jan 2025 for H1 headline changes").
+- **Wayback Machine:** Specific URLs to compare at web.archive.org (e.g., "Compare example.com snapshots from Jan 2024 vs Jan 2025 for H1 headline changes").
 - **Industry forums / Slack communities:** Name the specific communities to search if they exist for the space.
 
 ---
@@ -902,11 +902,11 @@ At least 1 white space. Include where the market is over-indexed. Each entry inc
 The following questions would most improve the confidence of this analysis. They are specific to gaps identified during research, not generic.
 
 ### Competitor Validation
-- [Specific question, e.g., "Do you actually lose deals to People Managing People, or is that a content competitor only?"]
-- [e.g., "Is Matchr (2-person company) a real competitive threat or can we ignore them?"]
+- [Specific question, e.g., "Do you actually lose deals to Initech Insights, or is that a content competitor only?"]
+- [e.g., "Is Globex Advisors (2-person company) a real competitive threat or can we ignore them?"]
 
 ### Internal Intelligence
-- [e.g., "What does OutSail's pricing actually look like from the vendor side? Do you have data on their referral fees?"]
+- [e.g., "What does Vandelay Partners' pricing actually look like from the vendor side? Do you have data on their referral fees?"]
 - [e.g., "Which competitors show up most in your sales conversations?"]
 
 ### Objections
@@ -917,7 +917,7 @@ The following questions would most improve the confidence of this analysis. They
 
 ### Manual Research Tasks
 - [e.g., "Search hn.algolia.com for '[competitor name]' sorted by date"]
-- [e.g., "Compare typeform.com snapshots from Jan 2024 vs Jan 2025 at web.archive.org for H1 headline changes"]
+- [e.g., "Compare example.com snapshots from Jan 2024 vs Jan 2025 at web.archive.org for H1 headline changes"]
 ```
 
 Each question should reference what triggered it (a specific research finding, a data conflict, a gap). No generic questions like "tell us about your competitors." Every question should be answerable in one sentence by someone who knows the business.

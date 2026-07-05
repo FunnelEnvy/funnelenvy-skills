@@ -563,7 +563,7 @@ Before deduplication, run every constructed hypothesis through the contrarian tr
 **Process:**
 
 1. Load `modules/contrarian-triggers.md`
-2. For each hypothesis, check all thirteen trigger conditions (CTR-01 through CTR-13) against loaded context files
+2. For each hypothesis, check all fourteen trigger conditions (CTR-01 through CTR-14) against loaded context files
 3. Apply the specified action for each match:
    - **Reframe:** Replace the hypothesis's proposed change, causal mechanism, and before/after examples with the alternative from the trigger matrix. Preserve the original trigger signal (the original pattern match is still valid, just the recommendation changes). Update the "Why this should work" section to reflect the reframed mechanism.
    - **Suppress:** Remove the hypothesis from the active list. Add to an internal "suppressed" list with the trigger ID and explanation. These are rendered in the "What's Not Here" section during Phase 5.

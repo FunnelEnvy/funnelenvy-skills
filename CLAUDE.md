@@ -15,29 +15,37 @@ This repository is **public**. Never write a real company or client name, engage
 
 ```
 funnelenvy-skills/
-├── schemas/
+├── schemas/                      # Human-readable reference copies (phase-file inline schemas are authoritative)
 │   ├── company-identity.md       # L0 schema
 │   ├── competitive-landscape.md  # L1 schema (merged: market + competitors + battle cards)
 │   ├── audience-messaging.md     # L1 schema (merged: personas + messaging + voice)
 │   ├── positioning-scorecard.md  # L1 schema (includes quick reference)
-│   ├── performance-profile.md    # L1 schema (GA4 analytics snapshot)
-│   ├── _fetch-registry.md        # Operational metadata schema (not L0/L1)
+│   ├── performance-profile.md    # L1 schema (GA4/AA analytics snapshot)
 │   ├── brand-voice.md            # L1 schema (voice analysis: tone, vocabulary, examples, rules)
-│   ├── _research-extractions.md  # Raw page extractions schema (operational)
-│   └── campaign-brief.md         # Campaign brief + companion schemas (landing-page-generator)
+│   ├── live-observation.md       # L0 schema (live-capture page structure)
+│   ├── live-copy.md              # L0 schema (live-capture verbatim copy)
+│   ├── campaign-brief.md         # Campaign brief + companion schemas (landing-page-generator)
+│   ├── _fetch-registry.md        # Operational metadata schema (not L0/L1)
+│   └── _research-extractions.md  # Raw page extractions schema (operational)
 ├── modules/
 │   ├── reddit-research.md        # Shared Reddit API integration (all skills)
 │   ├── web-extract.md            # Three-tier web extractor (markdown.new -> curl+HTMLParser -> WebFetch)
 │   ├── business-brief.md         # Pre-flight intake template + protocol
 │   ├── slugify.md                # Deterministic name-to-slug rules for filenames
 │   ├── competitive-assessment.md # Claim assessment, similarity, overlap scoring (Agent 2)
+│   ├── voc-extraction.md         # Voice-of-customer extraction (positioning-framework)
 │   ├── experiment-patterns.md    # 32 CRO patterns across 10 categories (hypothesis-generator)
+│   ├── patterns-procurement.md   # Procurement archetype patterns (hypothesis-generator)
+│   ├── contrarian-triggers.md    # 14 contrarian triggers (hypothesis-generator)
+│   ├── hypothesis-interactions.md # AND/OR/XOR interaction gates + empirical effects (hypothesis-generator)
 │   ├── ice-scoring.md            # ICE calibration anchors and scoring rules (hypothesis-generator)
 │   ├── conversion-playbook.md    # Paid LP structural rules, CTA, form, benchmarks (landing-page-generator)
-│   └── campaign-brief-template.md # Campaign brief template structure (landing-page-generator)
+│   ├── campaign-brief-template.md # Campaign brief template structure (landing-page-generator)
+│   ├── lp-audit-taxonomy.md      # 10-dimension LP audit taxonomy (landing-page-generator)
+│   └── section-taxonomy.md       # Composable LP section taxonomy (landing-page-generator)
 ├── skills/
 │   ├── positioning-framework/
-│   │   ├── SKILL.md              # Orchestration hub v1 (~840 lines, depth-gated)
+│   │   ├── SKILL.md              # Orchestration hub v1.1.2 (depth-gated)
 │   │   ├── agent-header.md       # Shared agent rules (deduped from phase files)
 │   │   └── phases/               # Phase-specific instruction modules
 │   │       ├── research.md       # Tier 0-3 research instructions (depth-gated)
@@ -46,18 +54,24 @@ funnelenvy-skills/
 │   │       ├── messaging.md      # Personas + messaging + voice + inline schema
 │   │       └── scoring.md        # Scorecard + QA + inline schema (depth-gated)
 │   ├── positioning-update/
-│   │   └── SKILL.md              # Client feedback amendment skill v1.0 (~single agent)
+│   │   └── SKILL.md              # Client feedback amendment skill v1.0.1 (single agent)
 │   ├── ga4-audit/
-│   │   └── SKILL.md              # GA4 analytics audit v2.0 (~single agent, analytics-mcp)
+│   │   └── SKILL.md              # GA4 analytics audit v2.4.0 (single agent, analytics-mcp)
+│   ├── aa-audit/
+│   │   ├── SKILL.md              # Adobe Analytics audit v1.1.0 (single agent, AA 2.0 Reporting API)
+│   │   ├── aa_audit.py           # Reporting API query script
+│   │   └── aa-config.example.json # Client config template
 │   ├── hypothesis-generator/
-│   │   ├── SKILL.md              # CRO hypothesis engine v1.1 (~single agent, reads L0+L1)
+│   │   ├── SKILL.md              # CRO hypothesis engine v1.13.3 (single agent, reads L0+L1)
 │   │   └── phases/               # Phase-specific instruction modules
 │   │       ├── detect.md         # Pattern-based opportunity detection
 │   │       ├── detect-contextual.md # Context-derived opportunity detection (Phase 2b)
+│   │       ├── detect-strategic.md # Strategic-lever detection (Phase 2c)
 │   │       ├── construct.md      # Hypothesis construction from matched patterns
+│   │       ├── validate.md       # Premise & measurement validation (Phase 3.5)
 │   │       └── score.md          # ICE scoring and prioritization
 │   ├── landing-page-generator/
-│   │   ├── SKILL.md              # Orchestrator v1.0 (~4 phase agents, review gates)
+│   │   ├── SKILL.md              # Orchestrator v2.0.1 (4 phase agents, review gates)
 │   │   ├── agent-header.md       # Shared agent rules (all phases)
 │   │   ├── phases/               # Phase-specific instruction modules
 │   │   │   ├── brief.md          # Phase 1: campaign brief builder
@@ -65,20 +79,21 @@ funnelenvy-skills/
 │   │   │   ├── design.md         # Phase 3: HTML page builder
 │   │   │   └── qa.md             # Phase 4: QA validation
 │   │   └── templates/
-│   │       └── wireframe.jsx     # React wireframe reference (structural patterns)
+│   │       ├── section-catalog.html      # Composable section visual reference (design phase)
+│   │       └── wireframe-demo-legacy.jsx # Legacy React wireframe (reference only)
 │   ├── voice-inference/
-│   │   ├── SKILL.md              # Orchestrator v1.0 (~2 sequential agents, observe/compare modes)
+│   │   ├── SKILL.md              # Orchestrator v1.0.1 (2 sequential agents, observe/compare modes)
 │   │   ├── agent-header.md       # Shared agent rules (both agents)
 │   │   └── phases/               # Phase-specific instruction modules
 │   │       ├── extract.md        # Phase 1: page discovery + extraction
 │   │       └── analyze.md        # Phase 2: voice analysis + rule derivation
 │   ├── live-capture/
-│   │   ├── SKILL.md              # Orchestrator v0.1.0 (flags, I/O + browser mode resolution, routing)
+│   │   ├── SKILL.md              # Orchestrator v0.2.1 (flags, I/O + browser mode resolution, routing)
 │   │   ├── agent-header.md       # Shared agent rules (factual-not-interpretive, tri-state, position encoding)
 │   │   ├── phases/               # select (Section 8), capture (passive DOM), static-capture, write (inline schema)
 │   │   └── scripts/              # page_select.py (leverage ranking), content_hash.py (recapture-diff)
 │   ├── experiment-mockup/
-│   │   ├── SKILL.md              # Orchestrator v1.0.0 (~parses flags, detects mode, routes phases)
+│   │   ├── SKILL.md              # Orchestrator v1.4.1 (parses flags, detects mode, routes phases)
 │   │   ├── agent-header.md       # Shared agent rules (all phases)
 │   │   └── phases/               # Phase-specific instruction modules
 │   │       ├── inspect.md        # Phase 1 (live): navigate, locate section, extract styles
@@ -87,18 +102,27 @@ funnelenvy-skills/
 │   │       ├── annotate.md       # Phase 4 (both): CRO placement rationale
 │   │       └── static-build.md   # Fallback: combined extract + build (no DevTools)
 │   ├── render-program-site/
-│   │   ├── SKILL.md              # Orchestrator v0.1.0 (phased: gate+emit, curate prose, humanize, write)
+│   │   ├── SKILL.md              # Orchestrator v0.5.1 (phased: gate+emit, curate prose, humanize, write)
 │   │   ├── edge-contract.md      # Validated object + 7-check gate + source schemas + type-label map
 │   │   ├── scripts/             # render_site.py (deterministic: parse->gate->derive->emit)
-│   │   ├── templates/           # base/hub/spoke-strategic/spoke-tactical.html + styles.css + site.js
+│   │   ├── templates/           # base/hub/spoke-strategic/spoke-tactical/spoke-account.html + styles.css + site.js
 │   │   └── references/          # ai-writing-signs.md (embedded humanizer rules)
 │   └── render-default-deliverables/
-│       └── SKILL.md              # L2 rendering skill v1.0 (~single agent, no research)
-├── examples/                     # Public examples
+│       └── SKILL.md              # L2 rendering skill v1.0.2 (single agent, no research)
+├── scripts/                      # client_ref_guard.py (public-repo guard), install-hooks.sh, validators
+├── hooks/                        # pre-commit + commit-msg (invoke the guard; installed via core.hooksPath)
+├── .github/workflows/            # client-ref-guard.yml (CI: tree scan + unit tests)
+├── .claude-plugin/               # marketplace.json (plugin manifest)
+├── _tests/                       # Unit tests (guard, render_site)
 ├── CLAUDE.md
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
 ├── LICENSE
 └── README.md
 ```
+
+Skill CHANGELOG.md files and per-skill dev artifacts are omitted from the tree for brevity; versions above track SKILL.md frontmatter (the source of truth).
 
 ## Three-Layer Architecture
 
@@ -162,8 +186,10 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 | `.claude/context/competitive-landscape.md` | L1 | positioning-framework (standard/deep) | render-default-deliverables, website-audit, content strategy, hypothesis roadmap |
 | `.claude/context/audience-messaging.md` | L1 | positioning-framework (standard/deep) | render-default-deliverables, website-audit, content strategy |
 | `.claude/context/positioning-scorecard.md` | L1 | positioning-framework (all depths, minimal at quick) | render-default-deliverables, website-audit, hypothesis roadmap |
-| `.claude/context/performance-profile.md` | L1 | ga4-audit | hypothesis-generator (ICE calibration + performance-driven hypotheses), render-default-deliverables (executive summary enrichment) |
+| `.claude/context/performance-profile.md` | L1 | ga4-audit (GA4 properties) or aa-audit (Adobe Analytics properties) | hypothesis-generator (ICE calibration + performance-driven hypotheses), live-capture (page selection), render-default-deliverables (executive summary enrichment) |
 | `.claude/context/brand-voice.md` | L1 | voice-inference | positioning-framework Agent 3 (voice baseline), landing-page-generator (voice calibration), render-default-deliverables (messaging guide enrichment), hypothesis-generator (voice-aware hypothesis framing) |
+| `.claude/context/live-observation.md` | L0 | live-capture (legacy mode) | hypothesis-generator, experiment-mockup |
+| `.claude/context/live-copy.md` | L0 | live-capture (legacy mode) | hypothesis-generator, experiment-mockup |
 | `.claude/context/_fetch-registry.md` | Operational | positioning-framework Agent 1 (appended by Agent 2) | Agent 2 (duplicate fetch prevention) |
 | `.claude/context/_voice-extractions.md` | Internal/Operational | voice-inference Agent 1 | Agent 2. Ephemeral, overwritten on each run. Not prior work. |
 | `.claude/context/_research-extractions.md` | Internal/Operational | positioning-framework Agent 1 | Agents 2, 3, 4 (selectively). Ephemeral, overwritten on each run. Not prior work. |
@@ -284,7 +310,7 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 2. **`/positioning-framework <url>`** (standard depth, produces all L0 + L1 context + deliverables, ~450-500K tokens across subagents)
 3. **`/positioning-framework <url> --depth deep`** (extends competitive context to deep, ~550-650K tokens across subagents)
 4. **`/positioning-update`** (optional, apply client feedback/corrections to context files, ~20-40K tokens)
-5. **`/ga4-audit <property_id>`** (optional, produces performance-profile.md for traffic-driven hypotheses, ~5-8 min)
+5. **`/ga4-audit <property_id>`** (optional, produces performance-profile.md for traffic-driven hypotheses, ~5-8 min; for Adobe Analytics properties, run **`/aa-audit --config <path>`** instead, same output file)
 6. **`/hypothesis-generator`** (produces experiment roadmap from L0 + L1 context + optional performance data)
 7. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
 8. **`/landing-page-generator <company> <slug> --stage all`** (optional, produces campaign landing page from L0 + L1 context, ~260-400K tokens)
@@ -342,7 +368,7 @@ Positioning dimensions use categorical ratings (Strong / Needs Work / Missing) i
 
 ## Available Skills
 
-### positioning-framework (v1.1.1)
+### positioning-framework (v1.1.2)
 Consolidated positioning, competitive research, and messaging framework. Feed it a company URL with a depth level and it researches, analyzes, and produces structured L0 + L1 context files.
 
 **Depth levels:**
@@ -369,7 +395,7 @@ Runs up to 4 sequential agents depending on depth (Research+L0, Competitive, Mes
 
 Four modes: Autonomous Research (default), Guided Interview, Audit & Update, Reconciliation (compare research against client's manual worksheet).
 
-### render-default-deliverables (v1.0.1)
+### render-default-deliverables (v1.0.2)
 L2 rendering skill. Consumes L0 + L1 context files and produces human-readable deliverables. No research, no analysis. Pure synthesis and formatting.
 
 Auto-invoked by positioning-framework at standard/deep depth. Also available standalone via `/render-default-deliverables` for re-rendering after context updates.
@@ -382,7 +408,7 @@ Auto-invoked by positioning-framework at standard/deep depth. Also available sta
 **Output:** `.claude/deliverables/` with manifest
 
 ### ga4-audit (v2.4.0)
-GA4 analytics audit. Pulls 10-15 targeted reports from a GA4 property via analytics-mcp, classifies conversion events, discovers element-level interactions (CTA clicks, link text, custom parameters), and produces a v2.1 `performance-profile.md` L1 context file with page grouping, opportunity sizing, trend analysis, element interaction data, and optional L0 enrichment. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
+GA4 analytics audit. Pulls 11-15 targeted reports from a GA4 property via analytics-mcp, classifies conversion events, discovers element-level interactions (CTA clicks, link text, custom parameters), and produces a v2.3 `performance-profile.md` L1 context file with page grouping, opportunity sizing, trend analysis, element interaction data, and optional L0 enrichment. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
 
 **Invocation:** `/ga4-audit [property_id] [--days 90] [--date-range "YYYY-MM-DD:YYYY-MM-DD"] [--no-compare]`
 
@@ -393,12 +419,22 @@ Property ID is optional. If omitted, auto-detects from `company-identity.md` fro
 
 **Runtime:** ~5-8 minutes. ~50-80K tokens. Single interaction point (event classification confirmation).
 
-### hypothesis-generator (v1.13.2)
+### aa-audit (v1.1.0)
+Adobe Analytics audit, the AA counterpart to ga4-audit for properties on Adobe. Runs `aa_audit.py` against the AA 2.0 Reporting API (client config JSON + `ADOBE_AA_*` env credentials), interprets the structured JSON output, and produces a `performance-profile.md` L1 context file consumable by the same downstream skills (hypothesis-generator, live-capture page selection, render-default-deliverables). Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
+
+**Invocation:** `/aa-audit [--config /path/to/config.json] [--days 90] [--no-compare]`
+
+**Outputs:**
+- L1 context: performance-profile.md (page performance, conversion funnels, channel/device breakdown, data quality assessment)
+
+**Runtime:** ~5-8 minutes. ~50-80K tokens.
+
+### hypothesis-generator (v1.13.3)
 Standalone CRO hypothesis engine. Reads positioning context (L0 + L1) plus optional performance data, applies
 32 experiment patterns across 10 categories plus performance-driven triggers, and produces a prioritized experiment
 roadmap with ICE scoring, test feasibility estimation, contrarian filtering (14 triggers that reframe or suppress standard CRO advice in B2B and context-specific scenarios), interaction-effect modeling (AND/OR/XOR gates between same-page hypotheses, 7 empirical interaction effects), LIFT-model sequencing (Relevance > Clarity > Anxiety > Distraction > Urgency within tiers), empirical tiebreakers (winner replication, proximity-to-conversion ordering), and inconclusive test guidance per experiment including post-deployment causal impact validation and directional significance soft-coding. Premise and measurement validation (Phase 3.5) emits per-hypothesis tri-state gates consumed as hard Confidence ceilings, covering both lanes: six tactical gates, plus strategic gates (baseline reliability with a design-forcing branch, business-metric instrumentation, premise contradiction). When a business-level lever qualifies (Phase 2c, six lever families with a 7-criterion quality gate whose gap-is-still-open criterion is tri-state: documented-live discards, documented-absent mints a build, context-silence about a client-side system mints only confirm-first), also produces a separate strategic roadmap deliverable with non-A/B measurement designs and an unscored Measurement Foundation section for instrumentation prerequisites (never scored as experiments). When `performance-profile.md` is present, produces data-calibrated scores with empirical benchmarks and B2B SaaS calibration anchors, traffic-driven hypotheses, and per-experiment feasibility notes. Infeasible experiments (insufficient traffic) are routed to "What's Not Here" with alternative approaches. Dual-mode I/O: when the working repo declares a CRO knowledge base binding, reads the scope's silver artifacts from the KB and writes typed gold-experiment-roadmap / gold-strategic-roadmap artifacts (`--scope` required; `--no-kb` forces legacy), with schema-tolerant performance trigger evaluation for profiles lacking `schema_version`. Manually invoked: /hypothesis-generator
 
-### landing-page-generator (v2.0.0)
+### landing-page-generator (v2.0.1)
 B2B paid landing page generator. Four-phase pipeline: Brief Builder, Copy Agent, Design Agent, QA Validator. Consumes L0+L1 context files and produces campaign-specific landing page deliverables. Each phase produces a file consumed by the next phase. Human review gates between phases when running the full pipeline.
 
 **Invocation:** `/landing-page-generator <company> <campaign-slug> [--stage brief|copy|design|qa|all] [--depth standard|deep]`
@@ -417,7 +453,7 @@ B2B paid landing page generator. Four-phase pipeline: Brief Builder, Copy Agent,
 
 **Runtime:** ~270-410K tokens for full pipeline. Individual phases: Brief ~50-80K, Copy ~85-125K, Design ~105-155K, QA ~30-50K.
 
-### positioning-update (v1.0.0)
+### positioning-update (v1.0.1)
 Client feedback amendment skill. Parses freeform client feedback (emails, Slack messages, meeting notes), classifies each piece of intelligence, presents a structured change plan for approval, and executes surgical updates to L0+L1 context files. No web research. Triggers deliverable re-render after changes.
 
 **Invocation:** `/positioning-update [--file path/to/feedback.md] [--dry-run] [--context-dir path/] [--skip-render]`
@@ -437,7 +473,7 @@ Client feedback amendment skill. Parses freeform client feedback (emails, Slack 
 
 **Runtime:** ~20-40K tokens. ~3-8 minutes.
 
-### voice-inference (v1.0.0)
+### voice-inference (v1.0.1)
 Brand voice analysis from website content. Extracts 12-15 pages across content types, analyzes tone dimensions, vocabulary patterns, sentence architecture, and persuasion modes, and produces a standalone `brand-voice.md` L1 context file. Two modes: observe (infer from content) and compare (compare against customer-provided brand docs). Does not require positioning-framework to have been run first.
 
 **Invocation:** `/voice-inference <url> [--mode observe|compare] [--docs <path-or-url>...] [--guide <path-or-url>]`
@@ -454,7 +490,7 @@ Brand voice analysis from website content. Extracts 12-15 pages across content t
 
 **Runtime:** ~80-120K tokens. ~10-15 minutes.
 
-### live-capture (v0.2.0, in active development)
+### live-capture (v0.2.1, in active development)
 Live-page structural and copy capture. Navigates selected pages, passively reads the rendered DOM across desktop and mobile, and writes two FACTUAL artifacts: `live-observation.md` (page structure) and `live-copy.md` (verbatim copy). Facts and two permitted mechanical derivations only; no judgments (consumers compute the interpretation). Reuses experiment-mockup's browser stack (Chrome DevTools / Playwright / static fallback, with the configured-but-broken = STOP rule) and positioning-framework's dual-mode KB write contract.
 
 **Invocation:** `/live-capture <url> [--scope <slug>] [--no-kb] [--static] [--urls <comma-list>] [--viewports desktop,mobile]`
@@ -471,8 +507,8 @@ Live-page structural and copy capture. Navigates selected pages, passively reads
 
 **Note:** KB-mode silver enrichment depends on the client type skill registering `silver-structural-observation` (Phase A Change B). Legacy mode is independent. Authoritative artifact schema inlined in `phases/write.md`; reference copies in `schemas/`.
 
-### experiment-mockup (v1.4.0)
-Visual mockup generator for proposed experiment changes. Takes a hypothesis from `experiment-roadmap.md`, navigates to the target page, injects the proposed change styled to match the site's design, iterates with the user in real time, then captures the approved state as a standalone HTML artifact with CRO placement rationale. Two modes: live (Chrome DevTools MCP, interactive, ~90% visual fidelity) and static (HTML extraction fallback, non-interactive, ~70% fidelity).
+### experiment-mockup (v1.4.1)
+Visual mockup generator for proposed experiment changes. Takes a hypothesis from `experiment-roadmap.md`, navigates to the target page, injects the proposed change styled to match the site's design, iterates with the user in real time, then captures the approved state as a standalone HTML artifact with CRO placement rationale. Three browser modes: live (Chrome DevTools MCP, interactive, ~90% visual fidelity), playwright (Playwright MCP, screenshot-based iteration), and static (HTML extraction fallback, non-interactive, ~70% fidelity).
 
 **Invocation:** `/experiment-mockup <hypothesis-number> [--url <override-url>] [--static] [--scope <slug>] [--no-kb]`
 
@@ -494,7 +530,7 @@ Visual mockup generator for proposed experiment changes. Takes a hypothesis from
 
 **Runtime:** ~40-80K tokens (live, variable with iteration), ~30-50K tokens (static).
 
-### render-program-site (v0.5.0)
+### render-program-site (v0.5.1)
 Renders a unified two-altitude program site from hypothesis-generator's two gold roadmaps, read in place: the strategic roadmap (`gold-strategic-roadmap`, program-level bets) and the tactical roadmap (`gold-experiment-roadmap`, page-level tests). It derives each item's id, key, title, tier, ICE, and page from the gold structure and authors nothing into those artifacts; the one net-new input is a small render-owned sidecar (`{scope}-program-edges.md`) carrying the cross-altitude edge binding plus the gate-classification fields, keyed by gold `**Key:**`. Produces a hub page plus one spoke per bet (`sb-NN.html`) and one per test (`p-NN.html`), with the cross-altitude edge contract enforced as a hard build gate (mechanism compatibility, dangling targets, executor-status derivation, sidecar-vs-gold version lock, binding completeness) that fails closed with a non-zero exit. An optional third input, an account-program deliverable (`--account-program`), renders a distinct off-store altitude: account plays carry no ICE, no on-page mechanism, and no cross-altitude edge, so they bypass the edge gate and the portfolio map and are validated by a separate account-binding leg (>=1 play, unique ordinals, required labels); the hub gains an `#account-program` section and one `ap-NN.html` spoke per play. When no account program is supplied the render is byte-identical to a two-altitude site. The strategic roadmap's optional `## Measurement Foundation` section (hypothesis-generator's Strategic Roadmap Output Format) renders as an unscored `#measurement-foundation` hub section: keyless prerequisite entries with no ICE, no tier, no map presence, no cross-altitude edges, and no spokes; they need no sidecar entries and are excluded from every sidecar-related gate check (a sidecar edge that targets one fails as a dangling target), and a roadmap without the section renders byte-identically. Hybrid skill: a deterministic generator (`scripts/render_site.py`) owns the gate, the Impact-by-Ease portfolio map, edge typing, and all chrome and data-bound structure, so the strategic layer cannot drift; a scoped LLM pass then curates the spoke prose slots and runs a humanizer pass. Replaces the former roadmap-presentation skill. No web research, no `.claude/context/` writes.
 
 **Invocation:** `/render-program-site [<strategic-md> <tactical-md>] [--edges <path>] [--account-program <path>] [--scope <slug>] [--no-kb] [--out <dir>]`.

@@ -1,6 +1,6 @@
 ---
 name: render-program-site
-version: "0.5.0"
+version: "0.5.1"
 description: >
   Render a two-altitude program site from two markdown inputs (a strategic layer of bets
   and a tactical roadmap of page tests): a hub plus one spoke per bet and per test, with
@@ -8,10 +8,12 @@ description: >
   program site", "program site", "strategic + tactical roadmap site", or the explicit
   /render-program-site invocation. Deterministic generator for the gate, map, and
   structure; scoped LLM pass curates spoke prose.
-updated: 2026-07-02
+updated: 2026-07-05
 ---
 
 # Render Program Site
+
+> **Model:** Opus (the LLM curation and humanizer passes; the generator itself is deterministic Python)
 
 Renders a client-facing, multi-page static site that reads one CRO program at two
 altitudes: the **strategy** (program-level bets) and the **experiment backlog**
@@ -25,7 +27,7 @@ is code; only prose wording is agent-authored.
 - [Invocation](#invocation)
 - [Preconditions](#preconditions)
 - [Inputs](#inputs)
-- [KB Mode (Dual-Mode I/O)](#kb-mode-dual-mode-io)
+- [KB Mode (Dual-Mode Output)](#kb-mode-dual-mode-output)
 - [Execution Pipeline](#execution-pipeline)
 - [Scripts](#scripts)
 - [References](#references)
@@ -40,7 +42,7 @@ is code; only prose wording is agent-authored.
 ```
 
 - Two explicit positional paths render those gold roadmaps directly (override mode resolution); pair them with `--edges <path>` for the sidecar.
-- `--scope <slug>` selects KB mode and resolves all three required inputs (and the optional account program) from the scope (see below).
+- `--scope <slug>` names the KB scope; in KB mode it is required and resolves all three inputs (and the optional account program) from the scope, in legacy mode it is warned about and ignored (see below). Mode itself is selected by KB binding detection, not by this flag.
 - `--edges <path>` supplies the edge sidecar (required; resolved from the scope in KB mode).
 - `--account-program <path>` supplies the optional account-program deliverable (the off-store altitude). When present, the hub gains an "account program" section and one `ap-NN.html` spoke per play; when absent, output is byte-identical to a two-altitude render.
 - `--no-kb` forces legacy mode.
@@ -85,18 +87,21 @@ The `mockup` block also accepts an optional `control_screenshot` (experiment-moc
 labeled Before/After pair instead of a single after screenshot; when absent (or its file is
 missing), it renders after-only, unchanged.
 
-## KB Mode (Dual-Mode I/O)
+## KB Mode (Dual-Mode Output)
 
-Mode resolution mirrors hypothesis-generator and experiment-mockup:
+Mode resolution mirrors hypothesis-generator and experiment-mockup exactly:
 
-1. `--no-kb` forces legacy mode.
-2. Otherwise, if the working repo's CLAUDE.md declares a `Knowledge Bases` binding AND a
-   valid `--scope <slug>` is given, select KB mode. The bound type skill must define
+1. `--no-kb` forces legacy mode. Done.
+2. Otherwise detect the KB binding: the working repo's CLAUDE.md must declare a
+   `Knowledge Bases` section, and the bound type skill must define
    `gold-experiment-roadmap` (the same consumer check experiment-mockup uses -- this skill
-   consumes roadmaps, it does not produce KB artifacts).
-3. KB mode with a missing or invalid `--scope` is a HARD STOP that lists the valid scopes.
-4. Failed binding detection falls back to legacy mode loudly (no `--kb` force flag).
-5. Explicit positional input paths override the mode-resolved inputs in either mode (pair them
+   consumes roadmaps, it does not produce KB artifacts). Binding detected: KB mode.
+   Failed detection: legacy mode, loudly, reporting which check failed
+   (there is deliberately no `--kb` force flag; a broken binding gets fixed, not worked around).
+3. In KB mode, `--scope <slug>` is required and must match a valid scope defined by the
+   type skill. Missing or invalid `--scope` is a HARD STOP that lists the valid scopes.
+   Do not guess a scope. In legacy mode, a supplied `--scope` is warned about and ignored.
+4. Explicit positional input paths override the mode-resolved inputs in either mode (pair them
    with `--edges` for the sidecar).
 
 | | Strategic input | Tactical input | Edge sidecar | Account program (optional) | Output site |
@@ -245,6 +250,7 @@ not part of this skill).
 
 | Version | Changes |
 |---|---|
+| 0.5.1 | Repo-audit doc corrections, no generator change. Mode resolution rewritten to match hypothesis-generator/experiment-mockup exactly: KB binding detection alone selects KB mode (previously step 2 said binding AND a valid `--scope` select it while step 3 said a missing `--scope` in KB mode is a HARD STOP -- contradictory); `--scope` names the scope (required in KB mode, warn-and-ignore in legacy) and never selects the mode. Section renamed `KB Mode (Dual-Mode Output)` to match the header the other dual-mode skills use and cross-reference. Added the Model declaration (Opus for the curation/humanizer passes). |
 | 0.5.0 | Measurement Foundation rendering. `render_site.py` now parses the strategic gold roadmap's optional `## Measurement Foundation` section (hypothesis-generator SKILL.md > Strategic Roadmap Output Format) into a new item class: foundation entries (bold-labeled items; unscored, keyless, no ICE, no tier, no map presence, no cross-altitude edges, no spokes). The hub gains a conditional `#measurement-foundation` section between the strategy cards and the backlog (one `.mf` card per entry: label as title, prose through `foundation-lead`/`foundation-<n>` curation slots, no score chips) plus a nav link; new `#measurement-foundation`/`.mf-grid`/`.mf` CSS. Foundation entries are excluded from every sidecar-related gate check (binding completeness, dangling targets, executor-status derivation, version-lock scope) and require no sidecar entries; a sidecar edge whose target names a foundation entry fails as a dangling target (check 2). Composes with the optional account altitude (both, either, or neither). Output is byte-identical to 0.4.0 for any strategic roadmap without the section (empty `{{MEASUREMENT_FOUNDATION}}` reproduces the hub seam; no nav link). Also adds the `informs` edge-direction semantics note to `edge-contract.md` (edges point bet -> test; behavior unchanged). |
 | 0.4.0 | Optional account-program altitude. New `--account-program <path>` renders an off-store account layer: `load_account` parses the deliverable standalone (plays sliced from `## The Account-Level Plays`, cohorts from the `## The Account-Cohort Taxonomy` table; no `**Key:**`/`**Scores:**` required), a separate account-binding gate leg validates the plays (>=1 play, unique ordinals, required `Cohort`/`The play`/`How it is measured` labels), the hub gains a conditional `#account-program` section + nav link, and one `ap-NN.html` spoke is emitted per play. Account plays never enter the 7-check edge gate or the Impact-by-Ease map. `extract_sections` id-prefix generalized to `{bet:sb, test:p, play:ap}`. New `templates/spoke-account.html` + `#account-program`/`.cohort`/`.x-tag.off` CSS. Output is byte-identical to 0.3.x for any program supplying no account program (empty `{{ACCOUNT_PROGRAM}}` reproduces the hub seam; no `ap-*.html`; no nav link). Also corrects the stale `0.2.1` version pin in README.md / in-repo CLAUDE.md. |
 | 0.3.0 | Optional Before/After mockup render. The `mockup` block accepts an optional `control_screenshot` (experiment-mockup's `control-screenshot.png`): when present and resolvable, the tactical spoke's "Proposed change" section renders a labeled two-frame Before/After comparison (responsive grid, stacks under 760px) instead of a single after screenshot. `copy_mockup_assets` now copies `control.png` alongside `screenshot.png` and returns a dict of resolved paths; the gate rejects a non-string `control_screenshot`; a missing control file degrades to after-only. Output is byte-identical to 0.2.x for any `mockup` block without a resolvable `control_screenshot`. New `.mockup-compare` / `.mockup-label` CSS. |

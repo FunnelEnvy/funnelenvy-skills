@@ -1,8 +1,8 @@
 ---
 name: live-capture
-version: 0.2.0
+version: 0.2.1
 description: "When the user wants to capture a live site's page structure and copy as factual input for CRO analysis. Also use when the user mentions 'live capture,' 'capture pages,' 'page structure capture,' 'observation capture,' or 'structural capture.' Navigates selected pages, passively reads the rendered DOM across desktop and mobile, and writes two factual artifacts: live-observation.md (structure) and live-copy.md (copy). Legacy mode writes L0 to .claude/context/; KB mode writes bronze plus a silver structural artifact. Facts only, no analysis."
-updated: 2026-06-11
+updated: 2026-07-05
 ---
 
 # Live Capture
@@ -47,6 +47,23 @@ Resolved once in Phase 0 and held in-session. The capture logic is identical in 
 | `--static` | off | Force the static fallback (no browser MCP). Lower fidelity, no render/console data. |
 | `--urls` | none | Explicit comma-separated page list. Bypasses Section 8 page selection and the no-profile nav-crawl. |
 | `--viewports` | `desktop,mobile` | Comma-separated viewports to capture. |
+
+---
+
+## Preconditions
+
+**Hard requirements (fail or stop if missing):**
+- A target `<url>` argument.
+- A working browser MCP (Chrome DevTools preferred, Playwright secondary), OR `--static`, OR the user's explicit "continue" at the no-browser gate. A configured-but-broken MCP is a STOP, never a silent fallback (see Browser-Mode Detection).
+- KB mode only: a valid `--scope` (missing or invalid is a HARD STOP listing valid scopes).
+
+**Soft requirements (degrade if missing):**
+- Performance data for page selection: legacy `.claude/context/performance-profile.md`, or the scope's `silver-performance-analysis` in KB mode. Without it, Phase 1 falls back to the no-profile nav-crawl and overall confidence is capped at 3.
+
+**Reads:** the performance data above (optional). Does NOT read other L0/L1 context files.
+**Writes:** legacy mode `.claude/context/live-observation.md` + `live-copy.md`; KB mode bronze captures + the silver `live-structure.md` (see Operating Modes). Overwrites its own prior outputs (operational recapture model, not prior-work extension).
+
+**Concurrency:** do not run while another producing skill is writing to the same context tree or KB scope (no locking).
 
 ---
 

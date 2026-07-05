@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.1] - 2026-07-05
+
+### Fixed
+- Repo-audit contract completion, no behavior change: added the Preconditions section (the only skill without one; hard/soft requirements, reads/writes, and the concurrency rule previously lived implicitly in the flag table and Phase 0 gates). The soft performance-data dependency (legacy `performance-profile.md` / KB `silver-performance-analysis`) is now declared in SKILL.md rather than only in `phases/select.md`.
+
 ## [0.2.0] - 2026-06-11
 
 ### Added

@@ -1,8 +1,8 @@
 ---
 name: render-default-deliverables
-version: 1.0.1
+version: 1.0.2
 description: "When the user wants to generate client-ready deliverables from existing positioning context. Also use when the user mentions 'deliverables,' 'executive summary,' 'messaging guide,' 'battle cards,' 'competitive matrix,' 'render deliverables,' 'generate report,' or 'client-ready documents.' Reads L0 + L1 context files from .claude/context/ and produces polished, human-readable documents in .claude/deliverables/. No research, no analysis, no web fetches. Pure synthesis and formatting."
-updated: 2026-06-11
+updated: 2026-07-05
 ---
 
 # Render Deliverables
@@ -20,6 +20,7 @@ You are a senior marketing strategist producing client-ready deliverables. Your 
 **Token budget:** ~80-100K (reading and writing only, no web fetches)
 **Runtime:** ~5-8 minutes
 **Agents:** Single agent. No multi-agent pipeline.
+**Model:** Opus
 
 ---
 

@@ -337,6 +337,37 @@ Key leadership insights from podcast appearances, interviews, earnings calls.
 
 ---
 
+#### 13. Post-Research Questionnaire (REQUIRED)
+
+Generated AFTER all research is complete, informed by specific gaps the research uncovered (this is NOT the pre-flight questionnaire). Standard depth: 3-5 questions focused on competitor validation and objection discovery. Deep depth: 5-10 questions across all categories.
+
+```markdown
+## Post-Research Questionnaire
+
+The following questions would most improve the confidence of this analysis. They are specific to gaps identified during research, not generic.
+
+### Competitor Validation
+- [Specific, research-informed question]
+
+### Internal Intelligence
+- [Question about sales conversations, vendor-side data]
+
+### Objections
+- [Question about objections public sources likely miss]
+
+### ICP Clarification
+- [Question resolving a data conflict found in research]
+
+### Manual Research Tasks
+- [Concrete task the client or team can run]
+```
+
+Each question must reference what triggered it (a specific finding, conflict, or gap). No generic questions.
+
+**Used by:** Client workshop prep, follow-up research, confidence improvement.
+
+---
+
 ## Completeness Checklist
 
 > A checklist item passes with either (a) populated content citing sources or (b) an explicit gap marker. Silent omission fails. Honest gaps pass.

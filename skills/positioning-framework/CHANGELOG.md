@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.2] - 2026-07-05
+
+### Fixed
+- Repo-audit schema alignment, no behavior change: `phases/company.md` now lists Homepage Messaging as numbered body section #15 (REQUIRED) in the inline schema enumeration and adds it to the completeness checklist (the construction instructions existed but the numbered list stopped at #14, so the authoritative schema never declared the section it required agents to build); the reference copy `schemas/company-identity.md` drops its "Top Landing Pages" sub-table, which nothing in the repo produces or consumes (reference-copy drift; the phase file is authoritative). Also: `schemas/competitive-landscape.md` gains the missing #13 Post-Research Questionnaire section its own completeness checklist already required (matching `phases/competitive.md`), and real company names in `phases/competitive.md` example questions were replaced with fictional placeholders per the public-repo rule.
+
 ## [1.1.1] - 2026-06-11
 
 ### Fixed

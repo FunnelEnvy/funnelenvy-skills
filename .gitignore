@@ -2,6 +2,10 @@
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*credentials*.json
+*service-account*.json
 
 # Development directories (may contain client references and sensitive data).
 # NEVER commit change docs / _dev to this PUBLIC repo. Matches root _dev/ and any nested _dev/.

@@ -1,6 +1,6 @@
 ---
 name: experiment-mockup
-version: 1.4.0
+version: 1.4.1
 description: >-
   When the user wants to create a visual mockup of a proposed experiment change.
   Also use when the user mentions 'experiment mockup,' 'mockup hypothesis,'
@@ -15,7 +15,7 @@ description: >-
   modes: live (Chrome DevTools MCP, interactive), playwright (Playwright MCP,
   screenshot-based iteration), and static (HTML extraction fallback,
   non-interactive).
-updated: 2026-06-24
+updated: 2026-07-05
 ---
 
 # Experiment Mockup
@@ -380,10 +380,27 @@ If output files already exist for the same hypothesis slug (within the resolved 
 
 ---
 
+## Quality Checks
+
+Before reporting a mockup complete, verify:
+
+- [ ] The mockup matches the hypothesis exactly: the injected change is the roadmap's proposed change for hypothesis #[N], not an interpretation of it
+- [ ] `mockup.html` is standalone (inline CSS, no external requests) and opens correctly in a browser
+- [ ] The mockup shows a clean treatment: no "PROPOSED" labels, fidelity banners, or annotation overlays baked into the artifact
+- [ ] Styling matches the target site (extracted values, not defaults); static mode flags every unextracted value with `/* DEFAULT */`
+- [ ] `placement.md` has valid frontmatter and covers placement rationale, attention strategy, implementation notes, and risk flags
+- [ ] Live/playwright modes: control and mockup screenshots exist and are framed identically (same scroll position and viewport)
+- [ ] Output landed in the resolved mode's output base (legacy `.claude/deliverables/experiments/<slug>/` or `{kb_root}/deliverables/experiments/<slug>/`); no writes to `.claude/context/`
+- [ ] No existing mockup files were overwritten without the user confirming
+- [ ] The completion summary states I/O mode, browser mode, and the resolved output directory
+
+---
+
 ## Changelog
 
 | Version | Changes |
 |---------|---------|
+| 1.4.1 | Repo-audit contract completion, no behavior change: added the Quality Checks section (the dev rules require one; the file previously had none). |
 | 1.4.0 | Control ("before") screenshot capture. `capture.md` Step 1 now captures a Before/After pair from the same scroll position and viewport: it restores the original state (removes the injected element, restores any modified originals), screenshots the unmodified viewport as `control-screenshot.png`, then re-injects and screenshots the after as `mockup-screenshot.png`. `inject.md` Step 5 now hands off the injected element's class/id and any modified-original markup so capture can restore the control. New live/playwright-only output `control-screenshot.png` added to agent-header Section 2, SKILL.md Output Files, and the Step 7 completion summary. Static mode writes no control (documented in `static-build.md`). Pairs with render-program-site's optional `control_screenshot` to render a Before/After comparison; absence is backward compatible (after-only). |
 | 1.3.2 | Reference rename: roadmap-presentation -> render-program-site across the KB-mode and mockup-output prose (the consumer skill was replaced). No behavioral change. |
 | 1.3.0 | Key-based output-directory resolution: `Step 4` now resolves the output directory from the matched hypothesis's persisted `**Key:**` field instead of `slugify(experiment name)`, with a shared fallback contract (prefer `**Key:**`; when absent, fall back to `slugify(title)` and print a one-line warning, no hard failure on keyless roadmaps). `Step 2` now also extracts the `**Key:**` field. Decouples mockup resolution from mutable roadmap heading titles (chg_2026-06-18_stable-mockup-resolution-key). |

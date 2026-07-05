@@ -6,6 +6,27 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Repo tooling
+
+#### Fixed
+- **client_ref_guard.py**: the corporate-suffix detector now catches the comma legal-name form ("Acme, Inc." / "Acme Traders, LLC"), the dominant US style, via an optional trailing comma on each capitalized token; new comma-form unit tests. The tightened detector also surfaced real company names used as fixture examples in `modules/slugify.md`, `modules/reddit-research.md`, and `skills/positioning-framework/phases/competitive.md`; all replaced with fictional placeholders per the public-repo rule.
+- **CI**: the client-ref-guard workflow now also runs the `_tests/` unit suite, so guard regressions fail the PR instead of shipping silently.
+- **Hygiene**: `.gitignore` gains key/credential-file patterns (`*.pem`, `*.key`, `*credentials*.json`, `*service-account*.json`); the stale "denylist" comment in `hooks/pre-commit` now describes the actual shape-based detector; the dead `skills/roadmap-presentation/` leftover directory was removed; local `test-runs/` engagement outputs were relocated outside the public working tree.
+- **Docs**: repo CLAUDE.md re-synced with the filesystem (aa-audit registered in the structure tree, Available Skills, workflow order, and context-file table; all stale version pins updated; missing modules/phases/schemas/templates added to the tree; `examples/` removed; ga4-audit corrected to 11-15 reports / v2.3 profile; experiment-mockup corrected to three browser modes). README gains the missing `/render-default-deliverables` invocation example.
+
+### Skill patch sweep (repo audit 2026-07-05)
+
+#### Fixed
+- **positioning-framework** (1.1.1 -> 1.1.2): Homepage Messaging declared as inline-schema section #15 (REQUIRED) + completeness-checklist item in `phases/company.md`; reference schema's orphan "Top Landing Pages" table removed; `schemas/competitive-landscape.md` gains the missing #13 Post-Research Questionnaire its own checklist required; real-name example sanitization.
+- **hypothesis-generator** (1.13.2 -> 1.13.3): Module Dependencies tree marks `patterns-b2b-saas.md` as planned/not-on-disk; contrarian trigger count corrected 13 -> 14 (tree + `phases/construct.md`).
+- **render-program-site** (0.5.0 -> 0.5.1): mode-resolution contradiction resolved (binding detection selects KB mode; `--scope` never does); section renamed `KB Mode (Dual-Mode Output)`; Model declaration added.
+- **landing-page-generator** (2.0.0 -> 2.0.1): Quality Checks section, per-agent model table, changelog, `updated` field added.
+- **experiment-mockup** (1.4.0 -> 1.4.1): Quality Checks section added.
+- **live-capture** (0.2.0 -> 0.2.1): Preconditions section added (hard/soft deps, reads/writes, concurrency).
+- **voice-inference** (1.0.0 -> 1.0.1): per-agent model table, changelog, `updated` field added.
+- **positioning-update** (1.0.0 -> 1.0.1): dangling `agent-header.md` references now point to `skills/positioning-framework/agent-header.md`; changelog + `updated` field added.
+- **render-default-deliverables** (1.0.1 -> 1.0.2): Model declaration added.
+
 ## [1.8.0] - 2026-07-02
 
 ### hypothesis-generator

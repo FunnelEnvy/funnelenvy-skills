@@ -24,9 +24,9 @@ curl -s -H "User-Agent: funnelenvy-skills/1.0" \
 ```
 
 URL-encode the query. Use `+` for spaces, `%22` for quotes. Examples:
-- `q=%22typeform+alternative%22` searches for the exact phrase "typeform alternative"
-- `q=reform+vs+typeform` searches for posts containing those words
-- `q=%22reform%22+OR+%22reform.app%22` searches for either term
+- `q=%22acme+alternative%22` searches for the exact phrase "acme alternative"
+- `q=acme+vs+globex` searches for posts containing those words
+- `q=%22acme%22+OR+%22acme.app%22` searches for either term
 
 ### Search within a specific subreddit
 

@@ -707,6 +707,10 @@ If no trigger events are found in research, write: `[INCOMPLETE -- no trigger ev
 <!-- origin: research -->
 ```
 
+#### 15. Homepage Messaging (REQUIRED)
+
+Exact homepage hero copy with source attribution tags. Full construction instructions, the markdown block, and the source attribution values are defined in the `Homepage Messaging (L0 Section)` section earlier in this file -- follow that section verbatim. The H1 must come from the main content area, never from navigation or header taglines.
+
 ### Completeness Checklist
 
 > A checklist item passes with either (a) populated content citing sources or (b) an explicit gap marker. Silent omission fails. Honest gaps pass.
@@ -723,6 +727,7 @@ A `company-identity.md` file is **complete** when:
 - [ ] Proof Point Registry has entries from verified sources (target: 5+; fewer is acceptable with gap marker)
 - [ ] Constraints section is present (even if no regulatory constraints exist)
 - [ ] Buying Triggers section is present with structured trigger/source/frequency format (even if `[INCOMPLETE]`)
+- [ ] Homepage Messaging section is present with source attribution tags (H1 from main content, not nav)
 - [ ] `confidence` score is set and honest
 - [ ] Proof points contain zero comparative language (no "vs.", "above average", "higher than", "compared to", "half the", "more than [industry/competitor]")
 - [ ] All table sections have Origin column populated

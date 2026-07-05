@@ -1,8 +1,8 @@
 ---
 name: hypothesis-generator
-version: 1.13.2
+version: 1.13.3
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. In KB mode (see KB Mode (Dual-Mode Output)), reads the scope's silver CRO artifacts from a bound knowledge base and writes a typed gold-experiment-roadmap artifact instead. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
-updated: 2026-07-04
+updated: 2026-07-05
 ---
 
 # Hypothesis Generator
@@ -830,9 +830,9 @@ SKILL.md (this file)
   ├── phases/score.md               Phase 4: ICE scoring and sequencing
   ├── modules/experiment-patterns.md   CRO pattern library (32 patterns, 10 categories; the base library)
   ├── modules/patterns-procurement.md  procurement archetype patterns (loaded by archetype resolver; see Phase 1)
-  ├── modules/patterns-b2b-saas.md     b2b-saas archetype patterns (loaded by archetype resolver; see Phase 1)
+  ├── modules/patterns-b2b-saas.md     b2b-saas archetype patterns (planned, not yet on disk; resolver skips if absent -- see Phase 1)
   ├── modules/ice-scoring.md           ICE calibration anchors, empirical benchmarks, B2B SaaS calibration, and predictive scoring reference
-  ├── modules/contrarian-triggers.md   Contrarian filter: context conditions where standard CRO advice backfires (13 triggers)
+  ├── modules/contrarian-triggers.md   Contrarian filter: context conditions where standard CRO advice backfires (14 triggers)
   ├── modules/hypothesis-interactions.md  Interaction-effect model: AND/OR/XOR gates between hypothesis pairs, empirical interaction effects
   └── modules/evidence-*.md            (optional) additional evidence sources and calibration data
 ```
