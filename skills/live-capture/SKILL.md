@@ -73,6 +73,8 @@ Run before anything else. Two independent resolutions: I/O mode (legacy vs KB) a
 
 ### I/O Mode Resolution
 
+> Canonical contract: `modules/kb-mode.md`. When KB-mode semantics change, edit that module first, then re-sync every dual-mode skill it lists. The procedure below is this skill's runtime copy.
+
 1. If `--no-kb` is set: legacy mode. Done.
 2. Read the working repo's `CLAUDE.md`. Find a `Knowledge Bases` section. If absent: legacy mode, and note in the run output: "No `Knowledge Bases` section in CLAUDE.md; using legacy output."
 3. Parse the KB root path (it may be `docs/` or the repo root) and KB type skill name from that section. Verify the type skill exists at `.claude/skills/{kb-type}/`, then resolve the artifact types this skill writes using the two-level lookup (repo-local `{kb-type}/artifacts/{type}.md` first, then the `kb-start` base): `bronze-note-capture` (commonly inherited from kb-start, NOT repo-local), `bronze-research-extraction`, and `silver-structural-observation`. The KB-mode gate is `silver-structural-observation`: if it does not resolve, fall back to legacy (the skill has no silver target to enrich) and report it. A missing bronze type also falls back, reporting which. Do not require these to live in the repo-local `artifacts/` dir; inherited kb-start types are valid. Never write typed artifacts into a half-configured KB.

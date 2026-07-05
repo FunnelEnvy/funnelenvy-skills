@@ -67,6 +67,8 @@ This is a single-agent skill: there is no agent parameter-block threading. Mode 
 
 ### Mode Resolution Procedure (Phase 1, step 0)
 
+> Canonical contract: `modules/kb-mode.md`. When KB-mode semantics change, edit that module first, then re-sync every dual-mode skill it lists. The procedure below is this skill's runtime copy.
+
 1. If `--no-kb` is set: legacy mode. Done.
 2. Read the working repo's `CLAUDE.md`. Find a `Knowledge Bases` section. If absent: legacy mode, and note in the run output: "No `Knowledge Bases` section in CLAUDE.md; using legacy I/O."
 3. Parse the KB root path (e.g., `docs/`) and KB type skill name from that section. Verify the type skill exists at `.claude/skills/{kb-type}/` and its `artifacts/` directory defines `gold-experiment-roadmap`, `silver-strategy-context`, and `bronze-company-facts` -- the output type plus the two types backing the hard L0 precondition. If any check fails: legacy mode, and report which check failed. Optional silver types are NOT mode-resolution requirements: a missing optional silver artifact degrades gracefully exactly like a missing optional legacy context file.
@@ -776,6 +778,27 @@ In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope
 
 ---
 
+## Module Dependencies
+
+Modules resolve from the repository-root `modules/` directory (a sibling of `skills/`), not from this skill's own folder. See Phase 1 `Module resolution and availability` for symlink-aware resolution and the hard load-failure guard.
+
+```
+SKILL.md (this file)
+  ├── phases/detect.md              Phase 2: opportunity detection from context
+  ├── phases/detect-contextual.md   Phase 2b: context-derived opportunity detection
+  ├── phases/detect-strategic.md    Phase 2c: strategic-lever detection (business-level levers, non-A/B measurement designs); routes to the separate strategic deliverable, not the tactical opportunity list
+  ├── phases/construct.md           Phase 3: hypothesis construction with causal reasoning
+  ├── phases/validate.md            Phase 3.5: premise & measurement validation (six tri-state gates, hard caps for Phase 4)
+  ├── phases/score.md               Phase 4: ICE scoring and sequencing
+  ├── modules/experiment-patterns.md   CRO pattern library (32 patterns, 10 categories; the base library)
+  ├── modules/patterns-procurement.md  procurement archetype patterns (loaded by archetype resolver; see Phase 1)
+  ├── modules/patterns-b2b-saas.md     b2b-saas archetype patterns (planned, not yet on disk; resolver skips if absent -- see Phase 1)
+  ├── modules/ice-scoring.md           ICE calibration anchors, empirical benchmarks, B2B SaaS calibration, and predictive scoring reference
+  ├── modules/contrarian-triggers.md   Contrarian filter: context conditions where standard CRO advice backfires (14 triggers)
+  ├── modules/hypothesis-interactions.md  Interaction-effect model: AND/OR/XOR gates between hypothesis pairs, empirical interaction effects
+  └── modules/evidence-*.md            (optional) additional evidence sources and calibration data
+```
+
 ## Quality Rules
 
 1. **When a spec is provided, every spec item is accounted for.** CRO/on-page items map to a hypothesis or appear in "What's Not Here" with a reason. Out-of-scope items (SEO/GEO, interlinking, content audit without page content) appear in "What's Not Here" with routing guidance. A roadmap that silently skips spec items is a failure.
@@ -815,24 +838,3 @@ In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope
 18. **Every emitted experiment carries a `**Key:**` field.** The key is minted once via `slugify(title)` and preserved verbatim across regens and title edits; it is never re-derived from a changed title. It is the stable join key downstream skills use to resolve a mockup to its experiment.
 
 ---
-
-## Module Dependencies
-
-Modules resolve from the repository-root `modules/` directory (a sibling of `skills/`), not from this skill's own folder. See Phase 1 `Module resolution and availability` for symlink-aware resolution and the hard load-failure guard.
-
-```
-SKILL.md (this file)
-  ├── phases/detect.md              Phase 2: opportunity detection from context
-  ├── phases/detect-contextual.md   Phase 2b: context-derived opportunity detection
-  ├── phases/detect-strategic.md    Phase 2c: strategic-lever detection (business-level levers, non-A/B measurement designs); routes to the separate strategic deliverable, not the tactical opportunity list
-  ├── phases/construct.md           Phase 3: hypothesis construction with causal reasoning
-  ├── phases/validate.md            Phase 3.5: premise & measurement validation (six tri-state gates, hard caps for Phase 4)
-  ├── phases/score.md               Phase 4: ICE scoring and sequencing
-  ├── modules/experiment-patterns.md   CRO pattern library (32 patterns, 10 categories; the base library)
-  ├── modules/patterns-procurement.md  procurement archetype patterns (loaded by archetype resolver; see Phase 1)
-  ├── modules/patterns-b2b-saas.md     b2b-saas archetype patterns (planned, not yet on disk; resolver skips if absent -- see Phase 1)
-  ├── modules/ice-scoring.md           ICE calibration anchors, empirical benchmarks, B2B SaaS calibration, and predictive scoring reference
-  ├── modules/contrarian-triggers.md   Contrarian filter: context conditions where standard CRO advice backfires (14 triggers)
-  ├── modules/hypothesis-interactions.md  Interaction-effect model: AND/OR/XOR gates between hypothesis pairs, empirical interaction effects
-  └── modules/evidence-*.md            (optional) additional evidence sources and calibration data
-```

@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.4.1] - 2026-07-05
+
+### Fixed
+- Repo-audit convention fix, no content change: the top-level Quality Checks section moved after Data Source Routing so the file ends with the quality checklist (the dev rules require quality checks at the end). Pure section reorder; every line is unchanged.
+
 ## [2.4.0] - 2026-06-11
 
 ### Added

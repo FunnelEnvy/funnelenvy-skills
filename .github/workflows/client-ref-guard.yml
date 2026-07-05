@@ -22,3 +22,5 @@ jobs:
         run: python scripts/client_ref_guard.py scan-tree
       - name: Run unit tests (guard regressions fail here, not silently)
         run: python -m unittest discover _tests
+      - name: Check skill registry consistency (frontmatter vs README/CLAUDE.md/marketplace/changelogs)
+        run: python scripts/registry_check.py

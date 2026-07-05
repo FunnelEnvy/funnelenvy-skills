@@ -33,6 +33,7 @@ funnelenvy-skills/
 │   ├── business-brief.md         # Pre-flight intake template + protocol
 │   ├── slugify.md                # Deterministic name-to-slug rules for filenames
 │   ├── competitive-assessment.md # Claim assessment, similarity, overlap scoring (Agent 2)
+│   ├── kb-mode.md                # Canonical KB-mode dual-mode contract (all 5 dual-mode skills)
 │   ├── voc-extraction.md         # Voice-of-customer extraction (positioning-framework)
 │   ├── experiment-patterns.md    # 32 CRO patterns across 10 categories (hypothesis-generator)
 │   ├── patterns-procurement.md   # Procurement archetype patterns (hypothesis-generator)
@@ -45,24 +46,25 @@ funnelenvy-skills/
 │   └── section-taxonomy.md       # Composable LP section taxonomy (landing-page-generator)
 ├── skills/
 │   ├── positioning-framework/
-│   │   ├── SKILL.md              # Orchestration hub v1.1.2 (depth-gated)
+│   │   ├── SKILL.md              # Orchestration hub (depth-gated)
 │   │   ├── agent-header.md       # Shared agent rules (deduped from phase files)
 │   │   └── phases/               # Phase-specific instruction modules
 │   │       ├── research.md       # Tier 0-3 research instructions (depth-gated)
 │   │       ├── company.md        # L0 construction + inline schema
 │   │       ├── competitive.md    # Competitive analysis + inline schema (depth-gated)
 │   │       ├── messaging.md      # Personas + messaging + voice + inline schema
-│   │       └── scoring.md        # Scorecard + QA + inline schema (depth-gated)
+│   │       ├── scoring.md        # Scorecard + QA + inline schema (depth-gated)
+│   │       └── quick-readout.md  # Quick-depth readout template + context-file spec (orchestrator-inline)
 │   ├── positioning-update/
-│   │   └── SKILL.md              # Client feedback amendment skill v1.0.1 (single agent)
+│   │   └── SKILL.md              # Client feedback amendment skill (single agent)
 │   ├── ga4-audit/
-│   │   └── SKILL.md              # GA4 analytics audit v2.4.0 (single agent, analytics-mcp)
+│   │   └── SKILL.md              # GA4 analytics audit (single agent, analytics-mcp)
 │   ├── aa-audit/
-│   │   ├── SKILL.md              # Adobe Analytics audit v1.1.0 (single agent, AA 2.0 Reporting API)
+│   │   ├── SKILL.md              # Adobe Analytics audit (single agent, AA 2.0 Reporting API)
 │   │   ├── aa_audit.py           # Reporting API query script
 │   │   └── aa-config.example.json # Client config template
 │   ├── hypothesis-generator/
-│   │   ├── SKILL.md              # CRO hypothesis engine v1.13.3 (single agent, reads L0+L1)
+│   │   ├── SKILL.md              # CRO hypothesis engine (single agent, reads L0+L1)
 │   │   └── phases/               # Phase-specific instruction modules
 │   │       ├── detect.md         # Pattern-based opportunity detection
 │   │       ├── detect-contextual.md # Context-derived opportunity detection (Phase 2b)
@@ -71,7 +73,7 @@ funnelenvy-skills/
 │   │       ├── validate.md       # Premise & measurement validation (Phase 3.5)
 │   │       └── score.md          # ICE scoring and prioritization
 │   ├── landing-page-generator/
-│   │   ├── SKILL.md              # Orchestrator v2.0.1 (4 phase agents, review gates)
+│   │   ├── SKILL.md              # Orchestrator (4 phase agents, review gates)
 │   │   ├── agent-header.md       # Shared agent rules (all phases)
 │   │   ├── phases/               # Phase-specific instruction modules
 │   │   │   ├── brief.md          # Phase 1: campaign brief builder
@@ -82,18 +84,18 @@ funnelenvy-skills/
 │   │       ├── section-catalog.html      # Composable section visual reference (design phase)
 │   │       └── wireframe-demo-legacy.jsx # Legacy React wireframe (reference only)
 │   ├── voice-inference/
-│   │   ├── SKILL.md              # Orchestrator v1.0.1 (2 sequential agents, observe/compare modes)
+│   │   ├── SKILL.md              # Orchestrator (2 sequential agents, observe/compare modes)
 │   │   ├── agent-header.md       # Shared agent rules (both agents)
 │   │   └── phases/               # Phase-specific instruction modules
 │   │       ├── extract.md        # Phase 1: page discovery + extraction
 │   │       └── analyze.md        # Phase 2: voice analysis + rule derivation
 │   ├── live-capture/
-│   │   ├── SKILL.md              # Orchestrator v0.2.1 (flags, I/O + browser mode resolution, routing)
+│   │   ├── SKILL.md              # Orchestrator (flags, I/O + browser mode resolution, routing)
 │   │   ├── agent-header.md       # Shared agent rules (factual-not-interpretive, tri-state, position encoding)
 │   │   ├── phases/               # select (Section 8), capture (passive DOM), static-capture, write (inline schema)
 │   │   └── scripts/              # page_select.py (leverage ranking), content_hash.py (recapture-diff)
 │   ├── experiment-mockup/
-│   │   ├── SKILL.md              # Orchestrator v1.4.1 (parses flags, detects mode, routes phases)
+│   │   ├── SKILL.md              # Orchestrator (parses flags, detects mode, routes phases)
 │   │   ├── agent-header.md       # Shared agent rules (all phases)
 │   │   └── phases/               # Phase-specific instruction modules
 │   │       ├── inspect.md        # Phase 1 (live): navigate, locate section, extract styles
@@ -102,13 +104,13 @@ funnelenvy-skills/
 │   │       ├── annotate.md       # Phase 4 (both): CRO placement rationale
 │   │       └── static-build.md   # Fallback: combined extract + build (no DevTools)
 │   ├── render-program-site/
-│   │   ├── SKILL.md              # Orchestrator v0.5.1 (phased: gate+emit, curate prose, humanize, write)
+│   │   ├── SKILL.md              # Orchestrator (phased: gate+emit, curate prose, humanize, write)
 │   │   ├── edge-contract.md      # Validated object + 7-check gate + source schemas + type-label map
 │   │   ├── scripts/             # render_site.py (deterministic: parse->gate->derive->emit)
 │   │   ├── templates/           # base/hub/spoke-strategic/spoke-tactical/spoke-account.html + styles.css + site.js
 │   │   └── references/          # ai-writing-signs.md (embedded humanizer rules)
 │   └── render-default-deliverables/
-│       └── SKILL.md              # L2 rendering skill v1.0.2 (single agent, no research)
+│       └── SKILL.md              # L2 rendering skill (single agent, no research)
 ├── scripts/                      # client_ref_guard.py (public-repo guard), install-hooks.sh, validators
 ├── hooks/                        # pre-commit + commit-msg (invoke the guard; installed via core.hooksPath)
 ├── .github/workflows/            # client-ref-guard.yml (CI: tree scan + unit tests)
@@ -122,7 +124,7 @@ funnelenvy-skills/
 └── README.md
 ```
 
-Skill CHANGELOG.md files and per-skill dev artifacts are omitted from the tree for brevity; versions above track SKILL.md frontmatter (the source of truth).
+Skill CHANGELOG.md files and per-skill dev artifacts are omitted from the tree for brevity. The tree carries no version pins; versions live in SKILL.md frontmatter (source of truth), mirrored only in the Available Skills headers below, README.md, and each changelog -- all enforced by `scripts/registry_check.py` in CI.
 
 ## Three-Layer Architecture
 
@@ -407,7 +409,7 @@ Auto-invoked by positioning-framework at standard/deep depth. Also available sta
 
 **Output:** `.claude/deliverables/` with manifest
 
-### ga4-audit (v2.4.0)
+### ga4-audit (v2.4.1)
 GA4 analytics audit. Pulls 11-15 targeted reports from a GA4 property via analytics-mcp, classifies conversion events, discovers element-level interactions (CTA clicks, link text, custom parameters), and produces a v2.3 `performance-profile.md` L1 context file with page grouping, opportunity sizing, trend analysis, element interaction data, and optional L0 enrichment. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
 
 **Invocation:** `/ga4-audit [property_id] [--days 90] [--date-range "YYYY-MM-DD:YYYY-MM-DD"] [--no-compare]`
@@ -564,3 +566,5 @@ When a skill is added, removed, or has its version changed in `skills/`, update 
 1. **Skills table:** Add or remove the skill row. Each skill name must link to its `SKILL.md` file using the format `[skill-name](skills/skill-name/SKILL.md)`. Include the version from the skill's YAML frontmatter and a one-line description.
 2. **Skill count:** If the README mentions a skill count anywhere, update it to reflect the current number of skills in `skills/`.
 3. **Invocation examples:** If the new skill has a user-facing invocation (e.g., `/landing-page-generator`), add it to the "Run a skill" examples in the Quick Start section.
+
+This rule is mechanically enforced: `scripts/registry_check.py` runs in CI and fails the PR on any frontmatter/README/CLAUDE.md/marketplace/changelog mismatch. Run it locally before pushing.

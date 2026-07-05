@@ -40,6 +40,8 @@ No arguments required. Context is discovered automatically from `.claude/context
 - No other producing skill should be running concurrently
 - May be auto-invoked by positioning-framework at standard/deep depth after all agents complete
 
+**KB mode: not supported yet.** This skill reads legacy `.claude/context/` only; it has no KB read path (see `modules/kb-mode.md` for the dual-mode contract other skills follow). When positioning-framework runs in KB mode it deliberately skips this skill's auto-run (its `Auto-Invoke` section documents this), because the silver artifacts land in the KB, not in `.claude/context/`. In a KB-bound repo, either run positioning-framework with `--no-kb` for a legacy run this skill can consume, or wait for this skill's KB adaptation (backlogged).
+
 ---
 
 ## Startup: Context Discovery

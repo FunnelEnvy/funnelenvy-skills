@@ -3,7 +3,7 @@
 ## [1.13.3] - 2026-07-05
 
 ### Fixed
-- Repo-audit doc corrections, no behavior change: the Module Dependencies tree now marks `modules/patterns-b2b-saas.md` as planned/not-yet-on-disk (the resolver-skips-if-absent caveat previously lived only in the Phase 1 table, so the tree advertised a module that does not exist); the contrarian trigger count corrected from 13 to 14 in the tree annotation and in `phases/construct.md` (the module defines CTR-01 through CTR-14; CTR-14 was added in 1.6.0 but two counts were never updated). Content-only change to `SKILL.md` and `phases/construct.md`.
+- Repo-audit doc corrections, no behavior change: the Module Dependencies tree now marks `modules/patterns-b2b-saas.md` as planned/not-yet-on-disk (the resolver-skips-if-absent caveat previously lived only in the Phase 1 table, so the tree advertised a module that does not exist); the contrarian trigger count corrected from 13 to 14 in the tree annotation and in `phases/construct.md` (the module defines CTR-01 through CTR-14; CTR-14 was added in 1.6.0 but two counts were never updated). Content-only change to `SKILL.md` and `phases/construct.md`. Also gains the `modules/kb-mode.md` canonical-contract pointer in its KB-mode section (drift canary enforced by `scripts/registry_check.py`). Quality Rules moved after Module Dependencies so the file ends with the quality checklist (pure section reorder, no wording changes).
 
 ## [1.13.2] - 2026-07-04
 
