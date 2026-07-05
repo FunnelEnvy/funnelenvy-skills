@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.14.0] - 2026-07-05
+
+### Added
+- `modules/copy-craft.md` (v1.0.0): evidence-graded copywriting rules for proposed variant copy (headline/H1, hero subhead, CTA button copy, CTA microcopy, form labels and error/privacy microcopy). Twenty-two rules grouped by element plus cross-cutting rules, each carrying a strength tag (strong / moderate / heuristic) and a finding citation; an evidence-quality preamble stating the B2B evidence gap honestly (the strong ground is comprehension/usability mechanism evidence, mostly not B2B-conversion-specific); a verbatim do-not-encode folklore list; and a tiered source appendix. Encodes direction and mechanism, never folklore lift percentages. The first-person-CTA "law" is kept only as an explicitly de-rated test idea (Rule 15).
+- Wired the module into `phases/construct.md` at five anchors: Required Inputs (copy-craft listed for copy-bearing hypotheses); Step 3 before/after (proposed copy across all copy-bearing categories written against copy-craft, specificity deferring to Step 4b); Step 3b scope note (copy-craft compliance orthogonal to the strategic-anchor requirement); Step 3b variation `copy` block (each field written per copy-craft); and Step 4b (reciprocal cross-reference: copy-craft Rules 4/20 route verification through the proof-integrity check). Craft-level only: the Experiment Scope Rule, bundling, ICE scoring, and the strategic lane are unchanged. CTA-label and form-microcopy hypotheses, previously ungoverned for copy, now receive craft-checked copy via Step 3. [hypothesis-generator-copy-craft-module]
+
 ## [1.13.3] - 2026-07-05
 
 ### Fixed
