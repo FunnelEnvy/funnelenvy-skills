@@ -109,8 +109,12 @@ funnelenvy-skills/
 │   │   ├── scripts/             # render_site.py (deterministic: parse->gate->derive->emit)
 │   │   ├── templates/           # base/hub/spoke-strategic/spoke-tactical/spoke-account.html + styles.css + site.js
 │   │   └── references/          # ai-writing-signs.md (embedded humanizer rules)
-│   └── render-default-deliverables/
-│       └── SKILL.md              # L2 rendering skill (single agent, no research)
+│   ├── render-default-deliverables/
+│   │   └── SKILL.md              # L2 rendering skill (single agent, no research)
+│   └── cro-roadmap-red-team/
+│       ├── SKILL.md              # Orchestrator (6-phase: resolve, re-derive, checklist, grade, disposition, render)
+│       ├── agent-header.md       # Shared skeptic-subagent posture (independence, cite-or-it's-not-a-finding, licensed to concede)
+│       └── phases/               # resolve, rederive (tier-gated skeptics), checklist (CC1-CC11 + CC-MF), grade, disposition
 ├── scripts/                      # client_ref_guard.py (public-repo guard), install-hooks.sh, validators
 ├── hooks/                        # pre-commit + commit-msg (invoke the guard; installed via core.hooksPath)
 ├── .github/workflows/            # client-ref-guard.yml (CI: tree scan + unit tests)
@@ -545,6 +549,18 @@ Renders a unified two-altitude program site from hypothesis-generator's two gold
 - Does NOT read L0/L1 context files; the two gold roadmaps + the edge sidecar are the single source of truth
 
 **Outputs (dual-mode):** legacy `.claude/deliverables/program-site/`; KB mode `{kb_root}/deliverables/{scope}-program-site/` (`styles.css`, `site.js`, `index.html`, `sb-NN.html`, `p-NN.html`, `ap-NN.html` when an account program is supplied, `mockups/<id>/`). No `kb_layer` frontmatter (derived view). Hosting/deploy deferred to a follow-up (v1 non-goal).
+
+### cro-roadmap-red-team (v0.1.0)
+Independent red team for a produced CRO roadmap, at both altitudes (the tactical `gold-experiment-roadmap` and the strategic `gold-strategic-roadmap`). Exists because a generator that grades its own work rubber-stamps it: roadmaps carry per-hypothesis self-critique blocks written by the same reasoning that built them, so they reliably end in a confident rebuttal and rarely concede. The value comes from independence, which cannot live inside hypothesis-generator, so it lives in a separate evaluator. Six-phase pipeline: (1) scope + cold load (dual-mode source resolution, schema tolerance); (2) independent re-derivation via adversarial skeptic subagents, tier-gated so Quick Win / Strategic Bet / strategic bets get full cold-mechanism re-derivation plus perspective-diverse skeptics (mechanism / measurability / population) while Explorations get a lighter single-skeptic pass; (3) a cross-cutting structural checklist (CC1-CC11 + CC-MF + a non-skippable completeness step), altitude-aware (tactical A/B form + non-A/B strategic analog) with a gate-verdict-audit-vs-full-re-derivation split calibrated against hypothesis-generator's Phase 3.5 `validation_gates`; (4) self-critique grading (rebut vs deflect, citing the specific sentence and the unconfronted finding); (5) per-item dispositions (keep / reframe / demote / park / drop) plus a prioritized research backlog that routes each gap to the owning skill; (6) render. Enforced phase order (checklist before grading) and a negative-control property (a sound item can reach `keep` with no change, so the skill never manufactures critique). Read-only and analysis-only: no web research, no API calls, no edits to the target, no generated replacement hypotheses, no `.claude/context/` writes. Boundary with `experiment-measurement-audit` grounded and complementary (that skill audits one finalized experiment pre-launch and checks guardrail definition; this skill red-teams a portfolio pre-spec and owns guardrail readability; survivors route to the audit). Dual-mode consumer I/O (KB-mode gate: bound type skill defines `gold-experiment-roadmap`); writes a standalone dated critique, never a KB artifact.
+
+**Invocation:** `/cro-roadmap-red-team [<roadmap-path> ...] [--scope <slug>] [--no-kb] [--altitude tactical|strategic|both] [--out <path>]`.
+
+**Dependencies:**
+- Hard: at least one produced roadmap (tactical or strategic) resolves and is readable
+- Soft: the roadmap's cited sources (KB `depends_on` / legacy `.claude/context/` L0+L1); unresolvable sources are recorded as findings, not fatal
+- Does NOT edit the target roadmap; produces a standalone critique only
+
+**Outputs (dual-mode):** legacy `.claude/deliverables/roadmap-red-team.md`; KB mode `{kb_root}/deliverables/{scope}-roadmap-red-team.md`. No `kb_layer` frontmatter (derived analysis, not a KB artifact). Stable filename; re-runs overwrite, dated in the body header.
 
 ## Development
 
