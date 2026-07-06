@@ -6,6 +6,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### New skill
+
+#### Added
+- **cro-roadmap-red-team** (0.1.0): an independent red team for a produced CRO roadmap, at both altitudes (the tactical `gold-experiment-roadmap` and the strategic `gold-strategic-roadmap`). Exists because a generator that grades its own work rubber-stamps it: roadmaps carry per-hypothesis self-critique blocks written by the same reasoning that built them, so they reliably end in a confident rebuttal and rarely concede. Independence cannot live inside `hypothesis-generator`, so it lives in a separate evaluator. Six-phase pipeline (scope + cold load; independent re-derivation via adversarial skeptic subagents, tier-gated so Quick Win / Strategic Bet / strategic bets get full cold-mechanism re-derivation plus perspective-diverse skeptics while Explorations get a lighter pass; a cross-cutting structural checklist CC1-CC11 + CC-MF + a non-skippable completeness step, altitude-aware with a gate-verdict-audit-vs-full-re-derivation split calibrated against hypothesis-generator's Phase 3.5 validation gates; self-critique grading rebut-vs-deflect; per-item dispositions plus a routed research backlog; render). Enforced phase order (checklist before grading) and a negative-control property (a sound item can reach `keep` with no change). Read-only and analysis-only: no web research, no edits to the target, no generated hypotheses. Dual-mode consumer I/O (legacy `.claude/deliverables/`; KB mode reads the scope's gold roadmaps and their `depends_on`), writing a standalone dated critique that is never a KB artifact. Boundary with `experiment-measurement-audit` grounded and complementary (that skill audits one finalized experiment pre-launch and checks guardrail definition; this skill red-teams a portfolio pre-spec and owns guardrail readability; survivors route to the audit). Registered as a package deal; `modules/kb-mode.md` now lists six dual-mode skills.
+
 ### Repo tooling
 
 #### Fixed

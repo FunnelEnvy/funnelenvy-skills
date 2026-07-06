@@ -1,6 +1,6 @@
 # KB Mode: Canonical Dual-Mode Contract
 
-**This module is the canonical editing source for KB-mode semantics.** Five skills carry an
+**This module is the canonical editing source for KB-mode semantics.** Six skills carry an
 inline copy of the mode-resolution procedure so their runtime read is self-contained (the same
 inline-authority pattern the schemas use). When KB-mode semantics change, edit THIS file first,
 then re-sync every skill listed below in the same change. A drift canary in
@@ -16,8 +16,9 @@ SKILL.md.
 | live-capture | KB Mode (Dual-Mode Output) | Phase 0 | `silver-structural-observation` (gate) + the two bronze capture types, via two-level lookup (repo-local `artifacts/` first, then the `kb-start` base) |
 | experiment-mockup | KB Mode (Dual-Mode Output) | orchestrator, Step 1b | `gold-experiment-roadmap` (consumer check; writes no KB artifacts) |
 | render-program-site | KB Mode (Dual-Mode Output) | input resolution, phase 1 | `gold-experiment-roadmap` (consumer check; writes no KB artifacts) |
+| cro-roadmap-red-team | KB Mode (Dual-Mode Output) | Phase 1 (resolve) | `gold-experiment-roadmap` (consumer check; reads gold roadmaps + their `depends_on`; writes a standalone critique, no KB artifacts) |
 
-All five sections use the exact header `KB Mode (Dual-Mode Output)` -- skills cross-reference
+All six sections use the exact header `KB Mode (Dual-Mode Output)` -- skills cross-reference
 each other's sections by that name.
 
 ## Canonical Mode Resolution Procedure
