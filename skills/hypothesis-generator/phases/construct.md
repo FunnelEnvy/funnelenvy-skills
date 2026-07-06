@@ -5,6 +5,7 @@
 - Opportunity list from Phase 2 (detect)
 - Full body of all loaded context files (carried forward from Phase 1)
 - `modules/experiment-patterns.md` (for causal mechanisms and common mistakes)
+- `modules/copy-craft.md` (for any hypothesis that produces proposed copy: headline, subhead, CTA label, CTA microcopy, form labels/errors)
 
 ## Depth Behavior
 
@@ -127,6 +128,8 @@ Define the specific variant to test.
 
 **For copy experiments, produce before/after pairs:**
 
+When the proposed change includes any copy (H1, subhead, CTA label, CTA microcopy, form field labels, error or privacy microcopy), write that copy against `modules/copy-craft.md`. Apply the element-appropriate rules. Copy-craft now governs all copy-bearing categories, not just headlines. Specificity and quantification rules defer to Step 4b: use a specific number only when it is verifiable against the L0 proof registry.
+
 ```
 Before: "The Revenue Intelligence Platform for Modern Sales Teams"
 After: "Close 40% More Deals by Knowing What Your Buyers Actually Want"
@@ -137,6 +140,8 @@ The "before" comes from context files. The "after" adapts messaging from audienc
 ### Step 3b: Multi-Variation Copy
 
 **Scope:** This step applies ONLY to hypotheses in categories `headline`, `hero`, `positioning`, or `value-proposition`. For all other categories (form, layout, navigation, personalization, pricing, social-proof, content, trust, element-engagement), skip this step and keep the single before/after from Step 3.
+
+Copy-craft compliance (`modules/copy-craft.md`, per Step 3) applies to the copy in every variation here, in addition to the strategic-anchor requirement below. CTA-label and form-microcopy hypotheses that skip 3b still get craft-checked copy via Step 3.
 
 For qualifying hypotheses, produce **2-3 variation pairs** instead of a single proposed change. A strategist needs options anchored to different strategic directions because they have client context the skill cannot see.
 
@@ -188,6 +193,8 @@ variations:
 recommended_variation: "[A|B|C]"
 recommendation_reason: "[1-2 sentences: strongest verified proof, lowest legal risk, best alignment with scorecard gaps, etc.]"
 ```
+
+Each `copy` field (h1, subhead, cta) is written per `modules/copy-craft.md`.
 
 **Do not pad.** Two strong variations beat three where the third is a word swap. Only include Variation C when a genuinely distinct third strategic angle exists.
 
@@ -272,6 +279,8 @@ Classify the hypothesis into exactly one LIFT category based on what conversion 
 Add the `lift_category` field to the hypothesis record: one of `relevance`, `clarity`, `anxiety`, `distraction`, `urgency`.
 
 ### Step 4b: Proof Point Integrity Check
+
+`modules/copy-craft.md` Rules 4 and 20 (specificity/quantification) route their verification through this step: a specific number in proposed copy that fails this check must be genericized or dropped, not shipped.
 
 Before finalizing any hypothesis whose proposed change or causal mechanism references a statistic, percentage, or specific proof point from L0, verify the claim against the proof point registry in `company-identity.md`.
 
