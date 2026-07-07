@@ -1,8 +1,8 @@
 ---
 name: hypothesis-generator
-version: 1.14.0
+version: 1.14.1
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. In KB mode (see KB Mode (Dual-Mode Output)), reads the scope's silver CRO artifacts from a bound knowledge base and writes a typed gold-experiment-roadmap artifact instead. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
-updated: 2026-07-05
+updated: 2026-07-07
 ---
 
 # Hypothesis Generator
@@ -30,7 +30,7 @@ You are a senior CRO strategist with deep B2B experimentation expertise. Your jo
 This skill runs in one of two I/O modes, resolved once at Phase 1 step 0 and held in-session. The analysis is identical in both; only the read/write targets and the deliverable's frontmatter differ.
 
 - **Legacy mode** (default): reads L0 + L1 context from `.claude/context/*.md` and writes the tactical roadmap to `.claude/deliverables/experiment-roadmap.md`. The deliverable carries no frontmatter. When a business-level lever qualifies, it also writes the separate strategic roadmap to `.claude/deliverables/strategic-roadmap.md` (no frontmatter).
-- **KB mode** (current production): invoked under the KB harness (`governed_by: {kb-type}/gold-experiment-roadmap`). Reads the scope's silver artifacts from the bound knowledge base (resolved via the gold artifact's `depends_on`) and writes a typed gold `experiment-roadmap` artifact into the KB. When a business-level lever qualifies, it also writes a separate `gold-strategic-roadmap` artifact (`{kb_root}/deliverables/{scope}-strategic-roadmap.md`). The gold artifact frontmatter block (per the bound gold type def) is the only system surface on either deliverable; the body stays free of system internals per the `Deliverable Purity Constraint`, exactly as in legacy mode.
+- **KB mode**: invoked under the KB harness (`governed_by: {kb-type}/gold-experiment-roadmap`). Reads the scope's silver artifacts from the bound knowledge base, resolved by artifact type per `Read-side Mapping`, and writes a typed gold `experiment-roadmap` artifact into the KB (the artifact's `depends_on` then records which silver artifacts were actually consumed). When a business-level lever qualifies, it also writes a separate `gold-strategic-roadmap` artifact (`{kb_root}/deliverables/{scope}-strategic-roadmap.md`). The gold artifact frontmatter block (per the bound gold type def) is the only system surface on either deliverable; the body stays free of system internals per the `Deliverable Purity Constraint`, exactly as in legacy mode.
 
 The full KB-mode contract (mode resolution, read-side mapping, output path, frontmatter contract, validation gate) is documented in `KB Mode (Dual-Mode Output)` below. Sections that name only the legacy `.claude/` paths are labeled "(legacy mode)"; their KB-mode equivalents live in that section.
 
@@ -83,14 +83,14 @@ Phase files remain the authority for analytical content. In KB mode, the bound t
 
 ### Read-side Mapping
 
-In KB mode, Phase 1 replaces the `.claude/context/*.md` glob with reads of the scope's artifacts. **Resolve each input by its KB artifact TYPE** (the type declared in the artifact frontmatter, which the KB type skill defines as the schema authority), NOT by an assumed basename. KB mode always changes the directory (`.claude/context/` -> `reference/cro-{scope}/`); the basename is **KB-type-dependent**. The "Path under KB root" column shows the funnelenvy-default basename, but a KB type may name its artifacts after the type rather than after the legacy context file (for example, writing `performance-analysis.md` / `competitive-analysis.md` / `audience-analysis.md` for `silver-performance-analysis` / `silver-competitive-analysis` / `silver-audience-analysis`). Match on the artifact type within `reference/cro-{scope}/`; do NOT treat a basename that differs from the column as a missing artifact. Reading a basename mismatch as "artifact absent" would wrongly degrade the run, silently dropping every performance-driven trigger and applying the global no-baseline Confidence ceiling when the data is actually present.
+In KB mode, Phase 1 replaces the `.claude/context/*.md` glob with reads of the scope's artifacts. **Resolve each input by its KB artifact TYPE** (the type declared in the artifact frontmatter, which the KB type skill defines as the schema authority), NOT by an assumed basename. KB mode always changes the directory (`.claude/context/` -> `reference/cro-{scope}/`); the basename is **KB-type-dependent**. The "Path under KB root" column shows the funnelenvy-default basename: the funnelenvy producer (positioning-framework) names most silver artifacts after the artifact type (writing `competitive-analysis.md` / `audience-analysis.md` for `silver-competitive-analysis` / `silver-audience-analysis`), but a KB type may name its artifacts differently (for example, the legacy-derived `competitive-landscape.md` / `audience-messaging.md`, or the type-derived `performance-analysis.md` for `silver-performance-analysis` where the default column shows `performance-profile.md`). Match on the artifact type within `reference/cro-{scope}/`; do NOT treat a basename that differs from the column as a missing artifact. Reading a basename mismatch as "artifact absent" would wrongly degrade the run, silently dropping every performance-driven trigger and applying the global no-baseline Confidence ceiling when the data is actually present.
 
 | Legacy context file | KB artifact type | Path under KB root | Required |
 |---|---|---|---|
 | `company-identity.md` | `bronze-company-facts` + `silver-strategy-context` | `captures/company-facts/{scope}-company-facts.md` + `reference/cro-{scope}/strategy-context.md` | REQUIRED |
 | `positioning-scorecard.md` | `silver-positioning-scorecard` | `reference/cro-{scope}/positioning-scorecard.md` | optional |
-| `competitive-landscape.md` | `silver-competitive-analysis` | `reference/cro-{scope}/competitive-landscape.md` | optional |
-| `audience-messaging.md` | `silver-audience-analysis` | `reference/cro-{scope}/audience-messaging.md` | optional |
+| `competitive-landscape.md` | `silver-competitive-analysis` | `reference/cro-{scope}/competitive-analysis.md` | optional |
+| `audience-messaging.md` | `silver-audience-analysis` | `reference/cro-{scope}/audience-analysis.md` | optional |
 | `performance-profile.md` | `silver-performance-analysis` | `reference/cro-{scope}/performance-profile.md` | optional |
 | (none -- KB-native) | `silver-structural-observation` | `reference/cro-{scope}/live-structure.md` | optional |
 | (none -- KB-native) | `gold-experiment-index` (producer KB) + the silver insight records it links | producer KB root `index.md` (resolved by discovery, see `Mode Resolution Procedure` step 5) + linked silver insight paths | optional |
@@ -158,15 +158,15 @@ Key churn reporting (the same re-minted / orphaned lines as the legacy summary) 
 - `positioning-scorecard.md`: If missing, opportunity detection relies on context gap analysis instead of scorecard ratings. Hypotheses will have lower Confidence scores.
 - `competitive-landscape.md`: If missing, competitive pressure patterns (pricing transparency, differentiator crowding triggers) are unavailable. Those patterns are skipped.
 - `audience-messaging.md`: If missing, persona-based patterns (segment hero personalization, industry proof matching, nav intent mismatch) lose specificity. Generic versions are produced with a note.
-- `performance-profile.md`: If missing, all performance-driven hypothesis triggers are skipped. Confidence capped at 4 globally (no baseline data to validate assumptions). ICE scoring uses qualitative estimates only. Add "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses" to Prerequisites.
+- `performance-profile.md`: If missing, all 22 performance-driven triggers in the Phase 2 Step 1c table are skipped (that table is the authoritative trigger list and count). Confidence capped at 4 globally (no baseline data to validate assumptions). ICE scoring uses qualitative estimates only. Add "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses" to Prerequisites.
   When performance-profile.md schema_version >= "2.1":
     - All v2.0 features plus element-level interaction data
-    - 4 additional element interaction triggers fire in Phase 2 Step 1c
+    - Element-interaction triggers fire in Phase 2 Step 1c
     - Element data enriches hypotheses targeting pages with interaction baselines
     - New patterns EE-01 (CTA Click-Through) and EE-02 (Element Engagement Drop-off) become available
   When performance-profile.md schema_version >= "2.0":
     - Page groups, source mismatches, trends, failure modes, and sized opportunities are available
-    - Additional triggers fire in Phase 2 Step 1c (8 new triggers)
+    - The v2.0-field triggers fire in Phase 2 Step 1c
     - ICE modifiers in Phase 4 use sized opportunities and trend data
   When performance-profile.md schema_version = "1.0":
     - Existing v1 triggers still fire
@@ -239,7 +239,7 @@ Wait for response. If content is provided, treat it as supplementary page contex
 
 ### Phase 1: Context Discovery and Loading
 
-**Module resolution and availability (do this before loading any module).** Every `modules/<name>.md` reference in this skill and its phase files is repository-root-relative: the shared library lives in the `modules/` directory at the repo root, a sibling of `skills/`, NOT inside this skill's own folder. When the skill is invoked from a symlinked or installed location (e.g., `~/.claude/skills/hypothesis-generator/`), resolve this skill's real path first (follow the symlink), then load `modules/` from the repository root (the parent of `skills/`). If the required library (`experiment-patterns.md`, `ice-scoring.md`, `contrarian-triggers.md`, `hypothesis-interactions.md`) cannot be located and read, STOP and report that the shared pattern library is unavailable. Do NOT substitute embedded or remembered CRO patterns, ICE calibration, or contrarian/interaction logic: a roadmap produced without the library is not valid output, and a plausible-looking silent fallback is the exact failure this guard prevents.
+**Module resolution and availability (do this before loading any module).** Every `modules/<name>.md` reference in this skill and its phase files is repository-root-relative: the shared library lives in the `modules/` directory at the repo root, a sibling of `skills/`, NOT inside this skill's own folder. When the skill is invoked from a symlinked or installed location (e.g., `~/.claude/skills/hypothesis-generator/`), resolve this skill's real path first (follow the symlink), then load `modules/` from the repository root (the parent of `skills/`). If the required library (`experiment-patterns.md`, `ice-scoring.md`, `contrarian-triggers.md`, `hypothesis-interactions.md`, `copy-craft.md`, `slugify.md`) cannot be located and read, STOP and report that the shared pattern library is unavailable. Do NOT substitute embedded or remembered CRO patterns, ICE calibration, contrarian/interaction logic, copy-craft rules, or slug-minting rules: a roadmap produced without the library is not valid output, and a plausible-looking silent fallback is the exact failure this guard prevents. (`copy-craft.md` governs every copy-bearing hypothesis via `phases/construct.md`; `slugify.md` governs key minting under Quality Rule 18.)
 
 0. **Mode resolution** -- run the `Mode Resolution Procedure` from `KB Mode (Dual-Mode Output)`. In legacy mode, continue below unchanged. In KB mode, steps 1-2 read the scope's artifacts per `Read-side Mapping` instead of the `.claude/context/` glob, and the handoff check uses the KB-mode branches noted below. In KB mode, the optional experiment-history input (the producer KB's gold index plus the silver insights it links, per `Read-side Mapping`) is resolved and loaded alongside the other optional silver reads here -- read-only, with no `depends_on` edge -- and is consumed by `phases/detect.md` (Step 1g enrichment leg) and `phases/score.md` (Step 4 replication modifier + Step 7 sequencing). It adds no phase/module file.
 1. Glob `.claude/context/*.md`
@@ -613,7 +613,7 @@ Produced only when the strategic path (Phase 2c -> strategic construction -> str
 
   The body stays free of all `Deliverable Purity Constraint` prohibited terms exactly as in legacy mode; the gold frontmatter block is the only permitted system surface.
 
-  **Scope boundary:** this skill emits the `gold-strategic-roadmap` artifact with correct frontmatter. Registering the `gold-strategic-roadmap` type in a specific client KB type skill's `artifacts/` directory is a per-client follow-on, NOT part of this skill (the `silver-structural-observation` precedent). A KB-mode run against a client whose type skill has not yet registered the type is that adopter's coordinated dependency. Legacy mode needs no registration.
+  **Scope boundary:** this skill emits the `gold-strategic-roadmap` artifact with correct frontmatter. Registering the `gold-strategic-roadmap` type in a specific client KB type skill's `artifacts/` directory is a per-client follow-on, NOT part of this skill (the `silver-structural-observation` precedent). A KB-mode run against a client whose type skill has not yet registered the type is that adopter's coordinated dependency. Legacy mode needs no registration. The pre-write registration check (`KB-mode validation, prior work, and completion`) surfaces a missing registration at the head of the completion message instead of letting the post-write gate fail cold; the artifact is still written either way.
 
 ### Body specification
 
@@ -708,7 +708,8 @@ The Measurement Foundation section is part of the strategic deliverable, never a
 
 ### KB-mode validation, prior work, and completion
 
-- **Post-write validation.** After writing the KB strategic artifact, run the same `kb_type_validate.py` post-write gate as the tactical roadmap (resolve `<kb-start-scripts>` the same way; if validation reports errors, fix and re-validate; if the script cannot be resolved, warn, continue, and flag manual validation).
+- **Pre-write registration check.** Before writing, check whether the bound type skill's `artifacts/` directory defines `gold-strategic-roadmap` (a single glob; cheap). If it does not, still write the artifact exactly as specified, but LEAD the completion message with the missing-registration note: "`gold-strategic-roadmap` is not registered in the bound KB type skill. The strategic roadmap was written, but it will not pass type validation until the type is registered -- a per-client follow-on, per the Scope boundary in `Strategic Roadmap Output Format`." The post-write gate below then reports the unregistered type as a known, already-announced condition instead of failing cold.
+- **Post-write validation.** After writing the KB strategic artifact, run the same `kb_type_validate.py` post-write gate as the tactical roadmap (resolve `<kb-start-scripts>` the same way; if validation reports errors, fix and re-validate; if the script cannot be resolved, warn, continue, and flag manual validation). A failure caused solely by the unregistered `gold-strategic-roadmap` type is expected when the pre-write registration check flagged it; do not attempt to "fix" the artifact for that case.
 - **Prior work / supersede.** Glob the strategic deliverable. If present, the run supersedes it in place: preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch on an unchanged re-render; a change in the SET of consumed artifacts, such as a newly consumed input, counts as changed and triggers the minor bump), set `updated`, overwrite the body. Apply the **Key carry-forward rule** (`Re-render Behavior`) to the strategic prior, independently of the tactical roadmap's keys.
 - **Completion reporting.** The completion message reports the strategic deliverable's path, type (`gold-strategic-roadmap`), scope, version, `depends_on`, strategic experiment count, and validation status. When no strategic lever qualifies (the produce-only-when-qualify rule), it reports a single line instead: "No qualifying strategic levers; no strategic roadmap produced."
 

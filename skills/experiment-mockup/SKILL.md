@@ -1,6 +1,6 @@
 ---
 name: experiment-mockup
-version: 1.4.1
+version: 1.4.2
 description: >-
   When the user wants to create a visual mockup of a proposed experiment change.
   Also use when the user mentions 'experiment mockup,' 'mockup hypothesis,'
@@ -15,7 +15,7 @@ description: >-
   modes: live (Chrome DevTools MCP, interactive), playwright (Playwright MCP,
   screenshot-based iteration), and static (HTML extraction fallback,
   non-interactive).
-updated: 2026-07-05
+updated: 2026-07-07
 ---
 
 # Experiment Mockup
@@ -165,7 +165,17 @@ The full resolved output directory path is passed to the phase agent; the phases
 
 ### Step 5: Detect Execution Mode
 
+> Canonical contract: `modules/browser-mode.md`. When browser-mode detection semantics change, edit that module first, then re-sync every browser-driving skill it lists. The steps below are this skill's runtime copy.
+
 **Do NOT ask the user** whether they have a browser MCP configured. Test it. But do NOT silently degrade to static mode -- browser-based mockups are dramatically better, and the user deserves to know that before proceeding with a lower-fidelity fallback.
+
+**Real (non-headless) Chrome is required for WAF-protected targets.** Enterprise bot management (Akamai, Cloudflare, DataDome, PerimeterX, Imperva) fingerprints and 403-blocks HEADLESS Chrome before any content loads (`HeadlessChrome` user-agent, `navigator.webdriver`, TLS/JA3 and missing-surface signals). A real Chrome (headful, or a normal Chrome instance attached over CDP) presents as a human browser and passes. The Chrome-DevTools-first ranking below is not only about fidelity: a real attached Chrome is also what gets past enterprise WAFs. Preferred configurations, in order:
+
+- **Chrome DevTools MCP attached to a running real Chrome** (`--browserUrl http://127.0.0.1:9222` or `--wsEndpoint ws://...`), rather than letting it launch headless.
+- **Playwright MCP run headful, or attached over CDP** (`connectOverCDP` to a real Chrome), rather than `--headless`.
+- **Headless-only hosts** (servers, WSL, CI): run a real Chrome under a virtual display (WSLg / Xvfb) and attach to it, or attach over CDP to a real Chrome elsewhere. The failure mode is headless-LAUNCH, not the platform.
+
+**Static fallback is NOT a WAF remedy.** A static HTTP fetch is blocked at least as hard as headless Chrome (usually harder). Never present `--static` as the answer to a WAF block.
 
 #### 5.1: Static flag override
 
@@ -255,6 +265,16 @@ STOP and wait for the user's response:
 - If they want to set up Chrome DevTools MCP: help them configure it, then re-run detection from 5.3.
 - If they say "continue" or equivalent: proceed to STATIC MODE with the degradation context carried forward.
 - If they want to set up Playwright: help them configure it, then re-run detection from 5.4.
+
+#### 5.6: Headless pre-flight probe (after a browser mode is selected, before Step 6)
+
+A connected browser is not necessarily a usable one for WAF-protected targets. Once Chrome DevTools or Playwright mode is selected, run one in-page check (script evaluation in the connected browser) and record `browser_headless`:
+
+```
+isHeadless = (navigator.webdriver === true) || /HeadlessChrome/.test(navigator.userAgent)
+```
+
+If `isHeadless` is true, surface this BEFORE launching the phase agent: "Connected browser is headless. WAF-protected targets (Akamai/Cloudflare/etc.) will likely return 403. If the target is enterprise-protected, attach to a real Chrome (see the preferred configurations above) and re-run." This is cheap and catches the block before Phase 1 (Inspect) grinds against a 403. Pass `browser_headless` to the phase agent so a 403 during inspect is diagnosed as a WAF block, not a broken selector.
 
 ### Step 6: Route to Phase Sequence
 
@@ -402,6 +422,7 @@ Before reporting a mockup complete, verify:
 
 | Version | Changes |
 |---------|---------|
+| 1.4.2 | Browser-mode contract parity back-port: Step 5 gains the WAF/enterprise-bot-management guidance (fingerprinting signals, preferred real-Chrome configurations, "static fallback is NOT a WAF remedy") and a new Step 5.6 headless pre-flight probe (`navigator.webdriver` / `HeadlessChrome` check, surfaced before launching the phase agent) that live-capture already carried; the two skills' duplicated detection contract had drifted. The contract now has a canonical editing source at `modules/browser-mode.md` (drift canary enforced by `scripts/registry_check.py`); the inline copy stays runtime-self-contained. |
 | 1.4.1 | Repo-audit contract completion, no behavior change: added the Quality Checks section (the dev rules require one; the file previously had none). Also gains the `modules/kb-mode.md` canonical-contract pointer in its KB-mode section (drift canary enforced by `scripts/registry_check.py`). |
 | 1.4.0 | Control ("before") screenshot capture. `capture.md` Step 1 now captures a Before/After pair from the same scroll position and viewport: it restores the original state (removes the injected element, restores any modified originals), screenshots the unmodified viewport as `control-screenshot.png`, then re-injects and screenshots the after as `mockup-screenshot.png`. `inject.md` Step 5 now hands off the injected element's class/id and any modified-original markup so capture can restore the control. New live/playwright-only output `control-screenshot.png` added to agent-header Section 2, SKILL.md Output Files, and the Step 7 completion summary. Static mode writes no control (documented in `static-build.md`). Pairs with render-program-site's optional `control_screenshot` to render a Before/After comparison; absence is backward compatible (after-only). |
 | 1.3.2 | Reference rename: roadmap-presentation -> render-program-site across the KB-mode and mockup-output prose (the consumer skill was replaced). No behavioral change. |

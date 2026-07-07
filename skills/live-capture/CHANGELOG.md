@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.2] - 2026-07-07
+
+### Fixed
+- Browser-mode contract canonicalized: the detection procedure this skill and experiment-mockup carried as hand-synced duplicates now has a canonical editing source at `modules/browser-mode.md` (drift canary enforced by `scripts/registry_check.py`); this skill's inline copy gains the module pointer and aligns its configured-but-broken wording with the canonical text (no behavior change; the WAF guidance and headless pre-flight probe originated here and are unchanged). `phases/select.md` now states that per-page device-gap inputs are not emitted by current producers (ga4-audit and aa-audit report device data site-level only), so the 0.15 device term in `page_select.py` contributes 0 today; the term is forward-compatible and per-page values must not be derived from the site-level split.
+
 ## [0.2.1] - 2026-07-05
 
 ### Fixed

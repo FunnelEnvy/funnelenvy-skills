@@ -19,7 +19,7 @@ Read the brief's frontmatter first. Then load positioning context based on what 
 
 **Always load (frontmatter first, body only when noted):**
 
-- `.claude/context/company-identity.md` (frontmatter: proof point counts by tier, target_market)
+- `.claude/context/company-identity.md` (frontmatter: target_market; body: Proof Point Registry -- proof points live in the body, not frontmatter; loaded for the Step 2 proof cross-reference and Step 7 hero proof selection)
 - `.claude/context/audience-messaging.md` (frontmatter: persona_count, value_themes, voice attributes; body: objection inventory -- loaded only when evaluating objection distribution in Step 6)
 
 **Load if brief references competitive framing:**
@@ -28,8 +28,8 @@ Read the brief's frontmatter first. Then load positioning context based on what 
 
 **Load when present:**
 
-- `.claude/context/brand-voice.md` (frontmatter: tone_dimensions, vocabulary_stats)
-- `.claude/context/performance-profile.md` (frontmatter: device_split, traffic_adequacy)
+- `.claude/context/brand-voice.md` (frontmatter: primary_tone, person, jargon_tolerance, sentence_length_avg)
+- `.claude/context/performance-profile.md` (frontmatter: device_mobile_pct, traffic_adequacy)
 
 Do NOT load full positioning files end-to-end. Extract only what's specified above. Context window discipline matters here.
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.3] - 2026-07-07
+
+### Fixed
+- Repo-audit schema alignment, inline (authoritative) side: `phases/messaging.md` inline frontmatter gains the `voice_source` field its own Brand Voice Detection step instructs setting (an agent following the inline schema verbatim dropped it); Brand Narrative Tensions added to the inline body structure as REQUIRED with an explicit empty marker, resolving a three-way status conflict (construction said must-emit, inline schema omitted it, reference said OPTIONAL; reference relabeled to match); the inline completeness checklist gains the VOC Integration group and the proof-point-ID-resolution item the reference already required. `phases/scoring.md` Quick Reference one-liner now sources the positioning statement from `audience-messaging.md` (it cited `company-identity.md`, which has no positioning statement section); change-marker comment standardized on `re-rated by` in both scoring files. `phases/competitive.md` inline checklist gains three schema-level items from the reference (`category_buyer_term`, P_ evidence references on the Attributes Matrix, no campaign taglines in the Claim Overlap Map). Reference copies synced: `schemas/company-identity.md` checklist gains the 6 items the inline checklist already carried; `schemas/competitive-landscape.md` notes that depth-process checks intentionally live in the phase file only.
+
 ## [1.1.2] - 2026-07-05
 
 ### Fixed

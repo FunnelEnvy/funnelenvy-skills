@@ -128,7 +128,7 @@ Define the specific variant to test.
 
 **For copy experiments, produce before/after pairs:**
 
-When the proposed change includes any copy (H1, subhead, CTA label, CTA microcopy, form field labels, error or privacy microcopy), write that copy against `modules/copy-craft.md`. Apply the element-appropriate rules. Copy-craft now governs all copy-bearing categories, not just headlines. Specificity and quantification rules defer to Step 4b: use a specific number only when it is verifiable against the L0 proof registry.
+When the proposed change includes any copy (H1, subhead, CTA label, CTA microcopy, form field labels, error or privacy microcopy), write that copy against `modules/copy-craft.md`. Apply the element-appropriate rules. Copy-craft now governs all copy-bearing categories, not just headlines. Specificity and quantification rules defer to Step 4b: use a specific number only when it is verifiable against the L0 proof registry (on-page presence alone is not verification; see Step 4b verification step 5 for the back-fill reconciliation path).
 
 ```
 Before: "The Revenue Intelligence Platform for Modern Sales Teams"
@@ -280,7 +280,7 @@ Add the `lift_category` field to the hypothesis record: one of `relevance`, `cla
 
 ### Step 4b: Proof Point Integrity Check
 
-`modules/copy-craft.md` Rules 4 and 20 (specificity/quantification) route their verification through this step: a specific number in proposed copy that fails this check must be genericized or dropped, not shipped.
+`modules/copy-craft.md` Rules 4 and 20 (specificity/quantification) route their verification through this step: a specific number in proposed copy that fails this check must be genericized or dropped, or -- when the number is verified on the live page but absent from the registry -- carried behind a registry back-fill prerequisite (verification step 5 below). It is never shipped as-is.
 
 Before finalizing any hypothesis whose proposed change or causal mechanism references a statistic, percentage, or specific proof point from L0, verify the claim against the proof point registry in `company-identity.md`.
 
@@ -293,6 +293,8 @@ Before finalizing any hypothesis whose proposed change or causal mechanism refer
 3. **Check for proof braiding.** If the proposed copy combines elements from two or more proof points into a single sentence or claim, set `proof_braid: true`. Require explicit justification: both proof points must independently support the combined claim. If they do not, split into separate variations (if Step 3b applies) or rewrite to align with one source.
 
 4. **Comparative advertising check.** If the proposed copy names specific competitors or uses language like "unlike [competitor]" or "compared to [competitor]," set `comparative_advertising: true`. Add this note to the hypothesis record: "Comparative claim naming [competitors]. Legal review recommended before launch. Lanham Act and FTC comparative advertising standards apply."
+
+5. **On-page-but-unregistered reconciliation.** A number that is verified present on the live page (site copy in loaded context, a live-copy capture, or a structural observation) but absent from the L0 proof point registry is NOT verified by this check: on-page presence is not registry verification, because the live site may itself carry an unsubstantiated claim. Do not silently drop the copy, and do not silently ship the unregistered number. Keep the proposed copy, set `proof_integrity_passed: false`, and flag the registry back-fill as a prerequisite on the hypothesis: the number must be registered as a proof point (client confirmation or a /positioning-update pass) before the copy ships. Route the back-fill item to Prerequisites and Data Gaps (Phase 4 Step 8) under "Context Verification Needed."
 
 **Output fields added to hypothesis record:**
 

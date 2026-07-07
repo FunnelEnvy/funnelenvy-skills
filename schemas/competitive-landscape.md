@@ -391,6 +391,8 @@ A competitive-landscape.md file is considered **complete** when:
 - [ ] `confidence` value equals the lowest section confidence within this file
 - [ ] Post-Research Questionnaire included (3-5 questions at standard, 5-10 at deep) with specific, research-informed questions
 
+> **Note:** The phase file's inline checklist (phases/competitive.md) carries additional depth-process checks (Tier 2/3 source attempts, Reddit research, competitor sizing, deep extraction gates). Those are research-process checks, not schema shape, and intentionally live in the phase file only.
+
 ---
 
 ## Versioning Rules

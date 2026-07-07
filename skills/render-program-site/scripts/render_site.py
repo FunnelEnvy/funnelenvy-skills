@@ -244,9 +244,17 @@ def _parse_seq(lines, idx, indent):
     return out, idx
 
 
-def parse_frontmatter(text):
-    """Return (frontmatter_dict, body_text). Raises if no frontmatter block."""
+def parse_frontmatter(text, required=True):
+    """Return (frontmatter_dict, body_text).
+
+    With required=True (the default), a file that does not open with `---`
+    raises: the sidecar is frontmatter-only, so its load stays strict. Roadmap
+    and deliverable inputs pass required=False, because legacy-mode
+    hypothesis-generator roadmaps carry no YAML frontmatter by design (the L2
+    body-purity rule): such a file loads as ({}, full_text)."""
     if not text.startswith("---"):
+        if not required:
+            return {}, text
         raise ValueError("file has no YAML frontmatter")
     end = text.find("\n---", 3)
     if end == -1:
@@ -466,8 +474,10 @@ def load_strategic(path, sidecar):
     Also extracts the optional `## Measurement Foundation` section as foundation
     entries (unscored, keyless; see `parse_foundation`)."""
     with open(path, encoding="utf-8") as fh:
-        fm, body = parse_frontmatter(fh.read())
-    gold_version = str(fm.get("version", ""))
+        fm, body = parse_frontmatter(fh.read(), required=False)
+    # None = the roadmap carries no frontmatter version (legacy mode); gate 7
+    # skips the lock for that file, with an explicit report.
+    gold_version = str(fm["version"]) if fm.get("version") is not None else None
     foundation = parse_foundation(extract_named_section(body, "Measurement Foundation"))
     sections = extract_sections(body, "bet")
     sc_bets = sidecar["bets"]
@@ -503,8 +513,9 @@ def load_tactical(path, sidecar):
     """Load the tactical gold roadmap, deriving tests from the body and merging
     the sidecar's per-test mechanism_class + status (keyed by gold Key)."""
     with open(path, encoding="utf-8") as fh:
-        fm, body = parse_frontmatter(fh.read())
-    gold_version = str(fm.get("version", ""))
+        fm, body = parse_frontmatter(fh.read(), required=False)
+    # None = no frontmatter version (legacy mode); see load_strategic.
+    gold_version = str(fm["version"]) if fm.get("version") is not None else None
     sections = extract_sections(body, "test")
     sc_tests = sidecar["tests"]
     tests = []
@@ -577,7 +588,7 @@ def load_account(path):
     if not path:
         return None
     with open(path, encoding="utf-8") as fh:
-        _, body = parse_frontmatter(fh.read())
+        _, body = parse_frontmatter(fh.read(), required=False)
     plays_slice = extract_named_section(body, "The Account-Level Plays")
     taxonomy_slice = extract_named_section(body, "The Account-Cohort Taxonomy")
     secs = extract_sections(plays_slice, "play")
@@ -623,7 +634,11 @@ def run_gate(strategic, tactical, sidecar, account=None):
     # executor-status derivation, version-lock scope). A sidecar edge that names
     # a foundation entry as its target is a dangling target (check 2), because
     # edge targets resolve against tactical test Keys only.
+    #
+    # Returns a list of gate notes (non-violation reports the caller must
+    # surface, e.g. a skipped version lock). Raises GateError on any violation.
     violations = []
+    notes = []
     bets, tests = strategic["bets"], tactical["tests"]
     live_ids = {t["id"] for t in tests if t["status"] != "superseded"}
     test_by_id = {t["id"]: t for t in tests}
@@ -705,13 +720,23 @@ def run_gate(strategic, tactical, sidecar, account=None):
 
     # 7. version lock: the sidecar records the gold roadmap versions it was
     # authored against; both must match the live gold roadmaps' frontmatter.
+    # A roadmap whose gold_version is None carries no frontmatter `version`
+    # (legacy-mode roadmaps carry no frontmatter at all), so there is nothing
+    # to lock for that file: the lock is SKIPPED for it, and the skip is
+    # reported explicitly in the gate notes -- never a silent pass. This holds
+    # even when the sidecar declares a version for that file (the sidecar's
+    # version fields are schema-required, so legacy sidecars still author them).
     prog = sidecar["program"]
     sv = str(prog.get("strategic_version", ""))
     tv = str(prog.get("tactical_version", ""))
-    if sv != strategic["gold_version"]:
+    if strategic["gold_version"] is None:
+        notes.append("version lock: skipped for strategic (roadmap carries no version)")
+    elif sv != strategic["gold_version"]:
         violations.append("[7] strategic version lock: sidecar strategic_version '%s' != strategic "
                           "gold roadmap version '%s'" % (sv, strategic["gold_version"]))
-    if tv != tactical["gold_version"]:
+    if tactical["gold_version"] is None:
+        notes.append("version lock: skipped for tactical (roadmap carries no version)")
+    elif tv != tactical["gold_version"]:
         violations.append("[7] tactical version lock: sidecar tactical_version '%s' != tactical "
                           "gold roadmap version '%s'" % (tv, tactical["gold_version"]))
 
@@ -741,6 +766,7 @@ def run_gate(strategic, tactical, sidecar, account=None):
 
     if violations:
         raise GateError(violations)
+    return notes
 
 
 # --------------------------------------------------------------------------
@@ -1407,12 +1433,12 @@ def main(argv=None):
     link_edges(strategic, tactical)
     # stash bodies/paths for hub sequence extraction + mockup asset resolution
     with open(args.strategic, encoding="utf-8") as fh:
-        _, sbody = parse_frontmatter(fh.read())
+        _, sbody = parse_frontmatter(fh.read(), required=False)
     strategic_body_cache["strategic"] = sbody
     strategic_body_cache["sidecar_dir"] = os.path.dirname(os.path.abspath(args.edges))
 
     try:
-        run_gate(strategic, tactical, sidecar, account)
+        gate_notes = run_gate(strategic, tactical, sidecar, account)
     except GateError as ge:
         sys.stderr.write("EDGE-CONTRACT GATE FAILED (%d violation%s):\n"
                          % (len(ge.violations), "" if len(ge.violations) == 1 else "s"))
@@ -1427,6 +1453,8 @@ def main(argv=None):
     fnd = strategic.get("foundation") or []
     fnd_note = (" (%d foundation %s)" % (len(fnd), "entry" if len(fnd) == 1 else "entries")) if fnd else ""
     plays_note = (" (%d account plays)" % len(account["plays"])) if account is not None else ""
+    for n in gate_notes:
+        sys.stdout.write("note: %s\n" % n)
     sys.stdout.write("OK gate passed. Wrote %d pages to %s (%d bets, %d tests, %d with mockups).%s%s\n"
                      % (len(written), args.out, bets, tests, mockups, fnd_note, plays_note))
     return 0

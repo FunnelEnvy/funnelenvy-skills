@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.14.1] - 2026-07-07
+
+### Fixed
+- Unsatisfiable device trigger: the Step 1c "mobile bounce >10pp higher than desktop on same page" trigger could never fire (no producer emits per-page device data; ga4-audit and aa-audit report device splits site-level only). Rewritten to key on the site-level Mobile vs Desktop Gap that profiles actually carry, with a mobile-share floor and `top_pages` targeting; trigger evaluation rules now state the site-level-by-design constraint, and the Profile Schema Equivalence table gains the device-gap equivalence row.
+- Trigger-count arithmetic: SKILL.md's additive history ("8 new triggers", "4 additional") implied 19 performance-driven triggers; the Step 1c table has 22. Replaced with a single authoritative statement pointing at the table (count: 22).
+- Read-side Mapping basenames: the `silver-competitive-analysis` / `silver-audience-analysis` rows showed the legacy basenames (`competitive-landscape.md` / `audience-messaging.md`) as the funnelenvy default; positioning-framework actually writes the type-derived `competitive-analysis.md` / `audience-analysis.md`. Rows corrected and the example sentence reworded (type-derived = default, legacy-derived = variant). Resolve-by-type rule unchanged.
+- Operating Modes accuracy: the KB-mode summary claimed reads resolve "via the gold artifact's `depends_on`" (impossible on a first run; the gold artifact is this skill's output). Now states reads resolve by artifact type per Read-side Mapping, with `depends_on` recording what was consumed; "(current production)" label dropped.
+- Profile Schema Equivalence self-gating extended to version-stamped profiles lacking a referenced structure (e.g. an aa-audit profile stamped "2.1" with `element_interactions_available: true` but no `top_interactions[]`): the version stamp gates eligibility, not firing; firing always requires the actual data.
+- copy-craft follow-through (module + `phases/construct.md` Step 4b): on-page presence is not verification; a live-page-verified number absent from the L0 proof registry is carried behind a back-fill prerequisite (registered proof point via client confirmation or positioning-update) and is neither silently dropped nor silently shipped (new Step 4b verification step 5, `proof_integrity_passed: false` Confidence cap applies). Rule 12's example CTA de-first-personed ("See pricing plans") with a Rule 15 cross-reference; Rule 4 gains the scope-match requirement (cross-referencing Rule 20); new Rule 23: non-terminal step buttons state the next step, only the terminal button states the outcome. No rule renumbered.
+
+### Added
+- Phase 1 hard guard now covers `modules/copy-craft.md` and `modules/slugify.md` (their absence previously degraded silently to remembered rules, exactly what the guard exists to prevent).
+- Strategic gold pre-write registration check (KB mode): if a strategic lever qualified and the bound type skill does not define `gold-strategic-roadmap`, the artifact is still written but the completion message leads with the missing-registration note instead of a cold post-write validation failure. The registration-is-a-per-client-follow-on position is unchanged.
+
 ## [1.14.0] - 2026-07-05
 
 ### Added

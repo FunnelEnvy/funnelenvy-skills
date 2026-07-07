@@ -48,7 +48,9 @@ each carrying a `**Key:**` line, a `**Scores:**` line, and bold-labeled prose.
   rewritten by the curation pass.
 
 The gold frontmatter `version` of each roadmap is read for the version lock
-(gate check 7).
+(gate check 7). Legacy-mode roadmaps carry no YAML frontmatter at all
+(hypothesis-generator's L2 body-purity rule): the generator loads such a file
+as body-only, and check 7 skips the lock for it with an explicit report.
 
 ### Edge sidecar schema (`{scope}-program-edges.md`)
 
@@ -135,7 +137,14 @@ Run over the derived data:
 6. The sidecar's test entries author no inbound / reverse references.
 7. The version lock holds: the sidecar's `strategic_version` / `tactical_version`
    match the live gold roadmaps' frontmatter `version` (catches edges authored
-   against a since-revised roadmap).
+   against a since-revised roadmap). A roadmap that carries no frontmatter
+   `version` (legacy-mode roadmaps carry no frontmatter at all) has nothing to
+   lock: the lock is skipped for that file and the skip is reported explicitly
+   in the gate output (e.g. `version lock: skipped for tactical (roadmap
+   carries no version)`), never silently passed. The skip applies per file, so
+   a mixed pair still locks the file that does declare a version. The sidecar
+   authors both version fields regardless (they are schema-required); a sidecar
+   version with no roadmap version to check against is the same reported skip.
 
 Binding checks (alongside the seven): every strategic gold bet has a sidecar
 entry; every sidecar Key resolves to a gold Key; every live test has a

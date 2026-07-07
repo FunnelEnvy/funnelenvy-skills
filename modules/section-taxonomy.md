@@ -187,7 +187,7 @@ A conversion reminder placed mid-scroll. Prevents long pages from losing ready-t
 |---|---|---|
 | `simple-bar` | Default | Centered text + button on a visually differentiated background. Repeats primary CTA text exactly. |
 | `value-recap` | Page is proof-heavy (2+ proof sections above this point) | One sentence summarizing the case so far + CTA button. "Ready to see results like these?" |
-| `sticky-bar` | `device_split.mobile_pct` > 40% OR page has 8+ sections | Floating CTA bar that remains visible during scroll. Especially effective on mobile where scrolling back to the hero is high-friction. |
+| `sticky-bar` | `device_mobile_pct` > 40% OR page has 8+ sections | Floating CTA bar that remains visible during scroll. Especially effective on mobile where scrolling back to the hero is high-friction. |
 
 **Omit when:** Page has 4 or fewer total sections.
 

@@ -412,7 +412,13 @@ A company-identity.md file is considered **complete** when:
 - [ ] Proof Point Registry has entries from verified sources (target: 5+; fewer is acceptable with gap marker)
 - [ ] Constraints section is present (even if no regulatory constraints exist)
 - [ ] Buying Triggers present with structured format (trigger/source/frequency) or explicit gap marker
+- [ ] Homepage Messaging section is present with source attribution tags (H1 from main content, not nav)
 - [ ] `confidence` score is set and honest
+- [ ] Proof points contain zero comparative language (no "vs.", "above average", "higher than", "compared to", "half the", "more than [industry/competitor]")
+- [ ] All table sections have Origin column populated
+- [ ] All prose sections have `<!-- origin: X -->` comments
+- [ ] Frontmatter provenance booleans (`has_client_input`, `has_tier0_input`) match body content
+- [ ] On re-runs: no `client` or `tier-0` tags were downgraded
 
 A file missing REQUIRED sections should have `confidence: 1` in the frontmatter and a note about what's missing.
 

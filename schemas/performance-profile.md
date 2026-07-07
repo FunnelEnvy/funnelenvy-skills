@@ -310,6 +310,17 @@ Unlike other L1 context files, performance-profile.md is **overwritten entirely 
 
 Downstream skills should gate capability checks on `schema_version`. For example, a consumer that wants AI-referrer data should check `schema_version >= "2.2"`.
 
+### Producer Variance
+
+Both producers write the same schema family, but each stamps `schema_version` at the highest version whose full REQUIRED field set it emits. `ga4-audit` emits the full set and stamps `"2.3"`. `aa-audit` stamps `"2.1"` and varies as follows:
+
+- `report_suite` in place of `property_id` / `property_name`
+- No `ai_*` AI-referrer fields (mandatory from schema 2.2, above the AA-stamped version)
+- Element interaction data limited to suite-wide `tracked_elements[]`; no page-associated `element_interaction_events`, `discovered_parameters`, or `top_interactions[]`
+- The 2.3 field groups (scope, element instrumentation state, measurement integrity) are emitted additively on top of the 2.1 stamp
+
+Consumers gating on `schema_version` see only what the stamp guarantees; above-stamp fields are a bonus, never an assumption.
+
 ```markdown
 ## Changelog
 

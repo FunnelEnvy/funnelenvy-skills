@@ -8,16 +8,16 @@ Works standalone. Works better with FunnelEnvy's private data layer.
 
 | Skill | Version | Description |
 |-------|---------|-------------|
-| [positioning-framework](skills/positioning-framework/SKILL.md) | 1.1.2 | Autonomous positioning and messaging framework from web research. Dual-mode output: legacy `.claude/context/` files, or KB-native artifacts when a CRO knowledge base binding is detected |
+| [positioning-framework](skills/positioning-framework/SKILL.md) | 1.1.3 | Autonomous positioning and messaging framework from web research. Dual-mode output: legacy `.claude/context/` files, or KB-native artifacts when a CRO knowledge base binding is detected |
 | [ga4-audit](skills/ga4-audit/SKILL.md) | 2.4.1 | GA4 analytics audit with page grouping, opportunity sizing, element interactions, trend analysis, and AI-referrer (LLM) traffic segmentation |
-| [aa-audit](skills/aa-audit/SKILL.md) | 1.1.0 | Adobe Analytics audit with the same output schema as ga4-audit |
-| [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.14.0 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing. When business-level levers qualify, also produces a separate strategic roadmap deliverable (program/offer/motion/asset-level experiments with non-A/B measurement designs like holdout, pre/post, and operational tracking, each with its own scoring and exclusions) alongside the tactical page-element roadmap. Dual-mode I/O: legacy `.claude/context/` files, or KB-native (reads the scope's silver artifacts, writes a typed gold experiment roadmap) when a CRO knowledge base binding is detected. In KB mode with a completed-experiment knowledge base bound, generates net-new iteration experiments from prior test outcomes |
-| [landing-page-generator](skills/landing-page-generator/SKILL.md) | 2.0.1 | B2B paid landing page generator with brief, copy, design, and QA phases |
+| [aa-audit](skills/aa-audit/SKILL.md) | 1.1.1 | Adobe Analytics audit producing the same performance-profile schema family as ga4-audit (stamped at the schema version it fully satisfies) |
+| [hypothesis-generator](skills/hypothesis-generator/SKILL.md) | 1.14.1 | CRO experiment engine with 32 patterns, ICE scoring, test feasibility, contrarian filtering, and LIFT sequencing. When business-level levers qualify, also produces a separate strategic roadmap deliverable (program/offer/motion/asset-level experiments with non-A/B measurement designs like holdout, pre/post, and operational tracking, each with its own scoring and exclusions) alongside the tactical page-element roadmap. Dual-mode I/O: legacy `.claude/context/` files, or KB-native (reads the scope's silver artifacts, writes a typed gold experiment roadmap) when a CRO knowledge base binding is detected. In KB mode with a completed-experiment knowledge base bound, generates net-new iteration experiments from prior test outcomes |
+| [landing-page-generator](skills/landing-page-generator/SKILL.md) | 2.0.2 | B2B paid landing page generator with brief, copy, design, and QA phases |
 | [positioning-update](skills/positioning-update/SKILL.md) | 1.0.1 | Apply client feedback and corrections to positioning context files |
 | [voice-inference](skills/voice-inference/SKILL.md) | 1.0.1 | Brand voice analysis from website content with scored tone spectrum, vocabulary fingerprint, and actionable voice rules |
-| [live-capture](skills/live-capture/SKILL.md) | 0.2.1 | Live-page structural and copy capture. Navigates selected pages, passively reads the rendered DOM across viewports, and writes two factual artifacts (structure + verbatim copy). Dual-mode: legacy `.claude/context/` files, or KB-native bronze plus a silver structural artifact (in active development) |
-| [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.4.1 | Visual mockup generator for experiment hypotheses. Dual-mode (legacy / KB); resolves mockups by a stable per-experiment Key |
-| [render-program-site](skills/render-program-site/SKILL.md) | 0.5.1 | Renders a unified two-altitude program site (hub plus one spoke per strategic bet and one per page test) from hypothesis-generator's two gold roadmaps (read in place) plus a small render-owned edge sidecar, with the cross-altitude edge contract enforced as a hard build gate. The strategic roadmap's optional Measurement Foundation section renders as an unscored hub section (keyless prerequisite entries; no ICE, no map presence, no spokes). An optional account-program input adds a distinct off-store altitude (an `#account-program` hub section plus one spoke per account play) that bypasses the edge gate and the portfolio map; omitting either optional input renders byte-identically. Deterministic generator for the gate, the Impact-by-Ease map, and all structure; a scoped LLM pass curates spoke prose. Dual-mode: legacy `.claude/deliverables/` or KB-native |
+| [live-capture](skills/live-capture/SKILL.md) | 0.2.2 | Live-page structural and copy capture. Navigates selected pages, passively reads the rendered DOM across viewports, and writes two factual artifacts (structure + verbatim copy). Dual-mode: legacy `.claude/context/` files, or KB-native bronze plus a silver structural artifact (in active development) |
+| [experiment-mockup](skills/experiment-mockup/SKILL.md) | 1.4.2 | Visual mockup generator for experiment hypotheses. Dual-mode (legacy / KB); resolves mockups by a stable per-experiment Key |
+| [render-program-site](skills/render-program-site/SKILL.md) | 0.5.2 | Renders a unified two-altitude program site (hub plus one spoke per strategic bet and one per page test) from hypothesis-generator's two gold roadmaps (read in place) plus a small render-owned edge sidecar, with the cross-altitude edge contract enforced as a hard build gate. The strategic roadmap's optional Measurement Foundation section renders as an unscored hub section (keyless prerequisite entries; no ICE, no map presence, no spokes). An optional account-program input adds a distinct off-store altitude (an `#account-program` hub section plus one spoke per account play) that bypasses the edge gate and the portfolio map; omitting either optional input renders byte-identically. Deterministic generator for the gate, the Impact-by-Ease map, and all structure; a scoped LLM pass curates spoke prose. Dual-mode: legacy `.claude/deliverables/` or KB-native |
 | [render-default-deliverables](skills/render-default-deliverables/SKILL.md) | 1.0.2 | Generates client-ready deliverables from positioning context |
 | [cro-roadmap-red-team](skills/cro-roadmap-red-team/SKILL.md) | 0.1.0 | Independent red team for a produced CRO roadmap (experiment or strategic altitude). Re-derives each hypothesis cold from its cited evidence via adversarial skeptic subagents, grades the roadmap's own self-critiques (rebut vs deflect), runs a cross-cutting structural checklist, and emits per-item dispositions plus a routed research backlog. Read-only: no research, no edits to the target. Dual-mode: legacy `.claude/deliverables/` or KB-native gold roadmaps (in active development) |
 
@@ -87,12 +87,15 @@ Each depth builds on prior work. Running quick then standard then deep is increm
 | positioning-scorecard.md | Positioning health check, messaging gaps, confidence scores |
 | performance-profile.md | Page performance, conversion funnels, channel/device breakdown, AI-referrer traffic, data quality |
 | brand-voice.md | Scored tone spectrum, vocabulary fingerprint, categorized examples, voice rules |
+| live-observation.md | Factual live-page structure across viewports (produced by live-capture, legacy mode) |
+| live-copy.md | Verbatim live-page copy (produced by live-capture, legacy mode) |
 | _fetch-registry.md | Internal coordination file logging all URLs fetched by each agent |
 
 ### Deliverables (`.claude/deliverables/`)
 
 | File | Description |
 |------|-------------|
+| manifest.md | Index of all rendered deliverables |
 | executive-summary.md | Positioning assessment for executives |
 | messaging-guide.md | Persona-by-persona messaging with voice rules |
 | experiment-roadmap.md | Prioritized page-element experiment plan (produced by hypothesis-generator) |
@@ -105,6 +108,9 @@ Each depth builds on prior work. Running quick then standard then deep is increm
 | campaigns/[slug]/qa-report.md | QA validation report |
 | experiments/[slug]/mockup.html | Standalone HTML mockup of proposed experiment change |
 | experiments/[slug]/placement.md | CRO placement rationale and implementation notes |
+| experiments/[slug]/mockup-screenshot.png + control-screenshot.png | After/before browser screenshots of the proposed change (live and playwright modes) |
+| program-site/ | Two-altitude program site: hub plus one spoke per strategic bet and per page test (produced by render-program-site) |
+| roadmap-red-team.md | Independent critique of the produced roadmaps with per-item dispositions (produced by cro-roadmap-red-team) |
 
 ## How It Works
 
@@ -116,13 +122,19 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 
 **aa-audit** is the Adobe Analytics equivalent of ga4-audit. Runs a Python script against the AA 2.0 Reporting API and produces the same `performance-profile.md` schema, so all downstream skills (hypothesis-generator, render-default-deliverables) work identically regardless of analytics platform. Requires Python 3 with `requests`, Adobe Analytics API credentials (env vars), and a client config JSON file.
 
-**hypothesis-generator** reads everything the other skills produced and generates a prioritized experiment roadmap. Without GA4 data, it works from positioning gaps alone (confidence capped at 4/5). With GA4 data, it unlocks 19 performance-driven triggers, calibrates ICE scores using real traffic numbers, adds baseline metrics and test feasibility estimates to each hypothesis, and routes infeasible experiments (insufficient traffic) to "What's Not Here" with alternative approaches. In KB mode it reads the scope's silver CRO artifacts from a bound knowledge base instead of `.claude/context/` and writes the roadmap as a typed gold artifact, with schema-tolerant performance trigger evaluation for profiles that lack `schema_version`.
+**hypothesis-generator** reads everything the other skills produced and generates a prioritized experiment roadmap. Without GA4 data, it works from positioning gaps alone (confidence capped at 4/5). With GA4 data, it unlocks 22 performance-driven triggers, calibrates ICE scores using real traffic numbers, adds baseline metrics and test feasibility estimates to each hypothesis, and routes infeasible experiments (insufficient traffic) to "What's Not Here" with alternative approaches. In KB mode it reads the scope's silver CRO artifacts from a bound knowledge base instead of `.claude/context/` and writes the roadmap as a typed gold artifact, with schema-tolerant performance trigger evaluation for profiles that lack `schema_version`.
 
 **voice-inference** analyzes how a company communicates by extracting 12-15 pages across content types (homepage, product, blog, case studies, about) and building an evidence-backed voice profile. Scores tone dimensions, identifies vocabulary patterns and sentence architecture, catalogs 33+ categorized examples, and derives actionable voice rules. Two modes: observe (infer from content alone) and compare (compare inferred voice against customer-provided brand docs). Does not require positioning-framework to have been run first. Produces `brand-voice.md`.
 
-**experiment-mockup** (in active development) takes a hypothesis from the experiment roadmap and builds a visual mockup showing the proposed change in the context of the real target page. In live mode (requires Chrome DevTools MCP), it injects the change into the user's browser, matches the site's design system using computed styles, and iterates on placement and styling in real time. In static mode (automatic fallback), it extracts page HTML and builds a standalone mockup file. Both modes produce a CRO placement rationale explaining why the element is positioned where it is, what visual hierarchy strategy it uses, and how the dev team should implement it.
+**experiment-mockup** takes a hypothesis from the experiment roadmap and builds a visual mockup showing the proposed change in the context of the real target page. Three browser modes: live (Chrome DevTools MCP) injects the change into the user's browser, matches the site's design system using computed styles, and iterates on placement and styling in real time; playwright (Playwright MCP) iterates screenshot-by-screenshot; static extracts page HTML and builds a standalone mockup file. A configured-but-broken browser MCP stops the run for fixing rather than silently degrading to static. All modes produce a CRO placement rationale explaining why the element is positioned where it is, what visual hierarchy strategy it uses, and how the dev team should implement it.
 
 **render-program-site** (in active development) renders a unified two-altitude program site from hypothesis-generator's two gold roadmaps (the strategic roadmap of program-level bets and the tactical roadmap of page-level tests), read in place, plus a small render-owned edge sidecar that authors only the cross-altitude binding. It derives each item's id, title, tier, ICE, and page from the gold structure and produces a hub page plus one spoke per bet and one per test, with the cross-altitude edge contract (mechanism compatibility, dangling targets, version lock) enforced as a hard build gate that fails closed. A deterministic Python generator owns the gate, the Impact-by-Ease portfolio map, and all structure and chrome, so the strategic layer cannot drift; a scoped LLM pass then curates the spoke prose and runs a humanizer pass. Per-test mockups from experiment-mockup feed the tactical spokes' proposed-change comparison. Dual-mode: legacy `.claude/deliverables/` or KB-native.
+
+**landing-page-generator** turns positioning context into a campaign-specific B2B paid landing page through a four-phase pipeline (brief, copy, design, QA) with human review gates between phases. Signal-driven section assembly selects and sequences page sections from a composable taxonomy based on the campaign brief and available context.
+
+**live-capture** captures a live site's page structure and copy as factual input for CRO analysis. It selects high-leverage pages (traffic, conversion gap, bounce, device gap when performance data exists), passively reads the rendered DOM across desktop and mobile viewports, and writes two factual artifacts with no judgments: consumers compute the interpretation.
+
+**cro-roadmap-red-team** independently red-teams the produced roadmaps at both altitudes. Adversarial skeptic subagents re-derive each item's mechanism cold, a structural checklist runs cross-cutting checks, self-critique blocks are graded rebut-vs-deflect, and each item gets a disposition (keep / reframe / demote / park / drop) plus a research backlog routed to the owning skill. Read-only: it never edits the roadmap it critiques.
 
 **positioning-update** applies client feedback, stakeholder corrections, and new intelligence to existing context files. Paste an email, Slack thread, or meeting notes and it classifies each piece of information, shows you a structured change plan, and executes surgical edits after approval. No web research. Triggers deliverable re-render automatically.
 
@@ -141,16 +153,25 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 # 3. Pull analytics data (what's actually happening on your site)
 /ga4-audit properties/123456789
 
-# 4. Generate data-informed experiment ideas
+# 4. Capture live-page structure and copy as factual context (optional)
+/live-capture https://example.com
+
+# 5. Generate data-informed experiment ideas
 /hypothesis-generator
 
-# 5. Analyze brand voice (standalone, works without positioning context)
+# 6. Red-team the roadmap before committing to it (optional)
+/cro-roadmap-red-team
+
+# 7. Analyze brand voice (standalone, works without positioning context)
 /voice-inference https://example.com
 
-# 6. Visualize specific experiment changes as mockups
+# 8. Visualize specific experiment changes as mockups
 /experiment-mockup 1
 
-# 7. Re-render deliverables any time context changes
+# 9. Render the roadmaps as a client-facing program site (optional)
+/render-program-site
+
+# 10. Re-render deliverables any time context changes
 /render-default-deliverables
 ```
 
@@ -164,7 +185,8 @@ Most skills are pure markdown with no external dependencies. These are the excep
 |-------|-------------|-----|
 | ga4-audit | GA4 credentials (see `.env.example`) OR [analytics-mcp](https://github.com/nicholasgriffintn/analytics-mcp) | Queries GA4 via direct API (preferred) or MCP fallback. Python 3 + `requests` for direct API. |
 | aa-audit | Python 3 + `requests` package, Adobe Analytics API credentials (env vars), client config JSON | Runs a Python script against the AA 2.0 Reporting API |
-| experiment-mockup (live mode) | Chrome DevTools MCP | Injects changes into live browser DOM. Falls back to static mode without it. |
+| experiment-mockup (live mode) | Chrome DevTools MCP | Injects changes into live browser DOM. Playwright MCP is the secondary mode; static extraction is the last resort when no browser MCP is configured (a configured-but-broken MCP stops the run instead of degrading). |
+| live-capture | Chrome DevTools MCP or Playwright MCP (or `--static`) | Reads the rendered DOM across viewports; same browser-mode contract as experiment-mockup. |
 
 ## License
 

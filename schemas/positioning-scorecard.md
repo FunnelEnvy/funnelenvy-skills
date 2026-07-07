@@ -214,7 +214,7 @@ Per-section confidence ratings for the entire positioning framework. Downstream 
 - Preserve `generated_by` as the original producing skill
 - Ratings can change in any direction on re-assessment (unlike other L1 files where confidence only rises)
 - Section Confidence can be updated by any skill that has new data affecting confidence
-- Mark changes: `<!-- re-scored by [skill-name] [date] -->`
+- Mark changes: `<!-- re-rated by [skill-name] [date] -->`
 
 ```markdown
 ## Changelog

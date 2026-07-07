@@ -6,6 +6,22 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 2026-07-07 audit sweep
+
+#### Fixed
+- **render-program-site** (0.5.2): the documented legacy lane actually works now -- `render_site.py` loads frontmatter-less legacy roadmaps as body-only files and gate check 7 skips the sidecar version lock per-file with an explicit reported note (KB gold lane unchanged; mixed pairs still fail closed). Plus four SKILL.md text fixes (dead anchor, override wording, `$PY` full-path command, nonexistent label-to-region map). 8 new unit tests.
+- **hypothesis-generator** (1.14.1): unsatisfiable per-page device trigger rewritten to the site-level Mobile vs Desktop Gap producers actually emit; trigger count stated once authoritatively (22); Read-side Mapping basenames corrected to positioning-framework's real type-derived defaults; Operating Modes no longer claims reads resolve via the output artifact's `depends_on`; Phase 1 hard guard extended to copy-craft.md and slugify.md; strategic gold pre-write registration check added; copy-craft module closes its four open pre-merge items (on-page-but-unregistered back-fill path with a new construct.md Step 4b verification step, pronoun-neutral Rule 12 example, Rule 4 scope-match, new Rule 23 for non-terminal buttons).
+- **positioning-framework** (1.1.3): inline-schema defects fixed (`voice_source` added to messaging frontmatter; Brand Narrative Tensions status conflict resolved as REQUIRED-with-empty-marker; VOC Integration checklist block added; scorecard one-liner sources from audience-messaging.md; `re-rated by` marker standardized); reference checklists synced both directions.
+- **landing-page-generator** (2.0.2): four phantom context reads in `phases/copy.md` corrected to fields producers actually write; `device_split.mobile_pct` references in section-taxonomy and the section catalog corrected to `device_mobile_pct`.
+- **aa-audit** (1.1.1): honest schema stamp ("2.1", the highest version whose full required field set it emits, instead of "2.3" without the mandatory AI-referrer fields); Producer Variance documented in the shared schema; page-association limitation documented.
+- **live-capture** (0.2.2): browser-mode contract canonicalized (see below); `phases/select.md` documents that the 0.15 device-gap leverage term contributes 0 with current producers.
+- **experiment-mockup** (1.4.2): WAF/enterprise-bot-management guidance and the headless pre-flight probe back-ported from live-capture (the duplicated detection contract had drifted).
+- **Docs**: repo CLAUDE.md re-synced (dual-mode skill count, ga4-audit direct-API description + `ga4_client.py` in the tree, workflow order gains `/cro-roadmap-red-team`, deliverables table gains program-site / red-team / control-screenshot rows, experiment-mockup three-mode phase annotations, cro-roadmap-red-team cross-layer exception bullet, render-default-deliverables consumption claims for performance-profile/brand-voice removed to match the skill). README re-synced (22 triggers, experiment-mockup three modes, output tables, recommended order gains live-capture / red-team / render-program-site, How It Works paragraphs for landing-page-generator / live-capture / cro-roadmap-red-team, Playwright prerequisites).
+
+#### Added
+- **modules/browser-mode.md**: canonical browser-mode detection contract (exact-tool-name DevTools test, configured-but-broken = STOP, Playwright secondary, static last resort, WAF guidance, headless pre-flight probe) on the kb-mode.md pattern; experiment-mockup and live-capture keep runtime-self-contained inline copies, with a new drift canary in `scripts/registry_check.py` (4 new unit tests).
+- **CI**: `scripts/validate-hypothesis-generator.sh` (91 content checks) now runs in the workflow; content regressions in the largest skill fail the PR instead of shipping silently.
+
 ### New skill
 
 #### Added

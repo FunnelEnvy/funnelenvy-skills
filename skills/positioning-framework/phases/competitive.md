@@ -930,16 +930,17 @@ Each question should reference what triggered it (a specific research finding, a
 
 A competitive-landscape.md file is **complete** when:
 
-- [ ] YAML frontmatter has all required fields (schema, schema_version, generated_by, depth, last_updated, last_updated_by, confidence, company, category, top_competitors, competitors_analyzed, competitor_names, white_spaces, overlap_zones, claim_overlap_score)
+- [ ] YAML frontmatter has all required fields (schema, schema_version, generated_by, depth, last_updated, last_updated_by, confidence, company, category, category_buyer_term, top_competitors, competitors_analyzed, competitor_names, white_spaces, overlap_zones, claim_overlap_score)
 - [ ] Market Overview defines the market in buyer language
 - [ ] Buyer Alternatives has entries from verified sources (target: 3+ non-vendor alternatives; fewer is acceptable with gap marker)
 - [ ] JTBD Taxonomy covers all three tiers with real competitor names
 - [ ] Per-Competitor Profiles exist for every Major and Emerging competitor
 - [ ] Each profile includes verbatim H1, category claim, at least one competitive tactic, and inline battle card data
 - [ ] Battle card data includes "when we lose" for every profiled competitor
-- [ ] Competitive Attributes Matrix maps L0 differentiators against competitor types
+- [ ] Competitive Attributes Matrix maps L0 differentiators against competitor types with P_ evidence references
 - [ ] Competitive Pricing populated (or flagged with confidence impact)
 - [ ] Claim Overlap Map covers claims from L0 (target: 5+; fewer is acceptable with gap marker)
+- [ ] No campaign taglines in the Claim Overlap Map
 - [ ] Competitive White Space identifies unclaimed territory (target: 1+; mark `[NONE FOUND - no buyer signals available]` if none identified from available data)
 - [ ] Buyer Scenarios has entries from verified sources (target: 3+; fewer is acceptable with gap marker)
 - [ ] Competitor Confidence Ratings populated for every profiled competitor
