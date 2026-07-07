@@ -201,12 +201,15 @@ check "replication_target_surfaces guarded in Deliverable Purity Constraint" \
 check "Output Format has Experiment Program Continuity section" \
   "grep -c '^## Experiment Program Continuity' skills/hypothesis-generator/SKILL.md" \
   "1"
+# history_type/parent_outcome also appear in the in-KB interpretation contract
+# (Read-side Mapping) and the Outcome normalization table, not only the Purity
+# Constraint ban list -- counts bumped from 1 accordingly (in-kb-experiment-history-read-path).
 check "history_type guarded in Deliverable Purity Constraint" \
   "grep -c 'history_type' skills/hypothesis-generator/SKILL.md" \
-  "1"
+  "3"
 check "parent_outcome guarded in Deliverable Purity Constraint" \
   "grep -c 'parent_outcome' skills/hypothesis-generator/SKILL.md" \
-  "1"
+  "4"
 check "source_priority guarded in Deliverable Purity Constraint" \
   "grep -c 'source_priority' skills/hypothesis-generator/SKILL.md" \
   "1"
