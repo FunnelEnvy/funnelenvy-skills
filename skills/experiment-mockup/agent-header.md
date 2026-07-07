@@ -29,8 +29,10 @@ Read/write paths resolve against the orchestrator-provided roadmap source and ou
 | `.claude/context/brand-design-system.md` | Visual reference | Read (if exists): authoritative design tokens, color palette, typography, spacing |
 | `.claude/context/brand-components.html` | Visual reference | Read (if exists): ready-to-use HTML/CSS component patterns |
 | `<output-dir>/mockup.html` | Deliverable | Write: standalone HTML mockup |
-| `<output-dir>/control-screenshot.png` | Deliverable | Write: browser screenshot of the unmodified "before" state (live/playwright mode only; absent in static mode) |
-| `<output-dir>/mockup-screenshot.png` | Deliverable | Write: browser screenshot of the injected "after" state (live/playwright mode only) |
+| `<output-dir>/control-screenshot.png` | Deliverable | Write: desktop browser screenshot of the unmodified "before" state (live/playwright mode only; absent in static mode) |
+| `<output-dir>/mockup-screenshot.png` | Deliverable | Write: desktop browser screenshot of the injected "after" state (live/playwright mode only) |
+| `<output-dir>/control-screenshot-mobile.png` | Deliverable | Write: 390px browser screenshot of the unmodified "before" state (live/playwright mode only; absent in static mode) |
+| `<output-dir>/mockup-screenshot-mobile.png` | Deliverable | Write: 390px browser screenshot of the injected "after" state (live/playwright mode only) |
 | `<output-dir>/placement.md` | Deliverable | Write: CRO placement rationale |
 
 ---
@@ -40,7 +42,8 @@ Read/write paths resolve against the orchestrator-provided roadmap source and ou
 | Module | Sections | Used By |
 |--------|----------|---------|
 | `modules/conversion-playbook.md` | Sections 1-6 (navigation, CTA, form, post-submit, page section order, mobile) | inject.md, static-build.md |
-| `modules/lp-audit-taxonomy.md` | D1 (Awareness-Stage Alignment), D3 (Message Match), D5 (Social Proof Strategy), D8 (Copy Quality) | inject.md, static-build.md, annotate.md |
+| `modules/lp-audit-taxonomy.md` | Base D1 (Awareness-Stage Alignment), D3 (Message Match), D5 (Social Proof Strategy), D8 (Copy Quality); conditional D4/D6/D7 per change type (see SKILL.md Step 6) | inject.md, static-build.md, annotate.md |
+| `modules/copy-craft.md` | Full rules (evidence-graded copy: headline/subhead/CTA/form microcopy) | inject.md, static-build.md (Distillation Contract) |
 | `modules/web-extract.md` | Full pipeline | static-build.md only |
 | `modules/slugify.md` | Full rules | SKILL.md (hypothesis title to directory slug) |
 
@@ -52,12 +55,13 @@ Read modules at the start of the phase that needs them. Do not pre-load all modu
 
 All output files use YAML frontmatter (placement.md) or HTML comment metadata blocks (mockup.html). Required fields:
 
-- `schema`: the schema name (`experiment-mockup` or `experiment-placement`)
-- `schema_version`: `"1.0"`
+- `schema`: the schema name (`experiment-mockup` for mockup.html, `experiment-placement` for placement.md)
+- `schema_version`: `"1.0"` for mockup.html; `"1.1"` for placement.md (adds `change_type` / `change_type_source`)
 - `hypothesis`: hypothesis number from experiment-roadmap.md
 - `target_url`: the URL that was mocked up
+- `change_type` / `change_type_source` (placement.md only): the resolved change type and whether it came from the roadmap or was classified locally
 - `mode`: `live` or `static`
-- `generated_by`: `experiment-mockup v1.0.0`
+- `generated_by`: `experiment-mockup v1.5.0`
 - `last_updated`: ISO-8601 date
 
 ---

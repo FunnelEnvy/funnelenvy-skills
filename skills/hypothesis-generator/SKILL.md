@@ -1,6 +1,6 @@
 ---
 name: hypothesis-generator
-version: 1.14.1
+version: 1.15.0
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. In KB mode (see KB Mode (Dual-Mode Output)), reads the scope's silver CRO artifacts from a bound knowledge base and writes a typed gold-experiment-roadmap artifact instead. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
 updated: 2026-07-07
 ---
@@ -467,6 +467,7 @@ Continuation experiments themselves remain scored and placed in their normal tie
 **Key:** [stable slug minted once from the title; see key-minting rule below]
 **Page:** [specific page or URL path]
 **What to test:** [concrete, specific change]
+**Change type:** [one primary type from the enum, comma-separated when a bundled test spans types, primary first: insert | replace-copy | modify | remove | reorder. Derived per construct.md Step 3 (Change-type derivation). Projection content: re-derived on every render from the proposed change, NOT carried forward like `**Key:**`.]
 
 **Current state:** [what exists now, with specific copy or structure referenced from the website]
 **Baseline:** [if performance-profile.md exists: sessions/mo, bounce rate, conversion rate for the target page. Omit this line entirely if no performance data.]
@@ -838,5 +839,7 @@ SKILL.md (this file)
 17. **Self-critique is visible, not hidden.** Every hypothesis, regardless of tier, must include a Self-critique section in the deliverable (Step 10). The counterarguments must be stated fairly, not strawmanned. Evidence-strength language must be proportionate to actual evidence (one data point is a "signal," not a "pattern"). Internal consistency issues must be resolved before emission, not acknowledged and ignored. For strategic-lane hypotheses, the self-critique renders under the client-appropriate heading "Key risk" (not the literal "Self-critique"); the substance (fair thesis/design/outcome challenges with proportionate evidence language) is unchanged. See the Client-Facing Register.
 
 18. **Every emitted experiment carries a `**Key:**` field.** The key is minted once via `slugify(title)` and preserved verbatim across regens and title edits; it is never re-derived from a changed title. It is the stable join key downstream skills use to resolve a mockup to its experiment.
+
+19. **Every emitted tactical experiment carries a `**Change type:**` field** with a value from the enum (insert | replace-copy | modify | remove | reorder), primary first, comma-separated when a bundled test spans types. It is derived per construct.md Step 3 from the proposed change and re-derives on every render (projection content, not carried forward like `**Key:**`). The strategic roadmap does not carry this field; its levers are not page-element treatments.
 
 ---

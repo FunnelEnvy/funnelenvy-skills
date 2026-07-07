@@ -18,9 +18,11 @@
 
 Written to the output directory the orchestrator passes (legacy `.claude/deliverables/experiments/<slug>/`; KB mode `{kb_root}/deliverables/experiments/<slug>/`):
 
-- `<output-dir>/control-screenshot.png` (browser viewport screenshot of the unmodified "before" state)
+- `<output-dir>/control-screenshot.png` (desktop viewport screenshot of the unmodified "before" state)
+- `<output-dir>/mockup-screenshot.png` (desktop viewport screenshot of the injected "after" state)
+- `<output-dir>/control-screenshot-mobile.png` (390px viewport screenshot of the unmodified "before" state)
+- `<output-dir>/mockup-screenshot-mobile.png` (390px viewport screenshot of the injected "after" state)
 - `<output-dir>/mockup.html` (standalone self-contained HTML)
-- `<output-dir>/mockup-screenshot.png` (browser viewport screenshot of the injected "after" state)
 
 ---
 
@@ -46,6 +48,17 @@ Requirements:
 - The injected element must be visible in the "after" shot, and its (now empty) location visible in the "before" shot, at the same scroll position.
 - Both screenshots frame the same region at the same viewport width so the pair is comparable.
 - Save both as PNG.
+
+**Mobile pair (390px).** After the desktop pair, capture the same Before/After pair at a 390px viewport width, using the same restore/re-inject choreography so the mobile control is the genuine pre-change state:
+
+6. **Resize to 390px** width. Scroll so the injected element (still present from step 5) is centered or fully visible. Do NOT change scroll or width again until both mobile shots are taken.
+7. **Restore the original state** (remove the injected element, and restore any modified/replaced originals) exactly as in step 2.
+8. **Capture the mobile control.** Screenshot the current 390px viewport and write it as `control-screenshot-mobile.png`.
+9. **Re-apply the change** at the same insertion point, exactly as Phase 2 left it. Verify it rendered.
+10. **Capture the mobile after.** Screenshot the current 390px viewport and write it as `mockup-screenshot-mobile.png`.
+11. **Restore the desktop viewport** so any downstream step runs at the original width.
+
+Mobile-pair requirements: both mobile shots frame the same region at 390px; leave the element injected at the end (Phase 3 Step 2 reads the DOM from the injected state).
 
 ### Step 2: Extract Modified Section HTML
 
@@ -74,7 +87,7 @@ Structure:
   target_url: "[url]"
   insertion_point: "[DOM path]"
   mode: live
-  generated_by: experiment-mockup v1.0.0
+  generated_by: experiment-mockup v1.5.0
   last_updated: [YYYY-MM-DD]
 -->
 <!DOCTYPE html>
@@ -134,5 +147,5 @@ Requirements:
 
 1. Create the orchestrator-provided output directory if it doesn't exist (legacy `.claude/deliverables/experiments/<slug>/`; KB mode `{kb_root}/deliverables/experiments/<slug>/`)
 2. Write `mockup.html` to the output directory
-3. Write `control-screenshot.png` and `mockup-screenshot.png` to the output directory (already saved in Step 1)
-4. Confirm the files are written: "Mockup captured (before + after). Files written to [output directory]."
+3. Write `control-screenshot.png`, `mockup-screenshot.png`, `control-screenshot-mobile.png`, and `mockup-screenshot-mobile.png` to the output directory (already saved in Step 1)
+4. Confirm the files are written: "Mockup captured (before + after, desktop + mobile). Files written to [output directory]."

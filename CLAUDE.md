@@ -41,7 +41,7 @@ funnelenvy-skills/
 │   ├── contrarian-triggers.md    # 14 contrarian triggers (hypothesis-generator)
 │   ├── hypothesis-interactions.md # AND/OR/XOR interaction gates + empirical effects (hypothesis-generator)
 │   ├── ice-scoring.md            # ICE calibration anchors and scoring rules (hypothesis-generator)
-│   ├── copy-craft.md             # Evidence-graded copywriting rules for proposed variant copy (hypothesis-generator construct.md)
+│   ├── copy-craft.md             # Evidence-graded copywriting rules for proposed variant copy (hypothesis-generator construct.md; experiment-mockup Distillation Contract)
 │   ├── conversion-playbook.md    # Paid LP structural rules, CTA, form, benchmarks (landing-page-generator)
 │   ├── campaign-brief-template.md # Campaign brief template structure (landing-page-generator)
 │   ├── lp-audit-taxonomy.md      # 10-dimension LP audit taxonomy (landing-page-generator)
@@ -443,7 +443,7 @@ Adobe Analytics audit, the AA counterpart to ga4-audit for properties on Adobe. 
 
 **Runtime:** ~5-8 minutes. ~50-80K tokens.
 
-### hypothesis-generator (v1.14.1)
+### hypothesis-generator (v1.15.0)
 Standalone CRO hypothesis engine. Reads positioning context (L0 + L1) plus optional performance data, applies
 32 experiment patterns across 10 categories plus performance-driven triggers, and produces a prioritized experiment
 roadmap with ICE scoring, test feasibility estimation, contrarian filtering (14 triggers that reframe or suppress standard CRO advice in B2B and context-specific scenarios), interaction-effect modeling (AND/OR/XOR gates between same-page hypotheses, 7 empirical interaction effects), LIFT-model sequencing (Relevance > Clarity > Anxiety > Distraction > Urgency within tiers), empirical tiebreakers (winner replication, proximity-to-conversion ordering), and inconclusive test guidance per experiment including post-deployment causal impact validation and directional significance soft-coding. Premise and measurement validation (Phase 3.5) emits per-hypothesis tri-state gates consumed as hard Confidence ceilings, covering both lanes: six tactical gates, plus strategic gates (baseline reliability with a design-forcing branch, business-metric instrumentation, premise contradiction). When a business-level lever qualifies (Phase 2c, six lever families with a 7-criterion quality gate whose gap-is-still-open criterion is tri-state: documented-live discards, documented-absent mints a build, context-silence about a client-side system mints only confirm-first), also produces a separate strategic roadmap deliverable with non-A/B measurement designs and an unscored Measurement Foundation section for instrumentation prerequisites (never scored as experiments). When `performance-profile.md` is present, produces data-calibrated scores with empirical benchmarks and B2B SaaS calibration anchors, traffic-driven hypotheses, and per-experiment feasibility notes. Infeasible experiments (insufficient traffic) are routed to "What's Not Here" with alternative approaches. Dual-mode I/O: when the working repo declares a CRO knowledge base binding, reads the scope's silver artifacts from the KB and writes typed gold-experiment-roadmap / gold-strategic-roadmap artifacts (`--scope` required; `--no-kb` forces legacy), with schema-tolerant performance trigger evaluation for profiles lacking `schema_version`. Manually invoked: /hypothesis-generator
@@ -521,7 +521,7 @@ Live-page structural and copy capture. Navigates selected pages, passively reads
 
 **Note:** KB-mode silver enrichment depends on the client type skill registering `silver-structural-observation` (Phase A Change B). Legacy mode is independent. Authoritative artifact schema inlined in `phases/write.md`; reference copies in `schemas/`.
 
-### experiment-mockup (v1.4.2)
+### experiment-mockup (v1.5.0)
 Visual mockup generator for proposed experiment changes. Takes a hypothesis from `experiment-roadmap.md`, navigates to the target page, injects the proposed change styled to match the site's design, iterates with the user in real time, then captures the approved state as a standalone HTML artifact with CRO placement rationale. Three browser modes: live (Chrome DevTools MCP, interactive, ~90% visual fidelity), playwright (Playwright MCP, screenshot-based iteration), and static (HTML extraction fallback, non-interactive, ~70% fidelity).
 
 **Invocation:** `/experiment-mockup <hypothesis-number> [--url <override-url>] [--static] [--scope <slug>] [--no-kb]`

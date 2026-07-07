@@ -137,6 +137,21 @@ After: "Close 40% More Deals by Knowing What Your Buyers Actually Want"
 
 The "before" comes from context files. The "after" adapts messaging from audience-messaging.md. If audience-messaging.md doesn't exist, adapt from L0's strongest proof points and value propositions.
 
+**Change-type derivation.** After defining the proposed change, derive its `**Change type:**` from what the variant does to the page. This field tells the downstream mockup skill (experiment-mockup) HOW the change manifests visually; it does not add strategic freedom (hypothesis-generator still owns WHAT changes). Classify the proposed change into one primary type from this enum:
+
+- `insert` -- add a net-new element (objection callout, trust bar, social proof block, added microcopy line).
+- `replace-copy` -- change the text of an existing element, the element itself unchanged (headline, subhead, CTA label, form labels/microcopy).
+- `modify` -- change the style, structure, or behavior of an existing element (CTA prominence, form field layout, sticky behavior, image swap).
+- `remove` -- remove or hide an existing element (nav links, distractor blocks, form fields).
+- `reorder` -- resequence existing sections or elements, nothing added or removed.
+
+Rules:
+- List the primary type first.
+- When a bundled test (Experiment Scope Rule) genuinely spans types, list all applicable types comma-separated, primary first (e.g., `replace-copy, insert` for an H1 rewrite that also adds a proof strip). Do not list a type the variant does not actually perform.
+- The type is a function of the proposed change, so it re-derives on every render. It is NOT carried forward across regens like `**Key:**`.
+
+Record `change_type` on the hypothesis record; it renders in the tactical deliverable as the `**Change type:**` line (see SKILL.md tactical Output Format).
+
 ### Step 3b: Multi-Variation Copy
 
 **Scope:** This step applies ONLY to hypotheses in categories `headline`, `hero`, `positioning`, or `value-proposition`. For all other categories (form, layout, navigation, personalization, pricing, social-proof, content, trust, element-engagement), skip this step and keep the single before/after from Step 3.
