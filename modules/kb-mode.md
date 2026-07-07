@@ -12,7 +12,7 @@ SKILL.md.
 | Skill | Section | Resolution point | KB-mode gate (artifact types the type skill must define) |
 |---|---|---|---|
 | positioning-framework | KB Mode (Dual-Mode Output) | pre-flight, step 2.5 | all 7 CRO types (3 bronze + 4 silver); also HARD STOPs on `--depth quick` |
-| hypothesis-generator | KB Mode (Dual-Mode Output) | Phase 1, step 0 | `gold-experiment-roadmap` + `silver-strategy-context` + `bronze-company-facts`; optional producer-KB discovery (step 5) keyed on `gold-experiment-index` |
+| hypothesis-generator | KB Mode (Dual-Mode Output) | Phase 1, step 0 | `gold-experiment-roadmap` + `silver-strategy-context` + `bronze-company-facts`; optional producer-KB discovery (step 5) keyed on `gold-experiment-index`, with an in-output-KB `schema: experiment-history` fallback tried only when no external producer binds |
 | live-capture | KB Mode (Dual-Mode Output) | Phase 0 | `silver-structural-observation` (gate) + the two bronze capture types, via two-level lookup (repo-local `artifacts/` first, then the `kb-start` base) |
 | experiment-mockup | KB Mode (Dual-Mode Output) | orchestrator, Step 1b | `gold-experiment-roadmap` (consumer check; writes no KB artifacts) |
 | render-program-site | KB Mode (Dual-Mode Output) | input resolution, phase 1 | `gold-experiment-roadmap` (consumer check; writes no KB artifacts) |
