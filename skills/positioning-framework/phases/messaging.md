@@ -765,6 +765,7 @@ tone: "professional, authoritative, direct"
 person: "first plural"                    # "first plural" | "third person" | "mixed"
 complexity: "accessible"                  # "jargon-heavy" | "accessible" | "mixed"
 voice_consistency: "moderate"             # high | moderate | low - see Voice Consistency Rating definition above
+voice_source: null                        # null if voice derived in-house, "brand-voice.md" if deferred to voice-inference skill
 
 # Content counts
 customer_language_count: 5
@@ -922,6 +923,13 @@ When absent: `[NO PUBLIC VOC - Interview Data Needed]` with `[HYPOTHESIZED - NOT
 | Do (on-brand) | Source | Don't (off-brand or generic) | Source |
 |---------------|--------|------------------------------|--------|
 
+### Brand Narrative Tensions
+
+| Tension | Where It Appears | Intentional Provocation or Accidental? | Recommended Resolution |
+|---------|-----------------|---------------------------------------|----------------------|
+
+If no tensions found, write "No brand narrative tensions detected." Don't skip the section.
+
 ### Voice Rules
 
 Actionable constraints for content production:
@@ -959,9 +967,16 @@ Actionable constraints for content production:
 - [ ] Do/Don't Examples use actual sentences from company content
 - [ ] Voice Rules has actionable constraints (target: 3+; fewer is acceptable with gap marker)
 
+**VOC Integration:**
+- [ ] Money Quotes section present with at least one theme covered
+- [ ] Per-insight confidence tags present on value themes and pain points
+- [ ] Trigger Events populated per persona
+- [ ] Frequency x intensity bands used in Value Themes ordering
+
 **General:**
 - [ ] YAML frontmatter has all required fields
 - [ ] `confidence` value equals the lowest section confidence within this file
+- [ ] All proof point ID references (P1, P2, etc.) resolve to entries in company-identity.md's Proof Point Registry
 
 ### Versioning Rules
 

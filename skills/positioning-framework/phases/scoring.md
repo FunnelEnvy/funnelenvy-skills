@@ -373,7 +373,7 @@ This is a scannable snapshot of the full framework. What someone reads in 5 minu
 
 # [Company Name] - Positioning Quick Reference
 
-**One-liner:** [positioning statement from company-identity.md]
+**One-liner:** [positioning statement from audience-messaging.md > Positioning Statement]
 **Category:** [Market category]
 **Primary persona:** [Who you're talking to]
 **Primary differentiator:** [The one thing no competitor can claim]

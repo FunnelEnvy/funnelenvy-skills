@@ -26,3 +26,5 @@ jobs:
         run: python -m unittest discover _tests
       - name: Check skill registry consistency (frontmatter vs README/CLAUDE.md/marketplace/changelogs)
         run: python scripts/registry_check.py
+      - name: Validate hypothesis-generator content invariants (91 checks)
+        run: bash scripts/validate-hypothesis-generator.sh

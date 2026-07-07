@@ -38,10 +38,11 @@ Strength tags on each rule:
 
 ### CTA copy
 
-12. **Write CTA labels that state what happens on click** ("Get my pricing", "Request a demo"), never generic ("Submit"). [C-1] -- moderate (direction via GoodUI repeatability).
+12. **Write CTA labels that state what happens on click** ("See pricing plans", "Request a demo"), never generic ("Submit"). Keep default labels pronoun-neutral; pronoun framing ("my"/"your") is a separate, explicitly de-rated test idea, not part of this rule -- see Rule 15. [C-1] -- moderate (direction via GoodUI repeatability).
 13. **Match CTA verb commitment to buyer stage.** Low-commitment verbs for cold traffic ("See how it works"), high-commitment for ready buyers ("Talk to sales"). Mismatch raises anxiety. [C-4, C-3] -- heuristic.
 14. **Place friction- and anxiety-reducing microcopy adjacent to the CTA** ("No credit card needed", "2-minute setup", "We won't share your email"). [C-3] -- moderate (principle) / heuristic (magnitude).
 15. **Treat CTA pronoun ("my" vs "your") as a test idea, not a rule.** The famous first-person result is a single unreplicated case study. Propose it only as something worth testing, never as an asserted best practice. [C-2, folklore list] -- heuristic (explicitly de-rated).
+23. **In multi-step flows, non-terminal buttons state the next step; only the terminal button states the outcome.** A button that advances a flow names what comes next ("Continue to scheduling", "Next: choose a plan"); the final button names the outcome ("Schedule the demo", "Get the report"). Promising the outcome on an intermediate step misstates the remaining effort, and the mismatch surfaces at the step that reveals it. Extends Rule 12 to multi-step flows. [C-1, C-3] -- heuristic.
 
 ### Form microcopy
 
@@ -54,11 +55,11 @@ Strength tags on each rule:
 
 ## Cross-cutting rules
 
-4. **Prefer concrete, quantified claims over abstract ones when a verified number exists.** Concrete, fluent claims are processed as more credible and true. Guardrail: use a specific number only when it is verifiable against the L0 proof registry per construct.md Step 4b. [H-5] -- strong (mechanism).
+4. **Prefer concrete, quantified claims over abstract ones when a verified number exists.** Concrete, fluent claims are processed as more credible and true. Guardrail: use a specific number only when it is verifiable against the L0 proof registry per construct.md Step 4b. On-page presence is NOT verification: a number that is live on the page but absent from the proof registry must be back-filled as a registered proof point (client confirmation or a positioning-update pass) before the copy ships. Neither silently drop the copy nor silently ship the unregistered number; keep the copy and flag the back-fill as a prerequisite on the hypothesis (construct.md Step 4b reconciliation path). The number's scope must also match the claim's scope: a stat about one product line or one year cannot back a broader claim (scope check per Rule 20 / construct.md Step 4b). [H-5] -- strong (mechanism).
 5. **Target roughly a 7th-grade reading level; cut 3+-syllable words.** Lower reading level correlates with materially higher conversion across industries. [H-3] -- moderate-strong (correlational).
 9. **Purge buzzwords and empty category jargon** ("cutting-edge", "AI-powered", "disruptive", "best-in-class"). They read as noise to B2B buyers and lower perceived credibility. [S-2, jargon sources] -- heuristic-moderate.
 10. **Keep genuinely useful domain terms your ICP already uses.** The rule is anti-buzzword, not anti-vocabulary. Match the buyer's actual language. [S-2] -- heuristic.
-20. **Any claim ("2x faster", "cut costs 30%") must be specific AND verifiable.** Specificity only helps credibility if the reader believes it; fabricated precision backfires. Verification routes through construct.md Step 4b (proof-integrity): a specific number that fails that check is genericized or dropped, not shipped. [H-5, folklore list] -- strong (fluency mechanism) with the Step 4b guardrail.
+20. **Any claim ("2x faster", "cut costs 30%") must be specific AND verifiable.** Specificity only helps credibility if the reader believes it; fabricated precision backfires. Verification routes through construct.md Step 4b (proof-integrity): a specific number that fails that check is genericized or dropped, not shipped -- except a number that is live on the page but unregistered, which follows the Rule 4 back-fill path (kept, gated on a registry back-fill prerequisite). [H-5, folklore list] -- strong (fluency mechanism) with the Step 4b guardrail.
 21. **Do not encode conversion-lift percentages as promises.** State direction and mechanism; the specific magnitudes in CRO folklore are non-citable. This is a meta-rule about this module itself: generated copy and rationale never claim a numeric lift. [folklore list] -- strong.
 22. **Prefer one clear primary message per view over stacking multiple offers.** Reducing competing messages reduced friction and drove large lifts in controlled tests. [H-1] -- moderate (B2C-sourced principle).
 

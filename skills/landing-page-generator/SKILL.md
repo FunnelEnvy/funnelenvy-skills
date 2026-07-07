@@ -1,7 +1,7 @@
 ---
 name: landing-page-generator
-version: 2.0.1
-updated: 2026-07-05
+version: 2.0.2
+updated: 2026-07-07
 description: "When the user wants to generate a B2B paid landing page from existing positioning context. Also use when the user mentions 'landing page,' 'LP generator,' 'campaign page,' 'paid landing page,' 'landing page copy,' 'hero section,' or 'conversion page.' Four-phase pipeline with signal-driven section assembly: brief builder, copy agent (composable section selection), design agent, QA validator. Consumes L0+L1 context files from .claude/context/ and produces campaign deliverables in .claude/deliverables/campaigns/."
 ---
 

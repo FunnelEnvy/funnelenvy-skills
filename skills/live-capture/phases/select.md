@@ -46,6 +46,8 @@ From the performance profile, extract for each page: `path`, `sessions`, `cvr` (
 
 Classify each page's `lane`: `conversion` (product, pricing, solution, demo, contact, signup) or `content` (blog, resources, guides, docs). When unsure, default to `conversion`.
 
+**Device-gap inputs are currently always absent.** The per-page `mobile_bounce` / `desktop_bounce` fields are not emitted by the current producers: ga4-audit and aa-audit report device data at site level only, with no per-page device cross-report. So the 0.15 device term in Step 3 contributes 0 today. Do not derive per-page values from the site-level device split; leave the fields out and let the term zero out. The term is forward-compatible: it activates automatically if a producer adds a per-page device cross-report.
+
 ### Step 3: Rank deterministically
 
 Run the selection script (the arithmetic is reliability-critical, so it is scripted, not done by hand):

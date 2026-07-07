@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.0.2] - 2026-07-07
+
+### Fixed
+- Phantom context reads in `phases/copy.md`: the phase read four frontmatter fields no producer writes. `tone_dimensions`/`vocabulary_stats` corrected to brand-voice's real fields (`primary_tone`, `person`, `jargon_tolerance`, `sentence_length_avg`); `device_split` corrected to `device_mobile_pct`; the L0 "proof point counts by tier" read repointed at the body Proof Point Registry (proof points are body-only, `target_market` stays frontmatter). Also corrected the `device_split.mobile_pct` signal references in `modules/section-taxonomy.md` and `templates/section-catalog.html` to `device_mobile_pct`.
+
 ## [2.0.1] - 2026-07-05
 
 ### Fixed

@@ -14,6 +14,11 @@ place a skill or its version appears is a registry that must match:
      section header, the module pointer, and the invariant sentences (HARD STOP scope
      semantics, no --kb force flag, do-not-guess). Full semantics live in the module;
      this only catches a copy drifting away from the contract.
+  7. Browser-mode drift canary: every skill listed in modules/browser-mode.md carries the
+     module pointer and the invariant markers (exact-tool-name DevTools test,
+     configured-but-broken STOP, blocking no-MCP gate, WAF guidance, headless pre-flight
+     probe). Same shape as the KB-mode canary: full semantics live in the module; this
+     only catches an inline copy drifting away from the contract.
 
 Also fails on registry entries pointing at skills that do not exist on disk.
 The repo's "README Sync Rule" and "skill registration is a package deal" practice
@@ -149,6 +154,30 @@ def main():
                     errors.append("skills/%s/SKILL.md KB-mode copy drifted: missing %s (%r)" % (name, why, marker))
     else:
         errors.append("modules/kb-mode.md missing (canonical KB-mode contract)")
+
+    # Browser-mode drift canary: browser-driving skills derived from the module's own table
+    bm_module = os.path.join(root, "modules", "browser-mode.md")
+    if os.path.exists(bm_module):
+        table_skills = re.findall(r"^\| ([\w-]+) \| SKILL\.md", read(bm_module), re.M)
+        if not table_skills:
+            errors.append("modules/browser-mode.md browser-driving table parsed to zero skills (table format changed?)")
+        for name in table_skills:
+            if name not in skills:
+                errors.append("modules/browser-mode.md lists browser-driving skill %s which does not exist" % name)
+                continue
+            text = read(os.path.join(skills_dir, name, "SKILL.md"))
+            for marker, why in (
+                ("modules/browser-mode.md", "pointer to the canonical contract"),
+                ("mcp__chrome-devtools__list_pages", "exact-tool-name DevTools test"),
+                ("Do not fall through", "configured-but-broken STOP invariant"),
+                ("blocking gate, not a silent fallback", "no-browser-MCP blocking gate"),
+                ("Static fallback is NOT a WAF remedy", "WAF guidance"),
+                ("navigator.webdriver", "headless pre-flight probe"),
+            ):
+                if marker not in text:
+                    errors.append("skills/%s/SKILL.md browser-mode copy drifted: missing %s (%r)" % (name, why, marker))
+    else:
+        errors.append("modules/browser-mode.md missing (canonical browser-mode contract)")
 
     if errors:
         sys.stderr.write("registry-check: %d inconsistencies\n" % len(errors))

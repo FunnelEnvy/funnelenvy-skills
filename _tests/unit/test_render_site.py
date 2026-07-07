@@ -7,7 +7,9 @@ helpers, and end-to-end emit. The skill consumes hypothesis-generator's prose
 gold roadmaps (strategic + tactical) plus a render-owned edge sidecar; all three
 fixtures here are synthetic (non-client).
 """
+import contextlib
 import importlib.util
+import io
 import os
 import re
 import tempfile
@@ -232,6 +234,16 @@ These plays run off-store and are not A/B tests.
 """
 
 
+# --------------------------------------------------------------------------
+# Frontmatter-less legacy fixtures. hypothesis-generator's LEGACY-mode roadmaps
+# carry no YAML frontmatter by design (the L2 body-purity rule); the generator
+# must load them as body-only files.
+# --------------------------------------------------------------------------
+
+STRATEGIC_LEGACY = STRATEGIC.split("---\n", 2)[2]
+TACTICAL_LEGACY = TACTICAL.split("---\n", 2)[2]
+
+
 def _write_triple(strategic=STRATEGIC, tactical=TACTICAL, sidecar=SIDECAR):
     d = tempfile.mkdtemp()
     sp = os.path.join(d, "strategic.md")
@@ -311,6 +323,16 @@ class TestParser(unittest.TestCase):
         self.assertEqual(fm["description"], "A folded description that spans two lines into one.")
         self.assertEqual(fm["kb_layer"], "gold")
         self.assertEqual(fm["tags"], ["a", "b"])
+
+    def test_frontmatter_optional_returns_empty_and_full_text(self):
+        fm, body = rs.parse_frontmatter(STRATEGIC_LEGACY, required=False)
+        self.assertEqual(fm, {})
+        self.assertEqual(body, STRATEGIC_LEGACY)
+
+    def test_frontmatter_required_still_raises(self):
+        # the sidecar load stays strict: no frontmatter is still an error
+        with self.assertRaises(ValueError):
+            rs.parse_frontmatter(STRATEGIC_LEGACY)
 
     def test_parse_scores(self):
         self.assertEqual(rs.parse_scores("Impact 5 | Confidence 4 | Ease 2\nrationale"),
@@ -405,6 +427,63 @@ class TestGate(unittest.TestCase):
         bad = SIDECAR.replace("  - key: cta-label-test\n    mechanism_class: cta",
                               "  - key: cta-label-test\n    mechanism_class: cta\n    mockup: \"oops\"")
         self._expect_violation("[mockup]", sidecar=bad)
+
+
+# --------------------------------------------------------------------------
+# Legacy (frontmatter-less) roadmaps + the version-lock skip semantics
+# --------------------------------------------------------------------------
+# Legacy-mode roadmaps carry no frontmatter, so they have no `version` to lock:
+# gate check 7 skips the lock per versionless file and reports the skip
+# explicitly in the gate notes (never a silent pass, never a gate failure).
+# Gold roadmaps always carry `version`, so the KB lane locks exactly as before.
+
+class TestLegacyFrontmatterless(unittest.TestCase):
+    def test_frontmatterless_roadmaps_load(self):
+        s, t, _ = _load_all(strategic=STRATEGIC_LEGACY, tactical=TACTICAL_LEGACY)
+        self.assertEqual([b["id"] for b in s["bets"]], ["sb-01", "sb-02", "sb-03"])
+        self.assertEqual([x["id"] for x in t["tests"]], ["p-01", "p-02", "p-03", "p-04"])
+        self.assertIsNone(s["gold_version"])
+        self.assertIsNone(t["gold_version"])
+
+    def test_version_lock_skip_reported_in_notes(self):
+        # the sidecar still declares both versions (schema-required); with no
+        # roadmap version to check against, the lock skips with a report
+        s, t, sc = _load_all(strategic=STRATEGIC_LEGACY, tactical=TACTICAL_LEGACY)
+        notes = rs.run_gate(s, t, sc)  # must not raise
+        self.assertIn("version lock: skipped for strategic (roadmap carries no version)", notes)
+        self.assertIn("version lock: skipped for tactical (roadmap carries no version)", notes)
+
+    def test_gold_path_unchanged_no_notes(self):
+        s, t, sc = _load_all()
+        self.assertEqual(rs.run_gate(s, t, sc), [])
+
+    def test_mixed_pair_skips_only_the_versionless_file(self):
+        # strategic keeps its version (locked as before); tactical carries none
+        s, t, sc = _load_all(tactical=TACTICAL_LEGACY)
+        self.assertEqual(rs.run_gate(s, t, sc),
+                         ["version lock: skipped for tactical (roadmap carries no version)"])
+
+    def test_mixed_pair_still_fails_closed_on_real_skew(self):
+        # the versioned file's lock still fails even while the other is skipped
+        bad = SIDECAR.replace('strategic_version: "1.0.0"', 'strategic_version: "9.9.9"')
+        s, t, sc = _load_all(tactical=TACTICAL_LEGACY, sidecar=bad)
+        with self.assertRaises(rs.GateError) as cm:
+            rs.run_gate(s, t, sc)
+        self.assertTrue(any("[7] strategic" in v for v in cm.exception.violations),
+                        "expected a [7] strategic violation, got: %s" % cm.exception.violations)
+
+    def test_end_to_end_legacy_renders_and_reports_skip(self):
+        d, sp, tp, ep = _write_triple(strategic=STRATEGIC_LEGACY, tactical=TACTICAL_LEGACY)
+        out = os.path.join(d, "site")
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            rc = rs.main(["--strategic", sp, "--tactical", tp, "--edges", ep, "--out", out])
+        self.assertEqual(rc, 0)
+        stdout = buf.getvalue()
+        self.assertIn("note: version lock: skipped for strategic (roadmap carries no version)", stdout)
+        self.assertIn("note: version lock: skipped for tactical (roadmap carries no version)", stdout)
+        self.assertIn("OK gate passed.", stdout)
+        self.assertIn("index.html", os.listdir(out))
 
 
 # --------------------------------------------------------------------------

@@ -1,8 +1,8 @@
 ---
 name: aa-audit
-version: 1.1.0
+version: 1.1.1
 description: "When the user wants to audit Adobe Analytics data for a property. Also use when the user mentions 'AA audit,' 'Adobe Analytics audit,' 'AA performance profile,' or 'AA traffic analysis.' Runs a Python script against the AA 2.0 Reporting API, interprets the JSON output, and produces a structured performance-profile.md context file (.claude/context/ L1). Single agent, no depth flag. Works with any AA implementation given a client config file."
-updated: 2026-06-11
+updated: 2026-07-07
 ---
 
 # AA Audit
@@ -220,6 +220,8 @@ This produces the REQUIRED Element-Level Interactions body section. It always em
 
 **Search-reliability caveat:** element enumeration uses a broad single-token prefix `search` at an untruncated limit. Empty results from a narrow/over-scoped query are inconclusive, NOT proof of absence. The script already enumerates broadly; if a dimension returns empty under an approximate (prefix-only) scope, treat as inconclusive and note it.
 
+**Page-association limitation:** AA element enumeration is suite-wide -- interaction rows carry no page association, so the profile emits `tracked_elements[]` only, never the page-associated `top_interactions[]` that ga4-audit produces. hypothesis-generator's page-level element triggers self-gate off against this profile (detect.md already handles absent structures). Page-associated interactions via AA breakdown reports (element x page) are a possible future enhancement.
+
 ### Step 7b: Measurement Integrity (REQUIRED)
 
 This produces the REQUIRED Measurement Integrity body section from `event_liveness` and a friction pass. Always emit it.
@@ -263,13 +265,15 @@ If no events are dead/dark/spiked and no friction interactions are detected, sta
 
 ### Step 9: Write Performance Profile
 
-Construct `.claude/context/performance-profile.md` using the same schema as ga4-audit output.
+Construct `.claude/context/performance-profile.md` using the same schema family as ga4-audit output, stamped at the version whose full REQUIRED field set this skill actually emits. Consumers gate capabilities on `schema_version`, so the stamp must not overpromise.
+
+**Stamped version:** `schema_version` is `"2.1"`. The AA profile emits no `ai_*` AI-referrer fields (mandatory from schema 2.2) and no page-associated element detail fields (`element_interaction_events`, `discovered_parameters`, `top_interactions[]`), and it substitutes `report_suite` for `property_id`/`property_name`. The 2.3 field groups below (scope, element instrumentation state, measurement integrity) are emitted additively on top of the 2.1 stamp: version-gating consumers will not assume them, content-aware consumers can still use them.
 
 #### Frontmatter Fields
 
 All fields required unless noted.
 
-- Metadata: `schema` ("performance-profile"), `schema_version` ("2.3"), `generated_by` ("aa-audit"), `last_updated`, `last_updated_by` ("aa-audit"), `confidence` (1-5), `company` (from config company_id), `report_suite`, `date_range`, `days`
+- Metadata: `schema` ("performance-profile"), `schema_version` ("2.1"), `generated_by` ("aa-audit"), `last_updated`, `last_updated_by` ("aa-audit"), `confidence` (1-5), `company` (from config company_id), `report_suite`, `date_range`, `days`
 - Traffic: `total_sessions` (visits), `total_users` (visitors), `device_mobile_pct` (integer %)
 - Top pages (top 5): `top_pages[]` each with `path`, `sessions`, `bounce_rate`, `pages_per_session`, `avg_engagement_sec`, `failure_mode`
 - Conversions: `conversion_events[]` each with `name`, `count`, `classification`. Plus `primary_conversion_event`, `primary_conversion_rate` (%)
@@ -279,9 +283,9 @@ All fields required unless noted.
 - Page groups: `page_groups[]` each with `group`, `url_pattern`, `monthly_sessions`, `conversion_rate`, `bounce_rate`, `page_count`
 - Opportunities: `top_opportunities[]` each with `page`, `issue`, `formula_type`, `current_metric`, `target_metric`, `monthly_sessions`, `estimated_monthly_impact`, `action_category`, `sizing_note`
 - Data quality: `traffic_adequacy` ("high" | "adequate" | "low"), `sampling_applied` (false for AA 2.0 virtual report suites)
-- Scope (schema 2.3): `scope_applied` (bool), `scope_method` ("segment" | "prefix" | "none", from `meta.scope_method`), `scope_note` (string | null; description + accuracy caveat when approximate/prefix-only)
-- Element instrumentation (schema 2.3, ALWAYS emitted): `element_instrumentation_state` ("present" | "partial" | "absent"), `tracked_elements[]` each `name`/`count`/`status` ("live" | "dark"), `missing_element_classes[]`, `instrumentation_ask` (string | null). `element_interactions_available` retained for back-compat but is no longer a skip signal.
-- Measurement integrity (schema 2.3): `event_liveness[]` each `event`/`count`/`status` ("live" | "dead" | "dark" | "spiked"), `measurement_integrity_flags[]`, `friction_interactions[]` each `interaction`/`count`/`ratio_to_baseline` (nullable)/`type`
+- Scope (2.3 field group, emitted additively): `scope_applied` (bool), `scope_method` ("segment" | "prefix" | "none", from `meta.scope_method`), `scope_note` (string | null; description + accuracy caveat when approximate/prefix-only)
+- Element instrumentation (2.3 field group, emitted additively, ALWAYS emitted): `element_instrumentation_state` ("present" | "partial" | "absent"), `tracked_elements[]` each `name`/`count`/`status` ("live" | "dark"), `missing_element_classes[]`, `instrumentation_ask` (string | null). `element_interactions_available` retained for back-compat but is no longer a skip signal.
+- Measurement integrity (2.3 field group, emitted additively): `event_liveness[]` each `event`/`count`/`status` ("live" | "dead" | "dark" | "spiked"), `measurement_integrity_flags[]`, `friction_interactions[]` each `interaction`/`count`/`ratio_to_baseline` (nullable)/`type`
 - Comparison (omit when --no-compare): `comparison_period` with `start`, `end`. `trends` with `sessions_change_pct`, `primary_cvr_change_pp`, `bounce_rate_change_pp`, `mobile_bounce_change_pp`
 - L0: `l0_available` (bool), `l0_confidence` (int | null)
 
@@ -335,7 +339,7 @@ Use these mappings when writing the output to match the ga4-audit schema:
 Before writing the final file, verify:
 
 1. [ ] All 10 REQUIRED body sections present (including Element-Level Interactions and Measurement Integrity)
-2. [ ] YAML frontmatter has all required fields; `schema_version` is `"2.3"`
+2. [ ] YAML frontmatter has all required fields; `schema_version` is `"2.1"` (the highest version whose full REQUIRED field set this skill emits)
 3. [ ] Conversion events confirmed by user
 4. [ ] High-Bounce uses >50% bounce / >100 sessions thresholds
 5. [ ] Underperforming uses <50% group avg CVR / >200 sessions

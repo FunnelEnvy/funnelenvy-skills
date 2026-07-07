@@ -30,6 +30,13 @@ description: "A demo."
 
 Canonical contract: modules/kb-mode.md. There is deliberately no `--kb` force flag.
 If `--scope` is missing or invalid: HARD STOP. Do not guess a scope.
+
+## Browser-Mode Detection
+
+Canonical contract: modules/browser-mode.md. Call `mcp__chrome-devtools__list_pages`.
+Configured but broken: STOP. Do not fall through. No browser MCP is a
+blocking gate, not a silent fallback. Static fallback is NOT a WAF remedy.
+Probe: `navigator.webdriver` before the first page phase.
 """
 
 KB_MODE = """# KB Mode: Canonical Dual-Mode Contract
@@ -37,6 +44,13 @@ KB_MODE = """# KB Mode: Canonical Dual-Mode Contract
 | Skill | Section | Resolution point | KB-mode gate |
 |---|---|---|---|
 | demo-skill | KB Mode (Dual-Mode Output) | pre-flight | demo-gate |
+"""
+
+BROWSER_MODE = """# Browser Mode: Canonical Detection Contract
+
+| Skill | Inline copy location | Interaction model |
+|---|---|---|
+| demo-skill | SKILL.md Browser-Mode Detection | PASSIVE: demo |
 """
 
 CHANGELOG = """# Changelog
@@ -85,6 +99,7 @@ class _Fixture:
         self.write("CLAUDE.md", CLAUDE)
         self.write(".claude-plugin/marketplace.json", MARKETPLACE)
         self.write("modules/kb-mode.md", KB_MODE)
+        self.write("modules/browser-mode.md", BROWSER_MODE)
         return self
 
     def write(self, rel, content):
@@ -178,6 +193,37 @@ class TestRegistryCheck(unittest.TestCase):
             code, out = _run(f.d)
             self.assertEqual(code, 1)
             self.assertIn("kb-mode.md missing", out)
+
+    def test_browser_mode_drift_fails(self):
+        with _Fixture() as f:
+            f.write("skills/demo-skill/SKILL.md",
+                    SKILL_MD.replace("Static fallback is NOT a WAF remedy.", ""))
+            code, out = _run(f.d)
+            self.assertEqual(code, 1)
+            self.assertIn("browser-mode copy drifted", out)
+            self.assertIn("WAF guidance", out)
+
+    def test_browser_mode_missing_probe_fails(self):
+        with _Fixture() as f:
+            f.write("skills/demo-skill/SKILL.md",
+                    SKILL_MD.replace("Probe: `navigator.webdriver` before the first page phase.", ""))
+            code, out = _run(f.d)
+            self.assertEqual(code, 1)
+            self.assertIn("headless pre-flight probe", out)
+
+    def test_missing_browser_module_fails(self):
+        with _Fixture() as f:
+            os.remove(os.path.join(f.d, "modules", "browser-mode.md"))
+            code, out = _run(f.d)
+            self.assertEqual(code, 1)
+            self.assertIn("browser-mode.md missing", out)
+
+    def test_browser_mode_unparseable_table_fails(self):
+        with _Fixture() as f:
+            f.write("modules/browser-mode.md", "# Browser Mode\n\nNo table here.\n")
+            code, out = _run(f.d)
+            self.assertEqual(code, 1)
+            self.assertIn("parsed to zero skills", out)
 
     def test_wrong_count_in_description_fails(self):
         with _Fixture() as f:

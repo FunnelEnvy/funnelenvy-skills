@@ -1,8 +1,8 @@
 ---
 name: positioning-framework
-version: 1.1.2
+version: 1.1.3
 description: "When the user wants to build, audit, or update a positioning and messaging framework for a company or product. Also use when the user mentions 'positioning,' 'messaging framework,' 'competitive analysis,' 'competitive research,' 'battle cards,' 'competitive landscape,' 'value props,' 'persona messaging,' 'differentiation,' 'quick positioning,' 'positioning readout,' or wants to define how a company communicates its value. Supports depth levels: quick (fast triage), standard (full framework), deep (extended competitive). Produces structured context files (.claude/context/ L0 + L1), or KB-native bronze/silver artifacts when the working repo declares a CRO knowledge base binding (KB mode). Runs autonomous research by default. Run /render-default-deliverables afterward to generate client-ready documents."
-updated: 2026-07-05
+updated: 2026-07-07
 ---
 
 # Positioning & Messaging Framework

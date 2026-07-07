@@ -454,7 +454,7 @@ Real examples from the company's content. Not invented.
 
 ---
 
-#### 17. Brand Narrative Tensions (OPTIONAL)
+#### 17. Brand Narrative Tensions (REQUIRED, empty marker allowed)
 
 <!-- Not currently consumed downstream. Added for schema completeness. Potential future consumers: scoring.md (positioning health check), website-audit. -->
 

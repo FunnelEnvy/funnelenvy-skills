@@ -1,6 +1,6 @@
 ---
 name: render-program-site
-version: "0.5.1"
+version: "0.5.2"
 description: >
   Render a two-altitude program site from two markdown inputs (a strategic layer of bets
   and a tactical roadmap of page tests): a hub plus one spoke per bet and per test, with
@@ -8,7 +8,7 @@ description: >
   program site", "program site", "strategic + tactical roadmap site", or the explicit
   /render-program-site invocation. Deterministic generator for the gate, map, and
   structure; scoped LLM pass curates spoke prose.
-updated: 2026-07-05
+updated: 2026-07-07
 ---
 
 # Render Program Site
@@ -41,7 +41,7 @@ is code; only prose wording is agent-authored.
 /render-program-site [<strategic-md> <tactical-md>] [--edges <path>] [--account-program <path>] [--scope <slug>] [--no-kb] [--out <site-root>]
 ```
 
-- Two explicit positional paths render those gold roadmaps directly (override mode resolution); pair them with `--edges <path>` for the sidecar.
+- Two explicit positional paths render those gold roadmaps directly (override the mode-resolved inputs); pair them with `--edges <path>` for the sidecar.
 - `--scope <slug>` names the KB scope; in KB mode it is required and resolves all three inputs (and the optional account program) from the scope, in legacy mode it is warned about and ignored (see below). Mode itself is selected by KB binding detection, not by this flag.
 - `--edges <path>` supplies the edge sidecar (required; resolved from the scope in KB mode).
 - `--account-program <path>` supplies the optional account-program deliverable (the off-store altitude). When present, the hub gains an "account program" section and one `ap-NN.html` spoke per play; when absent, output is byte-identical to a two-altitude render.
@@ -62,7 +62,12 @@ is code; only prose wording is agent-authored.
 - The edge sidecar (`{scope}-program-edges.md`), the one net-new authored input, carrying the
   cross-altitude edge binding and the gate-classification fields (see `edge-contract.md`).
 - The sidecar's `strategic_version` / `tactical_version` match the live gold roadmaps'
-  frontmatter `version` (the version-lock gate halts otherwise).
+  frontmatter `version` (the version-lock gate halts otherwise). Legacy-mode roadmaps carry
+  no YAML frontmatter (hypothesis-generator's L2 body-purity rule), so a roadmap without a
+  frontmatter `version` has nothing to lock: the gate skips the lock for that file and
+  reports the skip explicitly (e.g. "version lock: skipped for tactical (roadmap carries
+  no version)"), never a silent pass. The lock is per file, so a mixed pair still locks
+  the file that declares a version. See `edge-contract.md` gate check 7.
 - Optional third input: an account-program deliverable (a `gold-strategy-deliverable` of the
   account-program shape) holding off-store account plays. It is parsed standalone (no sidecar
   binding, no edge participation, not on the map); see `edge-contract.md`. In KB mode it resolves
@@ -118,6 +123,11 @@ and the render is byte-identical to a two-altitude site.
 The strategic and tactical inputs are hypothesis-generator's gold roadmaps, read in place (no
 separate hand-authored format; the tactical-path collision with the gold output is resolved by
 reading the gold artifact directly). The sidecar is render-program-site's own authored input.
+Legacy-mode roadmaps carry no YAML frontmatter (hypothesis-generator's L2 body-purity rule):
+the generator loads them as body-only files, and the version-lock gate skips any roadmap
+without a frontmatter `version`, reporting the skip explicitly (see Preconditions and
+`edge-contract.md` gate check 7). KB gold roadmaps always carry `version`, so the KB lane
+locks exactly as before.
 
 `--out` overrides the output site path in both modes. No emitted file carries `kb_layer`
 frontmatter -- the site is a derived view, not a KB artifact.
@@ -131,7 +141,7 @@ phase before starting phase 1. Mark each complete as you finish it. In Claude Co
 ### Phase 1 -- Resolve inputs + mode
 
 Resolve the three input paths (strategic gold roadmap, tactical gold roadmap, edge sidecar) and
-the output site root per [KB Mode](#kb-mode-dual-mode-io). HARD STOP on a missing/invalid
+the output site root per [KB Mode](#kb-mode-dual-mode-output). HARD STOP on a missing/invalid
 `--scope` in KB mode (list valid scopes), and on a missing edge sidecar (it is the one input
 this skill cannot derive). Confirm all three input files exist before proceeding.
 
@@ -140,7 +150,7 @@ this skill cannot derive). Confirm all three input files exist before proceeding
 Run the generator:
 
 ```
-render_site.py --strategic <strategic-md> --tactical <tactical-md> --edges <sidecar-md> --out <site-root> [--account-program <account-md>]
+PY=$(python3 --version >/dev/null 2>&1 && echo python3 || echo python); $PY skills/render-program-site/scripts/render_site.py --strategic <strategic-md> --tactical <tactical-md> --edges <sidecar-md> --out <site-root> [--account-program <account-md>]
 ```
 
 The script validates the 7-check edge contract and, on success, emits `styles.css`,
@@ -170,8 +180,10 @@ contract violation (mechanism mismatch, dangling target, version skew, ...).
 ### Phase 3 -- Curate spoke prose (scoped LLM pass)
 
 For each emitted page, rewrite ONLY the content between `<!--PROSE id=.. slot=..-->` and
-`<!--/PROSE-->` markers, mapping the matching source body section to pitch-quality prose per
-the label->region map in `edge-contract.md`. Apply the curation drop-list: measurement-design
+`<!--/PROSE-->` markers. The generator pre-fills each slot with its verbatim source body
+text (carrying the source's bold label) under a marker that names the slot; curate per
+those pre-filled slot labels, rewriting each slot's source text into pitch-quality prose.
+Apply the curation drop-list: measurement-design
 detail, inconclusive-protocol detail, full score rationale, win/loss/key-risk blocks, and
 bundled-element disclosures stay in the source markdown and are NOT rendered to the site.
 
@@ -252,6 +264,7 @@ not part of this skill).
 
 | Version | Changes |
 |---|---|
+| 0.5.2 | Legacy-lane fix: `render_site.py` now loads frontmatter-less roadmaps as body-only files (hypothesis-generator's legacy deliverables carry no YAML frontmatter by design; the documented legacy default inputs previously crashed the parser), and gate check 7 skips the sidecar version lock per-file when a roadmap carries no `version`, reporting the skip as an explicit `note:` line on stdout (never silent). KB gold roadmaps always carry `version`, so that lane locks exactly as before; mixed pairs still fail closed on real skew in the versioned file. Semantics documented in `edge-contract.md` check 7 and Preconditions. Also: fixed the dead `#kb-mode-dual-mode-io` anchor left by the 0.5.1 section rename; "override mode resolution" wording aligned to "override the mode-resolved inputs"; Phase 2 command block now uses the probe-then-run `$PY` pattern with the full `skills/render-program-site/scripts/` path; Phase 3 curation instruction rewritten to match the generator's actual pre-filled slot labels (the previously cited label-to-region map never existed in `edge-contract.md`). 8 new unit tests. |
 | 0.5.1 | Repo-audit doc corrections, no generator change. Mode resolution rewritten to match hypothesis-generator/experiment-mockup exactly: KB binding detection alone selects KB mode (previously step 2 said binding AND a valid `--scope` select it while step 3 said a missing `--scope` in KB mode is a HARD STOP -- contradictory); `--scope` names the scope (required in KB mode, warn-and-ignore in legacy) and never selects the mode. Section renamed `KB Mode (Dual-Mode Output)` to match the header the other dual-mode skills use and cross-reference. Added the Model declaration (Opus for the curation/humanizer passes). Also gains the `modules/kb-mode.md` canonical-contract pointer in its KB-mode section (drift canary enforced by `scripts/registry_check.py`). |
 | 0.5.0 | Measurement Foundation rendering. `render_site.py` now parses the strategic gold roadmap's optional `## Measurement Foundation` section (hypothesis-generator SKILL.md > Strategic Roadmap Output Format) into a new item class: foundation entries (bold-labeled items; unscored, keyless, no ICE, no tier, no map presence, no cross-altitude edges, no spokes). The hub gains a conditional `#measurement-foundation` section between the strategy cards and the backlog (one `.mf` card per entry: label as title, prose through `foundation-lead`/`foundation-<n>` curation slots, no score chips) plus a nav link; new `#measurement-foundation`/`.mf-grid`/`.mf` CSS. Foundation entries are excluded from every sidecar-related gate check (binding completeness, dangling targets, executor-status derivation, version-lock scope) and require no sidecar entries; a sidecar edge whose target names a foundation entry fails as a dangling target (check 2). Composes with the optional account altitude (both, either, or neither). Output is byte-identical to 0.4.0 for any strategic roadmap without the section (empty `{{MEASUREMENT_FOUNDATION}}` reproduces the hub seam; no nav link). Also adds the `informs` edge-direction semantics note to `edge-contract.md` (edges point bet -> test; behavior unchanged). |
 | 0.4.0 | Optional account-program altitude. New `--account-program <path>` renders an off-store account layer: `load_account` parses the deliverable standalone (plays sliced from `## The Account-Level Plays`, cohorts from the `## The Account-Cohort Taxonomy` table; no `**Key:**`/`**Scores:**` required), a separate account-binding gate leg validates the plays (>=1 play, unique ordinals, required `Cohort`/`The play`/`How it is measured` labels), the hub gains a conditional `#account-program` section + nav link, and one `ap-NN.html` spoke is emitted per play. Account plays never enter the 7-check edge gate or the Impact-by-Ease map. `extract_sections` id-prefix generalized to `{bet:sb, test:p, play:ap}`. New `templates/spoke-account.html` + `#account-program`/`.cohort`/`.x-tag.off` CSS. Output is byte-identical to 0.3.x for any program supplying no account program (empty `{{ACCOUNT_PROGRAM}}` reproduces the hub seam; no `ap-*.html`; no nav link). Also corrects the stale `0.2.1` version pin in README.md / in-repo CLAUDE.md. |

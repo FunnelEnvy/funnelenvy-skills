@@ -155,15 +155,17 @@ The trigger conditions below are written against the ga4-audit v2.x performance-
 | `trends.primary_cvr_change_pp`, `trends.bounce_rate_change_pp` | Period-delta or period-over-period trend tables for conversion and bounce metrics |
 | Page sessions/bounce conditions (paid traffic, entry points, high-bounce pages) | A page-level traffic/bounce table with per-page volumes |
 | Data-gap gating (what can't be measured) | Documented data-gap or measurement-constraint notes in the profile body |
+| Site-level device gap (`device_mobile_pct` frontmatter + "Mobile vs Desktop Gap" body table) | A site-level device breakdown with bounce and/or conversion by device |
 
 - Triggers whose data has no equivalent in the profile (e.g., `element_interactions_available`, `top_interactions`, `page_groups`, `failure_mode`, `new_vs_returning` when those structures are absent) self-gate off, exactly as absent frontmatter fields do today.
+- The same self-gating applies to version-stamped profiles: when a profile carries a `schema_version` but a referenced structure is absent (e.g., a "2.1"-stamped profile with `element_interactions_available: true` but no `top_interactions` list), the trigger conditions cannot match and the trigger self-gates off, with no penalty. The version stamp gates eligibility, not firing; firing always requires the actual data.
 - Equivalence is evaluated per trigger, not per profile: one profile may satisfy the opportunity-sizing and trend triggers while lacking element-interaction data entirely.
 
 | Trigger Condition | Hypothesis Type | Example |
 |---|---|---|
 | Page gets >500 sessions/mo from paid traffic AND bounce >45% | Landing page messaging mismatch for paid visitors | "Paid traffic to /pricing bounces at 51% vs 39% organic. Ad promise doesn't match page reality." |
 | Page has conversion rate <50% of site average AND >200 sessions/mo | Conversion friction on high-traffic page | "/solutions/enterprise gets 890 sessions but converts at 0.5% vs 2.0% site avg. Messaging or layout friction." |
-| Mobile bounce rate >10pp higher than desktop on same page | Mobile UX/messaging friction | "Mobile bounce on homepage is 56% vs 42% desktop. Above-fold content doesn't work on small screens." |
+| Site-level mobile bounce rate >10pp higher than desktop OR mobile CVR <50% of desktop (per the profile's "Mobile vs Desktop Gap" table), AND mobile share of sessions >=20% | Mobile UX/messaging friction | "Mobile bounces at 56% vs 42% desktop site-wide, with 45% of sessions on mobile. Above-fold content doesn't work on small screens. Target the highest-traffic mobile entry pages." |
 | Landing page bounce >55% AND page is top-5 entry point | First-impression failure | "/blog/guide-x is 3rd highest entry point but 68% bounce. Content-to-CTA path is broken." |
 | Top conversion page has no positioning-derived hypothesis targeting it | Untested high-value page | "/demo converts at 11.9% but no positioning gap targets it. Test proof placement or form copy." |
 | Channel X has 2x+ bounce rate vs Channel Y on same page | Channel-specific messaging mismatch | "Google Ads traffic bounces at 52% vs organic at 38% on homepage. Paid visitors need different messaging." |
@@ -190,6 +192,7 @@ The trigger conditions below are written against the ga4-audit v2.x performance-
 - Triggers that match a page already targeted by a positioning-derived hypothesis still fire. They produce a separate performance-driven opportunity that will merge with the positioning-derived one in Phase 3 (Step 7), enriching it with baseline data.
 - Each performance-driven opportunity uses ICE baseline 3/3/3 (same as context-derived). The performance data provides evidence for scoring modifiers in Phase 4, not for inflating the baseline.
 - The arrival-mix and cross-property triggers fire off the arrival-mix / source data in the performance profile. When the source's intent cannot be determined from context, prefer routing a client question over inventing a hypothesis about an unknown population.
+- The device-gap trigger is site-level by design: no producer emits per-page device data (ga4-audit's device report is site-level only -- `device_mobile_pct` frontmatter plus the "Mobile vs Desktop Gap" body table; aa-audit likewise). Never condition a trigger on a per-page mobile-vs-desktop split. Target the resulting hypothesis at the highest-traffic mobile-relevant pages from `top_pages`, and state the gap as site-level in the hypothesis evidence.
 
 **Output:** Performance-driven opportunities added to the opportunity list, tagged `type: "performance-driven"`.
 

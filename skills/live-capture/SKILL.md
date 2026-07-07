@@ -1,8 +1,8 @@
 ---
 name: live-capture
-version: 0.2.1
+version: 0.2.2
 description: "When the user wants to capture a live site's page structure and copy as factual input for CRO analysis. Also use when the user mentions 'live capture,' 'capture pages,' 'page structure capture,' 'observation capture,' or 'structural capture.' Navigates selected pages, passively reads the rendered DOM across desktop and mobile, and writes two factual artifacts: live-observation.md (structure) and live-copy.md (copy). Legacy mode writes L0 to .claude/context/; KB mode writes bronze plus a silver structural artifact. Facts only, no analysis."
-updated: 2026-07-05
+updated: 2026-07-07
 ---
 
 # Live Capture
@@ -87,6 +87,8 @@ When KB mode is confirmed, hold this in-session state for the capture and write 
 
 ### Browser-Mode Detection
 
+> Canonical contract: `modules/browser-mode.md`. When browser-mode detection semantics change, edit that module first, then re-sync every browser-driving skill it lists. The procedure below is this skill's runtime copy.
+
 Do NOT ask the user whether a browser MCP is configured. Test it. But do NOT silently degrade to static: a rendered-DOM capture is dramatically higher fidelity, and the user deserves to know before falling back.
 
 **Real (non-headless) Chrome is required for WAF-protected targets.** Enterprise bot management (Akamai, Cloudflare, DataDome, PerimeterX, Imperva) fingerprints and 403-blocks HEADLESS Chrome before any content loads (`HeadlessChrome` user-agent, `navigator.webdriver`, TLS/JA3 and missing-surface signals). A real Chrome (headful, or a normal Chrome instance attached over CDP) presents as a human browser and passes. The Chrome-DevTools-first ranking below is not only about fidelity: a real attached Chrome is also what gets past enterprise WAFs. Preferred configurations, in order:
@@ -101,7 +103,7 @@ Do NOT ask the user whether a browser MCP is configured. Test it. But do NOT sil
 2. **Chrome DevTools test.** Call `mcp__chrome-devtools__list_pages` (exact tool name).
    - Success: CHROME DEVTOOLS MODE.
    - "No such tool" / "unknown tool": not configured. Go to step 3.
-   - Connection error, timeout, or other failure: the MCP is configured but BROKEN. **STOP.** Do not fall through. Surface the raw error and help the user fix it (Chrome not running, remote debugging off, wrong port). Re-test after each fix. Only proceed to step 3 if the user explicitly says to skip Chrome DevTools.
+   - Connection error, timeout, or other failure: the MCP is configured but broken. **STOP.** Do not fall through. Surface the raw error and help the user fix it (Chrome not running, remote debugging not enabled, wrong port or host). Re-test with `mcp__chrome-devtools__list_pages` after each fix attempt. Only proceed to step 3 if the user explicitly says they want to skip Chrome DevTools.
 3. **Playwright test.** Try the Playwright MCP page/context listing tool.
    - Success: PLAYWRIGHT MODE. Inform the user that iteration uses managed Chromium.
    - "No such tool": not configured. Go to step 4.
