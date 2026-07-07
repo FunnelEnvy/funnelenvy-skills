@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Added an in-output-KB experiment-history fallback: hypothesis-generator KB mode reads a silver `schema: experiment-history` artifact (plus its per-experiment gold insight guides) when external producer-KB discovery binds nothing; backward-compatible, additive. [in-kb-experiment-history-read-path]
+
 ## [1.15.0] - 2026-07-07
 
 ### Added
