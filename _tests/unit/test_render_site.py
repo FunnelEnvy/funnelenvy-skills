@@ -93,6 +93,7 @@ Synthetic tactical roadmap for testing.
 **Key:** cta-label-test
 **Page:** Sitewide
 **What to test:** Clearer, more specific CTA labels.
+**Change type:** replace-copy
 **Why this should work:** Specific labels raise click-through.
 **Scores:** Impact 3 | Confidence 4 | Ease 4
 Ease is 4 because it is a copy change.
@@ -353,6 +354,19 @@ class TestParser(unittest.TestCase):
         self.assertEqual(secs["p-01"]["tier"], "quick-win")
         self.assertEqual(secs["p-04"]["tier"], "exploration")
         self.assertEqual(secs["p-01"]["labels"]["Page"], "Sitewide")
+
+    def test_change_type_field_tolerated(self):
+        # hypothesis-generator v1.15.0 emits an additive `**Change type:**` line
+        # after `**What to test:**`. The gold parser must tolerate it: surface it
+        # as a plain label without disturbing key/tier/page derivation.
+        _, body = rs.parse_frontmatter(TACTICAL)
+        secs = rs.extract_sections(body, "test")
+        self.assertEqual(secs["p-01"]["labels"]["Change type"], "replace-copy")
+        # the additive line does not perturb the other labels or derivation
+        self.assertEqual(secs["p-01"]["key"], "cta-label-test")
+        self.assertEqual(secs["p-01"]["tier"], "quick-win")
+        self.assertEqual(secs["p-01"]["labels"]["What to test"],
+                         "Clearer, more specific CTA labels.")
 
 
 # --------------------------------------------------------------------------

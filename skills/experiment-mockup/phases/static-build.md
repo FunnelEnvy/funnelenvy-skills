@@ -10,11 +10,14 @@
 
 - Target URL (from orchestrator)
 - Hypothesis text: proposed change, before/after copy (from orchestrator)
+- Change type (from orchestrator: the roadmap's `**Change type:**` value, or "classify locally" for a legacy roadmap)
+- Variation set and recommended variation (from orchestrator, when the hypothesis carries a Variation block)
 - Hypothesis number, name (from orchestrator)
 - Output directory path (from orchestrator)
 - `modules/web-extract.md` (extraction pipeline)
 - `modules/conversion-playbook.md` (sections 1-6, CRO placement principles)
-- `modules/lp-audit-taxonomy.md` (dimensions D1, D3, D5, D8)
+- `modules/lp-audit-taxonomy.md` (base dimensions D1, D3, D5, D8, plus any conditional dimensions the orchestrator loaded per the change type)
+- `modules/copy-craft.md` (evidence-graded copy rules; governs any rewrite of the hypothesis copy)
 
 ## Outputs
 
@@ -106,18 +109,38 @@ Parse the site's CSS (from Step 1) to extract design tokens. This is less accura
 
 ### Step 5: Build mockup.html
 
-Apply the same CRO placement principles as live mode (from `modules/conversion-playbook.md` and `modules/lp-audit-taxonomy.md`):
+**Branch by change type.** Read the active change type (from the orchestrator, or classify locally from What-to-test + Proposed-change using the enum: `insert | replace-copy | modify | remove | reorder`). Apply the type-appropriate treatment to the assembled static HTML, mirroring `inject.md`'s branches:
 
-- Visual hierarchy: new element subordinate to CTA
-- Proximity: near the conversion element, not mid-page
-- Attention: scannable, short headline, 1-2 sentences
-- Contrast: subtle background or border accent, not an alert
+- `insert`: build a net-new content block per the insert rules below and place it near the conversion point.
+- `replace-copy`: change the target element's text in place in the extracted HTML; preserve its tag level and styles; do not restyle.
+- `modify`: change only the named style/structure properties of the target element in the extracted HTML.
+- `remove`: remove/hide the named element and verify the surrounding markup still holds together (no orphaned containers).
+- `reorder`: move the named elements in the extracted markup without altering them.
 
-Build the content block:
-1. Choose a structural pattern. If a brand component library was loaded in Step 3, use its component patterns. Otherwise, if the extracted HTML contains callout boxes, trust blocks, or info cards, replicate that pattern. Otherwise, use a simple left-border callout.
-2. Write the HTML for the hypothesis's proposed change, distilled for scannability.
+For a comma-separated (bundled) change type, apply each named branch to the part it governs; the primary type governs the dominant change.
+
+**Insert-branch placement rules** (CRO principles from `modules/conversion-playbook.md` and `modules/lp-audit-taxonomy.md`, applied when the type is `insert`):
+- Visual hierarchy: new element subordinate to the primary CTA (unless the hypothesis target IS the CTA).
+- Proximity: near the conversion element, not mid-page.
+- Attention: scannable, short headline, 1-2 sentences.
+- Contrast: subtle background or border accent, not an alert.
+
+**Distillation Contract** (any rewrite of the hypothesis copy, governed by `modules/copy-craft.md`):
+1. Never cut, alter, or round a quantified claim in the hypothesis "After" copy (those numbers passed proof-integrity upstream; this skill has no proof-registry access and treats them as immutable). If space forces cuts, keep the specific and cut elsewhere.
+2. Never introduce a claim, number, or named outcome not present in the hypothesis copy.
+3. Preserve front-loading: the load-bearing word stays first (copy-craft Rule 3).
+4. For `replace-copy`, apply the copy-craft element rules for the target element type; the insert branch's word-count/heading limits do not apply.
+5. Document distillation deltas in placement.md Section 3.
+
+**Variation handling.** When the hypothesis carries a Variation block, build the **Recommended** variation and record which one was built. Never build all variations in one file. placement.md Section 3 states which variation was mocked and that re-running to build another variation is possible.
+
+Build the treatment:
+1. For `insert`: choose a structural pattern. If a brand component library was loaded in Step 3, use its component patterns. Otherwise, if the extracted HTML contains callout boxes, trust blocks, or info cards, replicate that pattern. Otherwise, use a simple left-border callout.
+2. Write/edit the HTML for the hypothesis's proposed change per the active branch (distilled for scannability on `insert`).
 3. Style using brand tokens (Step 3) first, then extracted design tokens (Step 4) for gaps. Use flagged defaults where both sources are silent.
 4. Ensure the element uses native site styling only. No annotation borders, labels, or badges.
+
+**Self-review checklist pass (reasoning, no browser).** Static mode has no screenshot, so run the live-mode self-review as a reasoning pass over the assembled HTML before finalizing: element/edit present and not clipped in the layout; no obvious wrapping or reflow breakage; contrast per the active branch; primary-CTA prominence invariant holds (or the CTA-target exception applies); for `remove`/`reorder`, no orphaned containers or order-dependent CSS broken. Note any issue you cannot resolve from static extraction in placement.md.
 
 Assemble the standalone HTML file:
 
@@ -130,7 +153,7 @@ Assemble the standalone HTML file:
   target_url: "[url]"
   insertion_point: "[descriptive location]"
   mode: static
-  generated_by: experiment-mockup v1.0.0
+  generated_by: experiment-mockup v1.5.0
   last_updated: [YYYY-MM-DD]
 -->
 <!DOCTYPE html>

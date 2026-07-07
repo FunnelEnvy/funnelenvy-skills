@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.15.0] - 2026-07-07
+
+### Added
+- Tactical `**Change type:**` field (P1 of the experiment-mockup treatment-quality bundle). Every tactical hypothesis now carries a change type derived from its proposed change, from the enum `insert | replace-copy | modify | remove | reorder` (primary first, comma-separated when a bundled test spans types). `phases/construct.md` Step 3 gains the Change-type derivation block (enum definitions + bundled-comma rule); the tactical Output Format renders the field directly after `**What to test:**`; new Quality Rule 19 mandates it. The field is projection content: it re-derives on every render from the proposed change and is NOT carried forward across regens like `**Key:**`. The strategic roadmap is untouched (its levers are not page-element treatments). Consumed by experiment-mockup v1.5.0 to select a type-appropriate treatment. Backward compatible: experiment-mockup classifies the type locally from What-to-test + Proposed-change on roadmaps produced before this field existed; render-program-site and cro-roadmap-red-team tolerate the additive field line. No renumbering of existing rules or steps. [experiment-mockup-treatment-quality]
+
 ## [1.14.1] - 2026-07-07
 
 ### Fixed

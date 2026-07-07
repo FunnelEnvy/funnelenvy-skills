@@ -1,6 +1,6 @@
 ---
 name: experiment-mockup
-version: 1.4.2
+version: 1.5.0
 description: >-
   When the user wants to create a visual mockup of a proposed experiment change.
   Also use when the user mentions 'experiment mockup,' 'mockup hypothesis,'
@@ -135,9 +135,11 @@ Find the hypothesis matching the provided number. Hypotheses are numbered sequen
 - **Key:** field (the stable resolution key; absent on legacy / un-backfilled roadmaps)
 - **Page:** field (target URL or path)
 - **What to test:** field (the proposed change description)
+- **Change type:** field (one or more of `insert | replace-copy | modify | remove | reorder`, primary first). **Fallback when absent** (a legacy / un-backfilled roadmap that predates the field): do NOT fail. Set the change type to "classify locally" and pass that to the phase agent, which classifies from What-to-test + Proposed-change using the same enum (duplicated into inject.md so the agent is self-contained). This mirrors the `**Key:**` fallback contract: no hard failure. The resolved source (`roadmap` or `local`) is recorded in placement.md frontmatter (`change_type_source`).
 - **Current state:** field
 - **Proposed change:** field
 - **Before:** / **After:** quoted copy (if present)
+- **Variation block** (if present, from hypothesis-generator construct.md Step 3b): the variations (A/B/C with anchors and copy) and the `**Recommended:**` line. When present, the default behavior is to mock the Recommended variation; the phase agent names which variation was used at first presentation and lists the others (the user can switch variations during live/playwright iteration, a copy revision). Never build all variations in one invocation (the single-hypothesis-per-invocation rule is unchanged). If no Variation block is present, there is a single proposed change; proceed normally.
 
 If the hypothesis number does not exist, STOP with the error from the Preconditions table.
 
@@ -278,6 +280,18 @@ If `isHeadless` is true, surface this BEFORE launching the phase agent: "Connect
 
 ### Step 6: Route to Phase Sequence
 
+**Dimension loading (all three modes).** The lp-audit-taxonomy dimensions loaded are conditional on the change type extracted in Step 2. Use this mapping to decide which dimensions to load, then list them in the mode's load list below:
+
+| Condition | Dimensions to load |
+|-----------|--------------------|
+| Base (always) | D1, D3, D5, D8 |
+| Target element is a CTA or a form | add D6 (CTA Strategy and Form Design) |
+| Hypothesis mechanism references social proof, urgency, scarcity, authority, or loss framing | add D7 (Persuasion Psychology) |
+| Change type is `reorder` or `remove` | add D4 (Page Structure and Content Hierarchy) |
+| Change type absent (legacy roadmap, classify-locally) | load base D1/D3/D5/D8 plus D6 (cheap; covers the most common ambiguity) |
+
+Load `modules/copy-craft.md` in every mode (it governs the Distillation Contract for any copy rewrite).
+
 **LIVE MODE:**
 Launch a single agent with the following files loaded (in this order):
 1. `skills/experiment-mockup/agent-header.md`
@@ -286,11 +300,14 @@ Launch a single agent with the following files loaded (in this order):
 4. `skills/experiment-mockup/phases/capture.md`
 5. `skills/experiment-mockup/phases/annotate.md`
 6. `modules/conversion-playbook.md` (sections 1-6)
-7. `modules/lp-audit-taxonomy.md` (dimensions D1, D3, D5, D8)
-8. `modules/slugify.md`
+7. `modules/lp-audit-taxonomy.md` (dimensions per the Dimension loading table above)
+8. `modules/copy-craft.md` (Distillation Contract)
+9. `modules/slugify.md`
 
 Pass to the agent:
 - Hypothesis number, name, and full hypothesis text
+- Change type (the roadmap value, or "classify locally" when the field is absent)
+- Variation set and recommended variation (when the hypothesis carries a Variation block)
 - Target URL
 - Output directory path
 
@@ -304,11 +321,14 @@ Launch a single agent with the following files loaded (in this order):
 4. `skills/experiment-mockup/phases/capture.md`
 5. `skills/experiment-mockup/phases/annotate.md`
 6. `modules/conversion-playbook.md` (sections 1-6)
-7. `modules/lp-audit-taxonomy.md` (dimensions D1, D3, D5, D8)
-8. `modules/slugify.md`
+7. `modules/lp-audit-taxonomy.md` (dimensions per the Dimension loading table above)
+8. `modules/copy-craft.md` (Distillation Contract)
+9. `modules/slugify.md`
 
 Pass to the agent:
 - Hypothesis number, name, and full hypothesis text
+- Change type (the roadmap value, or "classify locally" when the field is absent)
+- Variation set and recommended variation (when the hypothesis carries a Variation block)
 - Target URL
 - Output directory path
 - Browser mode: "playwright" (agent uses this to select tool names and iteration pattern)
@@ -322,11 +342,14 @@ Launch a single agent with the following files loaded (in this order):
 3. `skills/experiment-mockup/phases/annotate.md`
 4. `modules/web-extract.md`
 5. `modules/conversion-playbook.md` (sections 1-6)
-6. `modules/lp-audit-taxonomy.md` (dimensions D1, D3, D5, D8)
-7. `modules/slugify.md`
+6. `modules/lp-audit-taxonomy.md` (dimensions per the Dimension loading table above)
+7. `modules/copy-craft.md` (Distillation Contract)
+8. `modules/slugify.md`
 
 Pass to the agent:
 - Hypothesis number, name, and full hypothesis text
+- Change type (the roadmap value, or "classify locally" when the field is absent)
+- Variation set and recommended variation (when the hypothesis carries a Variation block)
 - Target URL
 - Output directory path
 - Note that this is static mode (no browser MCP available). The agent should flag any CSS values it could not extract with `/* DEFAULT - could not extract */` comments.
@@ -350,13 +373,16 @@ Experiment mockup complete for hypothesis #[N]: [name]
 
 I/O mode: [KB (scope: <slug>) | legacy]
 Browser mode: [chrome-devtools|playwright|static]
+Change type: [resolved change type] (source: [roadmap | classified locally])
+Variation mocked: [variation id, or "n/a (single proposed change)"]
+Self-review: [performed at desktop + 390px mobile; N self-fix cycles | not applicable (static reasoning pass)]
 Output: [resolved output directory: .claude/deliverables/experiments/<slug>/ or {kb_root}/deliverables/experiments/<slug>/]
   - mockup.html (standalone, open in any browser)
   - placement.md (CRO rationale + implementation notes)
-  - control-screenshot.png (before / unmodified state; live & playwright modes only)
-  - mockup-screenshot.png (after / injected state; live & playwright modes only)
+  - control-screenshot.png / mockup-screenshot.png (desktop before/after; live & playwright modes only)
+  - control-screenshot-mobile.png / mockup-screenshot-mobile.png (390px before/after; live & playwright modes only)
 
-[If static mode: "Note: Static mockup was built from HTML extraction. For interactive mockups with real computed styles, configure Chrome DevTools MCP (recommended) or Playwright MCP."]
+[If static mode: "Note: Static mockup was built from HTML extraction (no screenshots, desktop or mobile; responsive behavior is a recommendation, not observed). For interactive mockups with real computed styles, configure Chrome DevTools MCP (recommended) or Playwright MCP."]
 
 [If playwright mode: "Note: Mockup built with Playwright (managed Chromium). For live browser iteration, configure Chrome DevTools MCP."]
 ```
@@ -369,8 +395,10 @@ Output: [resolved output directory: .claude/deliverables/experiments/<slug>/ or 
 |------|--------|----------|
 | `mockup.html` | HTML (self-contained, inline CSS) | Approved mockup state with surrounding page context, styled to match the target site |
 | `placement.md` | Markdown (YAML frontmatter) | CRO placement rationale, attention strategy, content distillation, alternatives, implementation notes, risk flags |
-| `control-screenshot.png` | PNG (live & playwright modes only) | Browser viewport screenshot of the unmodified "before" state, framed identically to the after shot. Consumed by render-program-site to render a Before/After pair. |
-| `mockup-screenshot.png` | PNG (live & playwright modes only) | Browser viewport screenshot of the injected "after" state |
+| `control-screenshot.png` | PNG (live & playwright modes only) | Desktop viewport screenshot of the unmodified "before" state, framed identically to the after shot. Consumed by render-program-site to render a Before/After pair. |
+| `mockup-screenshot.png` | PNG (live & playwright modes only) | Desktop viewport screenshot of the injected "after" state |
+| `control-screenshot-mobile.png` | PNG (live & playwright modes only) | 390px viewport screenshot of the unmodified "before" state, framed identically to the mobile after shot |
+| `mockup-screenshot-mobile.png` | PNG (live & playwright modes only) | 390px viewport screenshot of the injected "after" state |
 
 ---
 
@@ -407,11 +435,13 @@ If output files already exist for the same hypothesis slug (within the resolved 
 Before reporting a mockup complete, verify:
 
 - [ ] The mockup matches the hypothesis exactly: the injected change is the roadmap's proposed change for hypothesis #[N], not an interpretation of it
+- [ ] The treatment respects the change type: the type-appropriate branch was applied (a `replace-copy` edited text in place at the original tag/styles; a `modify` changed only named properties; a `remove` verified reflow; a `reorder` checked seams; an `insert` followed the subordination rules), and the treatment changed only what the hypothesis specifies
+- [ ] The Distillation Contract was honored: quantified claims from the hypothesis copy are unchanged, no new claim/number/outcome was introduced, and any copy rewrite followed copy-craft
 - [ ] `mockup.html` is standalone (inline CSS, no external requests) and opens correctly in a browser
 - [ ] The mockup shows a clean treatment: no "PROPOSED" labels, fidelity banners, or annotation overlays baked into the artifact
 - [ ] Styling matches the target site (extracted values, not defaults); static mode flags every unextracted value with `/* DEFAULT */`
-- [ ] `placement.md` has valid frontmatter and covers placement rationale, attention strategy, implementation notes, and risk flags
-- [ ] Live/playwright modes: control and mockup screenshots exist and are framed identically (same scroll position and viewport)
+- [ ] `placement.md` has valid frontmatter (including `change_type` / `change_type_source`, schema_version 1.1) and covers placement rationale, attention strategy, content distillation, alternatives (from the candidate pass), implementation notes, and risk flags
+- [ ] Live/playwright modes: the self-review gate ran at desktop and 390px mobile; desktop and mobile control/mockup screenshot pairs exist and each pair is framed identically (same scroll position and viewport)
 - [ ] Output landed in the resolved mode's output base (legacy `.claude/deliverables/experiments/<slug>/` or `{kb_root}/deliverables/experiments/<slug>/`); no writes to `.claude/context/`
 - [ ] No existing mockup files were overwritten without the user confirming
 - [ ] The completion summary states I/O mode, browser mode, and the resolved output directory
@@ -422,6 +452,7 @@ Before reporting a mockup complete, verify:
 
 | Version | Changes |
 |---------|---------|
+| 1.5.0 | Treatment-quality bundle (P1-P5). **P1 treatment-type taxonomy:** consumes hypothesis-generator's new `**Change type:**` field (extracted in Step 2; classified locally on legacy roadmaps that predate it, no hard failure, mirroring the `**Key:**` fallback). `inject.md`'s single insert-only "CRO Placement Principles" doctrine is restructured into "Treatment Principles by Change Type": cross-type invariants plus five per-type branches (insert = the prior rules verbatim; replace-copy edits text in place at original tag/styles; modify changes only named properties with an explicit primary-CTA-prominence exception; remove verifies reflow; reorder checks seams). Step 1 generalized to "Build the Treatment" and branches on type; `static-build.md` Step 5 gets the same branch logic. `annotate.md` becomes type-aware (Section 1/2 framing) and its frontmatter gains `change_type` / `change_type_source` with schema_version -> "1.1". Fixes the previously-broken archetypes (a headline or CTA-label test was forbidden by the old "never h1/h2" / "never the primary CTA color" rules). **P2 copy-craft + distillation contract:** `modules/copy-craft.md` loaded in all three modes; a Distillation Contract in inject.md/static-build.md makes quantified claims from the hypothesis copy immutable (they passed proof-integrity upstream and this skill has no registry access) and forbids introducing new claims. **P3 candidate pass + self-review:** inject Step 1a sketches/scores 2-3 candidates internally and builds only the winner (Section 4 now documents a real comparison), with a skip rule when the treatment is fully pinned; inject Step 2b screenshots the injected state and self-reviews before first presentation (2-cycle fix budget); static mode runs the checklist as a reasoning pass. **P4 mobile:** the self-review and `capture.md` add a 390px pair (`control-screenshot-mobile.png` / `mockup-screenshot-mobile.png`); annotate Section 5 responsive note becomes observed (live/playwright) vs speculative (static). **P5 type-conditional dimensions + variation awareness:** Step 6 loads lp-audit-taxonomy conditionally (base D1/D3/D5/D8; +D6 for CTA/form; +D7 for persuasion mechanisms; +D4 for reorder/remove; base+D6 when the type is absent); when the hypothesis carries a Variation block, the Recommended variation is mocked and named, others listed. Also fixed the pre-existing `generated_by: experiment-mockup v1.0.0` literal (now v1.5.0) in the capture/static-build/annotate templates. [experiment-mockup-treatment-quality] |
 | 1.4.2 | Browser-mode contract parity back-port: Step 5 gains the WAF/enterprise-bot-management guidance (fingerprinting signals, preferred real-Chrome configurations, "static fallback is NOT a WAF remedy") and a new Step 5.6 headless pre-flight probe (`navigator.webdriver` / `HeadlessChrome` check, surfaced before launching the phase agent) that live-capture already carried; the two skills' duplicated detection contract had drifted. The contract now has a canonical editing source at `modules/browser-mode.md` (drift canary enforced by `scripts/registry_check.py`); the inline copy stays runtime-self-contained. |
 | 1.4.1 | Repo-audit contract completion, no behavior change: added the Quality Checks section (the dev rules require one; the file previously had none). Also gains the `modules/kb-mode.md` canonical-contract pointer in its KB-mode section (drift canary enforced by `scripts/registry_check.py`). |
 | 1.4.0 | Control ("before") screenshot capture. `capture.md` Step 1 now captures a Before/After pair from the same scroll position and viewport: it restores the original state (removes the injected element, restores any modified originals), screenshots the unmodified viewport as `control-screenshot.png`, then re-injects and screenshots the after as `mockup-screenshot.png`. `inject.md` Step 5 now hands off the injected element's class/id and any modified-original markup so capture can restore the control. New live/playwright-only output `control-screenshot.png` added to agent-header Section 2, SKILL.md Output Files, and the Step 7 completion summary. Static mode writes no control (documented in `static-build.md`). Pairs with render-program-site's optional `control_screenshot` to render a Before/After comparison; absence is backward compatible (after-only). |

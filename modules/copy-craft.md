@@ -4,7 +4,7 @@ Version: 1.0.0
 Last updated: 2026-07-05
 Scope: headline/H1, hero subhead, CTA button copy, CTA microcopy, form labels and error/privacy microcopy
 
-Purpose: writing rules the hypothesis generator applies when producing proposed variant copy (construct.md Step 3 before/after and Step 3b multi-variation). This module governs HOW the words are written; it does not change experiment strategy, bundling, or scoring. Rules are evidence-graded.
+Purpose: writing rules for proposed variant copy. Two consumers: (1) hypothesis-generator, when producing proposed variant copy (construct.md Step 3 before/after and Step 3b multi-variation); (2) experiment-mockup, when distilling or rewriting the hypothesis copy for a mockup treatment (its Distillation Contract in inject.md / static-build.md, especially `replace-copy` element edits). This module governs HOW the words are written; it does not change experiment strategy, bundling, or scoring. Rules are evidence-graded.
 
 ---
 

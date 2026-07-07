@@ -9,8 +9,11 @@
 ## Required Inputs
 
 - Hypothesis number, name, target URL, page name (from orchestrator)
+- Change type and its source (roadmap `**Change type:**` value, or locally classified; passed from the orchestrator / inject phase)
 - Final insertion point / DOM path (from Phase 2/3 or static-build)
 - Iteration history (live mode: what was tried and changed)
+- Candidate-pass scoring (from inject Step 1a: the losing candidates and their pros/cons, or the skip reason)
+- Which variation was mocked (when the hypothesis carried a Variation block)
 - Final mockup copy, verbatim (from the approved injection or static build)
 - Execution mode: live or static
 - `modules/lp-audit-taxonomy.md` (dimensions D1, D3, D5, D8)
@@ -32,14 +35,16 @@ Create the file with YAML frontmatter and 6 body sections.
 ```yaml
 ---
 schema: experiment-placement
-schema_version: "1.0"
+schema_version: "1.1"
 hypothesis: [number]
 hypothesis_title: "[from roadmap]"
 target_url: "[url]"
 target_page: "[page name, e.g., Contact, Pricing, Homepage]"
+change_type: "[insert | replace-copy | modify | remove | reorder; comma-separated for a bundled test]"
+change_type_source: "[roadmap | local]"
 insertion_point: "[DOM path or descriptive location]"
 mode: [live|static]
-generated_by: experiment-mockup v1.0.0
+generated_by: experiment-mockup v1.5.0
 last_updated: [YYYY-MM-DD]
 ---
 ```
@@ -48,7 +53,9 @@ last_updated: [YYYY-MM-DD]
 
 ### Section 1: Placement Decision
 
-Write where the element was placed and the CRO reasoning behind it.
+**Type framing.** For `insert`, "placement" means where the net-new element was placed. For `replace-copy` and `modify`, "placement" means the existing element that was edited (name it and its location); there is no new element to place. For `remove`, describe what was removed and where it sat. For `reorder`, describe the old and new positions. Write the section against the active change type.
+
+Write where the element was placed (or which element was edited) and the CRO reasoning behind it.
 
 Required content:
 - Physical location on the page (e.g., "Directly above the contact form, inside the `section.contact-area` container")
@@ -59,7 +66,9 @@ Required content:
 
 ### Section 2: Attention Strategy
 
-Write how the element draws attention without cannibalizing the primary CTA.
+**Type framing.** For `insert`, cover how the element draws attention without cannibalizing the primary CTA (subordination). For `replace-copy` and `modify` whose target IS the primary CTA (a prominence or label test), cover the prominence delta instead: how the edited element's visual weight changed and why that serves the hypothesis, not how it stays subordinate. For `remove`/`reorder`, cover how attention redistributes across the remaining/resequenced elements.
+
+Write how the treatment handles attention, per the framing above.
 
 Required content:
 - Visual devices used: list each attention mechanism (background contrast, border accent, heading weight, icon) with the specific CSS values
@@ -71,25 +80,28 @@ Required content:
 Document how the hypothesis copy was adapted for the mockup context.
 
 Required content:
+- **Variation mocked (when applicable):** if the hypothesis carried a Variation block, state which variation was mocked (the Recommended one by default), name the others, and note that re-running can build a different variation. If the hypothesis had no variations, omit this line.
 - The original "After" copy from the hypothesis (verbatim quote)
 - The final mockup copy (verbatim quote)
-- What was kept and why (the core reframe, the key proof point, the emotional anchor)
+- What was kept and why (the core reframe, the key proof point, the emotional anchor). Per the Distillation Contract, quantified claims from the hypothesis copy are immutable: they are never cut, altered, or rounded, and no claim/number/outcome absent from the hypothesis copy is introduced.
 - What was cut and why (word count constraints near a conversion point, headline hierarchy, redundancy with existing page content)
-- If the copy was not distilled (used as-is): note why it was already appropriate for the context
+- If the copy was not distilled (used as-is): note why it was already appropriate for the context. For `remove`/`reorder`/`modify` treatments that change no copy, state "No copy change" and omit the distillation detail.
 
 ### Section 4: Alternative Placements
 
-Document at least 2 other placement options.
+Document the alternatives that were actually considered. This section consumes the candidate pass from inject Step 1a: the losing candidates and their internal scoring, so this is documentation of a comparison that happened, not a retrospective justification invented after the fact.
 
-For each alternative:
+For each candidate the pass rejected:
 - Where it would go (DOM location description)
 - What it would look like (brief structural description)
-- Pros (what this position offers)
-- Cons (why it's worse than the chosen placement)
+- Pros (what this option offered, from the internal scoring)
+- Cons (why it lost to the chosen treatment, from the internal scoring)
+
+If the candidate pass was skipped (the hypothesis fully pinned the treatment, e.g., `replace-copy` with exact copy on a single element), state the skip reason and that no placement discretion existed, rather than inventing alternatives.
 
 If the hypothesis suggested a specific location and the skill chose differently, explain why in a dedicated paragraph referencing the specific CRO principles that drove the divergence.
 
-In live mode: if placements were actually tried during iteration, document those as alternatives with the user's actual feedback as the "cons."
+In live mode: if placements were also tried during user iteration, document those with the user's actual feedback as the "cons."
 
 ### Section 5: Implementation Notes
 
@@ -100,7 +112,9 @@ Required content:
 - **CSS properties:** List every CSS property and value needed for the new element. Not "match the site's styles" but explicit values: `background: #f8f9fa; border-left: 3px solid #2563eb; padding: 24px 32px; font-family: Inter, sans-serif; font-size: 16px; line-height: 1.6;`
 - **SPA detection:** If the site appears to be a single-page application (React, Next.js, Vue, Angular indicators in the DOM or script tags), note: "This site uses [framework]. DOM injection will not work in production. The change requires component-level implementation in the [framework] source."
 - **JS behavior:** List any JavaScript needed (collapsible content, scroll-triggered visibility, conditional display based on referrer or URL parameter). If none needed, state "No JavaScript required."
-- **Responsive behavior:** How should this element behave on mobile? Common patterns: stack below the form (if it was beside it on desktop), collapse to a single-line summary, reduce padding, maintain full width. Specify the approach.
+- **Responsive behavior:**
+  - **Live and playwright modes (observed):** Report how the treatment DID behave at 390px, from the mobile self-review (inject Step 2b) and the mobile screenshot pair (`control-screenshot-mobile.png` / `mockup-screenshot-mobile.png`). Cite what was observed: stacking, padding, whether it stayed visible and coherent, any horizontal-overflow issue and how it was resolved. This is observed behavior, not a recommendation.
+  - **Static mode (speculative):** No browser, so state how the element SHOULD behave on mobile (stack below the form, collapse to a single-line summary, reduce padding, maintain full width) and mark it explicitly as a recommendation not yet verified in a browser.
 - **A/B test platform compatibility:** Can this change be injected client-side via Optimizely/VWO/Convert/Google Optimize? Conditions: if the change is a simple DOM insertion with no conditional logic, it's client-side compatible. If it requires server-side data, personalization logic, or modifies the initial page render, it needs server-side implementation. State which.
 
 ### Section 6: Risk Flags
