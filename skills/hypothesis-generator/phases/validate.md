@@ -122,6 +122,7 @@ Consume `construct.md` Step 5b (Test Feasibility) output: the per-variant MDE / 
 
 - Step 5b produced a per-variant MDE within a feasible or extended window for the thesis metric: `pass`.
 - Step 5b returned "unpowerable" on the thesis metric (the target surface cannot reach a readable per-variant sample on the primary metric, or the segmented denominator is too small): `fail`. `score.md` Step 5b (Infeasible Routing) routes an unpowerable-on-thesis-metric hypothesis to "What's Not Here."
+- Run-level `testing_method` (detect Step 1h) is non-A/B (`pre_post` / `cohort` / `operational`): `not-assessed`. The two-proportion power formula is an A/B construct; a pre/post read applies the treatment to the full traffic and has no per-variant sample to power, so the gate is neutral, never `fail`, and never triggers the `score.md` Step 5b "What's Not Here" routing on A/B-power grounds. Under `testing_method: ab` (the default) the gate is unchanged: an unpowerable A/B thesis metric still fails and routes out.
 - No performance profile (Step 5b was skipped): `not-assessed`. Neutral.
 
 This gate enforces what construct estimates: construct computes the MDE, validate makes "unpowerable" actually block the score rather than sit as an advisory note.
@@ -133,12 +134,13 @@ When `construct.md` Step 5 pre-registered the primary read as a segment (because
 - The pre-registered segment is isolable in the available instrumentation (a defined traffic source, device, or audience cut the platform can target and read): `pass`.
 - The segment cannot be isolated or instrumented (no way to deliver the variant to only that segment, or no way to read the metric for that segment alone): `fail`, and route the segmentation requirement to Prerequisites as an instrumentation block. A non-isolable required segment means the test cannot be run as designed.
 - No segment was pre-registered (the hypothesis is correctly all-visitors, or no dilution signal exists): `pass` (nothing to satisfy), or `not-assessed` when no performance profile exists to judge dilution. Either way, neutral; an all-visitors hypothesis on a non-diluted page is not penalized.
+- Run-level `testing_method` (detect Step 1h) is non-A/B (`pre_post` / `cohort` / `operational`): `not-assessed`. Segment isolation for a per-arm A/B read does not apply to a pre/post read; neutral, never `fail` on A/B grounds. Under `testing_method: ab` the gate is unchanged.
 
 ---
 
 ## Strategic Lane Gates
 
-Strategic-lane hypotheses (from Phase 2c, carrying `lane: "strategic"`) now pass through this phase. They receive a strategic gate subset, not the full tactical six: the tactical gates `powerable` and `segmentation_satisfied` are A/B-formula constructs and read `not-assessed` for non-A/B designs (they still apply when the finalized design is `randomized_ab`). Tri-state semantics are identical to the tactical gates: pass / fail / not-assessed; only an affirmative fail caps; not-assessed is neutral and never penalizes.
+Strategic-lane hypotheses (from Phase 2c, carrying `lane: "strategic"`) now pass through this phase. They receive a strategic gate subset, not the full tactical six: the tactical gates `powerable` and `segmentation_satisfied` are A/B-formula constructs and read `not-assessed` for non-A/B designs (they still apply when the finalized design is `randomized_ab`). The same A/B-construct reasoning makes these two gates read `not-assessed` for tactical hypotheses on a non-A/B `testing_method` run (detect Step 1h), per the method clauses in Gate 5 and Gate 6 above. Tri-state semantics are identical to the tactical gates: pass / fail / not-assessed; only an affirmative fail caps; not-assessed is neutral and never penalizes.
 
 Emit a `validation_gates` record per strategic hypothesis with these gates:
 

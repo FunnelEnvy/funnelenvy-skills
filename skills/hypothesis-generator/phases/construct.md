@@ -264,6 +264,8 @@ Every hypothesis requires a "why." This is the CRO reasoning that separates a ri
 
 The Prediction must carry a read threshold, not just a direction. State the condition under which the variant ships and the condition under which it is abandoned. For proxy-only scopes with no CVR baseline, the honest form is: "ship if the variant proxy beats control by the test's MDE at full sample; abandon if flat at full sample." Do not fabricate a point estimate ("+X%") when no baseline supports one. This read threshold renders in the deliverable as the `Expected effect and read threshold` line.
 
+**Displacement case (when Step 5 applied the displacement primary-metric override).** On an in-scope displacement surface the ship/abandon condition keys to the downstream primary metric, NOT the on-page proxy. State it explicitly: a proxy (engagement) decline alongside a downstream (contact / consultation / MQL) rise is a SHIP, not an abandon, because the bound history establishes that the proxy moves opposite to the downstream metric on this surface. An engagement-negative / downstream-positive variant is not killed. When the downstream metric is instrumented on the surface it is the readable primary and this threshold reads directly against it; when it is not instrumented, the abandon condition still keys to the downstream metric conceptually, but the readable threshold falls back to the Step 5a `guardrail_primary` decision rule (the instrumented proxy stays the readable primary, the downstream metric is the ground-truth guardrail), so there is no double-count.
+
 **Example:**
 > Visitors from paid search land on the homepage and see a category-defining headline ("Revenue Intelligence Platform"). These visitors already know the category: they searched for it. Repeating category language wastes the highest-attention moment on information they already have. Replacing with outcome language ("Close 40% more deals") immediately communicates value, reducing bounce rate and increasing demo request clicks. The primary metric is demo request rate; secondary metric is bounce rate.
 
@@ -355,6 +357,13 @@ Record `measurement_design` on the hypothesis record (internal field; it renders
 
 ### Step 5: Target Metric and Audience
 
+**Displacement primary-metric override (applies before the metric selection below).** When `detect.md` Step 1g carried a `displacement_surfaces` annotation (a displacement / inverted-proxy mechanism established in the bound experiment history), apply a surface-scoped override to the primary metric BEFORE running the standard selection below. This exists because the portfolio's own history documents that an on-page proxy on these surfaces moves opposite to the downstream business metric, so keying a hypothesis's ship/abandon read to that proxy would abandon a variant that hurts the proxy but lifts downstream, the exact winning pattern the history records.
+
+- **Propagation scope (bounded).** The override applies to a hypothesis whose target surface is either (a) an `observed_surface` from `displacement_surfaces`, always in scope because the displacement was empirically observed there, so its own surface takes the override regardless of surface type; or (b) a strictly same-type surface the mechanism plausibly covers (e.g. other top-of-funnel homepage-class entry pages when the displacement was observed on a homepage). Bound branch (b) tightly: do NOT propagate along (b) to loosely-related surfaces (evaluation-stage, pricing, post-signup), which would wrongly demote sound proxy reads elsewhere. The branch (b) exclusion never suppresses branch (a): an observed surface always takes the read even if it is itself an evaluation, pricing, or post-signup page. This same-type test is stated here once so it is applied consistently, not left to per-hypothesis discretion.
+- **Override.** On an in-scope surface, set the primary metric to the downstream business/conversion metric the displacement moved (the contact / consultation / MQL rate), and demote the on-page proxy (engagement / bounce / scroll) to a leading indicator in the secondary-metric slot below, naming the displacement lesson as the reason.
+- **Consistency, not per-hypothesis discretion.** Apply the override to EVERY hypothesis targeting an in-scope surface, including non-continuation ones, so the roadmap never reads one homepage test on the downstream metric and another on engagement. This is a surface-level rule, not a per-hypothesis judgment.
+- **Carry-through.** The overridden primary drives the Step 4 ship/abandon read threshold and the Step 5a instrumentation reconciliation below; both are keyed to the displacement case there.
+
 **Metric selection:**
 - Primary metric: The most direct behavioral indicator of the hypothesis being correct
 - Secondary metric (optional): A leading or lagging indicator that adds context
@@ -421,6 +430,8 @@ Classify the primary metric selected in Step 5.
 
 3. **Direct metrics need no guardrails.** Optionally add a quality guardrail (e.g., if primary is "form submission," guardrail might be "SQL rate from submissions" to guard against low-quality conversion inflation). Not required.
 
+4. **Displacement surface, uninstrumented downstream metric (reconciliation with the Step 5 override).** When Step 5 applied the displacement primary-metric override but the downstream business metric is NOT instrumented on the surface, do NOT force the uninstrumented metric to primary: that would trip `phases/validate.md` `metric_instrumented: fail` on the primary and wrongly route the test out via `score.md` Step 5b. Instead select `guardrail_primary` as the decision rule here (not `additive`): keep the instrumented on-page proxy as the readable primary, set the downstream metric as the guardrail, and attach a confirm-first readiness note to stand up or confirm downstream instrumentation on the surface. This is a promotion of the `guardrail_primary` read this step already models ("guardrail is ground truth"), SELECTED by the displacement rule, not a competing displacement-primary structure: the Step 5 override and this reconciliation are one rule with two instrumentation branches (instrumented -> real primary swap in Step 5; uninstrumented -> `guardrail_primary` here), so the downstream metric is never counted twice and no false `metric_instrumented: fail` is emitted. When the downstream metric IS instrumented on the surface, Step 5's override already made it the primary and this reconciliation does not fire.
+
 **Output fields added to hypothesis record:**
 
 - `metric_classification`: `"direct"` or `"proxy"`
@@ -433,7 +444,14 @@ Classify the primary metric selected in Step 5.
 
 **Skip this step entirely if `performance-profile.md` is not present.**
 
-**Non-A/B measurement-design branch (strategic-lane hypotheses).** If the hypothesis carries a non-A/B `measurement_design` (holdout / pre_post / cohort / geo_split / switchback / operational_metric, from Step 4c), do NOT run the two-proportion z-test below and do NOT auto-route it to "What's Not Here" for failing an A/B formula it was never meant to satisfy. Instead, state the design's feasibility in its own terms: data availability for the holdout or baseline, the length of the pre/post window, the instrumentation the operational metric needs, and a defined read window. A measurable strategic lever is feasible if its design can be stood up and read; it routes to a tier, not to "What's Not Here." Keep the A/B formula below intact for `randomized_ab` and for all tactical hypotheses. The 7-day-minimum and 100-conversions-per-variant hard gates apply only to designs that produce per-variant conversion counts (A/B and switchback); for pre/post, cohort, and operational-metric designs, replace those gates with a "sufficient pre-period baseline plus a defined read window" feasibility statement.
+**Non-A/B feasibility branch (strategic-lane non-A/B designs and non-A/B tactical method).** Two entry conditions select this branch:
+
+- a strategic-lane hypothesis carrying a non-A/B `measurement_design` (holdout / pre_post / cohort / geo_split / switchback / operational_metric, from Step 4c); or
+- a tactical hypothesis on a run whose `testing_method` (detect Step 1h) is `pre_post`, `cohort`, or `operational`.
+
+In either case, do NOT run the two-proportion z-test below and do NOT auto-route the hypothesis to "What's Not Here" for failing an A/B formula it was never meant to satisfy. Instead, state feasibility in the design's own terms: data availability for the holdout or baseline, the length of the pre/post window, the instrumentation an operational metric needs, and a defined read window. A measurable lever is feasible if its design can be stood up and read; it routes to a tier, not to "What's Not Here." The 7-day-minimum and 100-conversions-per-variant hard gates apply only to designs that produce per-variant conversion counts (A/B and switchback); for pre/post, cohort, and operational-metric designs, replace those gates with a "sufficient pre-period baseline plus a defined read window" feasibility statement, and never mark the hypothesis `feasibility: "infeasible"` on A/B-traffic grounds. Traffic-volume Impact discounting also does not apply under a non-A/B method (the low-traffic Impact demotion in `phases/score.md` Step 4 does not fire; see that step).
+
+Keep the A/B formula below intact for `randomized_ab` strategic designs and for tactical hypotheses on an `ab`-method run (the default, and the no-regression path): the two-proportion z-test, the hard gates, the feasibility tiers, and the infeasible routing all run exactly as today. This branch is method-aware selection among feasibility statements that already exist; it authors no second feasibility model.
 
 For each hypothesis that has a Baseline (from Step 2), estimate whether the target page has enough traffic to run a statistically valid A/B test.
 
@@ -472,6 +490,12 @@ The 100-conversion and 7-day hard gates below stay intact and apply on top of th
 ```markdown
 **Baseline:** 5,600 sessions/mo, 38.5% bounce, 3.0% CVR
 **Test Feasibility:** ~8 weeks at 15% MDE (2 variants, 5.6K samples/variant). Extended. Consider micro-conversion metric for faster signal.
+```
+
+For a non-A/B testing method (pre/post, cohort, operational; detect Step 1h), the Test Feasibility line takes the read-window form instead, with no MDE, no samples-per-arm, and no weeks-to-power:
+
+```markdown
+**Test Feasibility:** Read window: ~N weeks against a stable pre-period baseline.
 ```
 
 **Edge cases:**

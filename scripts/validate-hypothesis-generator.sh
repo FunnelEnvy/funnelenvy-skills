@@ -408,6 +408,76 @@ check "purity covers archetype-defined lever-family tokens" \
   "NONZERO"
 echo ""
 
+echo "[19] Measurement-method-aware tactical feasibility"
+# (a) detect.md testing-method detection step: three-tier precedence + penalty-free default.
+# NONZERO checks use plain grep (not grep -c) per the block [15] note.
+check "detect.md has testing-method detection step (Step 1h)" \
+  "grep -c '^### Step 1h: Testing-Method Detection' skills/hypothesis-generator/phases/detect.md" \
+  "1"
+check "detect.md testing-method step has three-tier resolution precedence" \
+  "grep 'Resolution precedence (first match wins)' skills/hypothesis-generator/phases/detect.md" \
+  "NONZERO"
+check "detect.md testing-method step states the penalty-free no-regression default" \
+  "grep 'deliberate no-regression choice' skills/hypothesis-generator/phases/detect.md" \
+  "NONZERO"
+# (b) construct.md Step 5b method-branch names the tactical non-A/B path.
+check "construct.md Step 5b method branch names the non-A/B tactical method" \
+  "grep 'non-A/B tactical method' skills/hypothesis-generator/phases/construct.md" \
+  "NONZERO"
+check "construct.md Step 5b references testing_method" \
+  "grep 'testing_method' skills/hypothesis-generator/phases/construct.md" \
+  "NONZERO"
+# (b2) score.md Step 6 enforces the non-A/B read-window against the Quick-Win fast-signal bar (QA Open Issue #1).
+check "score.md Step 6 substitutes read-window for estimated_duration_weeks under non-A/B" \
+  "grep 'read-window length for' skills/hypothesis-generator/phases/score.md" \
+  "NONZERO"
+# (c) SKILL.md Quality Rules 10 and 16 carry the method-aware qualification.
+check "SKILL.md Quality Rule 10 is method-aware" \
+  "grep 'Test feasibility is honest, and method-aware' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+check "SKILL.md Quality Rule 16 keys on read-window under non-A/B method" \
+  "grep 'the bar keys on the read-window length' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+check "testing_method guarded in Deliverable Purity Constraint" \
+  "grep 'Testing-method field reference' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+echo ""
+
+echo "[20] Displacement-lesson primary-read propagation"
+# (a) detect.md Step 1g displacement / inverted-proxy read emits the displacement_surfaces annotation.
+# NONZERO checks use plain grep (not grep -c) per the block [15] note.
+check "detect.md Step 1g has the displacement / inverted-proxy read block" \
+  "grep -c 'Displacement / inverted-proxy read (net-new annotation)' skills/hypothesis-generator/phases/detect.md" \
+  "1"
+check "detect.md displacement read emits the displacement_surfaces annotation" \
+  "grep 'displacement_surfaces' skills/hypothesis-generator/phases/detect.md" \
+  "NONZERO"
+check "detect.md displacement read is tri-state and penalty-free" \
+  "grep 'behaves byte-identically to today' skills/hypothesis-generator/phases/detect.md" \
+  "NONZERO"
+# (b) construct.md Step 5 bounded primary-metric override + same-type bound + all-hypotheses consistency.
+check "construct.md Step 5 carries the displacement primary-metric override" \
+  "grep -c 'Displacement primary-metric override' skills/hypothesis-generator/phases/construct.md" \
+  "1"
+check "construct.md Step 5 override states the strictly same-type propagation bound" \
+  "grep 'strictly same-type surface the mechanism plausibly covers' skills/hypothesis-generator/phases/construct.md" \
+  "NONZERO"
+check "construct.md Step 5 override applies to every hypothesis on the surface (consistency)" \
+  "grep 'Apply the override to EVERY hypothesis targeting an in-scope surface' skills/hypothesis-generator/phases/construct.md" \
+  "NONZERO"
+# (c) construct.md Step 5a guardrail_primary reconciliation for the uninstrumented-downstream branch.
+check "construct.md Step 5a reconciles the uninstrumented-downstream displacement branch" \
+  "grep 'Displacement surface, uninstrumented downstream metric' skills/hypothesis-generator/phases/construct.md" \
+  "NONZERO"
+check "construct.md Step 5a states one rule with two instrumentation branches (no double-count)" \
+  "grep 'one rule with two instrumentation branches' skills/hypothesis-generator/phases/construct.md" \
+  "NONZERO"
+# (d) SKILL.md guards displacement_surfaces in the Deliverable Purity Constraint.
+check "displacement_surfaces guarded in Deliverable Purity Constraint" \
+  "grep 'displacement_surfaces' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+echo ""
+
 echo "=== Results ==="
 echo "  PASS: $PASS"
 echo "  FAIL: $FAIL"
