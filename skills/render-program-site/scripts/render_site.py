@@ -318,15 +318,27 @@ def extract_sections(body, kind):
 
     Returns {id: {"title", "key", "tier", "labels": {label: text}, "paras": [..]}}.
     `kind` is "bet" (id prefix `sb`), "test" (id prefix `p`), or "play" (id prefix
-    `ap`, the account-program altitude); the id ordinal is the `### N.` section
-    number. `tier` is the enclosing tier H2. Bold-labeled
+    `ap`, the account-program altitude). `tier` is the enclosing tier H2. Bold-labeled
     paragraphs (`**Label:** text` or `**Label.** text`) are collected into
     `labels` with the trailing `:`/`.` stripped; `**Key:**` is also surfaced as
     `key`. Numbered sections only appear under tier H2s in the gold format, so a
     numbered heading reached while no tier is active is still captured (tier None)
     and the gate reports it.
+
+    Id assignment depends on `kind`. For "bet"/"test", a `### N.` section with no
+    `**Key:**` label is a red-team **tombstone** (cro-roadmap-red-team keeps
+    removed/recast slots in place so audit-trail "Experiment N" cross-references
+    stay valid): it is skipped -- no item, no id -- and surviving sections receive
+    contiguous ids assigned in document order (`sb-01, sb-02, ...`; `p-01, ...`),
+    so a red-teamed roadmap still renders. For "play", the id is the raw `### N.`
+    ordinal and no section is skipped (account plays legitimately carry no
+    `**Key:**` by design).
     """
     prefix = {"bet": "sb", "test": "p", "play": "ap"}[kind]
+    # Tombstone-skip + contiguous survivor ids apply only to the two numbered
+    # roadmap altitudes. `kind == "play"` is exempt: account plays carry no
+    # `**Key:**` by design and keep their raw-ordinal `ap-NN` ids.
+    tombstone_kind = kind in ("bet", "test")
     lines = body.split("\n")
     cur_tier = None
     starts = []  # (line_idx, ordinal, title, tier)
@@ -338,6 +350,7 @@ def extract_sections(body, kind):
         elif ln.startswith("## "):
             cur_tier = _tier_key(ln[3:])
     out = {}
+    seq = 0  # contiguous survivor counter (bet/test only)
     for k, (idx, ordn, title, tier) in enumerate(starts):
         nxt = starts[k + 1][0] if k + 1 < len(starts) else len(lines)
         block_lines = []
@@ -346,12 +359,12 @@ def extract_sections(body, kind):
             if ln.startswith("## ") and not ln.startswith("### "):
                 break  # next top-level section ends this experiment's block
             block_lines.append(ln)
-        cid = "%s-%02d" % (prefix, ordn)
         # Line-based bold-label extraction. In the gold format several
         # `**Label:** value` lines sit consecutively in one paragraph (no blank
         # line between them), so labels are read per line, not per paragraph. A
         # label's value continues onto following plain lines until the next
-        # label, a blank line, a blockquote (`>`), or a heading.
+        # label, a blank line, a blockquote (`>`), or a heading. Extracted BEFORE
+        # the id is minted, because the tombstone-skip decision keys on `labels`.
         labels, paras = {}, []
         cur_label = None
         for raw in block_lines:
@@ -373,6 +386,24 @@ def extract_sections(body, kind):
                 labels[cur_label] = lm.group(2).strip()
             elif cur_label is not None:
                 labels[cur_label] = (labels[cur_label] + " " + stripped).strip()
+        # Red-team tombstone (bet/test only): a `### N.` section with no
+        # `**Key:**` LINE is a removed/recast slot kept in place for audit-trail
+        # continuity. Skip it -- emit no item, mint no id, never inspect
+        # `**Scores:**`. The predicate is line ABSENCE (`"Key" not in labels`),
+        # NOT a falsy value: a present-but-empty `**Key:**` keeps "Key" in
+        # `labels` (value ""), is therefore not a tombstone, flows through with
+        # `key` resolving to None, and must still hit load_*'s missing-Key raise
+        # (an authoring bug, distinct from a tombstone).
+        if tombstone_kind and "Key" not in labels:
+            continue
+        # Surviving bet/test ids are contiguous in document order (no holes),
+        # matching the sidecar's key-based renumbering and the on-disk filenames.
+        # Account plays keep the raw `### N.` ordinal.
+        if tombstone_kind:
+            seq += 1
+            cid = "%s-%02d" % (prefix, seq)
+        else:
+            cid = "%s-%02d" % (prefix, ordn)
         out[cid] = {"title": title, "key": labels.get("Key") or None,
                     "tier": tier, "labels": labels, "paras": paras}
     return out
