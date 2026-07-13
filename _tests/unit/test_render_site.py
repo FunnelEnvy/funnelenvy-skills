@@ -245,6 +245,41 @@ STRATEGIC_LEGACY = STRATEGIC.split("---\n", 2)[2]
 TACTICAL_LEGACY = TACTICAL.split("---\n", 2)[2]
 
 
+# --------------------------------------------------------------------------
+# Red-team tombstone fixtures (non-client). cro-roadmap-red-team keeps a
+# removed/recast experiment as an in-place `### N.` heading + explanatory note
+# with NO **Key:** and NO **Scores:**, so audit-trail "Experiment N" refs stay
+# valid. render_site.py must skip such a slot (no id, no item) and renumber the
+# surviving bets/tests contiguously. The tombstone is inserted BEFORE a survivor
+# so the id-gap-close is exercised; the existing SIDECAR (which keys only the
+# surviving bets/tests) is reused unchanged.
+# --------------------------------------------------------------------------
+
+STRATEGIC_TOMBSTONE = (STRATEGIC
+    .replace("### 1. Speed to first value", "### 2. Speed to first value")
+    .replace("### 2. Proof and ROI", "### 3. Proof and ROI")
+    .replace("### 3. Offer ladder", "### 4. Offer ladder")
+    .replace("## Strategic Bets\n", """## Strategic Bets
+
+### 1. Deprecated activation bet -- REMOVED
+Removed during the 2026-07-10 red-team pass: the premise was contradicted by the
+qualified-lead baseline. Heading kept so audit-trail "Experiment 1" references
+still resolve. No **Key:** and no **Scores:** -- this is a tombstone.
+""", 1))
+
+TACTICAL_TOMBSTONE = (TACTICAL
+    .replace("### 1. Intake-only CTA label test", "### 2. Intake-only CTA label test")
+    .replace("### 2. Conversational signup form", "### 3. Conversational signup form")
+    .replace("### 3. Old form test", "### 4. Old form test")
+    .replace("### 4. Proof block on pricing", "### 5. Proof block on pricing")
+    .replace("## Quick Wins\n", """## Quick Wins
+
+### 1. Abandoned hero copy test -- RECAST
+Recast during the red-team pass into the CTA label test below; heading kept so
+audit-trail "Experiment 1" cross-references resolve. No **Key:** / **Scores:**.
+""", 1))
+
+
 def _write_triple(strategic=STRATEGIC, tactical=TACTICAL, sidecar=SIDECAR):
     d = tempfile.mkdtemp()
     sp = os.path.join(d, "strategic.md")
@@ -900,6 +935,133 @@ class TestFoundationEndToEnd(unittest.TestCase):
         # both conditional nav links present
         self.assertIn('href="#measurement-foundation">Measurement foundation</a>', html)
         self.assertIn('href="#account-program">Account program</a>', html)
+
+
+# --------------------------------------------------------------------------
+# Red-team tombstone skip + contiguous survivor ids
+# --------------------------------------------------------------------------
+# A `### N.` gold section with no **Key:** line is a red-team tombstone: skipped
+# entirely (no id, no item, **Scores:** never inspected) in the bet/test
+# altitudes, with surviving ids renumbered contiguously in document order.
+
+class TestTombstoneSkip(unittest.TestCase):
+    def test_extract_sections_skips_tombstone_strategic(self):
+        _, body = rs.parse_frontmatter(STRATEGIC_TOMBSTONE)
+        secs = rs.extract_sections(body, "bet")
+        # only the three survivors, contiguous, no hole where the tombstone sat
+        self.assertEqual(sorted(secs.keys()), ["sb-01", "sb-02", "sb-03"])
+        self.assertEqual(secs["sb-01"]["key"], "speed-to-first-value")
+        self.assertEqual(secs["sb-03"]["key"], "offer-ladder")
+        # the tombstone title never becomes an item
+        titles = [s["title"] for s in secs.values()]
+        self.assertNotIn("Deprecated activation bet -- REMOVED", titles)
+
+    def test_extract_sections_skips_tombstone_tactical(self):
+        _, body = rs.parse_frontmatter(TACTICAL_TOMBSTONE)
+        secs = rs.extract_sections(body, "test")
+        self.assertEqual(sorted(secs.keys()), ["p-01", "p-02", "p-03", "p-04"])
+        self.assertEqual(secs["p-01"]["key"], "cta-label-test")
+        # superseded old-form-test is NOT a tombstone: it keeps its contiguous slot
+        self.assertEqual(secs["p-03"]["key"], "old-form-test")
+        titles = [s["title"] for s in secs.values()]
+        self.assertNotIn("Abandoned hero copy test -- RECAST", titles)
+
+    def test_load_and_gate_pass_with_tombstones(self):
+        # tombstones in BOTH altitudes; the unchanged sidecar keys only survivors
+        s, t, sc = _load_all(strategic=STRATEGIC_TOMBSTONE, tactical=TACTICAL_TOMBSTONE)
+        self.assertEqual([b["id"] for b in s["bets"]], ["sb-01", "sb-02", "sb-03"])
+        self.assertEqual([x["id"] for x in t["tests"]], ["p-01", "p-02", "p-03", "p-04"])
+        rs.run_gate(s, t, sc)  # must not raise; key-based edges resolve after renumber
+
+    def test_end_to_end_tombstone_render_omits_dead_slots(self):
+        d, sp, tp, ep = _write_triple(strategic=STRATEGIC_TOMBSTONE,
+                                      tactical=TACTICAL_TOMBSTONE)
+        out = os.path.join(d, "site")
+        self.assertEqual(rs.main(["--strategic", sp, "--tactical", tp,
+                                  "--edges", ep, "--out", out]), 0)
+        files = set(os.listdir(out))
+        # contiguous survivor spokes, no hole; superseded p-03 omitted as before
+        for f in ("sb-01.html", "sb-02.html", "sb-03.html",
+                  "p-01.html", "p-02.html", "p-04.html"):
+            self.assertIn(f, files)
+        self.assertNotIn("sb-04.html", files)
+        self.assertNotIn("p-03.html", files)
+        with open(os.path.join(out, "index.html")) as f:
+            html = f.read()
+        # tombstone titles never reach the hub, the map, or any card
+        self.assertNotIn("Deprecated activation bet", html)
+        self.assertNotIn("Abandoned hero copy test", html)
+
+
+class TestTombstoneDoesNotMaskAuthoringBug(unittest.TestCase):
+    def test_key_present_but_scores_missing_still_raises(self):
+        # conversational-signup-form keeps its **Key:** but loses **Scores:** --
+        # a real item with a real bug, not a tombstone; the load must still raise.
+        scores_missing = TACTICAL.replace(
+            "**Scores:** Impact 4 | Confidence 4 | Ease 3\n"
+            "Ease is 3 because it is a form rebuild.",
+            "This test's scores line was dropped by an authoring error.")
+        with self.assertRaises(ValueError) as cm:
+            _load_all(tactical=scores_missing)
+        self.assertIn("Scores", str(cm.exception))
+
+    def test_present_but_empty_key_still_raises_missing_key(self):
+        # a present-but-empty **Key:** keeps "Key" in labels (value ""), so it is
+        # NOT a tombstone; it flows through to the existing missing-Key raise.
+        empty_key = STRATEGIC.replace("**Key:** speed-to-first-value", "**Key:**")
+        _, body = rs.parse_frontmatter(empty_key)
+        secs = rs.extract_sections(body, "bet")
+        # the section is still present (not skipped) with a None key
+        self.assertEqual(sorted(secs.keys()), ["sb-01", "sb-02", "sb-03"])
+        self.assertIsNone(secs["sb-01"]["key"])
+        with self.assertRaises(ValueError) as cm:
+            _load_all(strategic=empty_key)
+        self.assertIn("Key", str(cm.exception))
+
+
+class TestTombstonePlayCarveOut(unittest.TestCase):
+    def test_account_plays_not_skipped_alongside_tombstones(self):
+        # A tombstone-bearing strategic/tactical pair PLUS the account program.
+        # Account plays carry no **Key:** by design, but `kind == "play"` is
+        # exempt from the tombstone skip: both plays must survive.
+        s, t, sc = _load_all(strategic=STRATEGIC_TOMBSTONE, tactical=TACTICAL_TOMBSTONE)
+        d = tempfile.mkdtemp()
+        ap = os.path.join(d, "account.md")
+        with open(ap, "w") as f:
+            f.write(ACCOUNT)
+        acct = rs.load_account(ap)
+        self.assertEqual([p["id"] for p in acct["plays"]], ["ap-01", "ap-02"])
+        # neither play was dropped despite carrying no Key
+        self.assertIsNone(acct["plays"][0]["section"]["key"])
+        rs.run_gate(s, t, sc, acct)  # account-binding leg must still pass
+
+    def test_extract_sections_play_kind_keeps_keyless_sections(self):
+        _, body = rs.parse_frontmatter(ACCOUNT)
+        plays_slice = rs.extract_named_section(body, "The Account-Level Plays")
+        secs = rs.extract_sections(plays_slice, "play")
+        # both keyless plays retained (would be dropped if the gate leaked to play)
+        self.assertEqual(sorted(secs.keys()), ["ap-01", "ap-02"])
+
+
+class TestNoTombstoneByteIdentical(unittest.TestCase):
+    def test_contiguous_equals_raw_ordinal_when_no_gaps(self):
+        # With no tombstones and no ordinal gaps, contiguous survivor ids equal
+        # the raw `### N.` ordinals -- the compatibility guarantee.
+        _, sbody = rs.parse_frontmatter(STRATEGIC)
+        _, tbody = rs.parse_frontmatter(TACTICAL)
+        self.assertEqual(sorted(rs.extract_sections(sbody, "bet").keys()),
+                         ["sb-01", "sb-02", "sb-03"])
+        self.assertEqual(sorted(rs.extract_sections(tbody, "test").keys()),
+                         ["p-01", "p-02", "p-03", "p-04"])
+
+    def test_no_tombstone_render_is_deterministic(self):
+        d, sp, tp, ep = _write_triple()
+        o1, o2 = os.path.join(d, "a"), os.path.join(d, "b")
+        rs.main(["--strategic", sp, "--tactical", tp, "--edges", ep, "--out", o1])
+        rs.main(["--strategic", sp, "--tactical", tp, "--edges", ep, "--out", o2])
+        with open(os.path.join(o1, "index.html")) as a, \
+                open(os.path.join(o2, "index.html")) as b:
+            self.assertEqual(a.read(), b.read())
 
 
 if __name__ == "__main__":

@@ -33,10 +33,13 @@ nested under tier H2s (`## Quick Wins` / `## Strategic Bets` / `## Explorations`
 each carrying a `**Key:**` line, a `**Scores:**` line, and bold-labeled prose.
 `render_site.py` derives:
 
-- `id` -- from the `### N.` section ordinal: strategic `### N.` -> `sb-NN`,
-  tactical `### N.` -> `p-NN`. (The Key is the stable human-facing join key; the
-  id is the deterministic positional handle used for anchors, filenames, and
-  map nodes.)
+- `id` -- assigned **contiguously over the surviving `### N.` sections in
+  document order** for the bet/test altitudes: strategic survivors -> `sb-01,
+  sb-02, ...`, tactical survivors -> `p-01, p-02, ...`. Tombstone sections (no
+  `**Key:**`; see `Red-team tombstones`) are not counted, so a red-teamed
+  roadmap yields a hole-free id sequence. (The Key is the stable human-facing
+  join key; the id is the deterministic positional handle used for anchors,
+  filenames, and map nodes.)
 - `key` -- the `**Key:** <slug>` value. Stable and immutable across re-renders
   (hypothesis-generator's Key carry-forward rule). The sidecar binds by Key.
 - `title` -- the `### N. Title` heading text.
@@ -205,6 +208,29 @@ class outside the item model:
 - A strategic roadmap without the section renders byte-identically to a render
   before this class existed (empty `{{MEASUREMENT_FOUNDATION}}` reproduces the
   hub seam; no nav link).
+
+## Red-team tombstones (skipped, never rendered)
+
+A gold `### N.` section with no `**Key:**` line is a **tombstone**.
+`cro-roadmap-red-team`'s removed/recast convention keeps the heading (and its
+explanatory note) in place so audit-trail "Experiment N" cross-references stay
+valid. `render_site.py` skips a tombstone entirely:
+
+- No id, never on the portfolio map, never a spoke, never in the gate, never
+  referenced by the sidecar (which lists only surviving bets/tests by `**Key:**`).
+- Surviving bet/test sections are renumbered contiguously in document order
+  (see the `id` derivation bullet), so a tombstone leaves no hole in the id
+  sequence. The only observable id shift is when a tombstone precedes a
+  surviving item; edges bind by Key, not id, so no edge target breaks.
+- A sidecar edge whose `target` names a tombstone is a **dangling target**
+  (check 2), not a parse crash: edge targets resolve against tactical test Keys
+  only, and a tombstone carries no key.
+- A roadmap with no tombstones (and no ordinal gaps) renders byte-identically to
+  a pre-tombstone render -- contiguous ids equal the raw ordinals.
+
+Account plays are **exempt**: they carry no `**Key:**` by design (raw-ordinal
+`ap-NN`, validated by the account-binding leg's ordinal-uniqueness check), so
+the tombstone rule is scoped to the bet/test altitudes only.
 
 ## Account program (optional off-store altitude)
 
