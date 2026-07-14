@@ -1064,5 +1064,73 @@ class TestNoTombstoneByteIdentical(unittest.TestCase):
             self.assertEqual(a.read(), b.read())
 
 
+class TestAuditDesignRestyle(unittest.TestCase):
+    """v0.7.0 editorial data-story restyle: five hub headline PROSE slots, a
+    code-emitted stats band, and audit-style backlog rows (not a card wall)."""
+
+    def _hub(self, strategic=STRATEGIC, account=None):
+        d, sp, tp, ep = _write_triple(strategic=strategic)
+        out = os.path.join(d, "site")
+        argv = ["--strategic", sp, "--tactical", tp, "--edges", ep, "--out", out]
+        if account is not None:
+            ap = os.path.join(d, "account.md")
+            with open(ap, "w") as f:
+                f.write(account)
+            argv += ["--account-program", ap]
+        self.assertEqual(rs.main(argv), 0)
+        with open(os.path.join(out, "index.html")) as f:
+            return f.read()
+
+    def test_headline_slots_have_label_defaults(self):
+        html = self._hub()
+        for name, default in (("strategy-headline", "The strategy"),
+                              ("backlog-headline", "The experiment backlog"),
+                              ("sequence-headline", "The sequence")):
+            self.assertIn("<!--PROSE id=program slot=%s-->%s<!--/PROSE-->" % (name, default), html)
+        # decisions headline default folds in the client name
+        self.assertIn("<!--PROSE id=program slot=decisions-headline-->"
+                      "Decisions we need from Acme Robotics<!--/PROSE-->", html)
+        # the retired token must not leak through as a literal
+        self.assertNotIn("{{DECISIONS_H2}}", html)
+
+    def test_foundation_headline_slot(self):
+        html = self._hub(strategic=STRATEGIC_MF)
+        self.assertIn("<!--PROSE id=program slot=foundation-headline-->"
+                      "The measurement foundation<!--/PROSE-->", html)
+
+    def test_stats_band_renders_and_holds_no_prose(self):
+        html = self._hub()
+        self.assertIn('class="program-stats"', html)
+        self.assertIn('class="statbox"', html)
+        # the band is fully code-authored -- no curation slot inside it
+        start = html.index('class="program-stats"')
+        end = html.index("</section>", start)
+        self.assertNotIn("<!--PROSE", html[start:end])
+        # placed between the hero and the map (neither seam-test boundary)
+        self.assertLess(html.index('class="hero"'), html.index('class="program-stats"'))
+        self.assertLess(html.index('class="program-stats"'), html.index('id="map"'))
+
+    def test_backlog_is_rows_not_card_wall(self):
+        html = self._hub()
+        self.assertIn('class="brow"', html)          # audit-style rows
+        self.assertIn('<span class="tag ', html)      # mono tier chip
+        # no account in this fixture, so no `.test-grid` card wall anywhere
+        self.assertNotIn('class="test-grid"', html)
+        self.assertNotIn('class="badge ', html)        # old pill badge retired
+
+    def test_account_cards_survive_restyle(self):
+        # account plays still render as `.test off` cards in a `.test-grid`
+        html = self._hub(account=ACCOUNT)
+        self.assertEqual(html.count('class="test off"'), 2)
+        self.assertIn('class="test-grid"', html)
+
+    def test_sequence_slot_defaults_empty_not_raw_dump(self):
+        # the sequence slot defaults empty (like decisions) -> standard placeholder,
+        # so an uncurated render never dumps the raw `## Sequencing` section as a blob
+        html = self._hub()
+        self.assertIn('<!--PROSE id=program slot=sequence--><span class="slot">'
+                      '[no source prose for sequence', html)
+
+
 if __name__ == "__main__":
     unittest.main()

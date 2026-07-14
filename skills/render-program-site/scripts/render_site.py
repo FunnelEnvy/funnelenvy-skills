@@ -1016,13 +1016,16 @@ def build_bet_cards(bets):
 
 
 def build_backlog(tier_groups, superseded):
+    """Audit-style rows grouped under tier headers (not a card wall). Each row: mono
+    number + title link (to the test spoke) + one-line page target + ICE + ladder chip
+    + a mono `.tag` tier chip. Superseded rows are dimmed, unscored, non-linking."""
     out = []
     for key in TIER_ORDER:
         tests = tier_groups.get(key, [])
         if not tests:
             continue
         label, css, caption = TIERS[key]
-        cards = []
+        rows = []
         for t in tests:
             if t["intake_only"]:
                 ladder = '<span class="ladder none">intake-only</span>'
@@ -1031,29 +1034,33 @@ def build_backlog(tier_groups, superseded):
                 first = tops[0]
                 extra = ", ".join(bet_label(x) for x in tops)
                 ladder = '<a class="ladder" href="index.html#%s">&#8593; %s</a>' % (first, esc(extra))
-            cards.append(
-                '<div class="test" id="%s"><div class="t-top"><span class="t-n">#%s</span>'
-                '<span class="badge %s">%s</span></div>'
-                '<h4><a href="%s.html">%s</a></h4><p class="t-page">%s</p>'
-                '<div class="t-foot"><span class="t-ice mono">ICE <b>%d</b> &middot; %s</span>%s</div></div>'
-                % (t["id"], test_num(t["id"]), css, esc(label), t["id"], esc(t["title"]),
-                   esc(t["target_page"]), ice_total(t["ice"]), ice_str(t["ice"]), ladder))
+            rows.append(
+                '<div class="brow" id="%s"><span class="b-n">#%s</span>'
+                '<span class="b-main"><a class="b-title" href="%s.html">%s</a>'
+                '<span class="b-page">%s</span></span>'
+                '<span class="b-meta"><span class="b-ice">ICE <b>%d</b> &middot; %s</span>'
+                '%s<span class="tag %s">%s</span></span></div>'
+                % (t["id"], test_num(t["id"]), t["id"], esc(t["title"]),
+                   esc(t["target_page"]), ice_total(t["ice"]), ice_str(t["ice"]),
+                   ladder, css, esc(label)))
         out.append('<div class="tier"><div class="tier-head %s"><h3>%s</h3>'
-                   '<span class="ct mono">%s</span></div><div class="test-grid">%s</div></div>'
-                   % (css, esc(label), esc(caption), "".join(cards)))
+                   '<span class="ct mono">%s</span></div><div class="brows">%s</div></div>'
+                   % (css, esc(label), esc(caption), "".join(rows)))
     if superseded:
-        cards = []
+        rows = []
         for t in superseded:
             note = (" %s" % t["superseded_by"]) if t["superseded_by"] else ""
-            cards.append(
-                '<div class="test dim" id="%s"><div class="t-top"><span class="t-n">#%s</span>'
-                '<span class="badge sup">Superseded</span></div><h4>%s</h4>'
-                '<p class="t-page">%s</p><div class="t-foot"><span class="t-ice mono">not scored</span>'
-                '<span class="ladder none">superseded%s</span></div></div>'
+            rows.append(
+                '<div class="brow dim" id="%s"><span class="b-n">#%s</span>'
+                '<span class="b-main"><span class="b-title">%s</span>'
+                '<span class="b-page">%s</span></span>'
+                '<span class="b-meta"><span class="b-ice">not scored</span>'
+                '<span class="ladder none">superseded%s</span>'
+                '<span class="tag sup">Superseded</span></span></div>'
                 % (t["id"], test_num(t["id"]), esc(t["title"]), esc(t["target_page"]), esc(note)))
         out.append('<div class="tier"><div class="tier-head"><h3>Superseded</h3>'
                    '<span class="ct mono">shipped or replaced</span></div>'
-                   '<div class="test-grid">%s</div></div>' % "".join(cards))
+                   '<div class="brows">%s</div></div>' % "".join(rows))
     return "\n".join(out)
 
 
@@ -1128,14 +1135,64 @@ def build_foundation_section(foundation):
     return (
         '<section id="measurement-foundation">\n  <div class="container">\n'
         '    <span class="eyebrow">Stand-up work</span>\n'
-        '    <h2>The measurement foundation</h2>\n'
+        '    <h2>%s</h2>\n'
         '    <p class="section-lead">%s</p>\n'
         '    <div class="mf-grid">%s</div>\n  </div>\n</section>'
-        % (slot("program", "foundation-lead",
+        % (slot("program", "foundation-headline", "The measurement foundation"),
+           slot("program", "foundation-lead",
                 "Definition and instrumentation work the experiments below depend on. "
                 "These are not scored experiments; they are prerequisites the analytics "
                 "or operations team can stand up independently of the program."),
            "".join(cards)))
+
+
+def build_stats_band(strategic, tactical, derived):
+    """Build the hub `<section class="program-stats">` band, or '' when there are no
+    active tests. Deterministic and LLM-free: each stat is derived from already-parsed
+    data, the number is the star, and the caption carries a claim (it reframes, it does
+    not just name). Bare-count boxes are dropped rather than padding the band. The band
+    is fully code-authored -- it holds no PROSE slot, so a re-render reproduces it exactly.
+    """
+    bets = strategic["bets"]
+    active = [t for t in tactical["tests"] if t["status"] != "superseded"]
+    total = len(active)
+    if total == 0:
+        return ""
+    boxes = []  # (color_class, number, claim_caption)
+
+    # 1. How much of the backlog executes a strategic bet (strategy-led vs scattered).
+    laddered = sum(1 for t in active if not t["intake_only"])
+    if laddered:
+        if laddered == total:
+            cap = "every page test executes a strategic bet, so nothing in the backlog is a stray idea"
+        else:
+            cap = "page tests execute a strategic bet; the rest are standalone intake tests"
+        boxes.append(("blue", "%d/%d" % (laddered, total), cap))
+
+    # 2. Quick wins that can run before any stand-up work (front-loaded value).
+    quick = len(derived["tier_groups"].get(TIER_ORDER[0], []))
+    if quick:
+        label = TIERS[TIER_ORDER[0]][0].lower()
+        boxes.append(("green", "%d/%d" % (quick, total),
+                      "are %s: high-confidence, high-ease tests that run before any stand-up work" % label))
+
+    # 3. One further claim, only if the data supports a real one (never a bare count).
+    mocked = sum(1 for t in active if t.get("mockup"))
+    if mocked:
+        boxes.append(("purple", "%d/%d" % (mocked, total),
+                      "already carry a built visual mockup, so the change is specified, not hand-waved"))
+    elif bets and all(b.get("decided_on") for b in bets):
+        boxes.append(("blue", "%d" % len(bets),
+                      "strategic bets, each decided on a down-funnel metric the business already tracks"))
+
+    if not boxes:
+        return ""
+    cards = "".join(
+        '<div class="statbox"><div class="n %s">%s</div><div class="k">%s</div></div>' % (color, num, cap)
+        for color, num, cap in boxes)
+    return ('<section class="program-stats">\n  <div class="container">\n'
+            '    <span class="eyebrow">What the portfolio adds up to</span>\n'
+            '    <div class="stat-grid">%s</div>\n  </div>\n</section>' % cards)
 
 
 def build_hub(strategic, tactical, derived, templates, account=None):
@@ -1171,25 +1228,29 @@ def build_hub(strategic, tactical, derived, templates, account=None):
                          '<p>%s</p></div>'
                          % slot("program", "keystone", ks_seed))
 
-    seq_src = extract_named_section(strategic_body_cache.get("strategic", ""), "Sequencing")
     main = render(templates["hub"], {
         "PROVENANCE": prov,
         "HERO_H1": h1,
         "HERO_SUB": slot("program", "hero-sub", hero.get("subhead", "")),
+        "PROGRAM_STATS": build_stats_band(strategic, tactical, derived),
         "ALT1": slot("program", "altitude-1", "Program-level moves decided on the business objective."),
         "ALT2": slot("program", "altitude-2", "Page-level tests decided on the metric each page can read."),
         "MAP_LEAD": slot("program", "map-lead", ""),
         "MAP_SVG": build_map_svg(bets, tests),
         "MAP_NOTE": slot("program", "map-note", ""),
+        "STRATEGY_HEADLINE": slot("program", "strategy-headline", "The strategy"),
         "STRATEGY_LEAD": slot("program", "strategy-lead", ""),
         "KEYSTONE": keystone_html,
         "BET_CARDS": build_bet_cards(bets),
+        "BACKLOG_HEADLINE": slot("program", "backlog-headline", "The experiment backlog"),
         "BACKLOG_LEAD": slot("program", "backlog-lead", ""),
         "BACKLOG": build_backlog(derived["tier_groups"], derived["superseded"]),
         "MEASUREMENT_FOUNDATION": build_foundation_section(strategic.get("foundation") or []),
         "ACCOUNT_PROGRAM": build_account_section(account, program),
-        "SEQUENCE": slot("program", "sequence", seq_src),
-        "DECISIONS_H2": "Decisions we need from %s" % client,
+        "SEQUENCE_HEADLINE": slot("program", "sequence-headline", "The sequence"),
+        "SEQUENCE": slot("program", "sequence", ""),
+        "DECISIONS_HEADLINE": slot("program", "decisions-headline",
+                                   "Decisions we need from %s" % program.get("client", "")),
         "DECISIONS_LEAD": slot("program", "decisions-lead", ""),
         "DECISIONS": slot("program", "decisions", ""),
         "FOOT": "%s (%s) &middot; prepared by FunnelEnvy &middot; <span class=\"mono\">%s</span>"
@@ -1366,7 +1427,7 @@ def build_spoke_account(play, account, program, templates):
 # Asset handling + write
 # --------------------------------------------------------------------------
 
-strategic_body_cache = {}  # stash strategic body for hub sequence extraction
+strategic_body_cache = {}  # stash the sidecar dir for mockup asset resolution
 
 
 def copy_mockup_assets(t, mk, out_dir):
@@ -1462,10 +1523,7 @@ def main(argv=None):
     tactical = load_tactical(args.tactical, sidecar)
     account = load_account(args.account_program)
     link_edges(strategic, tactical)
-    # stash bodies/paths for hub sequence extraction + mockup asset resolution
-    with open(args.strategic, encoding="utf-8") as fh:
-        _, sbody = parse_frontmatter(fh.read(), required=False)
-    strategic_body_cache["strategic"] = sbody
+    # stash the sidecar dir for mockup asset resolution
     strategic_body_cache["sidecar_dir"] = os.path.dirname(os.path.abspath(args.edges))
 
     try:
