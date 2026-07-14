@@ -1,6 +1,6 @@
 ---
 name: render-program-site
-version: "0.6.0"
+version: "0.7.0"
 description: >
   Render a two-altitude program site from two markdown inputs (a strategic layer of bets
   and a tactical roadmap of page tests): a hub plus one spoke per bet and per test, with
@@ -8,7 +8,7 @@ description: >
   program site", "program site", "strategic + tactical roadmap site", or the explicit
   /render-program-site invocation. Deterministic generator for the gate, map, and
   structure; scoped LLM pass curates spoke prose.
-updated: 2026-07-13
+updated: 2026-07-14
 ---
 
 # Render Program Site
@@ -188,10 +188,20 @@ detail, inconclusive-protocol detail, full score rationale, win/loss/key-risk bl
 bundled-element disclosures stay in the source markdown and are NOT rendered to the site.
 
 You MUST NOT alter anything outside the prose slots -- the gate result, map coordinates
-(cx/cy), edge type labels, ICE values, tier badges, chips, links, and all structure are
-emitted by the script and are never agent-authored. The hub `sequence` and `decisions` slots
-are assembled from the source `## Sequencing` / decisions sections into the `.tl` / `.dec-grid`
-structures the comps use.
+(cx/cy), edge type labels, ICE values, tier tags, chips, links, the portfolio stats band, and
+all structure are emitted by the script and are never agent-authored. The hub `sequence` and
+`decisions` slots are assembled from the source `## Sequencing` / decisions sections into the
+`.tl` / `.dec-grid` structures the comps use.
+
+The five hub section headlines are prose slots on page id `program`: `strategy-headline`,
+`backlog-headline`, `sequence-headline`, `decisions-headline`, and (when a Measurement
+Foundation is present) `foundation-headline`. Each is pre-filled with its section's former
+label ("The strategy", etc.), so an uncurated regen still renders sanely. Curate each into a
+full-sentence **claim** that states what the section's content means together -- an insight
+statement one abstraction level above the items it summarizes and fully supported by them (a
+section header is an insight, not a topic label). The mono uppercase eyebrow stays as the
+section label above the claim. The portfolio stats band (`.program-stats`) is code-authored
+from parsed data and carries no slot -- never edit it.
 
 When a Measurement Foundation section is present, its hub slots are curated the same way:
 `foundation-lead` introduces the section and each `foundation-<n>` slot maps from that
@@ -264,6 +274,7 @@ not part of this skill).
 
 | Version | Changes |
 |---|---|
+| 0.7.0 | Editorial data-story design language. The output is restyled from a dashboard to an editorial data-story: mono uppercase eyebrows over full-sentence claim headlines, flat white with hairline framing instead of card shadows, a larger type scale (17px body; hub `h2` 30px/800; spoke `h1` 38px), and IBM Plex Mono leaned on as a data face (tags, numbers, labels, `tnum`). Three generator changes: (1) the five hub section headings become PROSE slots on page id `program` -- `strategy-headline`, `backlog-headline`, `sequence-headline`, `decisions-headline`, `foundation-headline` -- each pre-filled with its former label so an uncurated regen still renders, and the mono eyebrow stays as the section label; (2) a new code-emitted `.program-stats` band (deterministic, no slot; claim-captioned `.statbox` numbers derived from parsed data, placed between the hero and the map); (3) the backlog card wall becomes audit-style `.brow` rows (number + title + page + ICE + ladder + mono `.tag` tier chip) under the existing tier headers. Bet cards and account `.test off` cards stay cards but restyle flat via CSS; the retired `.badge` pill is replaced by `.tag`. Templates: `hub.html` gains the headline tokens + `{{PROGRAM_STATS}}`; `base.html` and the three spoke templates are unchanged (nav-mono, hero-scale, `.sec` grammar are CSS-only). Map geometry, edge/gate logic, and every existing slot id are untouched; four new `program` headline slots (plus `foundation-headline`) are added. 1 new unit-test class (5 cases). |
 | 0.6.0 | Red-team tombstone skip. `render_site.py` now skips a red-team **tombstone** slot (a `### N.` gold section with no `**Key:**` line, kept in place by `cro-roadmap-red-team` so audit-trail "Experiment N" cross-references stay valid) in the bet/test altitudes instead of crashing on the missing `**Key:**`/`**Scores:**`, and assigns surviving bet/test ids **contiguously in document order** (`sb-01, sb-02, ...`; `p-01, p-02, ...`) so a red-teamed roadmap renders with a hole-free id sequence. This unblocks re-rendering any roadmap that has been through a red-team pass. Compatibility: a roadmap with no tombstones and no ordinal gaps renders **byte-identically** to 0.5.x (contiguous ids equal the raw ordinals); the only output shift is when a tombstone precedes a surviving item, where the survivor ids close the gap. A present-but-empty `**Key:**` is an authoring bug, not a tombstone, and still raises. Account plays are exempt and keep raw-ordinal `ap-NN` ids (unchanged). Documented in `edge-contract.md` (`Red-team tombstones` subsection + the contiguous-over-survivors `id` derivation bullet). 4 new unit-test classes. |
 | 0.5.2 | Legacy-lane fix: `render_site.py` now loads frontmatter-less roadmaps as body-only files (hypothesis-generator's legacy deliverables carry no YAML frontmatter by design; the documented legacy default inputs previously crashed the parser), and gate check 7 skips the sidecar version lock per-file when a roadmap carries no `version`, reporting the skip as an explicit `note:` line on stdout (never silent). KB gold roadmaps always carry `version`, so that lane locks exactly as before; mixed pairs still fail closed on real skew in the versioned file. Semantics documented in `edge-contract.md` check 7 and Preconditions. Also: fixed the dead `#kb-mode-dual-mode-io` anchor left by the 0.5.1 section rename; "override mode resolution" wording aligned to "override the mode-resolved inputs"; Phase 2 command block now uses the probe-then-run `$PY` pattern with the full `skills/render-program-site/scripts/` path; Phase 3 curation instruction rewritten to match the generator's actual pre-filled slot labels (the previously cited label-to-region map never existed in `edge-contract.md`). 8 new unit tests. |
 | 0.5.1 | Repo-audit doc corrections, no generator change. Mode resolution rewritten to match hypothesis-generator/experiment-mockup exactly: KB binding detection alone selects KB mode (previously step 2 said binding AND a valid `--scope` select it while step 3 said a missing `--scope` in KB mode is a HARD STOP -- contradictory); `--scope` names the scope (required in KB mode, warn-and-ignore in legacy) and never selects the mode. Section renamed `KB Mode (Dual-Mode Output)` to match the header the other dual-mode skills use and cross-reference. Added the Model declaration (Opus for the curation/humanizer passes). Also gains the `modules/kb-mode.md` canonical-contract pointer in its KB-mode section (drift canary enforced by `scripts/registry_check.py`). |
