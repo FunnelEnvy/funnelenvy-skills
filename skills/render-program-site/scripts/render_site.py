@@ -1228,7 +1228,6 @@ def build_hub(strategic, tactical, derived, templates, account=None):
                          '<p>%s</p></div>'
                          % slot("program", "keystone", ks_seed))
 
-    seq_src = extract_named_section(strategic_body_cache.get("strategic", ""), "Sequencing")
     main = render(templates["hub"], {
         "PROVENANCE": prov,
         "HERO_H1": h1,
@@ -1249,7 +1248,7 @@ def build_hub(strategic, tactical, derived, templates, account=None):
         "MEASUREMENT_FOUNDATION": build_foundation_section(strategic.get("foundation") or []),
         "ACCOUNT_PROGRAM": build_account_section(account, program),
         "SEQUENCE_HEADLINE": slot("program", "sequence-headline", "The sequence"),
-        "SEQUENCE": slot("program", "sequence", seq_src),
+        "SEQUENCE": slot("program", "sequence", ""),
         "DECISIONS_HEADLINE": slot("program", "decisions-headline",
                                    "Decisions we need from %s" % program.get("client", "")),
         "DECISIONS_LEAD": slot("program", "decisions-lead", ""),
@@ -1428,7 +1427,7 @@ def build_spoke_account(play, account, program, templates):
 # Asset handling + write
 # --------------------------------------------------------------------------
 
-strategic_body_cache = {}  # stash strategic body for hub sequence extraction
+strategic_body_cache = {}  # stash the sidecar dir for mockup asset resolution
 
 
 def copy_mockup_assets(t, mk, out_dir):
@@ -1524,10 +1523,7 @@ def main(argv=None):
     tactical = load_tactical(args.tactical, sidecar)
     account = load_account(args.account_program)
     link_edges(strategic, tactical)
-    # stash bodies/paths for hub sequence extraction + mockup asset resolution
-    with open(args.strategic, encoding="utf-8") as fh:
-        _, sbody = parse_frontmatter(fh.read(), required=False)
-    strategic_body_cache["strategic"] = sbody
+    # stash the sidecar dir for mockup asset resolution
     strategic_body_cache["sidecar_dir"] = os.path.dirname(os.path.abspath(args.edges))
 
     try:

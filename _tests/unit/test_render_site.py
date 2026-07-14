@@ -1124,6 +1124,13 @@ class TestAuditDesignRestyle(unittest.TestCase):
         self.assertEqual(html.count('class="test off"'), 2)
         self.assertIn('class="test-grid"', html)
 
+    def test_sequence_slot_defaults_empty_not_raw_dump(self):
+        # the sequence slot defaults empty (like decisions) -> standard placeholder,
+        # so an uncurated render never dumps the raw `## Sequencing` section as a blob
+        html = self._hub()
+        self.assertIn('<!--PROSE id=program slot=sequence--><span class="slot">'
+                      '[no source prose for sequence', html)
+
 
 if __name__ == "__main__":
     unittest.main()
