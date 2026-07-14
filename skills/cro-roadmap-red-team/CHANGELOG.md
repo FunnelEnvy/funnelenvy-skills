@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.0] - 2026-07-14
+
+### Changed
+- Prose-style guidance consolidated to the shared `modules/prose-craft.md` humanizer / anti-AI-writing module in both `agent-header.md` and `SKILL.md`. The generic "no em dashes; blunt, direct" clause now points at the module (em dashes, blunt/direct, the full sign set); the "every claim tied to a cited source" / cite-or-it-is-not-a-finding independence posture stays local and unchanged. Faithful refactor with an intended broadening to the full sign set. [prose-craft-module-consolidation]
+
 ## [0.1.0] - 2026-07-05
 
 ### Added

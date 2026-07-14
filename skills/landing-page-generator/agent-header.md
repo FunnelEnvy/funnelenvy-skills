@@ -74,6 +74,6 @@ When voice context is unavailable, ask the human for:
 - Any terms to avoid
 - Required legal disclaimers
 
-## Em Dashes
+## Prose Style
 
-Never use em dashes anywhere. Use colons, commas, or separate sentences instead.
+Follow the shared humanizer / anti-AI-writing reference [`modules/prose-craft.md`](../../modules/prose-craft.md) for all authored copy and design prose. It is canonical for em dashes (banned; use colons, commas, or separate sentences), hedging, and the full sign set. This is a prose-reading discipline; it does not override the context-driven Voice Rules or the "Banned terms are absolute" rule above.

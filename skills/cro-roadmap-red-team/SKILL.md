@@ -1,8 +1,8 @@
 ---
 name: cro-roadmap-red-team
-version: 0.1.0
+version: 0.2.0
 description: "When the user wants to independently red-team, stress-test, or critique a produced CRO roadmap (experiment roadmap or strategic roadmap) before it ships. Also use when the user mentions 'red team,' 'red-team the roadmap,' 'critique the roadmap,' 'stress-test the hypotheses,' 'pressure-test the experiments,' 'are these experiments sound,' or 'independent review of the roadmap.' Re-derives each hypothesis cold from its cited evidence, grades the roadmap's own self-critiques (rebut vs deflect), runs a cross-cutting structural checklist, and emits per-item dispositions plus a routed research backlog. In KB mode (see KB Mode (Dual-Mode Output)) it reads the scope's gold roadmaps. No research, no web fetches, no edits to the target."
-updated: 2026-07-05
+updated: 2026-07-14
 ---
 
 # CRO Roadmap Red-Team
@@ -169,7 +169,7 @@ One standalone critique document, dated in the body header, written to the resol
 - A genuinely sound item can reach a **keep** disposition with no change (negative-control property): the skill does not manufacture critique.
 - The overall verdict names the single most material finding first.
 - No research, no web/API calls, no edits to the target roadmap, no `.claude/context/` writes, no generated replacement hypotheses.
-- No em dashes; blunt and direct; every claim tied to a cited source.
+- Prose style follows [`modules/prose-craft.md`](../../modules/prose-craft.md) (no em dashes, blunt and direct, the full humanizer sign set); every claim tied to a cited source (this skill's independence posture, kept local).
 
 ## Changelog
 
