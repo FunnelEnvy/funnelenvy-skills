@@ -6,6 +6,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-07-14
+
 ### 2026-07-14 prose-craft module consolidation
 
 #### Added
