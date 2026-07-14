@@ -6,6 +6,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 2026-07-14 prose-craft module consolidation
+
+#### Added
+- **modules/prose-craft.md**: new shared humanizer / anti-AI-writing module (on the `copy-craft.md` precedent), consolidating the prose-craft guidance that was scattered across four skills. Preserves the former 10-sign humanizer list verbatim in intent and adds 9 non-duplicative StrategyU signs (lazy descriptors, copula avoidance, synonym cycling, nominalization, fake-precision hedging, awkward verb-noun pairings, anthropomorphized data, staccato noun-phrase lists, structural tells), with a repo-stricter conflict rule (the absolute em-dash ban overrides StrategyU's one-per-section allowance).
+
+#### Changed
+- **render-program-site** (0.8.0): Phase 4 humanizer pass and References table repointed at `modules/prose-craft.md`; the skill-local humanizer reference under `references/` (and that now-empty directory) deleted.
+- **hypothesis-generator** (1.15.1): Quality Rules 8-9 (em dashes, hedge words) collapsed into a single Rule 8 referencing the module; `prose-craft.md` added to the Phase 1 hard module-resolution guard.
+- **landing-page-generator** (2.0.3): `agent-header.md` `## Em Dashes` section replaced by a `## Prose Style` module reference; context-driven Voice Rules and "Banned terms are absolute" unchanged.
+- **cro-roadmap-red-team** (0.2.0): the generic prose-style clause in `agent-header.md` and `SKILL.md` repointed at the module; the cite-or-it-is-not-a-finding independence posture kept local.
+
 ### 2026-07-07 audit sweep
 
 #### Fixed

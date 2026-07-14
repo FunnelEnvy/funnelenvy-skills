@@ -1,6 +1,6 @@
 ---
 name: render-program-site
-version: "0.7.0"
+version: "0.8.0"
 description: >
   Render a two-altitude program site from two markdown inputs (a strategic layer of bets
   and a tactical roadmap of page tests): a hub plus one spoke per bet and per test, with
@@ -223,7 +223,7 @@ When an account program is present, its prose slots are curated the same way: th
 ### Phase 4 -- Humanizer pass
 
 Run the curated prose (slot contents only) through one humanizer pass applying
-[`references/ai-writing-signs.md`](references/ai-writing-signs.md). Verbatim-quoted source
+[`modules/prose-craft.md`](../../modules/prose-craft.md). Verbatim-quoted source
 passages are exempt; the pass targets agent-authored prose. No em dashes.
 
 ### Phase 5 -- Completion message
@@ -246,7 +246,7 @@ not part of this skill).
 | Reference | Description | Load when |
 |---|---|---|
 | [`edge-contract.md`](edge-contract.md) | Input schemas, the 7-check gate, derived data, and the verbatim type-label map | Always (authoring/migrating inputs, Phase 2/3) |
-| [`references/ai-writing-signs.md`](references/ai-writing-signs.md) | Embedded AI-writing-sign rules for the humanizer pass | Phase 4 |
+| [`modules/prose-craft.md`](../../modules/prose-craft.md) | Shared humanizer / anti-AI-writing rules for the Phase 4 humanizer pass | Phase 4 |
 
 ## Output Files
 
@@ -280,6 +280,7 @@ not part of this skill).
 
 | Version | Changes |
 |---|---|
+| 0.8.0 | Humanizer pass consolidated to the shared `modules/prose-craft.md` module. Phase 4 and the References table now point at [`modules/prose-craft.md`](../../modules/prose-craft.md) instead of the deleted skill-local humanizer reference under `references/` (the empty directory drops out). The module preserves the former 10-sign list verbatim in intent and adds 9 non-duplicative StrategyU signs (lazy descriptors, copula avoidance, synonym cycling, nominalization, fake-precision hedging, awkward verb-noun pairings, anthropomorphized data, staccato noun-phrase lists, structural tells), so the Phase 4 pass now applies the fuller sign set. No generator change; templates, gate, map, and slots are untouched. |
 | 0.7.0 | Editorial data-story design language. The output is restyled from a dashboard to an editorial data-story: mono uppercase eyebrows over full-sentence claim headlines, flat white with hairline framing instead of card shadows, a larger type scale (17px body; hub `h2` 30px/800; spoke `h1` 38px), and IBM Plex Mono leaned on as a data face (tags, numbers, labels, `tnum`). Three generator changes: (1) the five hub section headings become PROSE slots on page id `program` -- `strategy-headline`, `backlog-headline`, `sequence-headline`, `decisions-headline`, `foundation-headline` -- each pre-filled with its former label so an uncurated regen still renders, and the mono eyebrow stays as the section label; (2) a new code-emitted `.program-stats` band (deterministic, no slot; claim-captioned `.statbox` numbers derived from parsed data, placed between the hero and the map); (3) the backlog card wall becomes audit-style `.brow` rows (number + title + page + ICE + ladder + mono `.tag` tier chip) under the existing tier headers. Bet cards and account `.test off` cards stay cards but restyle flat via CSS; the retired `.badge` pill is replaced by `.tag`. Templates: `hub.html` gains the headline tokens + `{{PROGRAM_STATS}}`; `base.html` and the three spoke templates are unchanged (nav-mono, hero-scale, `.sec` grammar are CSS-only). Map geometry, edge/gate logic, and every existing slot id are untouched; four new `program` headline slots (plus `foundation-headline`) are added. The hub `sequence` slot now defaults empty (like `decisions`) instead of pre-filling the raw `## Sequencing` section, so an uncurated render degrades to the standard slot placeholder rather than a wall of text; the Phase 3 curation contract gains a concrete `.tl-row` timeline shape and a distill-not-dump directive. 1 new unit-test class (6 cases). |
 | 0.6.0 | Red-team tombstone skip. `render_site.py` now skips a red-team **tombstone** slot (a `### N.` gold section with no `**Key:**` line, kept in place by `cro-roadmap-red-team` so audit-trail "Experiment N" cross-references stay valid) in the bet/test altitudes instead of crashing on the missing `**Key:**`/`**Scores:**`, and assigns surviving bet/test ids **contiguously in document order** (`sb-01, sb-02, ...`; `p-01, p-02, ...`) so a red-teamed roadmap renders with a hole-free id sequence. This unblocks re-rendering any roadmap that has been through a red-team pass. Compatibility: a roadmap with no tombstones and no ordinal gaps renders **byte-identically** to 0.5.x (contiguous ids equal the raw ordinals); the only output shift is when a tombstone precedes a surviving item, where the survivor ids close the gap. A present-but-empty `**Key:**` is an authoring bug, not a tombstone, and still raises. Account plays are exempt and keep raw-ordinal `ap-NN` ids (unchanged). Documented in `edge-contract.md` (`Red-team tombstones` subsection + the contiguous-over-survivors `id` derivation bullet). 4 new unit-test classes. |
 | 0.5.2 | Legacy-lane fix: `render_site.py` now loads frontmatter-less roadmaps as body-only files (hypothesis-generator's legacy deliverables carry no YAML frontmatter by design; the documented legacy default inputs previously crashed the parser), and gate check 7 skips the sidecar version lock per-file when a roadmap carries no `version`, reporting the skip as an explicit `note:` line on stdout (never silent). KB gold roadmaps always carry `version`, so that lane locks exactly as before; mixed pairs still fail closed on real skew in the versioned file. Semantics documented in `edge-contract.md` check 7 and Preconditions. Also: fixed the dead `#kb-mode-dual-mode-io` anchor left by the 0.5.1 section rename; "override mode resolution" wording aligned to "override the mode-resolved inputs"; Phase 2 command block now uses the probe-then-run `$PY` pattern with the full `skills/render-program-site/scripts/` path; Phase 3 curation instruction rewritten to match the generator's actual pre-filled slot labels (the previously cited label-to-region map never existed in `edge-contract.md`). 8 new unit tests. |

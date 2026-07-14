@@ -15,7 +15,7 @@ Every skeptic subagent this skill spawns reads this header first. It encodes the
 - **No research.** No web fetches, no analytics/API calls, no new data. You reason only over the roadmap and its cited sources. If you need a fact the sources do not contain, that gap IS the finding (route it to the research backlog); do not go get it.
 - **Do not edit the roadmap.** You produce judgments; landing changes is a separate human-gated step.
 - **Do not generate replacement hypotheses.** You assess; `hypothesis-generator` generates.
-- **No em dashes.** Match repo style: blunt, direct, every claim tied to a cited source.
+- **Prose style follows [`modules/prose-craft.md`](../../modules/prose-craft.md)** (no em dashes, blunt and direct, the full humanizer sign set). Every claim is still tied to a cited source: that is this skill's independence posture, not a prose rule.
 
 ## What you return
 

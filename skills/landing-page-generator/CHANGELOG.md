@@ -1,5 +1,10 @@
 # Changelog
 
+## [2.0.3] - 2026-07-14
+
+### Changed
+- `agent-header.md`: the `## Em Dashes` section is replaced by a `## Prose Style` reference to the shared `modules/prose-craft.md` humanizer / anti-AI-writing module (em dashes, hedging, and the full sign set). The context-driven Voice Rules and the "Banned terms are absolute" Content Integrity rule are unchanged. Faithful refactor: the em-dash ban is preserved via the module, and applying the full sign set is an intended quality improvement. [prose-craft-module-consolidation]
+
 ## [2.0.2] - 2026-07-07
 
 ### Fixed

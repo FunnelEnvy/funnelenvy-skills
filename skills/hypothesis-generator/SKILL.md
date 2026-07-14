@@ -1,8 +1,8 @@
 ---
 name: hypothesis-generator
-version: 1.15.0
+version: 1.15.1
 description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. In KB mode (see KB Mode (Dual-Mode Output)), reads the scope's silver CRO artifacts from a bound knowledge base and writes a typed gold-experiment-roadmap artifact instead. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
-updated: 2026-07-07
+updated: 2026-07-14
 ---
 
 # Hypothesis Generator
@@ -253,7 +253,7 @@ Wait for response. If content is provided, treat it as supplementary page contex
 
 ### Phase 1: Context Discovery and Loading
 
-**Module resolution and availability (do this before loading any module).** Every `modules/<name>.md` reference in this skill and its phase files is repository-root-relative: the shared library lives in the `modules/` directory at the repo root, a sibling of `skills/`, NOT inside this skill's own folder. When the skill is invoked from a symlinked or installed location (e.g., `~/.claude/skills/hypothesis-generator/`), resolve this skill's real path first (follow the symlink), then load `modules/` from the repository root (the parent of `skills/`). If the required library (`experiment-patterns.md`, `ice-scoring.md`, `contrarian-triggers.md`, `hypothesis-interactions.md`, `copy-craft.md`, `slugify.md`) cannot be located and read, STOP and report that the shared pattern library is unavailable. Do NOT substitute embedded or remembered CRO patterns, ICE calibration, contrarian/interaction logic, copy-craft rules, or slug-minting rules: a roadmap produced without the library is not valid output, and a plausible-looking silent fallback is the exact failure this guard prevents. (`copy-craft.md` governs every copy-bearing hypothesis via `phases/construct.md`; `slugify.md` governs key minting under Quality Rule 18.)
+**Module resolution and availability (do this before loading any module).** Every `modules/<name>.md` reference in this skill and its phase files is repository-root-relative: the shared library lives in the `modules/` directory at the repo root, a sibling of `skills/`, NOT inside this skill's own folder. When the skill is invoked from a symlinked or installed location (e.g., `~/.claude/skills/hypothesis-generator/`), resolve this skill's real path first (follow the symlink), then load `modules/` from the repository root (the parent of `skills/`). If the required library (`experiment-patterns.md`, `ice-scoring.md`, `contrarian-triggers.md`, `hypothesis-interactions.md`, `copy-craft.md`, `prose-craft.md`, `slugify.md`) cannot be located and read, STOP and report that the shared pattern library is unavailable. Do NOT substitute embedded or remembered CRO patterns, ICE calibration, contrarian/interaction logic, copy-craft rules, prose-craft rules, or slug-minting rules: a roadmap produced without the library is not valid output, and a plausible-looking silent fallback is the exact failure this guard prevents. (`copy-craft.md` governs every copy-bearing hypothesis via `phases/construct.md`; `prose-craft.md` governs roadmap prose style under Quality Rule 8; `slugify.md` governs key minting under Quality Rule 18.)
 
 0. **Mode resolution** -- run the `Mode Resolution Procedure` from `KB Mode (Dual-Mode Output)`. In legacy mode, continue below unchanged. In KB mode, steps 1-2 read the scope's artifacts per `Read-side Mapping` instead of the `.claude/context/` glob, and the handoff check uses the KB-mode branches noted below. In KB mode, the optional experiment-history input (the external producer KB's gold index plus the silver insights it links, OR the in-output-KB `schema: experiment-history` silver artifact plus the per-experiment gold insight guides it summarizes, per `Read-side Mapping`) is resolved and loaded alongside the other optional silver reads here -- read-only; its `depends_on` treatment diverges by source (external producer: no edge; in-KB silver history doc: edge recorded), per `Read-side Mapping` and `Output Mapping and Frontmatter Contract` -- and is consumed by `phases/detect.md` (Step 1g enrichment leg) and `phases/score.md` (Step 4 replication modifier + Step 7 sequencing). It adds no phase/module file.
 1. Glob `.claude/context/*.md`
@@ -814,6 +814,7 @@ SKILL.md (this file)
   ├── modules/contrarian-triggers.md   Contrarian filter: context conditions where standard CRO advice backfires (14 triggers)
   ├── modules/hypothesis-interactions.md  Interaction-effect model: AND/OR/XOR gates between hypothesis pairs, empirical interaction effects
   ├── modules/copy-craft.md            Evidence-graded copywriting rules for proposed variant copy (headline/subhead/CTA/form microcopy; construct.md Step 3/3b/4b)
+  ├── modules/prose-craft.md           Humanizer / anti-AI-writing rules for roadmap prose (em dashes, hedging, full sign set; Quality Rule 8)
   └── modules/evidence-*.md            (optional) additional evidence sources and calibration data
 ```
 
@@ -833,9 +834,7 @@ SKILL.md (this file)
 
 7. **No padding.** If only 6 strong hypotheses exist, produce 6. A tight roadmap beats a bloated one.
 
-8. **No em dashes.** Use commas, periods, or colons instead.
-
-9. **No hedge words.** "Potentially," "it seems," "perhaps," "might possibly" are banned.
+8. **Prose follows `modules/prose-craft.md`.** All roadmap prose obeys the shared humanizer / anti-AI-writing reference: no em dashes (use commas, periods, or colons), no hedge-word clusters, and the full sign set. The signs are not restated here; the module is canonical. (Rule 9 folded into this rule; 10+ unchanged.)
 
 10. **Test feasibility is honest, and method-aware.** When performance data exists, every hypothesis with a Baseline line also gets a Test Feasibility line. Under an A/B testing method (the default; detect Step 1h), experiments estimated at >26 weeks or with <100 sessions/mo are routed to "What's Not Here" with an explanation, not buried in the roadmap with optimistic scores. Under a non-A/B testing method (pre/post, cohort, operational), honesty means a defined read window against a stable pre-period baseline: the A/B duration and per-arm-traffic routing-out does not apply, and no tactical hypothesis is demoted or excluded on A/B-traffic grounds.
 
