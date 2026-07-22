@@ -1,10 +1,10 @@
 {
   "enabledPlugins": {
-    "fe-governance@fe-sys-hq": true,
+    "funnelenvy-skills@funnelenvy-skills": true,
     "claude-code-management@fe-sys-hq": true,
-    "fe-knowledge-base@fe-sys-hq": true,
+    "fe-governance@fe-sys-hq": true,
     "fe-integrations@fe-sys-hq": true,
-    "funnelenvy-skills@funnelenvy-skills": true
+    "fe-knowledge-base@fe-sys-hq": true
   },
   "extraKnownMarketplaces": {
     "fe-sys-hq": {
@@ -21,5 +21,18 @@
       },
       "autoUpdate": true
     }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "FE_ROOT=\"$(dirname \"${CLAUDE_PROJECT_DIR:-$PWD}\")/fe-sys-hq\"; [ -f \"$FE_ROOT/bin/fe-init.sh\" ] || git clone --depth 1 https://github.com/FunnelEnvy/fe-sys-hq.git \"$FE_ROOT\"; bash \"$FE_ROOT/bin/fe-init.sh\" || true; printf '%s\\n' '{\"reloadSkills\": true}'"
+          }
+        ]
+      }
+    ]
   }
 }
