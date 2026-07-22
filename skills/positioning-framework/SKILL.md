@@ -1,8 +1,8 @@
 ---
 name: positioning-framework
-version: 1.1.3
+version: 1.2.0
 description: "When the user wants to build, audit, or update a positioning and messaging framework for a company or product. Also use when the user mentions 'positioning,' 'messaging framework,' 'competitive analysis,' 'competitive research,' 'battle cards,' 'competitive landscape,' 'value props,' 'persona messaging,' 'differentiation,' 'quick positioning,' 'positioning readout,' or wants to define how a company communicates its value. Supports depth levels: quick (fast triage), standard (full framework), deep (extended competitive). Produces structured context files (.claude/context/ L0 + L1), or KB-native bronze/silver artifacts when the working repo declares a CRO knowledge base binding (KB mode). Runs autonomous research by default. Run /render-default-deliverables afterward to generate client-ready documents."
-updated: 2026-07-07
+updated: 2026-07-22
 ---
 
 # Positioning & Messaging Framework
@@ -186,12 +186,7 @@ Resolve `<kb-start-scripts>` from the fe-knowledge-base plugin's kb-start skill 
 
 ### KB Mode Completion Message
 
-Replace the `.claude/context/` file list in the standard/deep completion message with the KB artifact list (path + type + confidence per artifact), and append:
-
-```
-Gold-layer deliverables (executive summary, battle cards) are not rendered in KB mode yet.
-render-default-deliverables runs when its KB adaptation ships.
-```
+Replace the `.claude/context/` file list in the standard/deep completion message with the KB artifact list (path + type + confidence per artifact). At standard/deep depth, render-default-deliverables is auto-invoked with `--scope` (see `Auto-Invoke: render-default-deliverables`), so append its gold-deliverable output list to the completion message the same way legacy mode appends the `.claude/deliverables/` list.
 
 ---
 
@@ -410,9 +405,9 @@ Each agent reads `agent-header.md` (shared agent rules) plus its specific phase 
    If depth != quick:
      Launch Agent 4 (pass intake payload + KB parameter block if KB mode) → wait for completion
      KB mode only: Post-Write Validation Gate on Agent 4's artifacts
-10. If depth != quick AND legacy mode:
-      Auto-invoke render-default-deliverables (see below)
-    If KB mode: skip auto-invoke (see KB Mode Completion Message)
+10. If depth != quick:
+      Auto-invoke render-default-deliverables (see below).
+      Legacy mode: invoke with no arguments. KB mode: invoke with `--scope <slug>` (render-default-deliverables v1.1.0+ writes gold deliverable artifacts into the KB).
 11. Present completion message (see below)
 12. User reviews, provides corrections
 13. If corrections needed: re-run affected agent(s) only
@@ -572,11 +567,11 @@ This catches JS rendering failures, stale CDN content, geo-targeted page variati
 
 ### Auto-Invoke: render-default-deliverables
 
-**In KB mode: do NOT auto-invoke at any depth.** render-default-deliverables is not yet KB-adapted and would read/write legacy paths. The KB Mode Completion Message tells the user gold-layer rendering arrives with that skill's KB adaptation.
-
 At `--depth standard` and `--depth deep`, after all agents complete, automatically invoke the render-default-deliverables skill. This produces human-readable deliverables from the context files just generated.
 
-**How to invoke:** Use the Skill tool to invoke `render-default-deliverables`. The skill handles its own context discovery, tiering, and generation. Do not pass arguments. Do not read or modify its output.
+**In KB mode: auto-invoke the same way, passing the run's `--scope`.** render-default-deliverables is KB-adapted (v1.1.0+): it reads the scope's silver artifacts and writes typed gold deliverable artifacts into the KB. Invoke it with the resolved `--scope` so it renders the same scope this run just wrote. (Prior to that adaptation this step was skipped in KB mode; it no longer is.)
+
+**How to invoke:** Use the Skill tool to invoke `render-default-deliverables`. The skill handles its own context/silver discovery, tiering, and generation. In legacy mode pass no arguments; in KB mode pass `--scope <slug>`. Do not read or modify its output.
 
 **At `--depth quick`:** Do NOT auto-invoke. Quick depth produces minimal context (L0 + minimal scorecard). Prompt the user to run it manually if desired.
 

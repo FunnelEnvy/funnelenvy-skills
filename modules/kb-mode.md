@@ -1,6 +1,6 @@
 # KB Mode: Canonical Dual-Mode Contract
 
-**This module is the canonical editing source for KB-mode semantics.** Six skills carry an
+**This module is the canonical editing source for KB-mode semantics.** Nine skills carry an
 inline copy of the mode-resolution procedure so their runtime read is self-contained (the same
 inline-authority pattern the schemas use). When KB-mode semantics change, edit THIS file first,
 then re-sync every skill listed below in the same change. A drift canary in
@@ -17,8 +17,11 @@ SKILL.md.
 | experiment-mockup | KB Mode (Dual-Mode Output) | orchestrator, Step 1b | `gold-experiment-roadmap` (consumer check; writes no KB artifacts) |
 | render-program-site | KB Mode (Dual-Mode Output) | input resolution, phase 1 | `gold-experiment-roadmap` (consumer check; writes no KB artifacts) |
 | cro-roadmap-red-team | KB Mode (Dual-Mode Output) | Phase 1 (resolve) | `gold-experiment-roadmap` (consumer check; reads gold roadmaps + their `depends_on`; writes a standalone critique, no KB artifacts) |
+| ga4-audit | KB Mode (Dual-Mode Output) | Step 0 (before Step 1) | `silver-performance-analysis` (write output; single-agent write-side, no read-side mapping) |
+| aa-audit | KB Mode (Dual-Mode Output) | Step 0 (before Step 1) | `silver-performance-analysis` (write output; single-agent write-side, no read-side mapping) |
+| render-default-deliverables | KB Mode (Dual-Mode Output) | startup, before Context Discovery | `gold-strategy-deliverable` + `gold-battle-card` (write outputs) + `silver-strategy-context` + `bronze-company-facts` (L0-equivalent read precondition) |
 
-All six sections use the exact header `KB Mode (Dual-Mode Output)` -- skills cross-reference
+All nine sections use the exact header `KB Mode (Dual-Mode Output)` -- skills cross-reference
 each other's sections by that name.
 
 ## Canonical Mode Resolution Procedure

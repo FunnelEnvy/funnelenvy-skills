@@ -321,6 +321,15 @@ Both producers write the same schema family, but each stamps `schema_version` at
 
 Consumers gating on `schema_version` see only what the stamp guarantees; above-stamp fields are a bonus, never an assumption.
 
+### Cross-Skill Schema-Version Contract
+
+The producer/consumer interchange is governed by a single explicit contract so that a performance profile fires the same downstream triggers regardless of which audit skill produced it, and regardless of whether it was written to `.claude/context/` or into a KB.
+
+- **Canonical schema owner:** `ga4-audit` Step 10 is the authoritative field-set definition; this reference copy mirrors it. `aa-audit` stamps a subset per Producer Variance above.
+- **Consumer-accepted range:** the consumer (`hypothesis-generator` `phases/detect.md` > `Profile Schema Equivalence`) accepts stamped versions `"2.0"` through `"2.3"` AND an absent stamp. A stamp inside the range gates *eligibility* per-structure (a referenced structure that is absent self-gates its trigger off with no penalty). An absent stamp bypasses the version gate and every trigger is evaluated by content equivalence.
+- **KB-mode stamping:** in KB mode both producers carry `schema_version` into the `silver-performance-analysis` artifact as a ride-along field (ga4 `"2.3"`, aa `"2.1"`), so version gating still works. A hand-authored KB silver performance artifact may legitimately omit the stamp; the consumer's absent-stamp content-equivalence path covers that case.
+- **AA/GA4 equivalence rule:** the two producers are interchangeable at any given stamp for every field the stamp guarantees. Producer-specific substitutions (`report_suite` vs `property_id`/`property_name`; suite-wide vs page-associated element data; no `ai_*` fields below 2.2) are documented in Producer Variance and are handled consumer-side by per-structure self-gating, never by producer detection.
+
 ```markdown
 ## Changelog
 

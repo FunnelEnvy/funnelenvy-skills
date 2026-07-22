@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.0] - 2026-07-22
+
+### Added
+- KB-native I/O (dual-mode). When the working repo declares a CRO knowledge base binding, the skill reads the scope's silver artifacts (`silver-strategy-context` + `bronze-company-facts` as the L0 equivalent, plus optional `silver-positioning-scorecard` / `silver-audience-analysis` / `silver-competitive-analysis`) and writes the deliverables as typed gold artifacts: `gold-strategy-deliverable` (executive-summary, messaging-guide, competitive-comparison-matrix, distinguished by `deliverable_type`) at `deliverables/{scope}-*.md` and `gold-battle-card` (one per competitor) at `battle-cards/{scope}-{competitor}.md`, each carrying gold-to-silver `depends_on`. New `--scope` and `--no-kb` flags. Mode resolution mirrors the canonical `modules/kb-mode.md` contract (binding-detects-mode, no `--kb` force flag, HARD STOP on missing/invalid scope). Deliverable bodies are byte-identical to legacy; only gold frontmatter is prepended, and the `Deliverable Purity Constraint` still governs the body. `manifest.md` is not written in KB mode (the KB artifact graph is the index). This closes the gap that made positioning-framework skip its render auto-invoke in KB mode. [render-deliverables-kb-native]
+
 ## [1.0.2] - 2026-07-05
 
 ### Fixed
