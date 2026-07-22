@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.17.0] - 2026-07-22
+
+### Added
+- Live-program fold gate: a tactical candidate is now reconciled against the client's live experiment program before scoring, so the roadmap never mints a standalone test for a slot a running experiment already owns. A running/queued experiment on the same surface testing the same lever class (or a fold decision on record covering that surface + lever) hard-folds the candidate to "What's Not Here" as an iteration *inside* that experiment (named in plain language, carrying any variation copy/evidence it developed), instead of a competing standalone test. A running experiment on the same surface with a *different* lever keeps the candidate with a one-test-per-surface sequencing note; a *concluded* experiment frees its slot so a legitimate successor still mints; a fold decision in loaded context is binding even under ambiguous status. The reader now surfaces live-program state (running/queued occupancy + recorded folds) from both bound source shapes (`gold-experiment-index` and in-KB `schema: experiment-history`), not only completed-experiment continuation fuel. When program state is unreadable (KB mode, no experiment-history/program-state source bound), a visible "live program not reconciled" caveat is surfaced rather than left latent. New `detect.md` Step 1g live-program state read (emitting `live_program`), `validate.md` Gate 7 (`slot_available`, a routing-only gate excluded from the Step 4d Confidence-cap arithmetic), `score.md` Step 5b fold routing + caveat and Step 7 sequencing note, SKILL.md Read-side Mapping leg-2 note + What's Not Here fold entry/caveat + purity token guards + Quality Rule 20, validator block [21]. Tactical-only and method-agnostic; a legacy / no-live-program run is byte-identical (modulo version bump), with no standing caveat. [hypothesis-generator-live-program-fold-gate]
+
 ## [1.16.0] - 2026-07-22
 
 ### Added

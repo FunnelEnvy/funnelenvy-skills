@@ -478,6 +478,53 @@ check "displacement_surfaces guarded in Deliverable Purity Constraint" \
   "NONZERO"
 echo ""
 
+echo "[21] Live-program fold gate"
+# (a) detect.md Step 1g live-program state read emits the live_program annotation.
+# NONZERO checks use plain grep (not grep -c) per the block [15] note.
+check "detect.md Step 1g has the live-program state read block" \
+  "grep -c 'Live-program state read (net-new annotation)' skills/hypothesis-generator/phases/detect.md" \
+  "1"
+check "detect.md live-program read emits the live_program annotation" \
+  "grep 'live_program' skills/hypothesis-generator/phases/detect.md" \
+  "NONZERO"
+check "detect.md live-program read carries occupied_slots and recorded_folds" \
+  "grep -E 'occupied_slots|recorded_folds' skills/hypothesis-generator/phases/detect.md" \
+  "NONZERO"
+check "detect.md live-program read is tri-state and penalty-free (byte-identical when absent)" \
+  "grep 'behaves byte-identically to today' skills/hypothesis-generator/phases/detect.md" \
+  "NONZERO"
+# (b) validate.md Gate 7 slot_available, routing-only, excluded from the Step 4d cap count.
+check "validate.md defines Gate 7 slot_available" \
+  "grep -c '^### Gate 7: slot_available' skills/hypothesis-generator/phases/validate.md" \
+  "1"
+check "validate.md states slot_available is excluded from the Step 4d cap arithmetic" \
+  "grep 'NOT counted among the gates in the Step 4d' skills/hypothesis-generator/phases/validate.md" \
+  "NONZERO"
+check "validate.md Gate 7 is scoped tactical-only" \
+  "grep 'Scope: tactical hypotheses only' skills/hypothesis-generator/phases/validate.md" \
+  "NONZERO"
+# (c) score.md Step 5b fold routing + the KB-mode caveat + Step 7 sequencing note.
+check "score.md Step 5b carries the live-program fold routing" \
+  "grep 'Live-program fold routing' skills/hypothesis-generator/phases/score.md" \
+  "NONZERO"
+check "score.md renders the live-program-not-reconciled caveat" \
+  "grep 'live program not reconciled' skills/hypothesis-generator/phases/score.md" \
+  "NONZERO"
+check "score.md Step 7 carries the live-program one-test-per-surface sequencing note" \
+  "grep 'Live-program one-test-per-surface' skills/hypothesis-generator/phases/score.md" \
+  "NONZERO"
+# (d) SKILL.md purity guards + Quality Rule 20.
+check "live_program guarded in Deliverable Purity Constraint" \
+  "grep 'live_program' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+check "slot_available guarded in Deliverable Purity Constraint" \
+  "grep 'slot_available' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+check "SKILL.md carries Quality Rule 20 (live-program ownership)" \
+  "grep -c '^20. \*\*A running experiment owns its surface' skills/hypothesis-generator/SKILL.md" \
+  "1"
+echo ""
+
 echo "=== Results ==="
 echo "  PASS: $PASS"
 echo "  FAIL: $FAIL"
