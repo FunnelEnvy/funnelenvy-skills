@@ -1,8 +1,8 @@
 ---
 name: aa-audit
-version: 1.1.1
-description: "When the user wants to audit Adobe Analytics data for a property. Also use when the user mentions 'AA audit,' 'Adobe Analytics audit,' 'AA performance profile,' or 'AA traffic analysis.' Runs a Python script against the AA 2.0 Reporting API, interprets the JSON output, and produces a structured performance-profile.md context file (.claude/context/ L1). Single agent, no depth flag. Works with any AA implementation given a client config file."
-updated: 2026-07-07
+version: 1.2.0
+description: "When the user wants to audit Adobe Analytics data for a property. Also use when the user mentions 'AA audit,' 'Adobe Analytics audit,' 'AA performance profile,' or 'AA traffic analysis.' Runs a Python script against the AA 2.0 Reporting API, interprets the JSON output, and produces a structured performance-profile.md context file (.claude/context/ L1). Dual-mode output: when the working repo declares a CRO knowledge base binding, writes a typed silver-performance-analysis artifact into that KB instead (--scope required; --no-kb forces legacy). Single agent, no depth flag. Works with any AA implementation given a client config file."
+updated: 2026-07-22
 ---
 
 # AA Audit
@@ -12,10 +12,10 @@ You are an analytics specialist. Your job is to run the AA audit script, interpr
 **You are an L1 skill.** You run a Python script that queries Adobe Analytics, analyze the returned data, and produce a structured context file. This means:
 - You execute `aa_audit.py` which handles all API calls and outputs JSON
 - You interpret and analyze the JSON data
-- You produce one context file: `.claude/context/performance-profile.md`
+- You produce one context file: `.claude/context/performance-profile.md` (KB mode: a typed `silver-performance-analysis` artifact instead, see `KB Mode (Dual-Mode Output)`)
 - Your output is machine-readable (YAML frontmatter + structured markdown), not a deliverable
 
-**Output location:** `.claude/context/performance-profile.md`
+**Output location:** `.claude/context/performance-profile.md` (KB mode: `{kb_root}/reference/cro-{scope}/performance-analysis.md`, see `KB Mode (Dual-Mode Output)`)
 **Token budget:** ~50-80K
 **Runtime:** ~5-8 minutes
 **Agents:** Single agent. No multi-agent pipeline.
@@ -39,6 +39,8 @@ You are an analytics specialist. Your job is to run the AA audit script, interpr
 | `--config` | (required or from env) | Path to client AA config JSON |
 | `--days` | 90 | Number of days to look back from today |
 | `--no-compare` | false | Skip period-over-period comparison |
+| `--scope` | (none) | KB mode only. Names which KB scope the run writes into (the bound type skill defines valid scopes). Required in KB mode; warn-and-ignore in legacy mode. Distinct from the config's `scope` block, which is an analytics sub-property filter, not a KB scope. See `KB Mode (Dual-Mode Output)`. |
+| `--no-kb` | off | Force legacy `.claude/context/` output even when a KB binding is detected. See `KB Mode (Dual-Mode Output)`. |
 
 ### Config Resolution
 
@@ -53,6 +55,75 @@ These env vars must be set (never stored in repo):
 - `ADOBE_AA_CLIENT_ID`
 - `ADOBE_AA_CLIENT_SECRET`
 - `ADOBE_AA_ORG_ID`
+
+---
+
+## KB Mode (Dual-Mode Output)
+
+This skill runs in one of two output modes, resolved ONCE at Step 0 (before Step 1) and held in-session. Only the write target and the addition of KB frontmatter change. Every report the script pulls, every interpretation step, threshold, and quality check is identical in both modes: this is a write-side adaptation, not an analysis change.
+
+- **Legacy mode** (default): write `.claude/context/performance-profile.md` exactly as documented in Step 9.
+- **KB mode:** write the same profile content as a typed `silver-performance-analysis` artifact into a knowledge base declared by the working repo.
+
+This is a single-agent skill: there is no agent parameter-block threading. Mode resolution produces in-session KB state (`kb_root`, `kb_type`, `scope`, type-def path) consulted only by Step 9 (the write).
+
+### Mode Resolution Procedure (Step 0)
+
+> Canonical contract: `modules/kb-mode.md`. When KB-mode semantics change, edit that module first, then re-sync every dual-mode skill it lists. The procedure below is this skill's runtime copy.
+
+1. If `--no-kb` is set: legacy mode. Done.
+2. Read the working repo's `CLAUDE.md`. Find a `Knowledge Bases` section. If absent: legacy mode, and note in the run output: "No `Knowledge Bases` section in CLAUDE.md; using legacy I/O."
+3. Parse the KB root path (e.g., `docs/`) and KB type skill name from that section. Verify the type skill exists at `.claude/skills/{kb-type}/` and its `artifacts/` directory defines `silver-performance-analysis` (the output type). If any check fails: legacy mode, and report which check failed. Never write typed artifacts into a half-configured KB.
+4. KB mode confirmed. Resolve scope: `--scope <slug>` must match a valid scope defined by the type skill. If `--scope` is missing or invalid: HARD STOP. Display the valid scope list and ask the user to re-run with `--scope`. Do not guess a scope.
+
+There is deliberately no `--kb` force flag. A failed detection of the output KB falls back to legacy loudly so a broken KB binding gets fixed instead of worked around.
+
+### Schema Authority
+
+This SKILL.md (Step 9) remains the authority for the performance-profile field set and body sections. In KB mode, the bound type def (`.claude/skills/{kb-type}/artifacts/silver-performance-analysis.md`) is additionally the authority for the KB output path, the KB frontmatter contract, and any required section layout the type imposes: read it during Step 9 before writing. `governed_by` is composed at runtime as `{kb-type}/silver-performance-analysis`. This skill never hardcodes a KB type skill name or client-specific path.
+
+### Output Mapping and Frontmatter Contract
+
+| Legacy context file | KB artifact type | Path under KB root | Required |
+|---|---|---|---|
+| `performance-profile.md` | `silver-performance-analysis` | `reference/cro-{scope}/performance-analysis.md` | output |
+
+Resolve the write target by artifact TYPE, not by an assumed basename: the funnelenvy default basename is `performance-analysis.md`, but a KB type may name its artifact file differently. The directory is always `reference/cro-{scope}/`.
+
+KB mode prepends KB frontmatter to the same profile body:
+
+`fe-managed: true`, `name: {scope}-performance-analysis`, `description` (one line, generated), `kb_layer: silver`, `governed_by: {kb-type}/silver-performance-analysis`, `scope`, `data_provenance: client` (analytics is first-party client data), `generated_by: aa-audit`, `confidence` (the same 1-5 value legacy mode computes, capped per the scope caveat), `depends_on`, `tags` (3-7 semantic), `version`, `created`, `updated`. The full performance-profile field set from Step 9 (including `schema_version: "2.1"` and the additively-emitted 2.3 field groups) rides along as additional frontmatter fields, so a downstream consumer that version-gates still sees the stamp. The type def's `field_definitions` are validated for required presence; additional fields and sections are permitted.
+
+**`depends_on` policy for query-time data.** A performance analysis is a first-party projection of live analytics; it is not derived from any other KB artifact. So `depends_on` is an **empty list by default**: its provenance is the report suite and date range recorded in the body (`report_suite`, `date_range`, `days`), not an in-KB source edge. The one optional edge: if the bound KB declares an analytics-configuration or reference artifact for the scope that this run actually consumed, record a single same-layer edge to it. Never invent a bronze data-export edge the skill does not produce. If the bound `silver-performance-analysis` type def requires a non-empty `depends_on` and no such reference artifact exists, emit the empty list, note it in the completion message, and let the validation gate surface the type-def mismatch rather than fabricating an edge.
+
+### Prior Work Detection (KB Mode)
+
+Analytics data is a time-bounded snapshot, so the legacy "no incremental extension" rule holds in KB mode too. Glob `{kb_root}/reference/cro-{scope}/` for an existing `silver-performance-analysis` artifact. If present, overwrite it in place: preserve `created`, bump `version` (analytics snapshots are always a full re-pull, so a patch bump), set `updated` to today, replace the body wholesale. No diffing, no merging, no confidence-only-rises rule.
+
+### Post-Write Validation Gate
+
+After writing the KB artifact:
+
+```
+PY=$(python3 --version >/dev/null 2>&1 && echo python3 || echo python)
+$PY <kb-start-scripts>/kb_type_validate.py validate {kb_root}/reference/cro-{scope}/performance-analysis.md
+```
+
+Resolve `<kb-start-scripts>` from the fe-knowledge-base plugin's kb-start skill `scripts/` directory (marketplace plugin cache or source repo). If validation reports errors, fix the artifact frontmatter/sections and re-validate. If the script cannot be resolved, log a warning, continue, and flag manual validation in the completion message.
+
+### KB Mode Completion Message
+
+Replace the first line of the Step 9 completion summary with the KB artifact lines and append validation status:
+
+```
+Performance analysis written to {kb_root}/reference/cro-{scope}/performance-analysis.md
+  Type: silver-performance-analysis | Scope: {scope} | Version: {v}
+  depends_on: [reference artifact if consumed, else "none (query-time first-party data)"]
+
+  [standard Report suite / Date range / Sessions / etc. lines unchanged]
+
+  Validation: kb_type_validate.py passed | failed (fixed and re-validated) | unresolved (manual validation needed)
+```
 
 ---
 
@@ -79,7 +150,7 @@ These env vars must be set (never stored in repo):
 
 ## Prior Work Detection
 
-**None.** Analytics data is a time-bounded snapshot. Each run overwrites `.claude/context/performance-profile.md` entirely. No incremental extension, no confidence-only-rises rule.
+**None.** Analytics data is a time-bounded snapshot. Each run overwrites `.claude/context/performance-profile.md` entirely. No incremental extension, no confidence-only-rises rule. (KB mode applies the same overwrite-in-place rule to the `silver-performance-analysis` artifact, see `KB Mode (Dual-Mode Output)` > `Prior Work Detection (KB Mode)`.)
 
 ---
 
@@ -265,7 +336,7 @@ If no events are dead/dark/spiked and no friction interactions are detected, sta
 
 ### Step 9: Write Performance Profile
 
-Construct `.claude/context/performance-profile.md` using the same schema family as ga4-audit output, stamped at the version whose full REQUIRED field set this skill actually emits. Consumers gate capabilities on `schema_version`, so the stamp must not overpromise.
+Construct the performance profile using the same schema family as ga4-audit output, stamped at the version whose full REQUIRED field set this skill actually emits. Consumers gate capabilities on `schema_version`, so the stamp must not overpromise. **Mode branch:** in legacy mode, write `.claude/context/performance-profile.md`. In KB mode (resolved at Step 0), write the same content as a `silver-performance-analysis` artifact per `KB Mode (Dual-Mode Output)` > `Output Mapping and Frontmatter Contract` (KB frontmatter prepended, `schema_version: "2.1"` and the full field set ride along), then run the post-write validation gate. The field set and body sections below are identical in both modes.
 
 **Stamped version:** `schema_version` is `"2.1"`. The AA profile emits no `ai_*` AI-referrer fields (mandatory from schema 2.2) and no page-associated element detail fields (`element_interaction_events`, `discovered_parameters`, `top_interactions[]`), and it substitutes `report_suite` for `property_id`/`property_name`. The 2.3 field groups below (scope, element instrumentation state, measurement integrity) are emitted additively on top of the 2.1 stamp: version-gating consumers will not assume them, content-aware consumers can still use them.
 

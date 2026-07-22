@@ -1,8 +1,9 @@
 # Changelog
 
-## [Unreleased]
+## [1.16.0] - 2026-07-22
 
 ### Added
+- KB-mode silver input coverage generalized from a closed six-role enumeration to an open set: Phase 1 now globs **every** silver artifact in `reference/cro-{scope}/`, role-maps the known types as before, and ingests any other in-scope `silver-reference-doc` as **supplementary scope context** under a bounded consumption contract. Supplementary silver informs framing, constraints, and guardrails only (measurement reality, lead-quality / disqualification definitions, down-funnel attribution limits) exactly like the engagement-constraints input; it never mints a hypothesis, never enters pattern matching or the trigger tables, never touches ICE, and never lifts the no-baseline Confidence cap (it can tighten a guardrail, never loosen). Consumed supplementary docs are recorded in `depends_on` (same-KB gold-to-silver edge). Dissolves the design root behind the prior basenames/producer-binding input bugs: no roadmap-relevant silver strands merely because it is not an enumerated type. SKILL.md `Read-side Mapping` open-set framing + `Supplementary Silver (Non-Enumerated) Consumption Contract`; `phases/detect.md` Required Inputs + KB-native addition. Absent any non-enumerated silver, behavior is unchanged. [hypothesis-generator-kb-silver-input-coverage]
 - Added an in-output-KB experiment-history fallback: hypothesis-generator KB mode reads a silver `schema: experiment-history` artifact (plus its per-experiment gold insight guides) when external producer-KB discovery binds nothing; backward-compatible, additive. [in-kb-experiment-history-read-path]
 
 ### Changed

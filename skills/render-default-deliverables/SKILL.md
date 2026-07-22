@@ -1,8 +1,8 @@
 ---
 name: render-default-deliverables
-version: 1.0.2
-description: "When the user wants to generate client-ready deliverables from existing positioning context. Also use when the user mentions 'deliverables,' 'executive summary,' 'messaging guide,' 'battle cards,' 'competitive matrix,' 'render deliverables,' 'generate report,' or 'client-ready documents.' Reads L0 + L1 context files from .claude/context/ and produces polished, human-readable documents in .claude/deliverables/. No research, no analysis, no web fetches. Pure synthesis and formatting."
-updated: 2026-07-05
+version: 1.1.0
+description: "When the user wants to generate client-ready deliverables from existing positioning context. Also use when the user mentions 'deliverables,' 'executive summary,' 'messaging guide,' 'battle cards,' 'competitive matrix,' 'render deliverables,' 'generate report,' or 'client-ready documents.' Reads L0 + L1 context files from .claude/context/ and produces polished, human-readable documents in .claude/deliverables/. Dual-mode I/O: when the working repo declares a CRO knowledge base binding, reads the scope's silver artifacts and writes typed gold-strategy-deliverable / gold-battle-card artifacts instead (--scope required; --no-kb forces legacy). No research, no analysis, no web fetches. Pure synthesis and formatting."
+updated: 2026-07-22
 ---
 
 # Render Deliverables
@@ -16,7 +16,7 @@ You are a senior marketing strategist producing client-ready deliverables. Your 
 - Your output is human-readable: no YAML frontmatter, no confidence scores inline, no `[NEEDS CONFIRMATION]` inline (footnotes only), no references to agents, skills, context files, frontmatter, or any system internals
 - Your output is designed to be forwarded, pasted into decks, printed, shared with stakeholders
 
-**Output location:** `.claude/deliverables/`
+**Output location:** `.claude/deliverables/` (KB mode: typed gold artifacts under `{kb_root}/deliverables/` and `{kb_root}/battle-cards/`, see `KB Mode (Dual-Mode Output)`)
 **Token budget:** ~80-100K (reading and writing only, no web fetches)
 **Runtime:** ~5-8 minutes
 **Agents:** Single agent. No multi-agent pipeline.
@@ -27,10 +27,17 @@ You are a senior marketing strategist producing client-ready deliverables. Your 
 ## Invocation
 
 ```
-/render-default-deliverables
+/render-default-deliverables [--scope <slug>] [--no-kb]
 ```
 
-No arguments required. Context is discovered automatically from `.claude/context/`.
+No arguments required in legacy mode. Context is discovered automatically from `.claude/context/`.
+
+**Flags:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--scope` | (none) | KB mode only. Names which KB scope to render. Required in KB mode; warn-and-ignore in legacy mode. See `KB Mode (Dual-Mode Output)`. |
+| `--no-kb` | off | Force legacy `.claude/context/` -> `.claude/deliverables/` I/O even when a KB binding is detected. See `KB Mode (Dual-Mode Output)`. |
 
 ---
 
@@ -40,13 +47,106 @@ No arguments required. Context is discovered automatically from `.claude/context
 - No other producing skill should be running concurrently
 - May be auto-invoked by positioning-framework at standard/deep depth after all agents complete
 
-**KB mode: not supported yet.** This skill reads legacy `.claude/context/` only; it has no KB read path (see `modules/kb-mode.md` for the dual-mode contract other skills follow). When positioning-framework runs in KB mode it deliberately skips this skill's auto-run (its `Auto-Invoke` section documents this), because the silver artifacts land in the KB, not in `.claude/context/`. In a KB-bound repo, either run positioning-framework with `--no-kb` for a legacy run this skill can consume, or wait for this skill's KB adaptation (backlogged).
+**KB mode (supported).** When the working repo declares a CRO knowledge base binding, this skill reads the scope's silver artifacts and writes typed gold deliverable artifacts into the KB instead of the legacy `.claude/context/` -> `.claude/deliverables/` path. See `KB Mode (Dual-Mode Output)`. positioning-framework auto-invokes this skill in KB mode (passing `--scope`) at standard/deep depth, the same as it does in legacy mode. Force a legacy run with `--no-kb`. In KB mode the hard precondition is the scope's `bronze-company-facts` + `silver-strategy-context` (the L0 equivalent) plus at least one other silver artifact, mirroring the legacy "at least one L1 beyond company-identity" rule.
+
+---
+
+## KB Mode (Dual-Mode Output)
+
+This skill runs in one of two I/O modes, resolved ONCE at startup (before Context Discovery) and held in-session. Only the read source and the write target (plus the addition of gold frontmatter) change. Every tiering decision, contradiction scan, purity constraint, and per-deliverable quality gate is identical in both modes: this is an I/O adaptation, not a synthesis change. The deliverable **bodies** are byte-for-byte the same human-readable output in both modes; KB mode only prepends the gold artifact frontmatter that the type def requires.
+
+- **Legacy mode** (default): read `.claude/context/*.md`, write `.claude/deliverables/`.
+- **KB mode:** read the scope's silver artifacts from the bound KB, write each deliverable as its typed gold artifact into the KB.
+
+This is a single-agent skill: there is no agent parameter-block threading. Mode resolution produces in-session KB state (`kb_root`, `kb_type`, `scope`, type-def paths) consulted by Context Discovery (reads) and the write steps.
+
+### Mode Resolution Procedure
+
+> Canonical contract: `modules/kb-mode.md`. When KB-mode semantics change, edit that module first, then re-sync every dual-mode skill it lists. The procedure below is this skill's runtime copy.
+
+1. If `--no-kb` is set: legacy mode. Done.
+2. Read the working repo's `CLAUDE.md`. Find a `Knowledge Bases` section. If absent: legacy mode, and note in the run output: "No `Knowledge Bases` section in CLAUDE.md; using legacy I/O."
+3. Parse the KB root path (e.g., `docs/`) and KB type skill name from that section. Verify the type skill exists at `.claude/skills/{kb-type}/` and its `artifacts/` directory defines the output types `gold-strategy-deliverable` and `gold-battle-card`, plus `silver-strategy-context` and `bronze-company-facts` (the L0-equivalent read precondition). If any check fails: legacy mode, and report which check failed. Never write typed artifacts into a half-configured KB. Optional silver types are NOT mode-resolution requirements: a missing optional silver artifact degrades gracefully exactly like a missing optional legacy context file (a tier simply doesn't render).
+4. KB mode confirmed. Resolve scope: `--scope <slug>` must match a valid scope defined by the type skill. If `--scope` is missing or invalid: HARD STOP. Display the valid scope list and ask the user to re-run with `--scope`. Do not guess a scope. (When positioning-framework auto-invokes this skill in KB mode, it passes the run's `--scope`.)
+
+There is deliberately no `--kb` force flag. A failed detection of the output KB falls back to legacy loudly so a broken KB binding gets fixed instead of worked around.
+
+### Schema Authority
+
+This SKILL.md's Deliverable Specifications remain the authority for deliverable body content and structure. In KB mode, the bound gold type defs (`.claude/skills/{kb-type}/artifacts/gold-strategy-deliverable.md`, `.../gold-battle-card.md`) are the authority for the KB output path and the gold frontmatter contract: read them before writing. `governed_by` is composed at runtime as `{kb-type}/{gold-type}`. This skill never hardcodes a KB type skill name or client-specific path.
+
+### Read-side Mapping
+
+In KB mode, Context Discovery globs the scope's silver artifacts instead of `.claude/context/*.md`. **Resolve each input by its KB artifact TYPE**, not by an assumed basename (the directory is always `reference/cro-{scope}/`; the basename is KB-type-dependent). Map each silver type to the legacy context file the tiering rules already consume:
+
+| Legacy context file | KB artifact type | Path under KB root | Tier gated |
+|---|---|---|---|
+| `company-identity.md` | `bronze-company-facts` + `silver-strategy-context` | `captures/company-facts/{scope}-company-facts.md` + `reference/cro-{scope}/strategy-context.md` | all tiers (L0 precondition) |
+| `positioning-scorecard.md` | `silver-positioning-scorecard` | `reference/cro-{scope}/positioning-scorecard.md` | Tier 1 (Executive Summary) |
+| `audience-messaging.md` | `silver-audience-analysis` | `reference/cro-{scope}/audience-analysis.md` | Tier 2 (Messaging Guide) |
+| `competitive-landscape.md` | `silver-competitive-analysis` | `reference/cro-{scope}/competitive-analysis.md` | Tier 3 (Matrix + Battle Cards) |
+
+- **L0 precondition:** the LOWER of `bronze-company-facts.confidence` and `silver-strategy-context.confidence` must be present (the two together carry what `company-identity.md` carries in legacy mode). At least one other silver artifact must exist, mirroring the legacy "at least one L1 beyond company-identity" rule; otherwise HALT with the legacy `L0 only, no L1` guidance adapted to KB terms.
+- **Scope isolation is absolute:** only `reference/cro-{scope}/` and the scope's captures are read. An artifact from another scope is never read.
+- Frontmatter-first consumption is unchanged: read each silver artifact's frontmatter for tiering, then the body when a deliverable needs the full narrative.
+
+### Output Mapping and Frontmatter Contract
+
+Each deliverable body (produced exactly per its Deliverable Specification) is written as a typed gold artifact:
+
+| Legacy deliverable | KB artifact type | Path under KB root | depends_on (gold -> silver) |
+|---|---|---|---|
+| `executive-summary.md` | `gold-strategy-deliverable` (`deliverable_type: executive-summary`) | `deliverables/{scope}-executive-summary.md` | `silver-positioning-scorecard`, `silver-strategy-context` (+ `silver-competitive-analysis` when the competitive section rendered) |
+| `messaging-guide.md` | `gold-strategy-deliverable` (`deliverable_type: messaging-guide`) | `deliverables/{scope}-messaging-guide.md` | `silver-audience-analysis`, `silver-strategy-context` |
+| `competitive-comparison-matrix.md` | `gold-strategy-deliverable` (`deliverable_type: competitive-comparison-matrix`) | `deliverables/{scope}-competitive-comparison-matrix.md` | `silver-competitive-analysis`, `silver-strategy-context` |
+| `battle-cards/[competitor-slug].md` | `gold-battle-card` | `battle-cards/{scope}-{competitor-slug}.md` | `silver-competitive-analysis` |
+| `manifest.md` | (not a KB artifact) | (not written) | (n/a) |
+
+- **Basename by type, not assumption.** Paths above show the funnelenvy default; the bound gold type def is the path authority. Match/write by artifact TYPE.
+- **`manifest.md` is not written in KB mode.** The KB's own artifact graph (frontmatter `depends_on`, the KB index) is the manifest; a plain provenance index has no gold type. The completion message reports what was written and its `depends_on` instead. (If the bound KB defines an index artifact for deliverables, that is a KB-start concern, not this skill's output.)
+- **`deliverable_type`** distinguishes the three `gold-strategy-deliverable` instances (per the type def's tag/field; the 2026-06-03 pilot confirmed the gold type carries a `deliverable_type` discriminator). Battle cards are their own `gold-battle-card` type, one per competitor, sluged via `modules/slugify.md` (unchanged rule) and prefixed with `{scope}-`.
+
+KB frontmatter prepended to each gold artifact: `fe-managed: true`, `name` (`{scope}-{deliverable}` / `{scope}-{competitor}`), `description` (one line, generated), `kb_layer: gold`, `governed_by: {kb-type}/{gold-type}`, `scope`, `deliverable_type` (strategy-deliverable only), `data_provenance` (`client` when any consumed silver is `client`-provenance, else `public`), `generated_by: render-default-deliverables`, `depends_on` (KB-root-relative paths of the silver artifacts actually composed, gold-to-silver edges only, omitting missing optional ones), `tags` (3-7 semantic), `version`, `created`, `updated`.
+
+**Purity holds unchanged.** The gold artifact **frontmatter** is the only system surface; the **body** obeys the `Deliverable Purity Constraint` exactly as in legacy mode (no layer/file/agent/schema references, natural source attribution only). Frontmatter is not body.
+
+### Prior Work Detection (KB Mode)
+
+Deliverables are always a complete projection of current context (the legacy `Re-render Behavior`). Glob the scope's existing gold deliverable artifacts. For each that already exists, overwrite in place: preserve `created`, bump `version` (minor when the consumed silver changed since the prior render, patch for a re-render of unchanged inputs), set `updated` to today, replace the body. No diffing, no merging. A battle card whose competitor no longer appears in `silver-competitive-analysis` is left in place (never auto-deleted); note orphaned cards in the completion message.
+
+### Post-Write Validation Gate
+
+After writing the gold artifacts:
+
+```
+PY=$(python3 --version >/dev/null 2>&1 && echo python3 || echo python)
+$PY <kb-start-scripts>/kb_type_validate.py validate {kb_root}/deliverables/{scope}-*.md {kb_root}/battle-cards/{scope}-*.md
+```
+
+Resolve `<kb-start-scripts>` from the fe-knowledge-base plugin's kb-start skill `scripts/` directory (marketplace plugin cache or source repo). If validation reports errors, fix the artifact frontmatter/sections and re-validate. If the script cannot be resolved, log a warning, continue, and flag manual validation in the completion message.
+
+### KB Mode Completion Message
+
+Replace the `.claude/deliverables/` file list in the standard completion output with the KB artifact list (path + type + `deliverable_type` + `depends_on` per artifact) and append validation status:
+
+```
+Deliverables written to the knowledge base ({scope}):
+  {kb_root}/deliverables/{scope}-executive-summary.md         (gold-strategy-deliverable / executive-summary)
+  {kb_root}/deliverables/{scope}-messaging-guide.md           (gold-strategy-deliverable / messaging-guide)
+  {kb_root}/deliverables/{scope}-competitive-comparison-matrix.md  (gold-strategy-deliverable / competitive-comparison-matrix)
+  {kb_root}/battle-cards/{scope}-[competitor].md              (gold-battle-card)  x N
+
+  Skipped (missing silver): [tier] ([reason])
+  Orphaned prior battle cards (competitor no longer in silver): [list | none]
+
+  Validation: kb_type_validate.py passed | failed (fixed and re-validated) | unresolved (manual validation needed)
+```
 
 ---
 
 ## Startup: Context Discovery
 
-1. Glob `.claude/context/*.md`
+1. Glob `.claude/context/*.md` (**KB mode:** glob the scope's silver artifacts per `KB Mode (Dual-Mode Output)` > `Read-side Mapping` instead, and map each to its legacy-equivalent context file for every rule below)
 2. Read YAML frontmatter only (between `---` markers) for each file found
 3. Build inventory: file name, schema type, confidence, depth, generated_by, last_updated
 4. Determine which deliverable tiers can be produced (see Deliverable Tiering below)
@@ -70,9 +170,9 @@ Proceed? [Y/n]
 
 6. On user confirmation, read the full body of each context file needed
 7. Generate deliverables sequentially
-8. Write all files to `.claude/deliverables/`
-9. Generate manifest
-10. Print completion summary
+8. Write all files to `.claude/deliverables/` (**KB mode:** write each as its typed gold artifact per `KB Mode (Dual-Mode Output)` > `Output Mapping and Frontmatter Contract`, then run the post-write validation gate)
+9. Generate manifest (**KB mode:** skip; the KB artifact graph is the manifest, see the Output Mapping note)
+10. Print completion summary (**KB mode:** use the `KB Mode Completion Message`)
 
 ---
 
@@ -454,7 +554,7 @@ If you catch yourself writing any prohibited term, rewrite the sentence to attri
 
 ## Manifest
 
-After writing all deliverables, produce `.claude/deliverables/manifest.md`:
+**Legacy mode only.** In KB mode the manifest is not written (the KB's own artifact graph and `depends_on` edges are the index, see `KB Mode (Dual-Mode Output)` > `Output Mapping`). After writing all deliverables in legacy mode, produce `.claude/deliverables/manifest.md`:
 
 ```markdown
 # Deliverables Package

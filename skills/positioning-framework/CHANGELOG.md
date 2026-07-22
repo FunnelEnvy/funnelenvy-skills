@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] - 2026-07-22
+
+### Changed
+- KB mode now auto-invokes render-default-deliverables at standard/deep depth, passing the run's `--scope`, the same as legacy mode. This reverses the prior deferral (KB mode skipped the render auto-invoke because render-default-deliverables was not KB-adapted); render-default-deliverables v1.1.0+ writes typed gold deliverable artifacts into the KB. Orchestrator flow step 10, the Auto-Invoke section, and the KB Mode Completion Message updated to append the gold-deliverable output list. Legacy behavior unchanged. [render-deliverables-kb-native]
+
 ## [1.1.3] - 2026-07-07
 
 ### Fixed

@@ -230,6 +230,8 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 
 **Note:** The experiment-mockup paths above are legacy mode. In KB mode, experiment-mockup writes these artifacts under `{kb_root}/deliverables/experiments/<slug>/` instead, co-located with the gold roadmap so render-program-site resolves them via each test's `mockup` block.
 
+**Note:** The render-default-deliverables paths above (executive-summary, messaging-guide, competitive-comparison-matrix, battle-cards) are legacy mode. In KB mode (v1.1.0+), the skill writes these as typed gold artifacts into the KB instead: the three strategy deliverables as `gold-strategy-deliverable` (distinguished by `deliverable_type`) at `{kb_root}/deliverables/{scope}-*.md`, and one `gold-battle-card` per competitor at `{kb_root}/battle-cards/{scope}-{competitor}.md`, each carrying gold-to-silver `depends_on`. The deliverable bodies are identical to legacy; only gold frontmatter is prepended, and the Deliverable Purity Constraint still governs the body. `manifest.md` is not written in KB mode (the KB artifact graph is the index). See the skill's `KB Mode (Dual-Mode Output)` section. This is the same class of dual-mode output as positioning-framework and hypothesis-generator, not a new exception to the L2 rules: it remains pure synthesis (no research, no new analysis).
+
 **Migration notes:**
 - Prior to v1.0, competitive and messaging data lived in separate files (`market-landscape.md` + `competitor-profiles.md`, `audience-personas.md` + `messaging-framework.md` + `brand-voice.md`). These were merged into `competitive-landscape.md` and `audience-messaging.md`. Deprecated schema files have been removed.
 - Prior to v1.0, positioning-quick and competitive-research were separate skills. These were consolidated into positioning-framework with the `--depth` flag. Legacy split files are auto-migrated to the merged format on first run.
@@ -382,7 +384,7 @@ Positioning dimensions use categorical ratings (Strong / Needs Work / Missing) i
 
 ## Available Skills
 
-### positioning-framework (v1.1.3)
+### positioning-framework (v1.2.0)
 Consolidated positioning, competitive research, and messaging framework. Feed it a company URL with a depth level and it researches, analyzes, and produces structured L0 + L1 context files.
 
 **Depth levels:**
@@ -409,19 +411,21 @@ Runs up to 4 sequential agents depending on depth (Research+L0, Competitive, Mes
 
 Four modes: Autonomous Research (default), Guided Interview, Audit & Update, Reconciliation (compare research against client's manual worksheet).
 
-### render-default-deliverables (v1.0.2)
+### render-default-deliverables (v1.1.0)
 L2 rendering skill. Consumes L0 + L1 context files and produces human-readable deliverables. No research, no analysis. Pure synthesis and formatting.
 
-Auto-invoked by positioning-framework at standard/deep depth. Also available standalone via `/render-default-deliverables` for re-rendering after context updates.
+Auto-invoked by positioning-framework at standard/deep depth (in both legacy and KB mode). Also available standalone via `/render-default-deliverables` for re-rendering after context updates.
 
 **Deliverable tiers:**
 - Tier 1: Executive Summary (needs L0 + scorecard)
 - Tier 2: Messaging Guide (needs L0 + audience-messaging)
 - Tier 3: Competitive Comparison Matrix, Battle Cards (needs L0 + competitive-landscape)
 
-**Output:** `.claude/deliverables/` with manifest
+**Dual-mode I/O:** legacy reads `.claude/context/` and writes `.claude/deliverables/` with a manifest; KB mode (requires `--scope`, `--no-kb` forces legacy) reads the scope's silver artifacts and writes typed `gold-strategy-deliverable` (executive-summary / messaging-guide / competitive-comparison-matrix, by `deliverable_type`) + per-competitor `gold-battle-card` artifacts into the KB with gold-to-silver `depends_on` (no manifest; the KB graph is the index). Bodies are identical across modes; the Deliverable Purity Constraint governs the body in both. See SKILL.md > KB Mode (Dual-Mode Output).
 
-### ga4-audit (v2.4.1)
+**Output:** `.claude/deliverables/` with manifest (legacy); `{kb_root}/deliverables/` + `{kb_root}/battle-cards/` (KB mode)
+
+### ga4-audit (v2.5.0)
 GA4 analytics audit. Pulls 11-15 targeted reports from a GA4 property via direct API (`ga4_client.py`, preferred) or analytics-mcp fallback, classifies conversion events, segments AI-referrer (LLM) traffic, discovers element-level interactions (CTA clicks, link text, custom parameters), and produces a v2.3 `performance-profile.md` L1 context file with page grouping, opportunity sizing, trend analysis, element interaction data, and optional L0 enrichment. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
 
 **Invocation:** `/ga4-audit [property_id] [--days 90] [--date-range "YYYY-MM-DD:YYYY-MM-DD"] [--no-compare]`
@@ -433,7 +437,7 @@ Property ID is optional. If omitted, auto-detects from `company-identity.md` fro
 
 **Runtime:** ~5-8 minutes. ~50-80K tokens. Single interaction point (event classification confirmation).
 
-### aa-audit (v1.1.1)
+### aa-audit (v1.2.0)
 Adobe Analytics audit, the AA counterpart to ga4-audit for properties on Adobe. Runs `aa_audit.py` against the AA 2.0 Reporting API (client config JSON + `ADOBE_AA_*` env credentials), interprets the structured JSON output, and produces a `performance-profile.md` L1 context file consumable by the same downstream skills (hypothesis-generator, live-capture page selection). Stamped `schema_version: "2.1"`, the highest version whose full required field set it emits (no AI-referrer fields; element data is suite-wide without page association; see the schema's Producer Variance note). Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
 
 **Invocation:** `/aa-audit [--config /path/to/config.json] [--days 90] [--no-compare]`
@@ -443,7 +447,7 @@ Adobe Analytics audit, the AA counterpart to ga4-audit for properties on Adobe. 
 
 **Runtime:** ~5-8 minutes. ~50-80K tokens.
 
-### hypothesis-generator (v1.15.1)
+### hypothesis-generator (v1.16.0)
 Standalone CRO hypothesis engine. Reads positioning context (L0 + L1) plus optional performance data, applies
 32 experiment patterns across 10 categories plus performance-driven triggers, and produces a prioritized experiment
 roadmap with ICE scoring, test feasibility estimation, contrarian filtering (14 triggers that reframe or suppress standard CRO advice in B2B and context-specific scenarios), interaction-effect modeling (AND/OR/XOR gates between same-page hypotheses, 7 empirical interaction effects), LIFT-model sequencing (Relevance > Clarity > Anxiety > Distraction > Urgency within tiers), empirical tiebreakers (winner replication, proximity-to-conversion ordering), and inconclusive test guidance per experiment including post-deployment causal impact validation and directional significance soft-coding. Premise and measurement validation (Phase 3.5) emits per-hypothesis tri-state gates consumed as hard Confidence ceilings, covering both lanes: six tactical gates, plus strategic gates (baseline reliability with a design-forcing branch, business-metric instrumentation, premise contradiction). When a business-level lever qualifies (Phase 2c, six lever families with a 7-criterion quality gate whose gap-is-still-open criterion is tri-state: documented-live discards, documented-absent mints a build, context-silence about a client-side system mints only confirm-first), also produces a separate strategic roadmap deliverable with non-A/B measurement designs and an unscored Measurement Foundation section for instrumentation prerequisites (never scored as experiments). When `performance-profile.md` is present, produces data-calibrated scores with empirical benchmarks and B2B SaaS calibration anchors, traffic-driven hypotheses, and per-experiment feasibility notes. Infeasible experiments (insufficient traffic) are routed to "What's Not Here" with alternative approaches. Dual-mode I/O: when the working repo declares a CRO knowledge base binding, reads the scope's silver artifacts from the KB and writes typed gold-experiment-roadmap / gold-strategic-roadmap artifacts (`--scope` required; `--no-kb` forces legacy), with schema-tolerant performance trigger evaluation for profiles lacking `schema_version`. Manually invoked: /hypothesis-generator

@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] - 2026-07-22
+
+### Added
+- KB-native output (dual-mode). When the working repo declares a CRO knowledge base binding, the skill writes the performance profile as a typed `silver-performance-analysis` artifact at `reference/cro-{scope}/performance-analysis.md` instead of `.claude/context/performance-profile.md`. New `--scope` (KB scope, distinct from the config `scope` sub-property block) and `--no-kb` flags. Mode resolution mirrors the canonical `modules/kb-mode.md` contract (binding-detects-mode, no `--kb` force flag, HARD STOP on missing/invalid scope). `depends_on` is empty by default for query-time first-party analytics (provenance is the report suite + date range); one optional same-layer edge if the KB declares an analytics-reference artifact the run consumed. `schema_version: "2.1"` plus the additive 2.3 field groups ride along in the KB artifact frontmatter. Legacy behavior is byte-unchanged when no binding is detected. Cross-skill schema-version contract now explicit in `schemas/performance-profile.md`. [audit-skills-kb-native-writes]
+
 ## [1.1.1] - 2026-07-07
 
 ### Fixed
