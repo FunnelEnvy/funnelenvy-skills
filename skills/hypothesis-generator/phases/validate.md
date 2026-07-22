@@ -8,6 +8,7 @@ It performs NO web research and writes NOTHING to disk. It emits an internal per
 
 - The construct hypothesis records (Phase 3 output): each hypothesis with its causal mechanism (`construct.md` Step 4), primary and guardrail metrics (Step 5 / 5a), Test Feasibility output (Step 5b), pre-registered segment (Step 5 segmentation pre-registration), and self-critique (Step 10).
 - detect's Step 1f annotations: the measurement inventory (`instrumented_metrics` / `dark_metrics`) and the staleness signals (capture-date tags + cross-artifact element-disagreement). Absent legs read as not-assessed (see Graceful Degradation).
+- detect's Step 1g `live_program` annotation (`program_state_readable`, `occupied_slots`, `recorded_folds`), consumed by the tactical `slot_available` routing gate below. Absent (`program_state_readable: false`) reads as `not-assessed` (see Gate 7).
 - The loaded performance / audience / competitive / structural artifact bodies already in context (carried forward from Phase 1), used for premise triangulation. No file is re-fetched; this phase reads what is already in context.
 
 ## Depth Behavior
@@ -136,6 +137,31 @@ When `construct.md` Step 5 pre-registered the primary read as a segment (because
 - No segment was pre-registered (the hypothesis is correctly all-visitors, or no dilution signal exists): `pass` (nothing to satisfy), or `not-assessed` when no performance profile exists to judge dilution. Either way, neutral; an all-visitors hypothesis on a non-diluted page is not penalized.
 - Run-level `testing_method` (detect Step 1h) is non-A/B (`pre_post` / `cohort` / `operational`): `not-assessed`. Segment isolation for a per-arm A/B read does not apply to a pre/post read; neutral, never `fail` on A/B grounds. Under `testing_method: ab` the gate is unchanged.
 
+### Gate 7: slot_available (live-program occupancy, TACTICAL ROUTING gate)
+
+This gate reconciles each **tactical** hypothesis against the client's live experiment program (detect's Step 1g `live_program` annotation), so the roadmap never mints a standalone test for a slot a running experiment already owns. It is **structurally different from Gates 1-6**: an affirmative `fail` is a **hard fold** (the candidate is removed from scoring and routed to "What's Not Here" by `score.md` Step 5b), NOT a Confidence cap. It is therefore emitted **separately** from the six-gate `validation_gates` record and is **NOT counted among the gates in the Step 4d gated-Confidence rubric** (it never contributes to the one-fail-caps-at-3 / two-fails-cap-at-2 arithmetic). A folded candidate is not scored at all, so a Confidence ceiling on it would be meaningless.
+
+**Scope: tactical hypotheses only.** Strategic-lane hypotheses skip this gate; their cross-deliverable reconciliation is governed by `detect-strategic.md` Step 3, not live-program occupancy. Compute `lever_class` for the hypothesis from its category the same coarse way detect Step 1g does (hero/headline messaging, proof/trust, form, CTA, nav/IA, layout, pricing, personalization), and match it to an `occupied_slots` / `recorded_folds` entry's `lever_class` by content equivalence (the program-state source may be prose).
+
+Determine the gate value against `live_program`:
+
+- **Same surface + same lever class occupied** (an `occupied_slots` entry with a running/queued experiment on the hypothesis's surface and lever class), **OR a `recorded_folds` entry covers the surface + lever class** (binding regardless of the named experiment's current status): `fail`. The candidate is not scored; it routes to "What's Not Here" as a fold. Record the note: the live experiment named in natural language, the recommendation phrased as an iteration *inside* that experiment ("re-sync and re-read cleanly" rather than a standalone re-open), and a pointer to any variation copy or evidence the candidate developed so it is not lost. This is what `score.md` Step 5b renders.
+- **Same surface + different lever class occupied**: `pass`, with a one-test-per-surface sequencing note attached ("a live experiment runs on this surface; sequence this test after it concludes"). The candidate is kept and scored; the note flows to `score.md` Step 7 (Sequencing).
+- **Same lever class + different surface**: `pass`. No occupancy; the live experiment is cited as evidence via the existing Step 1g prior-threading, unchanged.
+- **Surface present but status ambiguous / `on-hold`, with no covering `recorded_folds` entry**: `pass` with a sequencing caution ("an experiment on this surface has ambiguous status; confirm it has concluded before launching"). Do NOT `fail` on ambiguous status alone -- a concluded read frees the slot, and over-suppressing would kill legitimate successors. A `recorded_folds` entry, by contrast, is binding and produces `fail` per the first bullet even under ambiguous status.
+- **`program_state_readable: false`** (no experiment-history source bound): `not-assessed`. Set the run-level `live_program_unreconciled: true` flag so `score.md` Step 5b surfaces the "live program not reconciled" caveat (KB mode). Neutral; never a fold on absence.
+
+**Tri-state parity.** pass / fail / not-assessed, like every other gate: only an affirmative `fail` acts (here, a fold), and `not-assessed` (no program-state source) is neutral. **Idempotency:** the gate is a pure function of the loaded program state, so a rerun yields the same disposition -- a folded candidate stays folded while the experiment runs or the fold is on record, and becomes a scorable successor only once the experiment concludes. It does not oscillate on its own.
+
+**Emit (separate from the six-gate record):**
+
+```
+slot_available: <pass | fail | not-assessed>
+slot_note: "[fail: the live experiment named + iteration-inside recommendation + variation/evidence pointer | pass: one-test-per-surface sequencing note or ambiguous-status caution, when applicable | not-assessed: 'live program state not readable']"
+```
+
+Plus the run-level `live_program_unreconciled` flag when `program_state_readable` is false.
+
 ---
 
 ## Strategic Lane Gates
@@ -172,4 +198,4 @@ A hypothesis carrying `confirm_first: true` (from `phases/detect-strategic.md`) 
 
 ## Output
 
-**Output to Phase 4 (score):** one `validation_gates` record per hypothesis, plus any Prerequisites additions (genuinely-dark metrics, "verify current before launch" notes, non-isolable-segment instrumentation blocks), any per-surface confirmation note for a `live-elsewhere` metric (a readiness/verification note, NOT a Prerequisites build entry; rendered via the SKILL.md `Readiness` field), and any "What's Not Here" routing flags (unpowerable thesis metric, genuinely-dark primary metric) for `score.md` Step 5b to apply. The records are internal; `score.md` Step 4 applies them as hard caps on the raw Confidence the soft modifiers compute, per the order-of-operations contract in `score.md` Step 4. Strategic-lane gate records (from `Strategic Lane Gates` above) flow to `score.md` Step 6b instead, which applies the same ceiling rule to the strategic scoring pass.
+**Output to Phase 4 (score):** one `validation_gates` record per hypothesis, plus the separate per-tactical-hypothesis `slot_available` routing determination and `slot_note` (Gate 7, NOT part of the six-gate record and NOT counted in the Step 4d cap arithmetic) and the run-level `live_program_unreconciled` flag, plus any Prerequisites additions (genuinely-dark metrics, "verify current before launch" notes, non-isolable-segment instrumentation blocks), any per-surface confirmation note for a `live-elsewhere` metric (a readiness/verification note, NOT a Prerequisites build entry; rendered via the SKILL.md `Readiness` field), and any "What's Not Here" routing flags (unpowerable thesis metric, genuinely-dark primary metric, and a `slot_available: fail` live-program fold) for `score.md` Step 5b to apply. The records are internal; `score.md` Step 4 applies them as hard caps on the raw Confidence the soft modifiers compute, per the order-of-operations contract in `score.md` Step 4. Strategic-lane gate records (from `Strategic Lane Gates` above) flow to `score.md` Step 6b instead, which applies the same ceiling rule to the strategic scoring pass.
