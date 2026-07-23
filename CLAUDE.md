@@ -525,7 +525,7 @@ Live-page structural and copy capture. Navigates selected pages, passively reads
 
 **Note:** KB-mode silver enrichment depends on the client type skill registering `silver-structural-observation` (Phase A Change B). Legacy mode is independent. Authoritative artifact schema inlined in `phases/write.md`; reference copies in `schemas/`.
 
-### experiment-mockup (v1.5.0)
+### experiment-mockup (v1.6.0)
 Visual mockup generator for proposed experiment changes. Takes a hypothesis from `experiment-roadmap.md`, navigates to the target page, injects the proposed change styled to match the site's design, iterates with the user in real time, then captures the approved state as a standalone HTML artifact with CRO placement rationale. Three browser modes: live (Chrome DevTools MCP, interactive, ~90% visual fidelity), playwright (Playwright MCP, screenshot-based iteration), and static (HTML extraction fallback, non-interactive, ~70% fidelity).
 
 **Invocation:** `/experiment-mockup <hypothesis-number> [--url <override-url>] [--static] [--scope <slug>] [--no-kb]`

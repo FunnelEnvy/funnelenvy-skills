@@ -121,6 +121,15 @@ This governs ANY rewrite of the hypothesis copy for the mockup context (most rel
 
 ## Steps
 
+### Step 1 (pre-build): Target-Fidelity Gate
+
+Run this gate BEFORE sketching candidates (Step 1a) or building (Step 1): candidate placements are chosen against the target region, so the region must be resolved first.
+
+- **Resolve the named region to the page's visual reality.** Map the hypothesis's named target region to the element it actually denotes on the rendered page (for "hero": the dominant first-viewport component, not wherever the quoted copy happens to sit).
+- **Stop-and-ask on disagreement.** If the roadmap's current-state description and the page's visual structure DISAGREE about what the named region is (e.g., the quoted "hero" copy lives below the actual above-the-fold banner), STOP and surface the discrepancy to the user: name BOTH candidate elements and ask which one the experiment means. Do not silently pick the copy-match.
+- **Report the upstream signal.** A disagreement is also a signal worth reporting: the roadmap's current-state description may be wrong. Note that for the user alongside the stop-and-ask.
+- **Record the outcome.** Record the resolved target and the gate outcome in placement metadata (`insertion_point` already exists; add the named-region-to-resolved-element reasoning, per annotate.md `Section 7: Capture Fidelity Notes`). Step 1a and Step 1 build against this resolved target.
+
 ### Step 1a: Candidate Pass (before building)
 
 When you have genuine discretion over the treatment (placement, pattern, or layout is NOT pinned by the hypothesis), do a quick internal comparison before committing to one build:
@@ -183,6 +192,8 @@ Use the browser MCP to insert the element:
 
 Before presenting to the user, screenshot the injected state and review it yourself. This catches obvious defects the human should never have to point out.
 
+The overlay-hygiene precondition (capture.md Step 0) applies to these self-review screenshots too: dismiss/hide floating overlays before the desktop and 390px shots, identically across both, under the same hard boundary (floating overlays only, never in-flow content, never the treatment or its layout context).
+
 **Desktop check.** Screenshot the injected viewport and verify:
 - The element (or the edited element for `replace-copy`/`modify`, or the reflowed region for `remove`/`reorder`) is fully visible, not clipped by overflow or a sticky header.
 - No text-wrapping artifacts or layout breakage.
@@ -197,7 +208,9 @@ Before presenting to the user, screenshot the injected state and review it yours
 
 Then restore the desktop viewport before presenting.
 
-**On failure:** fix the treatment and re-screenshot. Maximum 2 self-fix cycles total (across desktop and mobile). If issues remain after 2 cycles, present anyway and state the remaining known issues explicitly to the user.
+**Spot-the-diff check.** Viewing the Before/After pair side by side, the change must be identifiable within a few seconds by someone who has NOT read the hypothesis. If it is not, re-frame (tighter crop) and re-shoot, WITHIN the existing self-fix cycle budget (do not enlarge it). Annotation overlays remain forbidden in the artifact (the native-styling / no-annotation rule stands): fix framing, not labeling. Record the outcome (pass, or the re-frame it forced) in the self-review log and in placement metadata (annotate.md `Section 7`).
+
+**On failure:** fix the treatment and re-screenshot. Maximum 2 self-fix cycles total (across desktop, mobile, and any spot-the-diff re-frame). If issues remain after 2 cycles, present anyway and state the remaining known issues explicitly to the user.
 
 ### Step 3: Present to User
 

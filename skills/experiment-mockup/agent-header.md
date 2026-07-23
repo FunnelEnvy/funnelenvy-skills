@@ -56,12 +56,12 @@ Read modules at the start of the phase that needs them. Do not pre-load all modu
 All output files use YAML frontmatter (placement.md) or HTML comment metadata blocks (mockup.html). Required fields:
 
 - `schema`: the schema name (`experiment-mockup` for mockup.html, `experiment-placement` for placement.md)
-- `schema_version`: `"1.0"` for mockup.html; `"1.1"` for placement.md (adds `change_type` / `change_type_source`)
+- `schema_version`: `"1.0"` for mockup.html; `"1.2"` for placement.md (`change_type` / `change_type_source` frontmatter fields; `Section 7: Capture Fidelity Notes` body subsection)
 - `hypothesis`: hypothesis number from experiment-roadmap.md
 - `target_url`: the URL that was mocked up
 - `change_type` / `change_type_source` (placement.md only): the resolved change type and whether it came from the roadmap or was classified locally
 - `mode`: `live` or `static`
-- `generated_by`: `experiment-mockup v1.5.0`
+- `generated_by`: `experiment-mockup v1.6.0`
 - `last_updated`: ISO-8601 date
 
 ---
