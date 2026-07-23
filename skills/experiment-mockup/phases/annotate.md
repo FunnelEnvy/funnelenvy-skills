@@ -15,6 +15,10 @@
 - Candidate-pass scoring (from inject Step 1a: the losing candidates and their pros/cons, or the skip reason)
 - Which variation was mocked (when the hypothesis carried a Variation block)
 - Final mockup copy, verbatim (from the approved injection or static build)
+- Overlays hidden for capture (from capture.md Step 0; live/playwright only)
+- Resolved target region and gate outcome (from inject.md Target-Fidelity Gate, or static-build.md Step 2)
+- Salience-framing decision (from capture.md Step 1: resolved scale and whether the size backstop fired; live/playwright only)
+- Spot-the-diff outcome (from inject.md Step 2b; live/playwright only)
 - Execution mode: live or static
 - `modules/lp-audit-taxonomy.md` (dimensions D1, D3, D5, D8)
 
@@ -28,14 +32,14 @@
 
 ### Step 1: Write placement.md
 
-Create the file with YAML frontmatter and 6 body sections.
+Create the file with YAML frontmatter and 7 body sections.
 
 **Frontmatter:**
 
 ```yaml
 ---
 schema: experiment-placement
-schema_version: "1.1"
+schema_version: "1.2"
 hypothesis: [number]
 hypothesis_title: "[from roadmap]"
 target_url: "[url]"
@@ -44,7 +48,7 @@ change_type: "[insert | replace-copy | modify | remove | reorder; comma-separate
 change_type_source: "[roadmap | local]"
 insertion_point: "[DOM path or descriptive location]"
 mode: [live|static]
-generated_by: experiment-mockup v1.5.0
+generated_by: experiment-mockup v1.6.0
 last_updated: [YYYY-MM-DD]
 ---
 ```
@@ -129,6 +133,15 @@ Check for and flag:
 - **Content freshness:** If the injected content references specific data (pricing, customer count, percentage) that may change, flag the maintenance requirement.
 
 If no risk flags are identified, write: "No significant implementation risks identified for this placement."
+
+### Section 7: Capture Fidelity Notes
+
+Record the four capture-fidelity decisions as labeled prose entries, each a verdict plus brief reasoning. This section is mode-aware: P4 (target-fidelity) populates in ALL modes; the three screenshot-dependent items populate in live/playwright only and state "not applicable (static mode, no screenshots)" in static.
+
+- **Overlays hidden for capture (P1):** the floating overlays dismissed/hidden for the shots (e.g., "cookie-consent banner, chat widget"), or "none present". Live/playwright only; in static mode state "not applicable (static mode, no screenshots)".
+- **Resolved target region and gate outcome (P4):** the hypothesis's named region, the resolved element, and the gate outcome (clean pass; or stopped-and-asked, naming both candidates and the user's choice; or static Risk-Flag on an unresolved discrepancy). Populated in ALL modes: static resolves it via DOM structure through static-build.md Step 2.
+- **Salience-framing decision (P2):** the resolved scale (element/copy-scale or section-scale) and whether the one-directional size backstop fired. Live/playwright only; static states "not applicable (static mode, no screenshots)".
+- **Spot-the-diff outcome (P3):** pass, or the re-frame it forced. Live/playwright only; static states "not applicable (static mode, no screenshots)".
 
 ### Step 2: Write to Disk
 

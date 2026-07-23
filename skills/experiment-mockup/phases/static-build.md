@@ -24,7 +24,7 @@
 - `<output-dir>/mockup.html` (standalone self-contained HTML; output dir is orchestrator-provided: legacy `.claude/deliverables/experiments/<slug>/`, KB mode `{kb_root}/deliverables/experiments/<slug>/`)
 - Working state for Phase 4 (annotate.md): insertion point, design tokens, placement rationale
 
-**No screenshots in static mode** (no browser to screenshot). Static mode writes neither `mockup-screenshot.png` nor `control-screenshot.png`. A consuming render-program-site spoke degrades to after-only (no Before/After pair) for static mockups.
+**No screenshots in static mode** (no browser to screenshot). Static mode writes neither `mockup-screenshot.png` nor `control-screenshot.png`. A consuming render-program-site spoke degrades to after-only (no Before/After pair) for static mockups. Because static mode takes no screenshots, the screenshot-dependent capture-fidelity parts (P1 overlay hygiene, P2 salience framing, P3 spot-the-diff) do NOT apply here; only the non-screenshot P4 target-fidelity check has a static analog (Step 2 below).
 
 ---
 
@@ -56,6 +56,8 @@ Parse the fetched HTML to find the section referenced in the hypothesis.
 2. If multiple candidates found: ask the user for clarification. Example: "I found two forms on this page: a contact form in the main content area and a newsletter signup in the footer. Which one is the target for this hypothesis?"
 
 3. If no candidates found: ask the user to describe the target area. Example: "I couldn't identify the target section from the HTML. Can you describe what's on the page near where the change should go?"
+
+**Target-fidelity check (P4, static analog).** A named-region-vs-DOM-structure discrepancy is exactly the ambiguity items 2-3 already surface: if the hypothesis names a region (e.g., "the hero") but the parsed HTML/CSS structure disagrees about what that region is (the quoted current-state copy sits outside the dominant / first-in-flow structural region), treat it as an ambiguous target. In static mode there is no rendered visual reality, so reason over DOM structure (dominant / first-in-flow structural region) rather than visual dominance. When a live user is present, fold the discrepancy into the Step 2 clarification ask above (name both candidate regions and ask which one the experiment means). When running non-interactively without a live user, record the discrepancy as a Risk Flag in placement.md `### Section 6: Risk Flags` and continue (and populate placement.md `Section 7`'s target-fidelity entry). No new parallel blocking gate is added.
 
 4. Once identified, extract:
    - The target section HTML (the `<section>` or container `<div>` that holds the conversion element)
@@ -153,7 +155,7 @@ Assemble the standalone HTML file:
   target_url: "[url]"
   insertion_point: "[descriptive location]"
   mode: static
-  generated_by: experiment-mockup v1.5.0
+  generated_by: experiment-mockup v1.6.0
   last_updated: [YYYY-MM-DD]
 -->
 <!DOCTYPE html>
