@@ -1,6 +1,6 @@
 ---
-version: "1.1.0"
-updated: 2026-06-16
+version: "1.2.0"
+updated: 2026-07-27
 ---
 # Repo Conventions
 
@@ -32,7 +32,7 @@ You MUST NOT deviate even when creating "temporary" or "one-off" files.
 
 - Branch names MUST follow the pattern `{user-prefix}_{description}`
 - Commit messages and PR descriptions are concise and bulleted
-- Significant changes go through a branch with PR creation
+- Implementation changes go through a branch with PR creation
 
 ## Python
 

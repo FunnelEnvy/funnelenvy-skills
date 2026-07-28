@@ -1,0 +1,71 @@
+name: fe-release-tag
+
+# Creates and pushes the annotated release tag v{version} — the git op a Claude
+# Code remote (web) session cannot perform (tag push is blocked in-session, and no
+# in-session GitHub API tag-creation path exists). Fired at the release cut via
+# workflow_dispatch (actions_run_trigger). See change-management release-operations
+# §7 `Git Release Tagging` and git-strategy.md `Remote-Session Constraints`.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version WITHOUT the leading v (e.g. 1.88.0). The tag created is v{version}.'
+        required: true
+        type: string
+      resource_name:
+        description: 'Root resource name — the annotated tag message is "{resource_name} v{version}".'
+        required: true
+        type: string
+      message:
+        description: 'Optional full tag-message override. When empty, the message is "{resource_name} v{version}".'
+        required: false
+        type: string
+
+# Least privilege: creating and pushing a tag needs contents:write only.
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Create and push annotated tag v{version}
+        env:
+          VERSION: ${{ inputs.version }}
+          RESOURCE_NAME: ${{ inputs.resource_name }}
+          MESSAGE_OVERRIDE: ${{ inputs.message }}
+        run: |
+          set -euo pipefail
+
+          tag="v${VERSION}"
+
+          # Compose the annotated-tag message: the exact shape release-operations §7
+          # `Git Release Tagging` specifies — "{root resource name} v{version}".
+          if [ -n "${MESSAGE_OVERRIDE}" ]; then
+            msg="${MESSAGE_OVERRIDE}"
+          else
+            msg="${RESOURCE_NAME} v${VERSION}"
+          fi
+
+          # Existing-tag handling: a release tag is IMMUTABLE. If v{version} already
+          # exists on origin, fail loudly rather than silently overwriting.
+          git fetch --tags --force origin
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null; then
+            echo "::error::Tag ${tag} already exists on origin — release tags are immutable; refusing to overwrite."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "${tag}" -m "${msg}"
+          git push origin "refs/tags/${tag}"
+
+          echo "Created and pushed annotated tag ${tag} with message: ${msg}"

@@ -1,0 +1,134 @@
+name: fe-branch-sweep
+
+# Deterministic remote-session branch cleanup.
+#
+# A Claude Code remote (web) session can create/update refs but cannot DELETE
+# them. It records a branch as deletable by creating a `_deletable/<original-ref>`
+# marker branch, then dispatches this workflow. This sweep performs the deletions
+# the session cannot, with permissions the session lacks.
+#
+# Two deterministic passes, NO heuristics — no stale-N-days test and no
+# merged-state inference. All eligibility judgment lives at marker-write time
+# (see change-management git-strategy.md `Remote-Session Constraints`):
+#   (a) marker pass       — delete exactly what each `_deletable/*` marker names.
+#   (b) merged-PR-head pass — delete merged-PR head branches, setting-independent.
+
+on:
+  # Safety-net: a daily run catches any marker whose in-session dispatch was missed.
+  schedule:
+    - cron: '17 4 * * *'
+  # Fired in-session via actions_run_trigger right after a marker is written,
+  # for timely cleanup.
+  workflow_dispatch:
+
+# Least privilege: ref deletion needs contents:write; identifying merged-PR head
+# branches (pass b) needs pull-requests:read. No other scope.
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sweep _deletable markers and merged-PR head branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const MARKER_PREFIX = '_deletable/';
+
+            // --- Guard set: default branch + every protected branch ---------------
+            // Defense in depth: the sweep MUST refuse to delete these even if a
+            // marker names one — skip and continue, never fail the run.
+            const repoData = await github.rest.repos.get({ owner, repo });
+            const defaultBranch = repoData.data.default_branch;
+            const guarded = new Set([defaultBranch]);
+            const protectedBranches = await github.paginate(
+              github.rest.repos.listBranches,
+              { owner, repo, protected: true, per_page: 100 }
+            );
+            for (const b of protectedBranches) guarded.add(b.name);
+            const isGuarded = (name) => guarded.has(name);
+
+            // Delete a branch ref, tolerating an already-absent ref (idempotent).
+            async function deleteBranch(name) {
+              try {
+                await github.rest.git.deleteRef({ owner, repo, ref: `heads/${name}` });
+                core.info(`deleted branch ${name}`);
+              } catch (e) {
+                if (e.status === 404 || e.status === 422) {
+                  core.info(`branch ${name} already absent — no-op`);
+                } else {
+                  throw e;
+                }
+              }
+            }
+
+            // --- Pass (a): marker pass -------------------------------------------
+            // Enumerate every ref under refs/heads/_deletable/*. For each marker
+            // `_deletable/<original-ref>`: delete <original-ref>, then the marker.
+            // <original-ref> may itself contain '/', preserved verbatim.
+            const markerRefs = await github.paginate(
+              github.rest.git.listMatchingRefs,
+              { owner, repo, ref: `heads/${MARKER_PREFIX}`, per_page: 100 }
+            );
+            for (const r of markerRefs) {
+              // r.ref is "refs/heads/_deletable/<original-ref>".
+              const fullName = r.ref.replace(/^refs\/heads\//, ''); // "_deletable/<original-ref>"
+              if (!fullName.startsWith(MARKER_PREFIX)) continue;     // prefix-boundary guard
+              const originalRef = fullName.slice(MARKER_PREFIX.length); // "<original-ref>"
+              if (!originalRef) continue;                            // empty marker — skip
+
+              if (isGuarded(originalRef)) {
+                core.warning(
+                  `marker names guarded branch '${originalRef}' — skipping; branch and marker left intact`
+                );
+                continue;
+              }
+
+              // Delete the marked branch (no-op if already gone), then the marker.
+              await deleteBranch(originalRef);
+              await deleteBranch(fullName);
+            }
+
+            // --- Pass (b): merged-PR-head pass (setting-independent) --------------
+            // Delete the head branch of every merged PR, but ONLY when that head
+            // (i) carries no open PR and (ii) its current tip SHA is unchanged since
+            // the merge (equals the PR's head SHA at merge). Same definite
+            // server-side condition delete_branch_on_merge uses — deterministic, not
+            // a heuristic. Where the native setting is on, GitHub deletes the head
+            // first and this pass finds nothing. No marker is written for these.
+            const closedPRs = await github.paginate(
+              github.rest.pulls.list,
+              { owner, repo, state: 'closed', per_page: 100 }
+            );
+            for (const pr of closedPRs) {
+              if (!pr.merged_at) continue;                       // closed-not-merged — skip
+              // Head must live in THIS repo (skip cross-fork PRs).
+              if (!pr.head.repo || pr.head.repo.full_name !== `${owner}/${repo}`) continue;
+
+              const headBranch = pr.head.ref;
+              const mergeSha = pr.head.sha;                      // head SHA at merge
+              if (isGuarded(headBranch)) continue;               // never delete default/protected
+
+              // (i) no OPEN PR on this head branch.
+              const openOnHead = await github.paginate(
+                github.rest.pulls.list,
+                { owner, repo, state: 'open', head: `${owner}:${headBranch}`, per_page: 100 }
+              );
+              if (openOnHead.length > 0) continue;
+
+              // (ii) current tip unchanged since merge.
+              let currentSha;
+              try {
+                const ref = await github.rest.git.getRef({ owner, repo, ref: `heads/${headBranch}` });
+                currentSha = ref.data.object.sha;
+              } catch (e) {
+                if (e.status === 404) continue;                  // already deleted — nothing to do
+                throw e;
+              }
+              if (currentSha !== mergeSha) continue;             // new commits since merge — preserve
+
+              await deleteBranch(headBranch);
+            }
