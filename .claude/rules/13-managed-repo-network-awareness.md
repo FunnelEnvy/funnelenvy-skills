@@ -1,6 +1,6 @@
 ---
-version: "0.1.0"
-updated: 2026-07-20
+version: "0.2.0"
+updated: 2026-08-05
 ---
 # Managed Repo Network Awareness
 
@@ -13,4 +13,5 @@ Skipping this gate means an agent treats the repo as standalone and cannot disco
 - This repo is governed by fe-sys-hq — its rules and enabled plugins are distributed from the fe-sys-hq marketplace. You MUST treat fe-sys-hq as the origin of this repo's governance.
 - The fe-sys-hq source present in this environment carries `repo-registry.yaml`, the single source of truth for the managed-repo network (repo names, tiers, local paths, knowledge bases, `enabledPlugins`).
 - To discover fe-sys-hq, read the registry, or resolve a registry entry or a cross-repo `{repo-name}:path` link, you MUST use the `registry_resolve.py` resolver rather than assuming a path — the registry's location varies by environment, so this rule hardcodes none.
+- When a referenced file fails to resolve in the assumed working repo, you MUST attempt resolution against every provisioned source clone before declaring a missing-precondition halt — a dispatch routinely provisions the fe-sys-hq source alongside the target repo, so a file absent from the assumed repo may resolve in a sibling clone.
 - The authority for the discovery model and resolution rules is fe-repo-management's `Managed Repo Resolution` convention (the `fe-sys-hq Presence & Discovery` subsection); the resolver is its operative implementation. Consult it for how resolution works.
