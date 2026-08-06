@@ -1,6 +1,6 @@
 ---
-version: "1.6.0"
-updated: 2026-07-29
+version: "1.7.0"
+updated: 2026-08-05
 ---
 # Claude Usage
 
@@ -22,3 +22,4 @@ Concurrent agents committing to one shared working tree stop the main agent from
 - Every subagent and background task MUST either (a) **isolate** — run in its own git worktree, where it may commit, with the main agent orchestrating the landing of that work (e.g. a merge); or (b) **return work** — hand its result (edits left in the tree, a diff, or a structured result) back to the main agent, which performs the commit. These are the only two sanctioned patterns.
 - There is NO sequential exception: even a blocking, one-at-a-time subagent MUST NOT self-commit to the shared tree. Committing to the shared tree is never a subagent or background-task responsibility, whether it runs concurrently or in sequence.
 - With one writer to the shared tree, the main agent MUST treat its own git view as authoritative and MUST NOT add defensive re-checking or conflict-hedging that exists only to guard against concurrent unowned commits.
+- If you are directed to advance two or more change docs concurrently in one shared working tree, follow the `Interactive Concurrent Multi-Doc Execution` recipe in [fe-sys-hq:plugins/fe-governance/skills/change-management/SKILL.md](fe-sys-hq:plugins/fe-governance/skills/change-management/SKILL.md) rather than defaulting to serial execution. It composes the two primitives above; it does not add a third.
