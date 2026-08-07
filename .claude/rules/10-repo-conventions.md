@@ -1,6 +1,6 @@
 ---
-version: "1.2.0"
-updated: 2026-07-27
+version: "1.3.0"
+updated: 2026-08-07
 ---
 # Repo Conventions
 
@@ -19,7 +19,7 @@ Violating any credential rule is a security incident — leaked secrets cannot b
 
 You MUST NOT deviate even when creating "temporary" or "one-off" files.
 
-- Temporary, scratch, and one-off files MUST be created inside the repo they support — never elsewhere on the local device (home directory, system temp, desktop, or an unrelated repo).
+- Temporary, scratch, and one-off files — including disposable Build-step and migration scripts — MUST be created inside the repo they support (never elsewhere on the local device — home directory, system temp, desktop, or an unrelated repo) and MUST have filenames beginning with a `YYYY-MM-DD_` creation-date prefix, then the name in whatever convention otherwise applies (snake_case for Python scripts, kebab-case otherwise; e.g. `2026-08-07_migrate_links.py`).
 - All directory and filenames MUST be lowercase
 - Default to kebab-case; use underscore ONLY when prefixed or suffixed by date (e.g., `2026-02-19_file-a`)
 - Python files use snake_case matching skill name
