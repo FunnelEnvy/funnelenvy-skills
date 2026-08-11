@@ -1,10 +1,10 @@
 ---
-version: "1.3.0"
-updated: 2026-08-07
+version: "1.4.0"
+updated: 2026-08-11
 ---
 # Repo Conventions
 
-Shared file, directory, git, credential, and resource naming conventions for all managed repos.
+Shared file, directory, credential, and resource naming conventions for all managed repos.
 
 ## Credentials (MANDATORY — Security Boundary)
 
@@ -27,12 +27,6 @@ You MUST NOT deviate even when creating "temporary" or "one-off" files.
 - All dates MUST be represented as YYYY-MM-DD
 - **Underscore-prefixed directories** (e.g., `_dev/`, `_templates/`): Reserved for directories injected by a cross-cutting governance skill into a resource it doesn't own. The underscore prefix provides visual separation and sorts these above content directories. Directories owned by the resource itself use plain names without underscore prefix (e.g., `references/`, `operations/`, `transforms/`).
 - `.claude/rules/` is managed by fe-sys-hq rule deployment — you MUST NOT manually edit, add, or remove rule files from this directory. If you believe a rule needs changing, edit the source in `.claude/skills/fe-governance-deploy/rules/` instead.
-
-## Git
-
-- Branch names MUST follow the pattern `{user-prefix}_{description}`
-- Commit messages and PR descriptions are concise and bulleted
-- Implementation changes go through a branch with PR creation
 
 ## Python
 
