@@ -1,3 +1,16 @@
+---
+fe-managed: true
+name: tests-claude
+title: Automated Test Suite
+description: >
+  Agent-optimized context for this repo's automated test suite. Test-running commands,
+  authoring conventions, test-necessity and test-verdict-integrity rules, and
+  change-management integration for the Design/Build/QA test lifecycle.
+governed_by: document-management
+version: "1.0.0"
+created: 2026-09-22
+updated: 2026-09-22
+---
 # Automated Test Suite
 
 Automated test suite for this repo's Python scripts. stdlib `unittest` infrastructure with a three-layer architecture, fixture-based testing, and a script coverage floor. Load `change-management` before working with test lifecycle operations. Load `document-management` before reviewing or editing managed files in this directory.
@@ -16,7 +29,7 @@ Automated test suite for this repo's Python scripts. stdlib `unittest` infrastru
 
 - **Running tests in-session**: Use `python -m unittest discover _tests/ -v` for the full suite, `python -m unittest discover _tests/{layer} -v` for a single layer, and `python -m unittest _tests.{layer}.test_{script_name} -v` for a single file. A full-layer or full-suite run can take minutes. Let it finish rather than killing it, and run it in the background if you need the session free. A long run is not a hang, but it is not automatically a normal cost either: one file carrying most of a layer's time is a `Test Necessity` H4 target.
 - **Authoring tests**: Test files follow `test_{script_name}.py` in the correct layer directory (`unit/`, `functional/`, or `integration/`). Use `unittest` (stdlib) only — no pytest, no pip. Every script the repo owns must have at least one test case. That is a floor, not a target; `Test Necessity` H6 governs everything above it. Every test MUST satisfy `Test Necessity` and `Test-Verdict Integrity` below.
-- **Authoring fixtures**: Static fixtures are small purpose-built `.md` files checked into `fixtures/` for read-only patterns. Programmatic fixtures are created via `tempfile` in `setUp`/`tearDown`, using the repo's shared fixture helpers where they exist. Tests must clean up after themselves.
+- **Authoring fixtures**: Static fixtures are small purpose-built `.md` files checked into `fixtures/` for read-only patterns. Programmatic fixtures are created via `tempfile`, using the repo's shared fixture helpers where they exist. `Test Necessity` H4 governs whether a test builds its own, copies one, or shares one. Tests must clean up after themselves.
 - **Change-management integration**: Design's `Test design analysis` captures coverage planning in the change document's `Verification Design > Tests` subsection. The Build step runs `python -m unittest _tests.{layer}.test_{script_name} -v` for each new or modified script and authors new test files and fixtures per the design. The QA step runs the full suite as pre-QA verification.
 
 ## Test Necessity

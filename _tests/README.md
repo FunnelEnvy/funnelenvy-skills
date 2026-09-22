@@ -84,4 +84,4 @@ Checked into `_tests/fixtures/`. Small, purpose-built `.md` files, not copies of
 
 ### Programmatic Fixtures
 
-Created via `tempfile` in `setUp`/`tearDown`, using the repo's shared fixture helpers where it has them. Used by tests that need a directory tree or a git repo. Each test gets its own fresh fixture, and cleans it up.
+Created via `tempfile`, using the repo's shared fixture helpers where it has them. Used by tests that need a directory tree or a git repo. A test gets its own fresh fixture, or a fresh copy of one built once, and cleans it up. When a fixture may be shared instead is in [CLAUDE.md](CLAUDE.md) under `Test Necessity` H4.
