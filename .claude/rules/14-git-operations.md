@@ -1,6 +1,6 @@
 ---
-version: "1.0.0"
-updated: 2026-08-11
+version: "1.1.0"
+updated: 2026-09-24
 ---
 # Git Operations
 
@@ -11,6 +11,7 @@ Cross-cutting git conventions for all managed repos — how git work is structur
 - Branch names MUST follow the pattern `{user-prefix}_{description}`.
 - Commit messages and PR descriptions MUST be concise and bulleted.
 - Implementation changes MUST go through a branch with PR creation — there is no trivial-change exception.
+- The one exception is **fe-governance-deploy output** — the rules, `settings.json` and managed workflow files it distributes — which commits direct to `main` in each target repo. The approval that stands in for the PR is the `[User] Approve deploy strategy` gate the deploy takes before writing anything; a deploy that skipped that gate has no exception to rely on.
 
 ## Git-Operation Ownership (Shared Working Tree)
 
