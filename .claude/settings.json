@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "FE_ROOT=\"$(dirname \"${CLAUDE_PROJECT_DIR:-$PWD}\")/fe-sys-hq\"; [ -f \"$FE_ROOT/bin/fe-init.sh\" ] || git clone --depth 1 https://github.com/FunnelEnvy/fe-sys-hq.git \"$FE_ROOT\"; bash \"$FE_ROOT/bin/fe-init.sh\" || true; printf '%s\\n' '{\"reloadSkills\": true}'"
+            "command": "[ \"${CLAUDE_CODE_REMOTE:-}\" = \"true\" ] && exit 0; FE_MAIN=\"$(git -C \"${CLAUDE_PROJECT_DIR:-$PWD}\" worktree list --porcelain 2>/dev/null | sed -n '1s|^worktree ||p')\"; FE_ROOT=\"$(dirname \"${FE_MAIN:-${CLAUDE_PROJECT_DIR:-$PWD}}\")/fe-sys-hq\"; [ -f \"$FE_ROOT/bin/fe-init.sh\" ] || { printf 'fe-init hook: no fe-sys-hq beside the main worktree, so this session grounds on a fresh --depth 1 clone of remote main at %s\\n' \"$FE_ROOT\" >&2; git clone --depth 1 https://github.com/FunnelEnvy/fe-sys-hq.git \"$FE_ROOT\"; }; bash \"$FE_ROOT/bin/fe-init.sh\" || true; printf '%s\\n' '{\"hookSpecificOutput\": {\"hookEventName\": \"SessionStart\", \"reloadSkills\": true}}'"
           }
         ]
       }

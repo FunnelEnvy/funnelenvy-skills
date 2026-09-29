@@ -1,6 +1,6 @@
 ---
-version: "1.4.0"
-updated: 2026-08-11
+version: "1.5.0"
+updated: 2026-09-29
 ---
 # Repo Conventions
 
@@ -17,9 +17,9 @@ Violating any credential rule is a security incident — leaked secrets cannot b
 
 ## Files and Directories
 
-You MUST NOT deviate even when creating "temporary" or "one-off" files.
+You MUST NOT deviate even when creating "temporary" or "one-off" files. This holds even when the environment provides a session scratchpad and instructs you to prefer it: this rule governs, so these files MUST NOT go in the scratchpad.
 
-- Temporary, scratch, and one-off files — including disposable Build-step and migration scripts — MUST be created inside the repo they support (never elsewhere on the local device — home directory, system temp, desktop, or an unrelated repo) and MUST have filenames beginning with a `YYYY-MM-DD_` creation-date prefix, then the name in whatever convention otherwise applies (snake_case for Python scripts, kebab-case otherwise; e.g. `2026-08-07_migrate_links.py`).
+- Temporary, scratch, and one-off files, including disposable migration scripts, MUST be created in the repo-root `tmp/` directory of the repo they support. Never create them elsewhere on the local device: the home directory, system temp, the harness session scratchpad, the desktop, or an unrelated repo. This bullet applies except where a governing skill specifies otherwise. Each such file MUST begin with a `YYYY-MM-DD_` creation-date prefix, then the name in whatever convention otherwise applies (snake_case for Python scripts, kebab-case otherwise). Under `tmp/`, a dated directory carries the prefix and the entries inside it carry none of their own. Examples: `tmp/2026-08-07_migrate_links.py`, `tmp/2026-09-25_deploy/<repo-name>`.
 - All directory and filenames MUST be lowercase
 - Default to kebab-case; use underscore ONLY when prefixed or suffixed by date (e.g., `2026-02-19_file-a`)
 - Python files use snake_case matching skill name
@@ -39,5 +39,5 @@ You MUST NOT deviate even when creating "temporary" or "one-off" files.
 
 ## .gitignore
 
-- Every repo MUST have a `.gitignore` that covers: `.env`, credential files, OS artifacts, editor files
+- Every repo MUST have a `.gitignore` that covers: `.env`, credential files, `tmp/`, OS artifacts, editor files
 - You MUST verify `.gitignore` coverage before adding any integration that uses credentials — do not assume it is already covered
