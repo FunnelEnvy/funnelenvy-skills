@@ -3,6 +3,7 @@ fe-managed: true
 name: tests-changelog
 description: Changelog for the automated test suite.
 governed_by: change-management/changelog
+managed_by: change-management
 version: "1.0.0"
 created: 2026-09-22
 updated: 2026-09-22

@@ -7,6 +7,7 @@ description: >
   authoring conventions, test-necessity and test-verdict-integrity rules, and
   change-management integration for the Design/Build/QA test lifecycle.
 governed_by: document-management
+managed_by: change-management
 version: "1.0.0"
 created: 2026-09-22
 updated: 2026-09-22

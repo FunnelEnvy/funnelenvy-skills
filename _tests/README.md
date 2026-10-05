@@ -6,6 +6,7 @@ description: >
   infrastructure with fixture-based testing, three-layer architecture
   (unit/functional/integration), and a script coverage floor.
 governed_by: document-management
+managed_by: change-management
 version: "1.0.0"
 created: 2026-09-22
 updated: 2026-09-22
