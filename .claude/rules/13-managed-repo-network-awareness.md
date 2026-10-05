@@ -1,6 +1,6 @@
 ---
 version: "0.2.0"
-updated: 2026-08-05
+updated: 2026-10-05
 ---
 # Managed Repo Network Awareness
 

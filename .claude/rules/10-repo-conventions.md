@@ -1,6 +1,6 @@
 ---
-version: "1.5.0"
-updated: 2026-09-29
+version: "1.6.0"
+updated: 2026-10-05
 ---
 # Repo Conventions
 
@@ -11,7 +11,7 @@ Shared file, directory, credential, and resource naming conventions for all mana
 Violating any credential rule is a security incident — leaked secrets cannot be unrotated. These rules have zero exceptions.
 
 - NEVER store credentials, API keys, tokens, or secrets in repo files
-- Store all credentials in `.env` files
+- Store credentials in `.env` files or in a dedicated secret store, such as a password manager
 - NEVER commit `.env` files — ensure `.gitignore` includes `.env` and all credential file patterns
 - NEVER prompt a user to input credentials into chat — set up `.env` with placeholders and let the user fill them in directly
 
