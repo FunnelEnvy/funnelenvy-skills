@@ -11,6 +11,11 @@ title: Changelog
 ---
 # Changelog
 
+## [Unreleased]
+
+### Changed
+- `CLAUDE.md` body synced with fe-sys-hq `_tests` v1.7.1 (fe-sys-hq v3.24.0): `Assertion causality` requires running the fail-first proof against the pre-change code and recording a partition line, a cited pre-existing test is proven by mutation, and `Change-management integration` splits the proof across Design, Build and QA
+
 ## [1.0.0] - 2026-09-22
 
 ### Added

@@ -8,9 +8,9 @@ description: >
   change-management integration for the Design/Build/QA test lifecycle.
 governed_by: document-management
 managed_by: change-management
-version: "1.0.0"
+version: "1.1.0"
 created: 2026-09-22
-updated: 2026-09-22
+updated: 2026-10-08
 ---
 # Automated Test Suite
 
@@ -31,7 +31,11 @@ Automated test suite for this repo's Python scripts. stdlib `unittest` infrastru
 - **Running tests in-session**: Use `python -m unittest discover _tests/ -v` for the full suite, `python -m unittest discover _tests/{layer} -v` for a single layer, and `python -m unittest _tests.{layer}.test_{script_name} -v` for a single file. A full-layer or full-suite run can take minutes. Let it finish rather than killing it, and run it in the background if you need the session free. A long run is not a hang, but it is not automatically a normal cost either: one file carrying most of a layer's time is a `Test Necessity` H4 target.
 - **Authoring tests**: Test files follow `test_{script_name}.py` in the correct layer directory (`unit/`, `functional/`, or `integration/`). Use `unittest` (stdlib) only — no pytest, no pip. Every script the repo owns must have at least one test case. That is a floor, not a target; `Test Necessity` H6 governs everything above it. Every test MUST satisfy `Test Necessity` and `Test-Verdict Integrity` below.
 - **Authoring fixtures**: Static fixtures are small purpose-built `.md` files checked into `fixtures/` for read-only patterns. Programmatic fixtures are created via `tempfile`, using the repo's shared fixture helpers where they exist. `Test Necessity` H4 governs whether a test builds its own, copies one, or shares one. Tests must clean up after themselves.
-- **Change-management integration**: Design's `Test design analysis` captures coverage planning in the change document's `Verification Design > Tests` subsection. The Build step runs `python -m unittest _tests.{layer}.test_{script_name} -v` for each new or modified script and authors new test files and fixtures per the design. The QA step runs the full suite as pre-QA verification.
+- **Change-management integration**: Design's `Test design analysis` captures coverage planning in the change document's `Verification Design > Tests` subsection. The Build step runs `python -m unittest _tests.{layer}.test_{script_name} -v` for each new or modified script and authors new test files and fixtures per the design. The QA step runs the full suite as pre-QA verification. The `Assertion causality` proof is split across the steps:
+  - **Design** classifies each planned case in `Verification Design > Tests` as fail-pre-change or positive control, with the reason. It proves any cited pre-existing test by mutation at Design and records the mutation and observed failure there, since that test already exists.
+  - **Build** runs the pre-change proof and records the partition in `Verification Results > Tests Results`.
+  - **QA** reconciles the recorded sum against the test file's case list. It re-runs the harness only when the sum does not hold or the cases changed after Build.
+  - **A production-code fix applied at any gate** re-arms the proof for whoever applies it: a QA finding, an Open Issues resolution, or a §7 Closed fix. The applier shows the affected assertion fails against the pre-fix code.
 
 ## Test Necessity
 
@@ -68,7 +72,7 @@ These rules bind a case as you author or modify it. Removing existing cases unde
 
 A test's verdict MUST be caused by the behavior it names, and by nothing else. The two rule families below are that one property read at two scopes: the host must not decide the verdict, and the assertion must be caused by the behavior under test. Both are instances of the general property, so a cause not listed here is still governed by it.
 
-**Scope.** These rules bind a test as you author or modify it. They are not a claim that the existing suite already complies. Bring a site into compliance when you touch it. Sweeping an unswept surface is its own change, not a widening of whatever change brought you here.
+**Scope.** These rules bind a test as you author or modify it. `Assertion causality` also binds an existing, untouched test that a change names as covering a guard or branch. They are not a claim that the existing suite already complies. Bring a site into compliance when you touch it. Sweeping an unswept surface is its own change, not a widening of whatever change brought you here.
 
 ### Host independence
 
@@ -86,5 +90,10 @@ A test MUST NOT let the host decide its verdict. Each rule names its operative m
 A green assertion MUST be caused by the behavior under test.
 
 - **Isolate the key under test in a multi-key sort.** Build the fixture so the primary key opposes every lower-priority tie-break. A case whose name order agrees with its score order passes with the score key ignored entirely.
-- **Cover every reachable branch you claim.** A suite claiming exhaustive coverage of a decision table or mode branch MUST carry one case per reachable branch the design enumerates.
-- **Show a new or modified test to FAIL against the pre-change code** before its coverage claim is accepted. Where a case is a deliberate positive control, asserting something the change must *not* alter, label it as one, so "passes both ways" reads as recorded intent rather than an unexamined result.
+- **Cover every reachable branch you claim.** A suite claiming exhaustive coverage of a decision table or mode branch MUST carry one case per reachable branch the design enumerates. A guard or branch the change adds beyond that enumeration gets a case, a measured reachability finding, or deletion. A reachability rationale alone does not discharge it.
+- **Show a new or modified test to FAIL against the pre-change code** before its coverage claim is accepted. Where a case is a deliberate positive control, asserting something the change must *not* alter, label it as one, so "passes both ways" reads as recorded intent rather than an unexamined result. A cited pre-existing test is shown to fail by removing or inverting the guard it is claimed to cover.
+- **Discharge the fail-first check by running it, and record the partition.**
+  - **New or modified case:** run it against the pre-change module, extracted with `git show {base}:{path}` into a disposable harness. Run once, then delete the harness. No working-tree file is touched.
+  - **Cited pre-existing test:** remove or invert the guard and confirm that exact test fails.
+  - **A case classified fail-pre-change that passes** is a finding. Re-arm it or relabel it a positive control.
+  - **Partition record:** fail-pre-change count plus control count equals the case count, with the harness base named. The sum is the check: it catches a pass-side miscount that a correct failure count hides. A cited pre-existing test sits outside the sum. The line names it, the guard mutated, and the failure observed, carried from Design's record in `Verification Design > Tests`.
