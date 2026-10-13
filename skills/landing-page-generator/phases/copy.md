@@ -10,7 +10,7 @@
 ## Required Inputs
 
 - `brief.md` in the campaign directory -- HARD REQUIREMENT. If missing: `[PRECONDITION FAILED]: Run Phase 1 (brief) first.`
-- `modules/conversion-playbook.md` -- Sections 1-4, 6 only; Section 5 is ordering principles
+- `modules/conversion-playbook.md` -- Sections 1-4, 6, 9 and 10 (Section 5 is ordering principles). Section 9 holds the ATF rules, including Rule 1's header-only litmus test and Rule 7 (subheader). Section 10 holds the Line-Level Rules and Feature Blocks.
 - `modules/section-taxonomy.md` -- section selection signals, variant definitions, ordering constraints
 
 ## Selective Context Loading
@@ -218,7 +218,7 @@ Generate three headline variants using the Bad Alternative Exercise output, stro
    - **Headline B (Proof-led):** Leads with the strongest verified proof point as a bold claim. Skip this variant if only `claimed` tier proof exists.
    - **Headline C (Objection-led):** Leads with the product benefit while preemptively handling the #1 buying objection.
 
-   Each variant must pass the Specificity Litmus Test (conversion-playbook.md Rule 1): replace the company name with a competitor's. If the headline still works, rewrite it.
+   Each variant must pass both Rule 1 tests (conversion-playbook.md Section 9). Test 1, header only: read alone, does the headline say exactly what is sold? A question, slogan or pain statement on its own fails; move it to the hook line and rewrite the headline. Test 2, competitor swap: replace the company name with a competitor's. If the headline still works, rewrite it.
 
 4. Generate hook line for each variant (1 sentence, `[OPTIONAL]` marker):
    - If headline is pain-led (A): hook adds the bold claim
@@ -227,10 +227,14 @@ Generate three headline variants using the Bad Alternative Exercise output, stro
 
 5. Mark which option is recommended and why.
 
-- Subheadline: 1 sentence explaining HOW the company delivers the outcome.
+- Subheadline: one or two sentences (conversion-playbook.md Rule 7). First what the product is or how it works, then which features make the headline's claim believable. Never a restatement of the headline.
 - CTA button text: exactly as specified in the brief. Same text every time it appears.
 - Social proof line: "Trusted by [X] companies" or similar, using a metric from the brief.
 - If the brief has a `[GAP]` on ad copy, write headlines that message-match the target keywords directly.
+
+**Line-level rules (every section):** apply conversion-playbook.md Section 10 Line-Level Rules as you write. Introduce every person's name, product term and acronym before using it; you know the brief, the visitor does not. Give every line a reason to exist: if the visitor would lose nothing when it is cut, cut it. No process copy. Name specific tools or customers only where a line needs them. Tell one story: a demo, case and proof line about the same event end the same way. Write objection answers as conversion copy, consistent with each other.
+
+**Feature sections** (Solution Overview and any other section that pitches a value prop) follow conversion-playbook.md Feature Blocks: a blunt value header, a paragraph that handles the objection the value raises, a product-in-action visual, each tied back to the hero's value prop.
 
 **CTA Text Generation**
 
@@ -313,6 +317,8 @@ Present to the human:
 - Section manifest summary (types and variants selected)
 - "Run `/landing-page-generator <company> <slug> --stage design` when ready for Phase 3."
 
+Do not describe the copy as reviewed, checked or ready to ship. It has not been reviewed until Phase 4's independent gates run.
+
 ---
 
 ## Construct-Mode Taxonomy Dimensions
@@ -322,7 +328,7 @@ Read `modules/lp-audit-taxonomy.md` Construct Mode section (table at bottom) plu
 | Dimension | Construct-mode constraint |
 |-----------|--------------------------|
 | D1: Awareness-Stage Alignment | Set headline approach based on the brief's `traffic_awareness_stage`. Product-aware traffic gets proof-led or pain-led copy. Problem-aware gets problem agitation. Match CTA commitment level to awareness stage. |
-| D2: Value Proposition Clarity | H1 must pass the caveman test and specificity audit. Subheader covers exactly one of: what the product is, or how the headline claim is achievable. No vague claims ("save time," "grow revenue") without specifics. |
+| D2: Value Proposition Clarity | H1 must pass the header-only litmus test (read alone, it says what is sold), the caveman test and the specificity audit. Subheader is one or two sentences covering both jobs by default: what the product is or how it works, and what makes the headline's claim believable. No vague claims ("save time," "grow revenue") without specifics. |
 | D3: Message Match | If ad copy is available in the brief, the H1 must echo the ad's core phrase. If unavailable, flag as `[GAP]` and optimize for target keyword match instead. |
 | D5: Social Proof Strategy | Place proof by specificity gradient: ATF gets aggregate numbers/logos, mid-page gets named testimonials, bottom gets detailed metrics. At least 2 distinct proof types. Align strongest proof to the primary buying objection. |
 | D7: Persuasion Psychology | Apply loss framing in at least one section (what they risk by not acting). Pre-empt top 2-3 objections before the FAQ. Include risk reversal language near the CTA if applicable ("no obligation," "cancel anytime"). Consider a micro-commitment path if the primary CTA is high-commitment. |
@@ -334,6 +340,8 @@ These are generation constraints, not a post-hoc checklist. Apply them as you wr
 ---
 
 ## Self-Check Checklist
+
+This checklist confirms format and completeness. It is not a quality review, and passing it does not mean the copy is good: the copy agent never grades its own copy (agent-header.md, Content Integrity rule 6). Phase 4 runs the independent review gates.
 
 Before writing the file, verify:
 
@@ -349,6 +357,10 @@ Before writing the file, verify:
 - [ ] Required disclaimers present in footer section
 - [ ] At least one named testimonial with full attribution (if proof exists)
 - [ ] All headlines under 10 words
+- [ ] Every headline variant passes Rule 1 test 1: read alone, it says what is sold
+- [ ] Subheadline is one or two sentences and covers both Rule 7 jobs, or the copy notes why one is enough
+- [ ] No person's name, product term or acronym appears before the copy introduces it (read in section order)
+- [ ] No process copy (internal workflow, tooling or recording notes)
 - [ ] Copy at 7th grade reading level or below (simple sentences, short paragraphs, no jargon unless it's buyer vocabulary)
 - [ ] No competing secondary CTAs (one action, repeated)
 - [ ] `[GAP]` markers preserved from brief and handled appropriately

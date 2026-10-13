@@ -6,6 +6,15 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 2026-10-13 landing page conversion principles
+
+#### Changed
+- **landing-page-generator** (2.1.0): Julian Shapiro's landing page guide wired into writing and review. The header-only litmus test ("If the visitor reads only this text on your page, will they know exactly what you sell?") runs before the competitor-swap test in the copy phase and QA. QA gains Step 4e, four independent review gates run on every copy pass in two fresh subagents: a cold reader that sees only the page text, then a gate reviewer for the Julian audit, the truth check and a line-level delete test. New Content Integrity rule: no phase grades its own copy. Fixes the subheader rule's self-contradiction (D2 "not both" against ATF-6 "both"), the `pain-lead` hero variant that produced headers never saying what is sold, and a stale QA pointer to the playbook's checklist section.
+- **modules/conversion-playbook.md** (2.1): Purchase Rate = Desire - (Labor + Confusion) frame, Rule 1 test 1 (header only), Rule 7 (subheader), Line-Level Rules, Feature Blocks, two copy anti-patterns (process copy, undefined names and terms), and QA checklist items.
+- **modules/lp-audit-taxonomy.md** (1.1.0): D2 header-only test and corrected subheader rule; D8 delete-test and introduce-before-use checks; the Julian model named correctly.
+- **modules/section-taxonomy.md**: `pain-lead` headline names the pain and what is sold.
+- **schemas/campaign-brief.md**: qa-report reference copy re-synced to schema 2.1.
+
 ## [1.9.0] - 2026-07-14
 
 ### 2026-07-14 prose-craft module consolidation

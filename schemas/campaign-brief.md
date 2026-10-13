@@ -73,14 +73,33 @@ brand_components_html: str        # filename, omit if no brand files
 
 ```yaml
 schema: qa-report
-schema_version: "1.1"
+schema_version: "2.1"
 client: str
 campaign: str
 files_checked: [str]                 # Which files were QA'd
 copy_checks: str                     # "X/Y" pass count
 design_checks: str                   # "X/Y" pass count
 cross_checks: str                    # "X/Y" pass count
-overall: str                         # PASS | FAIL
+section_count: int                   # from copy.md sections array
+section_parity: str                  # PASS | FAIL (CS-1)
+ordering_violations: int             # CS-3 hard rule violations, 0 = pass
+ordering_warnings: int               # CS-3 soft rule deviations
+variant_alignment_flags: int         # CS-2 flag count
+objection_coverage: str              # "X/Y" (CS-4)
+cta_consistency: str                 # PASS | FAIL (CS-5)
+review_gates:                        # Step 4e independent review gates
+  cold_reader: str                   # PASS | FAIL | BLOCKED (fresh subagent, page text only)
+  julian_audit: str                  # PASS | FAIL | BLOCKED (gate reviewer subagent)
+  truth_check: str                   # PASS | FAIL | BLOCKED (gate reviewer subagent)
+  delete_test: str                   # PASS | FAIL | BLOCKED (gate reviewer subagent)
+cold_reader_header_read: str         # what the cold reader said is sold, from the H1 alone
+delete_test_cuts: int                # lines on the delete-test cut list
+dimension_ratings: {str: str}        # 10 lp-audit-taxonomy dimensions: strong | needs_work | missing
+strong_count: int
+needs_work_count: int
+missing_count: int
+top_issue: str                       # dimension name
+overall: str                         # PASS | FAIL (FAIL on any Missing dimension or any gate FAIL/BLOCKED)
 # Brand component fields (present only when brand design system detected)
 brand_component_checks: str       # "X/Y" pass count, omit if no brand files
 brand_component_violations: int   # BC- check failure count, omit if no brand files
@@ -105,4 +124,4 @@ No YAML frontmatter (HTML file). Metadata stored in an HTML comment block at the
 
 ---
 
-*Schema reference v1.2 | Last updated March 2026*
+*Schema reference v1.3 | Last updated October 2026*
