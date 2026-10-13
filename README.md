@@ -177,6 +177,14 @@ Skills build on each other. Each one reads from and writes to `.claude/context/`
 
 Each step is optional and independent, but they compound. Positioning context makes the analytics audit smarter (product-line page grouping). Analytics data makes hypothesis-generator smarter (traffic-calibrated scores, performance-driven triggers). Run what you have access to.
 
+## Governance
+
+Governed by [fe-sys-hq](https://github.com/FunnelEnvy/fe-sys-hq). Its `fe-governance-deploy` skill deploys the governance sources here:
+
+- **Rules.** `.claude/rules/`
+- **Plugins.** Enabled and configured in `.claude/settings.json`
+- **Workflows.** The `fe-`-prefixed files in `.github/workflows/`
+
 ## Prerequisites
 
 Most skills are pure markdown with no external dependencies. These are the exceptions:
