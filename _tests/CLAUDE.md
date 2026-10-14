@@ -8,13 +8,13 @@ description: >
   change-management integration for the Design/Build/QA test lifecycle.
 governed_by: document-management
 managed_by: change-management
-version: "1.1.0"
+version: "1.1.1"
 created: 2026-09-22
-updated: 2026-10-08
+updated: 2026-10-14
 ---
 # Automated Test Suite
 
-Automated test suite for this repo's Python scripts. stdlib `unittest` infrastructure with a three-layer architecture, fixture-based testing, and a script coverage floor. Load `change-management` before working with test lifecycle operations. Load `document-management` before reviewing or editing managed files in this directory.
+Automated test suite for this repo's Python scripts. stdlib `unittest` infrastructure with a three-layer architecture, fixture-based testing, and a script coverage floor. Load `change-management` before working with test lifecycle operations. Load `document-management` before reviewing or editing managed files in this directory. Before writing or editing a docstring in this directory, load `document-management` (in the `fe-governance` plugin) and follow its `docstring-standards` reference.
 
 ## Architecture
 
