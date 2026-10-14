@@ -2,7 +2,7 @@
 
 Module for `skills/lp-audit/`. Shared by both audit mode (diagnostic) and construct mode (generative). Audit mode scores each dimension; construct mode uses dimensions as a generation checklist.
 
-**Version:** 1.0.0
+**Version:** 1.1.0
 **Sources:** Demand Curve ATF Playbook, Julian Shapiro LP Guide, Harry Dry / MarketingExamples, CopyHackers / Joanna Wiebe, Cialdini (Influence + Pre-Suasion), Schwartz (Breakthrough Advertising), Brunson (Dotcom Secrets), Unbounce Conversion Benchmark Report (Q4 2024, 41K pages / 57M conversions / 464M visits), Baymard Institute (checkout/form UX research)
 
 ---
@@ -62,25 +62,26 @@ Overall LP health = count of Strong / Needs Work / Missing across all 10 dimensi
 
 **What it checks:** Whether a visitor can understand what the product/service is, who it's for, and why it matters within 5 seconds of landing.
 
-**Framework:** Julian Shapiro's desire-minus-labor formula + Demand Curve ATF specificity rules.
+**Framework:** Julian Shapiro's model, Purchase Rate = Desire - (Labor + Confusion), and his header litmus test, plus Demand Curve ATF specificity rules.
 
 The header must answer: What value do you provide, and how do you deliver it? Three headline approaches (test-worthy variants, not exclusive):
 
 | Approach | Structure | Best when... |
 |----------|-----------|-------------|
-| Pain-led | Name the specific pain, then present relief | Problem Aware traffic, high-urgency problems |
+| Pain-led | Name the specific pain and what you sell, then present relief | Problem Aware traffic, high-urgency problems |
 | Keyword-led | Mirror the search term / ad copy, add specificity | Paid search, high-intent queries |
 | Proof-led | Lead with a specific result or metric | Product Aware traffic, strong case studies |
 
 **Checks:**
 
-1. **Caveman test (Donald Miller / Harry Dry).** Could someone unfamiliar with the product glance at the ATF and grunt back what you offer? If the headline uses jargon, abstractions, or self-congratulatory language ("The leading platform for..."), it fails.
-2. **Specificity audit.** Replace vague claims with the "so what" test:
+1. **Header-only litmus test (Julian Shapiro).** Cover everything but the H1. "If the visitor reads only this text on your page, will they know exactly what you sell?" A slogan, a question or a pain statement on its own fails, however strong the rest of the hero is.
+2. **Caveman test (Donald Miller / Harry Dry).** Could someone unfamiliar with the product glance at the ATF and grunt back what you offer? If the headline uses jargon, abstractions, or self-congratulatory language ("The leading platform for..."), it fails.
+3. **Specificity audit.** Replace vague claims with the "so what" test:
    - "Save time" -> How much time? Compared to what?
    - "Grow your business" -> What metric? By how much?
    - "AI-powered" -> What does the AI actually do for the user?
-3. **Subheader function.** Subheader should expand on exactly one of: (a) what the product is, or (b) how the headline claim is possible. Not both. One to two sentences max.
-4. **Value prop vs. feature list.** The ATF should communicate value (outcome for user), not features (what the product does). Features belong below the fold.
+4. **Subheader function.** One or two sentences covering Julian Shapiro's two jobs, both by default: (a) what the product is or how it works, and (b) which features make the headline's claim believable. One job is Needs Work. A subheader that only restates the headline fails.
+5. **Value prop vs. feature list.** The ATF should communicate value (outcome for user), not features (what the product does). Features belong below the fold.
 
 **Context file dependencies:**
 - `company-identity.md` -> core value proposition, category, target market
@@ -89,7 +90,7 @@ The header must answer: What value do you provide, and how do you deliver it? Th
 
 **Strong:** Headline is specific, benefit-focused, and immediately comprehensible to the target persona. Subheader expands without repeating. No jargon.
 **Needs Work:** Headline is comprehensible but generic (could apply to competitors), or subheader repeats instead of expanding.
-**Missing:** Headline is abstract, self-referential ("Welcome to [Company]"), or requires domain knowledge to parse. Visitor cannot determine what the product does within 5 seconds.
+**Missing:** Headline is abstract, self-referential ("Welcome to [Company]"), or requires domain knowledge to parse. Read alone, the header does not say what is sold. Visitor cannot determine what the product does within 5 seconds.
 
 ---
 
@@ -328,6 +329,8 @@ Recommended progression (adapt per awareness stage):
 - **Self-referential opening.** "Welcome to [Company]" or "We are the leading provider of..." The visitor doesn't care who you are. They care what you do for them.
 - **Wall of text.** Paragraphs longer than 3-4 lines on desktop. No subheadings. No visual breaks.
 - **Passive voice.** "Results are delivered by our platform" vs "Our platform delivers results." Passive voice weakens claims.
+- **Process copy.** Lines about how the seller works internally rather than what the visitor gets.
+- **Undefined names and terms.** A person's name, product term or acronym used before the page says what it is.
 
 ### The Rule of One (CopyHackers)
 
@@ -347,6 +350,8 @@ Pages that try to serve multiple personas, communicate multiple value props simu
 4. **Rule of One compliance.** Does the page target one persona, one big idea, one promise, one offer? Or does it try to serve multiple audiences simultaneously?
 5. **Voice consistency.** Does the copy maintain a consistent tone throughout, or does it shift between conversational and corporate, between first and third person?
 6. **Banned term check.** Cross-reference copy against audience-messaging.md banned terms list and known jargon.
+7. **Delete test.** For each line, what would the visitor lose if it were cut? Flag every line whose answer is nothing. Julian Shapiro: "Be concise and ensure every word and element is of value."
+8. **Introduce before use.** Read in scroll order and flag every person's name, product term or acronym that appears before the page says what it is. Claims are exempt here; check them under Dimension 5 and Dimension 7.
 
 **Context file dependencies:**
 - `audience-messaging.md` -> tone, voice, banned terms, customer language samples
@@ -527,7 +532,7 @@ LP Audit Skill
 
 **Online resources (distilled into checks above):**
 - Demand Curve ATF Playbook (demandcurve.com/playbooks/above-the-fold) -- Header writing, specificity, hook construction
-- Julian Shapiro LP Guide (julian.com/guide/startup/landing-pages) -- Page structure template, desire-minus-labor, reviewer criteria
+- Julian Shapiro LP Guide (julian.com/guide/startup/landing-pages) -- Page structure template, Purchase Rate = Desire - (Labor + Confusion), header litmus test, subheader jobs, feature blocks, reviewer criteria
 - Harry Dry / MarketingExamples LP Guide (marketingexamples.com/landing-page/guide) -- ATF/BTF formula, caveman test, practical examples
 - CopyHackers / Joanna Wiebe -- PAS framework, Rule of One, messaging hierarchy, conversion copywriting process
 - Unbounce Conversion Benchmark Report Q4 2024 -- Industry benchmarks, readability data, channel performance, device split, form friction data (41K pages, 57M conversions, 464M visits)
@@ -535,4 +540,4 @@ LP Audit Skill
 
 ---
 
-*Module version 1.0.0. Last updated: 2026-03-12.*
+*Module version 1.1.0. Last updated: 2026-10-13.*

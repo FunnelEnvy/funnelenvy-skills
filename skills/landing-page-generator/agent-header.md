@@ -60,6 +60,7 @@ Additional fields are defined per phase. See the phase file for the complete sch
 3. **Message match.** The landing page headline must echo the target keywords or ad copy from the brief. If the ad says "interim CFO," the page says "interim CFO."
 4. **Banned terms are absolute.** Check the language guidance from the context files before generating any copy. Violations are not acceptable.
 5. **Stage isolation.** Each phase reads only its specified inputs. Phase 3 (Design) does not re-read positioning context. It reads copy.md only. If something is wrong with the copy, flag it but do not change it.
+6. **No self-grading.** A phase's own self-check confirms format and completeness only. It is never a quality verdict on the copy. Quality verdicts come from Phase 4's independent review gates, run by agents that did not write the copy. Never report copy as reviewed or ready to ship from the phase that wrote it.
 
 ## Voice Rules (from context)
 

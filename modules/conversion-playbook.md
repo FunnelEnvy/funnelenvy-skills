@@ -3,8 +3,8 @@
 > **Module type:** Shared cross-skill reference
 > **Used by:** landing-page-generator (phases/copy.md, phases/design.md, phases/qa.md), hypothesis-generator (CRO pattern reference)
 > **Scope:** Client-agnostic structural rules for B2B paid landing pages. Defines what stays constant across all clients and campaigns.
-> **Evidence basis:** Conversion research from Unbounce, HubSpot, VWO, CXL, Instapage, KlientBoost, Shopify, and industry benchmarks (2024-2026).
-> **Last updated:** March 2026
+> **Evidence basis:** Conversion research from Unbounce, HubSpot, VWO, CXL, Instapage, KlientBoost, Shopify, and industry benchmarks (2024-2026). Header, subheader, feature and line-level rules follow Julian Shapiro's landing page guide (julian.com/guide/startup/landing-pages).
+> **Last updated:** October 2026
 
 ---
 
@@ -271,16 +271,22 @@ Full company-identity.md bodies, performance profiles, all-persona audience rese
 
 ## 9. ATF Copy Principles
 
-Six rules for above-the-fold copy. These apply to all landing pages (paid and organic). Agents reference these by rule name.
+Seven rules for above-the-fold copy. These apply to all landing pages (paid and organic). Agents reference these by rule name.
+
+The frame for all of them is Julian Shapiro's model: **Purchase Rate = Desire - (Labor + Confusion)**. Raise desire (show the value, create intrigue). Cut labor: "Be concise and ensure every word and element is of value." Cut confusion: every sentence easy to understand, the next action obvious, the button impossible to miss.
 
 ### Rule 1: Header Specificity
 
-The H1 must name a specific benefit. No corporate abstractions.
+The H1 must say what you sell and name a specific benefit. No corporate abstractions.
+
+**Litmus test 1, header only (run first):** cover everything except the H1 and ask Julian Shapiro's question: "If the visitor reads only this text on your page, will they know exactly what you sell?" If not, rewrite. A slogan fails. So does a question or a pain statement on its own: it can open the hero as the hook line, but the H1 still says what you sell.
+
+**Name the category, not a tool list.** Say what kind of thing the product is, in words the visitor already knows. Listing specific third-party tools in the H1 narrows a product that works with whatever the customer runs. Name specific tools, integrations or customers where they do work further down the page.
 
 **Vague (fail):** "Transform your onboarding experience" / "Unlock growth" / "Empower your team" / "Streamline operations"
 **Specific (pass):** "Cut onboarding time from 3 months to 3 weeks" / "Find every compliance gap before your auditor does"
 
-**Litmus test:** Replace the company name with a competitor's. If the headline still works, it's too vague. A specific headline is true for exactly one product.
+**Litmus test 2, competitor swap:** Replace the company name with a competitor's. If the headline still works, it's too vague. A specific headline is true for exactly one product. This catches generic headers. It does not catch a header that never says what is sold, which is why test 1 runs first.
 
 **Banned patterns:** "Transform," "Revolutionize," "Unlock," "Empower," "Streamline," "Next-generation," "World-class," "Cutting-edge," "Best-in-class." These are filler, not positioning.
 
@@ -351,6 +357,14 @@ CTA button text must continue the story the header started. It is the actionable
 
 **Exception:** Form submission buttons (inside lightboxes or inline forms) should be direct and action-specific ("Book My Demo," "Download the Guide"). At that point the visitor has committed. The narrative CTA gets them to the form; the form CTA confirms the action.
 
+### Rule 7: Subheader
+
+The subheader expands the H1. It does not repeat it.
+
+**Length:** one or two sentences. "Don't make this an essay." (Julian Shapiro)
+
+**Two jobs:** first, what the product is or how it works; second, which features make the H1's claim believable. Julian Shapiro says the subheader is "commonly used for" these two thoughts, and his examples do both; covering both is our default, and QA warns when only one is covered (ATF-6). A subheader that only restates the H1 in other words fails.
+
 ---
 
 ## 10. Copy Generation Guardrails
@@ -361,8 +375,8 @@ The brief's `traffic_awareness_stage` field determines which headline approach i
 
 | Stage | Primary approach | Headline leads with... |
 |-------|-----------------|----------------------|
-| Unaware | Story / pattern interrupt | Provocative question or surprising stat, NOT the product |
-| Problem Aware | Pain-led | Name the specific pain, then bridge to solution category |
+| Unaware | Story / pattern interrupt | Surprising stat or question as the hook line; the H1 still says what you sell (Rule 1, test 1) |
+| Problem Aware | Pain-led | Name the specific pain and what you sell, then bridge to the solution category |
 | Solution Aware | Keyword-led + differentiation | Mirror search intent, add "the only X that Y" differentiator |
 | Product Aware | Proof-led | Specific result metric from a named customer |
 | Most Aware | Offer-led | The deal, the incentive, the simplified next step |
@@ -393,8 +407,30 @@ The copy agent must not produce any of the following patterns:
 - **Feature-first framing.** "Our platform has AI-powered analytics." Rewrite as outcome: "See which leads will close this quarter."
 - **Hedging language.** "May help you potentially improve..." Cut qualifiers. State the benefit directly.
 - **Unsubstantiated superlatives.** "The best," "the leading," "world-class" without a proof point ID reference.
+- **Process copy.** Lines that describe how the seller works internally (recording practices, internal tooling, staffing notes) instead of what the visitor gets. When an offer changes, remove the disclosures that came with the old offer. A notice that is genuinely required goes where the visitor consents (the form or confirmation), not in the pitch.
+- **Undefined names and terms.** A person's name, product term or acronym used before the page has said what it is. The visitor does not have the brief. (Claims are different: a hook states one first and backs it up later.)
 
 If a draft contains any of these, the copy agent must rewrite before outputting.
+
+### Line-Level Rules
+
+Apply while writing every section, not only the hero.
+
+1. **Every line earns its place.** For each line ask: what would the visitor lose if it were cut? If the answer is nothing, cut it. A line can be perfectly clear and still add nothing, so "is it understood?" is the wrong test. This is Julian Shapiro's "ensure every word and element is of value" applied one line at a time.
+2. **Introduce before use.** No person's name, product term or acronym before the page says what it is. A person's name means nothing until the page has said who they are and why that matters to the visitor. Claims are exempt: a hook states a claim first and the page backs it up, and the truth check covers whether it does.
+3. **Examples only where needed.** Name specific tools, integrations or customers only where the line needs them to be understood or believed.
+4. **One story.** A demo, a case study and a proof line that describe the same event tell the same ending. A mismatch reads as a trust problem.
+5. **Objection answers are conversion copy.** Answer the worry the visitor has, not the full permissions or process spec. Keep every answer consistent with every other answer on the page.
+
+### Feature Blocks
+
+Julian Shapiro's structure for the features and objections section: usually three to six blocks, each with:
+
+- a short, blunt value header ("No clean up", not "Revolutionize your workflow")
+- a paragraph that explains the value and handles the objection it raises
+- an image that shows the product in action (for a service, the deliverable), not abstract imagery
+
+Each block ties back to the hero's main value prop, so the section reads as one running argument.
 
 ### Rule of One
 
@@ -443,6 +479,11 @@ CTA commitment level must match the brief's `traffic_awareness_stage`:
 ## 11. QA Checklist
 
 ### Copy QA
+- [ ] Read alone, the H1 says what you sell (Rule 1, test 1)
+- [ ] Subheader is one or two sentences and covers both Rule 7 jobs (one job is a warning, a restatement fails)
+- [ ] No name, term or claim used before it is introduced
+- [ ] No process copy
+- [ ] Every line passes the delete test (Line-Level Rules, rule 1)
 - [ ] Headline message-matches target keywords / ad copy
 - [ ] Proof points in at least 4 sections (hero, problem/solution, proof, FAQ)
 - [ ] Same CTA text in exactly 3 locations
@@ -463,6 +504,9 @@ CTA commitment level must match the brief's `traffic_awareness_stage`:
 - [ ] Full-width CTA buttons on mobile
 - [ ] All images compressed
 
+### Independent Review
+- [ ] The four review gates (cold reader, Julian audit, truth check, delete test) ran on the final copy, none in the context that wrote it. landing-page-generator runs them in `phases/qa.md` Step 4e.
+
 ---
 
-*Conversion Playbook v2.0 | FunnelEnvy | March 2026*
+*Conversion Playbook v2.1 | FunnelEnvy | October 2026*

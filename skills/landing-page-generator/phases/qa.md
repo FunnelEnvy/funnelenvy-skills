@@ -1,7 +1,7 @@
 # Phase 4: QA Validator
 
 > **Reads:** agent-header.md (shared rules) + this file
-> **Depends on:** modules/conversion-playbook.md (Section 9: QA Checklist), modules/lp-audit-taxonomy.md (10-dimension scoring framework), modules/section-taxonomy.md (ordering constraints, selection signal validation)
+> **Depends on:** modules/conversion-playbook.md (Section 9: ATF rules, Section 10: Line-Level Rules and Feature Blocks, Section 11: QA Checklist), modules/lp-audit-taxonomy.md (10-dimension scoring framework), modules/section-taxonomy.md (ordering constraints, selection signal validation)
 > **Input:** `.claude/deliverables/campaigns/<slug>/brief.md` + `copy.md` + `page.html` (whichever exist)
 > **Output:** `.claude/deliverables/campaigns/<slug>/qa-report.md`
 
@@ -24,7 +24,7 @@ At least one of `copy.md` or `page.html` must exist in the campaign directory. I
 1. Read `brief.md` frontmatter + full body. Extract: target keywords, CTA text, banned terms list, required disclaimers, form field count, post-submit type.
 2. Read `copy.md` if it exists.
 3. Read `page.html` if it exists.
-4. Read `modules/conversion-playbook.md` Section 9 (QA Checklist) for the complete checklist.
+4. Read `modules/conversion-playbook.md` Section 11 (QA Checklist) for the complete checklist, and Sections 9 and 10 for the rules Step 4e audits against.
 5. Read `modules/section-taxonomy.md` for section selection signals and ordering constraints.
 
 ### Step 2: Run Copy QA (against copy.md)
@@ -49,10 +49,11 @@ Skip this section if copy.md does not exist.
 These checks apply to the above-the-fold section of copy.md and/or page.html.
 
 **ATF-1: Header Specificity**
-Does the H1 contain a concrete, specific benefit? Flag if it uses any banned vague patterns: "Transform," "Revolutionize," "Unlock," "Empower," "Streamline," "Next-generation," "World-class," "Cutting-edge," "Best-in-class."
+First, the header-only litmus test (conversion-playbook.md Rule 1, test 1): cover everything but the H1. Read alone, does it say exactly what is sold? A question, slogan or pain statement on its own FAILS here, whatever the subheader says.
+Then: does the H1 contain a concrete, specific benefit? Flag if it uses any banned vague patterns: "Transform," "Revolutionize," "Unlock," "Empower," "Streamline," "Next-generation," "World-class," "Cutting-edge," "Best-in-class."
 Run the litmus test: could a competitor use this exact headline? If yes, FAIL.
-- Pass: Specific benefit named
-- Fail: Vague or generic language detected
+- Pass: Read alone, the H1 says what is sold, and names a specific benefit
+- Fail: The H1 alone does not say what is sold, or vague or generic language detected
 
 **ATF-2: Bold Claim Sourced**
 If the H1, hook line, or subheader makes a quantitative claim (percentage, time saved, cost reduction, multiplier), is it traceable to a proof point ID in the brief or L0?
@@ -165,7 +166,7 @@ Unaddressed objections = FLAG
 
 ### Step 4c: Taxonomy Dimension Scoring
 
-After completing the Section 9 checklist, run the generated LP artifacts through the 10-dimension audit taxonomy. This is a holistic quality assessment layered on top of the prescriptive checklist.
+After completing the Section 11 checklist, run the generated LP artifacts through the 10-dimension audit taxonomy. This is a holistic quality assessment layered on top of the prescriptive checklist.
 
 **Inputs for scoring:**
 - `brief.md` (for D1 awareness stage, D3 message match, D6 form strategy)
@@ -182,7 +183,7 @@ After completing the Section 9 checklist, run the generated LP artifacts through
 
 **Scoring does NOT re-read context file bodies.** Read frontmatter only (~200 tokens per file) for D5/D7/D10 context checks. The copy and brief artifacts contain enough information for the remaining dimensions.
 
-**Token budget:** The taxonomy module is ~4,800 tokens plus ~3K for section-taxonomy.md. QA runs inline (no subagent), so this is absorbed by the orchestrator's context window. Total QA token cost: ~25K with composable section checks.
+**Token budget:** The taxonomy module is ~4,800 tokens plus ~3K for section-taxonomy.md. QA runs inline, so this is absorbed by the orchestrator's context window. Total QA token cost: ~25K with composable section checks, before Step 4e. The two gate subagents add an estimated 30-50K (not measured).
 
 ### Step 4d: Brand Component Validation (conditional)
 
@@ -204,6 +205,57 @@ When running, also read:
 
 **Scoring:** BC-1 through BC-6 are pass/fail. BC-7 is warn-only. Record results in the QA report alongside existing check groups.
 
+### Step 4e: Independent Review Gates
+
+The checks above verify the playbook. These four gates judge the copy. Every copy pass gets all four, and they run again every time the copy changes.
+
+They exist because a writer's own review rubber-stamps its work. The writer knows the brief, so it cannot see a name the page never introduced. And a review that asks "is this line understood?" passes lines that are perfectly clear and add nothing. The gates ask the questions the writer cannot.
+
+**Independence rule.** No gate runs in the QA context. It may have written or revised copy this session, and it has read the brief. QA dispatches two fresh subagents with the Task tool (opus) and records their results:
+
+- **The cold reader** runs Gate 1. It gets the page text only.
+- **The gate reviewer** runs gates 2 to 4 and judges Gate 1's result. It gets agent-header.md, this step, `modules/conversion-playbook.md` Sections 5, 9 and 10, brief.md, copy.md, page.html (when it exists), the body of `company-identity.md` (Proof Point Registry) and `audience-messaging.md` (objection inventory), and the cold reader's report. It gets no QA results from Steps 2 to 4d. Dispatch it after the cold reader returns.
+
+If a subagent cannot be dispatched (for example, QA is itself running inside a subagent), mark the gates it would run BLOCKED, set `overall: FAIL`, and say why. Never run a gate in the QA context as a substitute.
+
+**Build the page text first.** The cold reader and Gate 4 read the visitor-visible text in scroll order:
+
+- From page.html when it exists: every visible text node in document order, including headings, body copy, button labels, form labels and microcopy, captions, and image alt text. Exclude HTML comments, scripts, styles and hidden elements. Append the lightbox form text at the end, labeled as the form.
+- From copy.md otherwise: the recommended headline variant only, then each section body in manifest order. Strip frontmatter, HTML comments, `## Type: variant` headings, proof point IDs, `[OPTIONAL]` and `[GAP]` markers, and alternate headline variants.
+
+**Gate 1: Cold reader.** The prompt carries the page text and these instructions, nothing else: no brief, no context files, no copy.md frontmatter, no campaign name, and no description of the product. Ask the cold reader to return:
+
+1. **Header-only read.** From the H1 alone: what is being sold? Then from the hero (everything before the first section break): what is sold, to whom, and what is the next step?
+2. **Used before introduced.** Every person's name, product or feature term, and acronym that appears before the page says what it is. Give the line, and where it is introduced, if anywhere. Claims are out of scope here: a hook states a claim first and backs it up later, by design. Unsupported claims go under item 4.
+3. **Open questions.** What a first-time visitor still needs to know before acting.
+4. **Disbelief.** Any claim or line that reads as unsupported sales talk by the end of the page.
+
+The gate reviewer, not the cold reader, compares item 1 with the brief's offer. Pass: the header-only answer matches what the brief sells, and item 2 is empty. Otherwise FAIL. Items 3 and 4 feed Gate 3 and the recommended fixes. The cold reader is the agent stand-in for Julian Shapiro's "People not in your market" reviewer. It does not replace testing with real prospects.
+
+**Gate 2: Julian audit.** The gate reviewer runs ATF-1 to ATF-6 itself, then three whole-page checks against copy.md and page.html:
+
+- **Order.** The section sequence satisfies conversion-playbook.md Section 5 hard rules, including the Social Proof Bar at Section 2 or 3 and visible without scrolling on desktop (hard rule 3).
+- **Feature blocks.** Each section that pitches a value prop has a blunt value header and a paragraph that handles the objection the value raises, and ties back to the hero's value prop (conversion-playbook.md Feature Blocks). In page.html, each also carries a visual of the product in action or, for a service, of the deliverable. In copy-only runs, check that each block names the visual it needs.
+- **Desire, labor, confusion.** One line each: what on the page raises desire, what costs the visitor labor, what could confuse them. Recorded for the fixes list, not scored.
+
+Pass: ATF-1 passes, ATF-6 does not fail, no Section 5 hard rule is broken, and every feature block is complete. Otherwise FAIL.
+
+**Gate 3: Truth check.** Against brief.md, the Proof Point Registry and the objection inventory, plus the cold reader's disbelief list:
+
+- **Every claim traces.** Each number, name, quote, logo, customer and capability statement maps to a proof point ID or a named source line. Record the source beside it.
+- **One story.** Wherever two parts of the page describe the same event or capability (a demo and a case study, a hero claim and a proof block, two objection answers), they agree. A contradiction fails even when each line is sourced on its own.
+- **The offer is the offer.** The page promises only what the offer delivers: duration, deliverable, post-submit step. A disclosure tied to an offer the brief no longer includes is flagged for removal.
+
+Pass: no untraceable claim and no contradiction. Otherwise FAIL.
+
+**Gate 4: Delete test.** For every line of visible copy (headings, sentences, list items, button labels, form microcopy, captions), write one phrase naming what the visitor would lose if it were cut. A line whose honest answer is "nothing" goes on the cut list with an action: cut it, or merge it into a named line. Typical entries: a line that restates another, process copy, a name the visitor has no reason to care about yet, a caption that repeats its heading.
+
+Pass: the cut list is empty. Otherwise FAIL.
+
+**After fixes, rerun.** Copy fixes go through Phase 2, re-run with this report as feedback; stage isolation keeps Phase 3 from changing copy. Then re-run Phase 3 so page.html matches, and Phase 4 in full, because a fix can break another line. Use new subagents every time. A cold reader that has seen an earlier draft is no longer cold.
+
+**Result.** Any gate FAIL or BLOCKED sets `overall: FAIL`.
+
 ### Step 5: Write Report
 
 Write to `.claude/deliverables/campaigns/<slug>/qa-report.md`:
@@ -211,7 +263,7 @@ Write to `.claude/deliverables/campaigns/<slug>/qa-report.md`:
 ```yaml
 ---
 schema: qa-report
-schema_version: "2.0"
+schema_version: "2.1"
 client: <company-name>
 campaign: <campaign-slug>
 files_checked:
@@ -227,6 +279,13 @@ ordering_warnings: <int, CS-3 soft rule deviations>
 variant_alignment_flags: <int, CS-2 flag count>
 objection_coverage: <"X/Y", CS-4 result>
 cta_consistency: <PASS|FAIL>
+review_gates:
+  cold_reader: <PASS|FAIL|BLOCKED>
+  julian_audit: <PASS|FAIL|BLOCKED>
+  truth_check: <PASS|FAIL|BLOCKED>
+  delete_test: <PASS|FAIL|BLOCKED>
+cold_reader_header_read: <one line: what the cold reader said is sold, from the H1 alone>
+delete_test_cuts: <int, lines on the cut list>
 dimension_ratings:
   awareness_stage_alignment: <strong|needs_work|missing>
   value_proposition_clarity: <strong|needs_work|missing>
@@ -295,6 +354,24 @@ Body format:
 |---|-------|--------|-------|
 | Brand Component | BC-1 through BC-7 | X/Y pass + Z warnings | (conditional: only when brand files detected) |
 
+## Independent Review Gates
+
+| Gate | Result | Notes |
+|------|--------|-------|
+| 1: Cold reader | PASS/FAIL/BLOCKED | [header-only read; names or terms used before introduced] |
+| 2: Julian audit | PASS/FAIL/BLOCKED | [ATF-1 and ATF-6 results; order, feature-block and desire/labor/confusion findings] |
+| 3: Truth check | PASS/FAIL/BLOCKED | [untraceable claims; contradictions] |
+| 4: Delete test | PASS/FAIL/BLOCKED | [cut count] |
+
+### Cold Reader Report
+
+[The cold reader's four answers, verbatim]
+
+### Delete-Test Cut List
+
+| # | Line | Section | What the visitor loses if cut | Action |
+|---|------|---------|-------------------------------|--------|
+
 ## Taxonomy Dimension Scores
 
 | Dimension | Rating | Recommendation |
@@ -327,11 +404,13 @@ Body format:
 Present results summary to the human:
 - Overall PASS or FAIL
 - Count of passed/failed checks
-- For any FAILs: explain the fix
-- If all pass: "Page is ready for review and deployment."
+- For any FAILs: explain the fix, including every delete-test cut and every name or term the cold reader flagged
+- If every check and all four gates pass: "Page is ready for review and deployment."
 
 ---
 
-## QA Does Not Run as a Subagent
+## QA Runs Inline; the Review Gates Do Not
 
-QA is lightweight enough to run inline in the orchestrator context. No need to spawn a separate agent. This saves ~20K tokens of agent overhead. The orchestrator loads agent-header.md + this file and executes directly.
+QA is lightweight enough to run inline in the orchestrator context. The orchestrator loads agent-header.md + this file and executes directly, which saves ~20K tokens of agent overhead.
+
+The Step 4e gates are the exception. They always run in two fresh subagents, the cold reader and the gate reviewer. The orchestrator has read the brief, so it cannot read the page cold, and it may have revised the copy itself, so it cannot grade it.

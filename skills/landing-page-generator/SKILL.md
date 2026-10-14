@@ -1,13 +1,13 @@
 ---
 name: landing-page-generator
-version: 2.0.3
-updated: 2026-07-14
+version: 2.1.0
+updated: 2026-10-13
 description: "When the user wants to generate a B2B paid landing page from existing positioning context. Also use when the user mentions 'landing page,' 'LP generator,' 'campaign page,' 'paid landing page,' 'landing page copy,' 'hero section,' or 'conversion page.' Four-phase pipeline with signal-driven section assembly: brief builder, copy agent (composable section selection), design agent, QA validator. Consumes L0+L1 context files from .claude/context/ and produces campaign deliverables in .claude/deliverables/campaigns/."
 ---
 
 # Landing Page Generator
 
-> **Version:** 2.0.1
+> **Version:** 2.1.0
 > **Type:** Multi-phase pipeline with human review gates
 > **Model:** opus (all phases)
 > **Depends on:** modules/conversion-playbook.md, modules/campaign-brief-template.md, modules/lp-audit-taxonomy.md (construct mode), modules/section-taxonomy.md, templates/section-catalog.html
@@ -20,6 +20,8 @@ description: "When the user wants to generate a B2B paid landing page from exist
 | Copy Agent | 2 | Subagent (Task tool) | opus |
 | Design Agent | 3 | Subagent (Task tool) | opus |
 | QA Validator | 4 | Inline in orchestrator | opus (session model) |
+| Cold Reader (QA gate 1) | 4 | Fresh subagent (Task tool), every QA run, page text only | opus |
+| Gate Reviewer (QA gates 2-4) | 4 | Fresh subagent (Task tool), every QA run | opus |
 
 Sonnet was tested repo-wide and produced worse output (hallucinated facts, inflated claims) for marginal savings; all agents stay on Opus per the repo convention.
 
@@ -137,7 +139,7 @@ Each phase runs as a subagent. Load:
 | brief | agent-header.md + phases/brief.md | company-identity.md confidence >= 3 |
 | copy | agent-header.md + phases/copy.md + modules/section-taxonomy.md | brief.md must exist in campaign directory. Optionally reads brand-design-system.md from context directory (Step 3.5 component matching). |
 | design | agent-header.md + phases/design.md + templates/section-catalog.html OR brand-components.html | copy.md must exist in campaign directory. When brand-components.html exists in context directory, it replaces section-catalog.html as the section catalog. |
-| qa | agent-header.md + phases/qa.md + modules/section-taxonomy.md | At least one of copy.md or page.html must exist |
+| qa | agent-header.md + phases/qa.md + modules/section-taxonomy.md | At least one of copy.md or page.html must exist. Step 4e dispatches the cold-reader and gate-reviewer subagents. |
 
 ### Step 6: Review Gate (--stage all only)
 
@@ -168,8 +170,8 @@ After the final phase (or single phase), summarize what was produced:
 | Brief (Phase 1) | ~50-80K | Reads L0+L1 context, interactive gap filling |
 | Copy (Phase 2) | ~90-145K | Reads brief + playbook module + taxonomy construct mode (D1,D2,D3,D5,D7,D8,D10) + section-taxonomy.md (section selection logic) + positioning context. +10-15K when brand design system detected (Step 3.5 component matching). |
 | Design (Phase 3) | ~105-165K | Reads copy + structural rules + taxonomy construct mode (D4,D6,D9) + section catalog (brand-components.html when present, otherwise section-catalog.html) + brand design system tokens |
-| QA (Phase 4) | ~35-55K | Validation pass (includes composable section checks) + section-taxonomy.md (ordering constraint validation) |
-| Full pipeline | ~280-455K | All four phases with review gates. Upper bound includes brand component overhead. |
+| QA (Phase 4) | ~65-105K | Validation pass (includes composable section checks) + section-taxonomy.md (ordering constraint validation) + the two review-gate subagents. The gate share (~30-50K) is an estimate, not measured. |
+| Full pipeline | ~310-505K | All four phases with review gates. Upper bound includes brand component overhead. |
 
 ---
 
@@ -189,6 +191,9 @@ The fixed wireframe produced identical page structure for every campaign regardl
 
 **Why templates/ for the section catalog?**
 The section catalog is an HTML visual reference used by exactly one phase (design). It lives in `templates/` within the skill directory because it is skill-specific, not cross-skill. The legacy wireframe (`wireframe-demo-legacy.jsx`) is retained in the same directory for reference only.
+
+**Why do independent agents review the copy?**
+A writer that grades its own work rubber-stamps it, the same reason cro-roadmap-red-team exists apart from hypothesis-generator. The copy agent knows the brief, so it cannot notice a name or term the page never introduced. Its self-check asks whether each line is understood, which passes lines that are clear and add nothing. So the copy agent's checklist confirms format only, and QA Step 4e runs four gates in two fresh subagents, outside both the writing context and the orchestrator: a cold reader that sees only the page, then a gate reviewer for the Julian audit, the truth check and a line-level delete test.
 
 **Why does brand-components.html replace section-catalog.html, not supplement it?**
 The brand component library contains client-specific HTML/CSS patterns that must be used as-is for brand compliance. Using the generic catalog alongside it would give the design agent two competing pattern sources. The brand library is authoritative when present. The generic catalog exists for clients without brand context.
@@ -210,4 +215,6 @@ Before reporting any phase (or the pipeline) complete, verify:
 - [ ] Section selection and ordering satisfy the section-taxonomy constraints (no duplicate section types, ordering rules respected)
 - [ ] CTA copy, form fields, and page structure follow `modules/conversion-playbook.md` rules or the deviation is flagged in the QA report
 - [ ] QA report scores all 10 lp-audit-taxonomy dimensions and lists every flagged issue with location
+- [ ] All four QA review gates ran on the final copy, none in a context that wrote or revised it, and a new cold-reader subagent ran after every copy change
+- [ ] No phase described copy as reviewed or ready to ship before the gates passed
 - [ ] Gaps, soft-dependency degradations, and human inputs used are listed in the completion summary

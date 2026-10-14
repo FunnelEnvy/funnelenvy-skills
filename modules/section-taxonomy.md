@@ -18,7 +18,7 @@ The first content block. Headline, supporting text, primary CTA. Sets the conver
 
 | Variant | Selection Signal | Structure |
 |---|---|---|
-| `pain-lead` | `traffic_awareness_stage` = unaware OR problem_aware | Lead with the problem. Headline names the pain. Subheadline bridges to solution. CTA is low-commitment ("See How" / "Learn More"). |
+| `pain-lead` | `traffic_awareness_stage` = unaware OR problem_aware | Lead with the problem. Headline names the pain and what you sell, so it passes the header-only litmus test (conversion-playbook.md Rule 1); a pain or question on its own belongs in the eyebrow or hook line. Subheadline bridges to solution. CTA is low-commitment ("See How" / "Learn More"). |
 | `keyword-match` | `traffic_source` = paid_search AND `traffic_awareness_stage` = solution_aware. Also for competitive campaigns where `target_keywords` contain competitor name, "vs", or "alternative". | Headline echoes search intent (mirrors `target_keywords`). For competitive queries, headline positions against the category leader. Subheadline differentiates. CTA matches offer type directly. |
 | `proof-lead` | proof_points verified >= 2 AND (`traffic_source` = retargeting OR `traffic_awareness_stage` = product_aware OR most_aware) | Lead with strongest quantified result. Headline is the metric. Subheadline contextualizes. CTA is direct (book/start/get). |
 

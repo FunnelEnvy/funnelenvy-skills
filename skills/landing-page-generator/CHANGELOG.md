@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.1.0] - 2026-10-13
+
+### Added
+- `phases/qa.md` Step 4e, Independent Review Gates. Every copy pass gets four gates, rerun after every copy change, in two fresh subagents and never in the QA context: (1) a cold reader that sees only the visitor-visible page text in scroll order, reports what it thinks is sold from the H1 alone, and flags every person's name, product term or acronym used before the page says what it is; (2) a Julian audit (ATF-1 to ATF-6, Section 5 hard-rule order, feature blocks, and a recorded desire, labor and confusion read); (3) a truth check (every claim traces to a source, and surfaces describing the same event agree); (4) a line-level delete test ("what would the visitor lose if this line were cut?"). A gate reviewer subagent runs gates 2 to 4 and judges gate 1 without seeing QA's own results. A gate that cannot run in a fresh subagent is BLOCKED, never substituted. Report schema 2.1 adds `review_gates`, `cold_reader_header_read` and `delete_test_cuts`; any gate FAIL or BLOCKED fails QA. Copy fixes after QA go through Phase 2, then Phase 3 and Phase 4 rerun.
+- `agent-header.md` Content Integrity rule 6, No self-grading: a phase's self-check confirms format only; quality verdicts come from the Phase 4 gates.
+- Header-only litmus test (Julian Shapiro: "If the visitor reads only this text on your page, will they know exactly what you sell?") as Rule 1 test 1 in `modules/conversion-playbook.md`, run before the competitor-swap test, and wired into the copy phase's headline variants, its D2 construct row, and QA ATF-1. A question, slogan or pain statement on its own fails; it can open the hero as the hook line.
+- `modules/conversion-playbook.md` 2.1: the Purchase Rate = Desire - (Labor + Confusion) frame, Rule 7 (subheader: one or two sentences, both jobs by default), Line-Level Rules (every line earns its place, introduce names and terms before use, examples only where needed, one story, objection answers as conversion copy), Feature Blocks, two new copy anti-patterns (process copy, undefined names and terms), and matching QA checklist items. The copy phase applies the Line-Level Rules and Feature Blocks while writing.
+
+### Fixed
+- The subheader rule contradicted itself: `modules/lp-audit-taxonomy.md` D2 and the copy phase's D2 row said "exactly one of ... Not both", while QA ATF-6 asked for both jobs. Julian Shapiro's guide, which D2 cites, uses the subheader for both, and his examples do both. D2 and the copy phase now match ATF-6: both jobs by default, one job is a warning, a restatement fails. The copy phase's "1 sentence explaining HOW" subheadline line is corrected to one or two sentences. `lp-audit-taxonomy.md` 1.1.0 also names the model correctly (Purchase Rate = Desire - (Labor + Confusion), not "desire-minus-labor") and adds the header-only test plus D8 delete-test and introduce-before-use checks.
+- The `pain-lead` hero variant ("Headline names the pain") produced headers that never say what is sold. `modules/section-taxonomy.md`, `templates/section-catalog.html`, the playbook's Unaware and Problem Aware headline rows, and the taxonomy's D2 pain-led row now require the headline to name the pain and what is sold.
+- `phases/qa.md` pointed at conversion-playbook "Section 9" for the QA checklist; the checklist is Section 11. The copy phase's module scope ("Sections 1-4, 6 only") left out Sections 9 and 10, which its own steps cite. The SKILL.md body version line read 2.0.1 against frontmatter 2.0.3.
+- `schemas/campaign-brief.md` qa-report reference copy re-synced with the authoritative phase-file schema, per the Schema Authority rule (it still showed schema 1.1 without the 2.0 fields).
+
 ## [2.0.3] - 2026-07-14
 
 ### Changed
