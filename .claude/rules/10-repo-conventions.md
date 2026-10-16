@@ -1,6 +1,6 @@
 ---
-version: "1.7.0"
-updated: 2026-10-14
+version: "1.8.0"
+updated: 2026-10-16
 ---
 # Repo Conventions
 
@@ -13,6 +13,7 @@ Violating any credential rule is a security incident — leaked secrets cannot b
 - NEVER store credentials, API keys, tokens, or secrets in repo files
 - Store credentials in `.env` files or in a dedicated secret store, such as a password manager
 - NEVER commit `.env` files — ensure `.gitignore` includes `.env` and all credential file patterns
+- If you find a credential-shaped file that is neither tracked nor ignored, such as a private key, certificate, token file or `.env` variant, you MUST stop and tell the user. You MUST NOT commit it or change `.gitignore` for it until the user decides. For such a file, this bullet takes precedence over the other `.gitignore` instructions in this rule.
 - NEVER prompt a user to input credentials into chat — set up `.env` with placeholders and let the user fill them in directly
 
 ## Scratch and Temp Files
