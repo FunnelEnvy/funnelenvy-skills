@@ -1,6 +1,6 @@
 ---
-version: "1.8.0"
-updated: 2026-10-09
+version: "1.9.0"
+updated: 2026-10-19
 ---
 # Skill Loading Requirements
 
@@ -10,8 +10,10 @@ You MUST complete every load below before responding or acting, even when the qu
 
 - When the managed-document hook injects instructions after a Read, you MUST follow those instructions before responding to the user or taking any other action — even for read-only operations. Do not rationalize skipping injected instructions because the operation doesn't modify anything.
 - If a file is in a `_dev/` directory or its filename starts with `chg_`, load the `change-management` skill.
-- If a file is within a knowledge base directory (at any depth) or has `kb_layer` frontmatter, load the KB type skill and the `kb-start` skill.
-- If the user intent involves querying, exploring, or learning about a knowledge base — even without referencing a specific file — load `kb-start` and the KB type skill named in the knowledge base's own `CLAUDE.md`.
+- If any of these holds, load `kb-start`, plus the KB type skill named in that knowledge base's own `CLAUDE.md` once you know which knowledge base is involved:
+  - a file is within a knowledge base directory (at any depth) or has `kb_layer` frontmatter;
+  - the user intent involves querying, exploring or learning about a knowledge base, even without referencing a specific file;
+  - you are about to create a markdown document in a repo whose `CLAUDE.md` has a `Knowledge Bases` section, unless it is `tmp/` scratch or a document a governing skill places, such as a change document or an initiative overview.
 - If the user intent involves reading from or writing to an external service, load that service's `*-start` skill, which integration-start's `Known Integrations` names. Do this even when a connector tool for the service is already available. When `Known Integrations` names no skill for the service, or does not list it, load `integration-start`. In a repo that does not enable the `fe-integrations` plugin, skip this load.
 - If the user intent is to create a managed document, or to review one the session has not read, load the `document-management` skill. The hook covers a Read.
 - If the user intent is to create, rename, edit, or plan any change for a skill, plugin, marketplace, or any managed resource, load the resource-specific management skill and the `change-management` skill.
