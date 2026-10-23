@@ -62,7 +62,7 @@ validation_gates:
     metric_instrumented: "[one line]"
     baseline_exists: "[one line]"
     control_stable: "[one line: capture date and any element-disagreement, or 'no structural artifact']"
-    powerable: "[one line: per-variant MDE or 'unpowerable on thesis metric']"
+    powerable: "[one line: per-variant MDE at the SKILL.md Decision Posture, or 'unpowerable on thesis metric']"
     segmentation_satisfied: "[one line]"
 ```
 
@@ -121,7 +121,7 @@ Read detect's Step 1f staleness signals for the target surface.
 
 Consume `construct.md` Step 5b (Test Feasibility) output: the per-variant MDE / "unpowerable" determination, computed on the segmented (not pooled) denominator when Step 5 pre-registered a segment, and covering the guardrail metric as well as the primary.
 
-- Step 5b produced a per-variant MDE within a feasible or extended window for the thesis metric: `pass`.
+- Step 5b produced a per-variant MDE within the SKILL.md `Decision Posture` readable bands (<= 26 weeks: Feasible, Extended, or Challenging) for the thesis metric: `pass`. A Challenging window passes this gate; its length is a tier and sequencing question, not a power failure.
 - Step 5b returned "unpowerable" on the thesis metric (the target surface cannot reach a readable per-variant sample on the primary metric, or the segmented denominator is too small): `fail`. `score.md` Step 5b (Infeasible Routing) routes an unpowerable-on-thesis-metric hypothesis to "What's Not Here."
 - Run-level `testing_method` (detect Step 1h) is non-A/B (`pre_post` / `cohort` / `operational`): `not-assessed`. The two-proportion power formula is an A/B construct; a pre/post read applies the treatment to the full traffic and has no per-variant sample to power, so the gate is neutral, never `fail`, and never triggers the `score.md` Step 5b "What's Not Here" routing on A/B-power grounds. Under `testing_method: ab` (the default) the gate is unchanged: an unpowerable A/B thesis metric still fails and routes out.
 - No performance profile (Step 5b was skipped): `not-assessed`. Neutral.

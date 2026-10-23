@@ -6,6 +6,17 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 2026-10-23 decision posture and experiment-history binding
+
+#### Added
+- **hypothesis-generator** (1.18.0): legacy-mode experiment-history binding. `.claude/context/experiment-history.md` (when it declares `schema: experiment-history`) and the insight records at `.claude/deliverables/experiments/*/insight.md` feed the same continuation, deployed-state, live-program and evidence paths the KB-mode history feeds, read only through the new deterministic `scripts/history_backlog.py` projection. A required coverage ledger, closed in score Step 6c, accounts for every lead/high prior-test recommendation before the roadmap is written; `new_hypothesis` items mint; surface derivation replaces penalty-free surface skips; medium/low items show as considered. A legacy run with no history file is unchanged. Validator block [22] and 39 unit tests.
+- **cro-roadmap-red-team** (0.3.0): CC13 history-backlog coverage, an omission check that every lead or high-priority prior-test recommendation is adopted, merged, folded, routed to strategic, or dispositioned with grounds.
+
+#### Changed
+- **hypothesis-generator** (1.18.0): one SKILL.md `Decision Posture` table owns every threshold: 90% confidence (two-sided), 80% power, a 20% relative MDE, an 8-week Quick Win ceiling, bands at 8 / 16 / 26 weeks, a p 0.10-0.20 directional band that earns a confirm-and-extend test, and guarded-proxy Quick Wins. The sample-size constant 16 gives way to the z-table multiplier M, and the posture is stated in the tier definitions, feasibility lines and six-part read thresholds. Directional history outcomes map to their own classes, and unverified outcomes are capped at flat.
+- **cro-roadmap-red-team** (0.3.0): CC2 audits against the roadmap's declared decision posture and requires all six threshold parts; CC10 and Phase 1 resolve the legacy history file and the insight records.
+- **Docs**: CLAUDE.md Context Files table gains `experiment-history.md` and `engagement-constraints.md`, the Deliverables table gains the per-experiment `insight.md` records, and the hypothesis-generator and cro-roadmap-red-team entries move to 1.18.0 and 0.3.0 (CC1-CC13). README versions updated.
+
 ### 2026-10-13 landing page conversion principles
 
 #### Changed
@@ -18,8 +29,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 ### 2026-08-31 deployed-state reads
 
 #### Changed
-- **hypothesis-generator** (unreleased): reads deployed state and delivered sample from the bound experiment-history source, so a Current state block tracks the shipped control rather than a build a prior experiment replaced, and a feasibility window tracks enrolled participants rather than page visits. Change doc `skills/hypothesis-generator/_dev/7-closed/chg_2026-08-31_deployed-state-and-enrollment-denominator-reads.md`.
-- **cro-roadmap-red-team** (unreleased): CC12 deployed-state accuracy, a standing check for an item whose stated control describes a build a prior experiment or feature release has since replaced.
+- **hypothesis-generator** (1.18.0): reads deployed state and delivered sample from the bound experiment-history source, so a Current state block tracks the shipped control rather than a build a prior experiment replaced, and a feasibility window tracks enrolled participants rather than page visits. Change doc `skills/hypothesis-generator/_dev/7-closed/chg_2026-08-31_deployed-state-and-enrollment-denominator-reads.md`.
+- **cro-roadmap-red-team** (0.3.0): CC12 deployed-state accuracy, a standing check for an item whose stated control describes a build a prior experiment or feature release has since replaced.
 
 ## [1.9.0] - 2026-07-14
 

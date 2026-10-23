@@ -270,7 +270,7 @@ Every hypothesis requires a "why." This is the CRO reasoning that separates a ri
 3. **Prediction:** What change in behavior the variant should produce
 4. **Metric:** How that behavior change manifests in measurable terms
 
-The Prediction must carry a read threshold, not just a direction. State the condition under which the variant ships and the condition under which it is abandoned. For proxy-only scopes with no CVR baseline, the honest form is: "ship if the variant proxy beats control by the test's MDE at full sample; abandon if flat at full sample." Do not fabricate a point estimate ("+X%") when no baseline supports one. This read threshold renders in the deliverable as the `Expected effect and read threshold` line.
+The Prediction must carry a read threshold, not just a direction: the six-part threshold defined in SKILL.md `Output Format` > `Expected effect and read threshold`, every part required on an A/B read. The six parts are the primary metric; two-sided significance at the SKILL.md `Decision Posture`; the MDE and the sample per arm the read is sized for; one pre-registered read point, with no extension and no second look; the directional action; and the guardrail with its margin and its own detectable change, or a clause saying no guardrail is read. A proxy-only scope with no baseline rate has no computable MDE, so state the six parts against an absolute threshold pre-registered before launch (for example "ship if CTA click-through reaches 4.0% or more at the single read and beats control at p < 0.10, two-sided"), or declare the first run baseline-setting: it sets the baseline rate and ships nothing, and its follow-on test is sized on the posture MDE from that baseline. Never name the MDE in a threshold without its number, and do not fabricate a point estimate ("+X%") when no baseline supports one. This read threshold renders in the deliverable as the `Expected effect and read threshold` line.
 
 **Displacement case (when Step 5 applied the displacement primary-metric override).** On an in-scope displacement surface the ship/abandon condition keys to the downstream primary metric, NOT the on-page proxy. State it explicitly: a proxy (engagement) decline alongside a downstream (contact / consultation / MQL) rise is a SHIP, not an abandon, because the bound history establishes that the proxy moves opposite to the downstream metric on this surface. An engagement-negative / downstream-positive variant is not killed. When the downstream metric is instrumented on the surface it is the readable primary and this threshold reads directly against it; when it is not instrumented, the abandon condition still keys to the downstream metric conceptually, but the readable threshold falls back to the Step 5a `guardrail_primary` decision rule (the instrumented proxy stays the readable primary, the downstream metric is the ground-truth guardrail), so there is no double-count.
 
@@ -420,11 +420,11 @@ Classify the primary metric selected in Step 5.
 
    a. Name the downstream Direct metric the proxy is expected to predict. Example: "CTA click-through rate proxies for demo request completion."
 
-   b. Add a guardrail metric: a business-outcome metric that must not degrade for the proxy win to be valid. Example: "Guardrail: demo request rate must not decrease by more than 10% relative."
+   b. Add a guardrail metric: a business-outcome metric that must not degrade for the proxy win to be valid. Its non-inferiority margin is the SKILL.md `Decision Posture` guardrail margin, and the line states the guardrail's own detectable change at the test's sample. Example: "Guardrail: demo request rate must not fall by more than 20% relative; at this sample the check can detect only a drop of about 30%."
 
    c. State the decision rule. Choose one:
-      - **Additive:** "Win = proxy up (stat-sig) AND guardrail not significantly down."
-      - **Guardrail-primary:** "Win = guardrail up (stat-sig) even if proxy flat or down. Proxy is a leading indicator; guardrail is ground truth."
+      - **Additive:** "Win = proxy up at the `Decision Posture` significance AND guardrail inside its pre-registered margin."
+      - **Guardrail-primary:** "Win = guardrail up at the `Decision Posture` significance even if proxy flat or down. Proxy is a leading indicator; guardrail is ground truth."
 
    d. Document filter risk when the experiment might change traffic composition:
       ```
@@ -435,6 +435,8 @@ Classify the primary metric selected in Step 5.
       ```
 
    e. If no evidence exists that the proxy predicts the guardrail on this page, add to Prerequisites: "Validate leading-indicator relationship between [proxy] and [guardrail] on [page] using historical data before treating proxy-win as conclusive."
+
+   f. **Guarded-proxy Quick Win eligibility is decided in `phases/score.md` Step 4**, after Phase 3.5 has read instrumentation, not here. This step records what that decision reads: the guardrail metric and whether it is a Direct lead metric (b), its pre-registered margin (b), and the decision rule (c).
 
 3. **Direct metrics need no guardrails.** Optionally add a quality guardrail (e.g., if primary is "form submission," guardrail might be "SQL rate from submissions" to guard against low-quality conversion inflation). Not required.
 
@@ -463,47 +465,52 @@ Keep the A/B formula below intact for `randomized_ab` strategic designs and for 
 
 For each hypothesis that has a Baseline (from Step 2), estimate whether the target page has enough traffic to run a statistically valid A/B test.
 
-**Formula (standard two-proportion z-test, 80% power, 95% significance):**
+**Formula (two-sided two-proportion z-test at SKILL.md > `Decision Posture`):**
 
 ```
-n_per_variant = 16 * p * (1 - p) / (p * relative_mde)^2
+n_per_variant  = M * p * (1 - p) / (p * relative_mde)^2
 duration_weeks = (K * n_per_variant) / (monthly_sessions / 30) / 7
+mde_achievable = sqrt(M * p * (1 - p) / n_window) / p
 ```
 
 Where:
 - `K` = number of test arms (control + variants). For standard A/B tests: K = 2. For multi-variation hypotheses (Step 3b produced 2-3 variations): K = number of variations + 1. Using all variations in a single test requires more traffic; if duration becomes infeasible, note that running variations sequentially as separate A/B tests is an option.
 - `p` = current conversion rate for the target page (from Baseline data). If Step 5a classified the primary metric as `proxy`, use the proxy metric's baseline rate, not the downstream direct metric's rate.
-- `relative_mde` = 0.15 (15% relative minimum detectable effect). Not configurable. Conservative for CRO.
+- `M` = the `Decision Posture` multiplier, 2(z_sig + z_power)^2 from its z table (12.37 at the defaults). Take it from the M grid; never use a remembered constant.
+- `relative_mde` = the `Decision Posture` relative MDE (0.20). Size on it, never on a prior result's point estimate.
+- `n_window` = the per-variant sample a fixed window accrues; `mde_achievable` is the inverse, the relative change that window can detect.
 - `monthly_sessions` = the target surface's accrual rate, resolved in this order:
   1. **A delivered sample reported by a record in the bound experiment-history source for this surface**, when one exists. Records report what an experiment actually enrolled over a stated window (for example "2,407 cart visitors over 54 clean days"), which is the unit an experiment accrues. Page visits are not that unit: on any client whose delivery is gated by consent, bot filtering, or an injection condition, enrolled participants run materially below page sessions, and sizing on page sessions understates every window.
   2. Otherwise, sessions for the target page from performance-profile.md, normalized to 30 days if the profile's date range differs.
 
-  **Name the denominator in the rendered feasibility line** so the substitution is visible to the reader (for example "~9 weeks on measured enrollment of 46/day, not the 95 page-visits/day"). A silent substitution is as opaque as the wrong number.
+  **Name the denominator in the rendered feasibility line, with its number,** so the substitution is visible to the reader: "measured on 5,600 page sessions/mo" or "measured on enrollment of 46/day, not the 95 page-visits/day". The kind of denominator alone ("page sessions") is not enough. A silent substitution is as opaque as the wrong number.
 
-  **Where a record states its own detectable-effect floor for the surface** (for example "at current traffic only a change of roughly 30% or more is detectable in eight weeks"), surface that floor rather than computing a window past it. A record's own power statement about its own surface outranks a fresh computation on a denominator it already measured.
+  **Where a record states its own detectable-effect floor for the surface** (for example "at current traffic only a change of roughly 30% or more is detectable in eight weeks"), surface that floor rather than computing a window past it. A record's own power statement about its own surface outranks a fresh computation on a denominator it already measured. **When a profile or record states an MDE at a named basis** (for example a sizing table at 95% confidence and 80% power), rescale it to the posture with the `Decision Posture` profile rescale rule, `MDE_posture = MDE_stated * sqrt(M_posture / M_stated_basis)`, rather than re-deriving it from raw counts.
 
 **Power-check extension (FM3).** The base formula above powers the primary metric on the pooled page denominator. Extend it on three axes so the power determination matches the actual test design:
 
-1. **Guardrail / secondary metric.** When Step 5a named a guardrail metric (proxy-primary hypotheses) or Step 5 named a secondary metric the read depends on, run the same z-test for that metric's base rate. A test that is powerable on the proxy but cannot read its guardrail within the window is not actually decidable: report the guardrail's separate duration, and if the guardrail is unpowerable, say so explicitly ("primary powerable in ~6 weeks; guardrail [metric] unpowerable at this traffic, so a proxy win cannot be validated against it here").
+1. **Guardrail / secondary metric.** When Step 5a named a guardrail metric (proxy-primary hypotheses) or Step 5 named a secondary metric the read depends on, run the same z-test for that metric's base rate. A test that is powerable on the proxy but cannot read its guardrail within the window is not actually decidable: report the guardrail's separate duration, and if the guardrail is unpowerable, say so explicitly ("primary powerable in ~7 weeks; guardrail [metric] unpowerable at this traffic, so a proxy win cannot be validated against it here").
 2. **Segmented (not pooled) denominator.** When Step 5 pre-registered a segment as the primary read (FM6), set `monthly_sessions` to the segment's sessions, NOT the page's pooled sessions. Powering a segmented read on the pooled denominator overstates feasibility. State the denominator used ("powered on paid-search arrivals: ~1,200 sessions/mo, not the 6,400 pooled").
-3. **Explicit MDE or "unpowerable".** Emit a per-variant determination, not just a tier label: either the per-variant MDE achievable in the window ("~6 weeks to detect a 15% relative lift at 5,600 samples/variant") OR an explicit "unpowerable on the thesis metric at current traffic" when no feasible/extended window reaches a readable per-variant sample on the primary metric (or on the segmented denominator). The `phases/validate.md` `powerable` gate consumes this determination: an "unpowerable" thesis metric fails the gate and `score.md` Step 5b routes it to "What's Not Here."
+3. **Explicit MDE or "unpowerable".** Emit a per-variant determination, not just a tier label: either the per-variant MDE achievable in the window ("~7 weeks to detect a 20% relative lift at about 3,000 visitors per variant, at 90% confidence and 80% power") OR an explicit "unpowerable on the thesis metric at current traffic" when no window at or under the `Decision Posture` Infeasible line (26 weeks) reaches a readable per-variant sample on the primary metric (or on the segmented denominator). A Challenging window (above 16 and at most 26 weeks) is powerable, consistent with `phases/validate.md` Gate 5. The `phases/validate.md` `powerable` gate consumes this determination: an "unpowerable" thesis metric fails the gate and `score.md` Step 5b routes it to "What's Not Here."
 
 The 100-conversion and 7-day hard gates below stay intact and apply on top of the extension. The extension changes WHAT is powered (guardrail too, segmented denominator) and WHAT is emitted (explicit MDE or unpowerable); it does not relax the hard gates.
 
-**Feasibility tiers:**
+**Feasibility tiers** (the `Decision Posture` feasibility bands, applied to the unrounded estimate):
 
 | Duration | Label | Action |
 |----------|-------|--------|
-| <= 4 weeks | **Feasible** | No annotation needed beyond the Test Feasibility line |
-| 5-12 weeks | **Extended** | Add note: "Consider micro-conversion metric for faster signal" |
-| 13-26 weeks | **Challenging** | Add note: "Consider proxy metric or pre/post analysis" |
+| <= 8 weeks | **Feasible** | No annotation needed beyond the Test Feasibility line |
+| 9-16 weeks (above 8.0) | **Extended** | Add note: "Consider micro-conversion metric for faster signal" |
+| 17-26 weeks (above 16.0) | **Challenging** | Add note: "Consider proxy metric or pre/post analysis" |
 | >26 weeks OR <100 sessions/mo | **Infeasible** | Route to "What's Not Here" with explanation. Do not include in roadmap. |
+
+**Boundary rendering.** Round the rendered estimate to the nearest week, except within 0.5 week of a band edge (8, 16 or 26 weeks): there, render one decimal ("8.3 weeks, Extended"), so a rounded figure never sits next to a band it appears to contradict.
 
 **Output format (added after the Baseline line in the deliverable):**
 
 ```markdown
 **Baseline:** 5,600 sessions/mo, 38.5% bounce, 3.0% CVR
-**Test Feasibility:** ~8 weeks at 15% MDE (2 variants, 5.6K samples/variant). Extended. Consider micro-conversion metric for faster signal.
+**Test Feasibility:** ~15 weeks at a 20% MDE, 90% confidence, 80% power (2 variants, ~10K per variant, measured on 5,600 page sessions/mo). Extended. Consider micro-conversion metric for faster signal.
 ```
 
 For a non-A/B testing method (pre/post, cohort, operational; detect Step 1h), the Test Feasibility line takes the read-window form instead, with no MDE, no samples-per-arm, and no weeks-to-power:
@@ -612,13 +619,14 @@ if_inconclusive:
   move_on_signal: "[condition under which to abandon this line of testing]"
   micro_conversion: "[leading indicator to check]"
   next_hypothesis: "[which experiment to run next if this line is abandoned]"
+  directional_read: "[the confirm-and-extend response to a directional result (item 6): do not ship, do not extend; the fresh confirmation test of the same mechanism, sized on the posture MDE]"
 ```
 
 This data populates the "If Tests Are Inconclusive" section in the final deliverable.
 
 5. **Post-Deployment Causal Impact Validation.** For hypotheses targeting pages with variable external traffic sources (seasonal campaigns, PR spikes, affiliate bursts), define a 30-day post-deployment monitoring strategy. After deploying a winning variant, compare a 30-day pre/post time series to confirm the observed lift holds outside the test environment. If the page receives >30% of traffic from a single volatile source (paid campaigns with variable spend, PR-driven spikes), flag the hypothesis with: "Winner requires causal impact validation. Run 30-day pre/post time-series comparison after deployment. Monitor traffic source composition weekly during the validation period. If the dominant traffic source shifts >20% in volume or composition during validation, extend the window or re-run the test." This catches false positives where the winning variant coincided with favorable traffic mix rather than genuine behavioral change.
 
-6. **Directional Significance Soft-Coding.** When a test reaches p < 0.15 but not p < 0.05, and the pattern has prior validation in the experiment-patterns library or a high-confidence match from a calibrated evidence module: recommend conditional deployment with continued monitoring. Output: "Directionally significant (p < [value]). Pattern has prior validation via [pattern ID or evidence source]. Recommend soft-coding (deploy with monitoring) and re-evaluating at 2x the original sample size. If the effect holds at 2x sample, hard-code. If it reverses, revert." This strategy applies ONLY when: (a) the pattern has prior empirical validation (not context-derived hypotheses), AND (b) the directional result aligns with the predicted direction from the causal mechanism. Do not soft-code counter-directional results or results from novel hypotheses.
+6. **Directional read.** A result in the SKILL.md `Decision Posture` directional band (a primary lift in the predicted direction with p in the band), with the guardrail inside its pre-registered margin, is directional. Do not ship it and do not extend the running test. Queue a fresh confirm-and-extend test of the same mechanism, sized on the posture MDE (never on the directional result's point estimate), which `phases/score.md` Step 4 scores as a `follow_up` off a `directional_win` (Confidence +1, Ease 0). A directional result against the predicted direction is read as a loss. A directional primary with the guardrail outside its margin is not directional: read it as a loss on the guardrail. There is no second look at a larger sample and no conditional deployment. Record the response as `if_inconclusive.directional_read`; it renders as the "If directional" line in "If Tests Are Inconclusive".
 
 ### Step 7: Contrarian Filter
 
