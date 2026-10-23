@@ -95,6 +95,14 @@ For each opportunity, identify the specific page and element the experiment targ
 
 Document what exists now. This is the control in the experiment.
 
+**Deployed-state binding (applies before everything below).** When `detect.md` Step 1g carried a `deployed_state` annotation with an entry for the target surface, the control is the **shipped treatment**, not the pre-experiment build. Three rules:
+
+- **Describe what ships.** The Current state block states the shipped treatment as the control. Never write a Before state that describes a build a prior experiment replaced, and never assert an element is absent when the annotation reports it live.
+- **Where deployed state and the structural capture disagree, split the question.** Deployed state wins on *what is live*; the structural capture wins on *how it renders*. A capture post-dates a deploy only by accident, so a capture that shows the pre-experiment build on a surface the annotation reports as shipped is a stale capture, not a contradiction to average out. Flag it as a launch-time verification rather than silently preferring either.
+- **Carry `scope`.** A treatment live only for named accounts constrains the control claim to those accounts. Say so in the Current state block rather than generalizing it to the surface.
+
+Absent an entry for the target surface, the rules below apply exactly as today.
+
 **For copy experiments:**
 - Pull exact copy from company-identity.md's Homepage Messaging section, stated differentiators, or proof points
 - If exact copy isn't available, describe the observed pattern ("Homepage headline uses category language rather than outcome language")
@@ -466,7 +474,13 @@ Where:
 - `K` = number of test arms (control + variants). For standard A/B tests: K = 2. For multi-variation hypotheses (Step 3b produced 2-3 variations): K = number of variations + 1. Using all variations in a single test requires more traffic; if duration becomes infeasible, note that running variations sequentially as separate A/B tests is an option.
 - `p` = current conversion rate for the target page (from Baseline data). If Step 5a classified the primary metric as `proxy`, use the proxy metric's baseline rate, not the downstream direct metric's rate.
 - `relative_mde` = 0.15 (15% relative minimum detectable effect). Not configurable. Conservative for CRO.
-- `monthly_sessions` = sessions for the target page from performance-profile.md, normalized to 30 days if the profile's date range differs
+- `monthly_sessions` = the target surface's accrual rate, resolved in this order:
+  1. **A delivered sample reported by a record in the bound experiment-history source for this surface**, when one exists. Records report what an experiment actually enrolled over a stated window (for example "2,407 cart visitors over 54 clean days"), which is the unit an experiment accrues. Page visits are not that unit: on any client whose delivery is gated by consent, bot filtering, or an injection condition, enrolled participants run materially below page sessions, and sizing on page sessions understates every window.
+  2. Otherwise, sessions for the target page from performance-profile.md, normalized to 30 days if the profile's date range differs.
+
+  **Name the denominator in the rendered feasibility line** so the substitution is visible to the reader (for example "~9 weeks on measured enrollment of 46/day, not the 95 page-visits/day"). A silent substitution is as opaque as the wrong number.
+
+  **Where a record states its own detectable-effect floor for the surface** (for example "at current traffic only a change of roughly 30% or more is detectable in eight weeks"), surface that floor rather than computing a window past it. A record's own power statement about its own surface outranks a fresh computation on a denominator it already measured.
 
 **Power-check extension (FM3).** The base formula above powers the primary metric on the pooled page denominator. Extend it on three axes so the power determination matches the actual test design:
 
