@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### changed
+- Read deployed state and delivered sample from the bound experiment-history source: a Current state block now tracks the shipped control rather than a build a prior experiment replaced, and a feasibility window tracks enrolled participants rather than page visits [deployed-state-and-enrollment-denominator-reads]
+
 ## [1.17.0] - 2026-07-22
 
 ### Added
