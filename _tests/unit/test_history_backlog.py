@@ -378,6 +378,35 @@ class TestOutcomeMappingEdges(unittest.TestCase):
         self.assertEqual(rec["mapping"], "flat")
 
 
+class TestBracketedQualifiers(unittest.TestCase):
+    # Each primary line would earn winner / loser / directional_loss without a qualifier.
+    CASES = (
+        ("win", "Converting (primary): Control 5.0% (50/1000) vs V1 7.0% (70/1000), lift +40.0%, p=0.010"),
+        ("loss", "Converting (primary): Control 7.0% (70/1000) vs V1 5.0% (50/1000), lift -28.6%, p=0.010"),
+        ("inconclusive", "Converting (primary): Control 6.0% (60/1000) vs V1 5.0% (50/1000), lift -18.0%, p=0.150"),
+    )
+
+    def _assert_capped(self, qualifier):
+        for token, primary in self.CASES:
+            with self.subTest(token=token):
+                rec = _one("%s [%s]" % (token, qualifier), primary)
+                self.assertEqual(rec["mapping"], "flat")
+                self.assertIn("[%s]" % qualifier, hb.record_line(rec))
+
+    def test_unreadable_qualifier_caps_win_loss_and_inconclusive_at_flat(self):
+        self._assert_capped("UNREADABLE: sample ratio mismatch")
+
+    def test_contradictory_qualifier_caps_win_loss_and_inconclusive_at_flat(self):
+        self._assert_capped("CONTRADICTORY: downstream checkout starts fell")
+
+    def test_meta_tally_labels_every_qualifier_and_keeps_the_unverified_count(self):
+        text = HISTORY.replace("- **Outcome:** loss\n", "- **Outcome:** loss [CONTRADICTORY: meetings rose]\n")
+        _, out, _ = hb.project("h.md", _lines(text), [])
+        self.assertIn("- Bracketed qualifier: 2 records (never mapped above flat): CONTRADICTORY 1, UNVERIFIED 1", out)
+        self.assertIn("- UNVERIFIED qualifier: 1 records", out)
+        self.assertIn("loss [CONTRADICTORY] 1", out)
+
+
 class TestFieldShapes(unittest.TestCase):
     def test_next_steps_as_sub_bullets_reach_the_record_and_the_count(self):
         extra = "- **Next Steps:**\n  - Roll out to the solutions page.\n  - Test a shorter form.\n"

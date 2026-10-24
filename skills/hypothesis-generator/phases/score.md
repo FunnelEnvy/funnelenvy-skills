@@ -113,7 +113,7 @@ These adjustments are based on the overall context quality, not individual patte
 | iteration | directional_win | 0 (a different design off a result that only leaned) | 0 | per surface; learning value | Exploration / Strategic Bet |
 | new_hypothesis | any | 0 (a new test the prior record suggested, not a replication) | per design | per surface | per ICE |
 
-A `directional_loss` scores exactly like a `loser` or `flat` parent: it is read as a loss. A `rollout` item whose parent is not a `winner` (a win mapped `flat` for an UNVERIFIED qualifier or a missing p, or a directional parent) scores as a `follow_up` for that parent: there is no proven variant to roll out, so it never takes the rollout row's `+1`/`+1`.
+A `directional_loss` scores exactly like a `loser` or `flat` parent: it is read as a loss. A `rollout` item whose parent is not a `winner` (a win mapped `flat` for a bracketed qualifier or a missing p, or a directional parent) scores as a `follow_up` for that parent: there is no proven variant to roll out, so it never takes the rollout row's `+1`/`+1`.
 
 Encode these rules with the table:
 - **Winner-rollout `+1`/`+1` is the ONLY path to a replication-grade Quick Win.** Do NOT extend the Ease `+1` to non-winner iterations: no proven variant exists, so the implementation-cost reduction does not apply. This keeps the existing winner-rollout Quick-Win path (the lines 70/89 behavior) intact and unchanged. The directional `+1` is Confidence only: a confirm-and-extend test off a `directional_win` never takes the Ease `+1` and never the rollout path.

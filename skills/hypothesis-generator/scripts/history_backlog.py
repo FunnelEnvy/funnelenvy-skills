@@ -9,7 +9,7 @@ more per-experiment insight records, and prints a compact markdown projection th
 the skill reads INSTEAD of the raw files:
 
   - meta: schema version, stated and parsed experiment counts, outcome tallies as
-    written and as mapped, the UNVERIFIED-qualifier count
+    written and as mapped, the bracketed-qualifier counts (UNVERIFIED among them)
   - the line ranges of the Cross-Experiment Patterns, Baseline Anchors, Discovered
     Mechanisms and Coverage Gaps sections, for a bounded follow-up read
   - one index line per record: heading, page, treatment category, outcome and its
@@ -50,11 +50,13 @@ under the field) is appended to it. A stated experiment_count that differs from 
 parsed count prints a WARNING line.
 
 Outcome mapping (mirrors SKILL.md > Read-side Mapping > Outcome mapping):
-    win / loss, stated primary p <= 0.05, no UNVERIFIED qualifier  -> winner / loser
+    win / loss, stated primary p <= 0.05, no bracketed qualifier   -> winner / loser
     win / loss, stated primary p above 0.05 and below 0.20         -> directional_win / directional_loss
     directional-win / directional-loss label                       -> directional_win / directional_loss
     inconclusive, stated primary p < 0.20, positive / negative lift -> directional_win / directional_loss
-    any settled outcome with the UNVERIFIED qualifier              -> flat
+    any settled outcome carrying a bracketed qualifier             -> flat
+      (for example [UNVERIFIED ...], [UNREADABLE: ...], [CONTRADICTORY: ...]; the
+      qualifier text is carried into the record index line)
     win or loss with no stated p <= 0.05                           -> flat
     inconclusive (other)                                           -> flat
     monitoring                                                     -> not minted (deployed state only)
@@ -85,7 +87,8 @@ HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 FIELD_RE = re.compile(r"^[-*]\s+\*\*(.+?):\*\*\s*(.*)$")
 SUB_RE = re.compile(r"^\s+[-*]\s+(.*)$")
-UNVERIFIED_RE = re.compile(r"\[\s*UNVERIFIED\b[^\]]*\]", re.I)
+QUALIFIER_RE = re.compile(r"\[([^\]]*)\]")
+UNVERIFIED_RE = re.compile(r"^\s*UNVERIFIED\b", re.I)
 P_RE = re.compile(r"\bp\s*(<=|>=|=|<|>|≤|≥)\s*(\d*\.\d+|\d+)", re.I)
 LIFT_RE = re.compile(r"\blift\s*([+\-−]?)\s*(\d+(?:\.\d+)?)\s*%", re.I)
 COUNT_PAIR_RE = re.compile(r"\(\s*\d[\d,]*\s*/\s*(\d[\d,]*)\s*\)")
@@ -371,7 +374,7 @@ def parse_primary(fields):
 
 
 def outcome_token(raw):
-    text = UNVERIFIED_RE.sub(" ", raw or "").strip().lower()
+    text = QUALIFIER_RE.sub(" ", raw or "").strip().lower()
     text = re.sub(r"[\s_]+", "-", text)
     for token in OUTCOME_TOKENS:
         if text == token or text.startswith(token + "-") or text.startswith(token + "("):
@@ -382,7 +385,13 @@ def outcome_token(raw):
     return text or "unknown"
 
 
-def map_outcome(token, unverified, primary_p, lift, fallback_p=None):
+def qualifier_label(text):
+    """Short label for a bracketed qualifier: its leading word, upper-cased."""
+    m = re.match(r"\s*([A-Za-z][A-Za-z-]*)", text or "")
+    return m.group(1).upper() if m else "QUALIFIER"
+
+
+def map_outcome(token, qualified, primary_p, lift, fallback_p=None):
     """Return (mapping, reason).
 
     `primary_p` is the p stated on the `(primary)` metric line. `fallback_p` is the
@@ -395,8 +404,8 @@ def map_outcome(token, unverified, primary_p, lift, fallback_p=None):
         return "not_minted", "in-progress: occupied slot"
     if token not in ("win", "loss", "directional-win", "directional-loss", "inconclusive"):
         return "not_minted", "outcome not recognized"
-    if unverified:
-        return "flat", "UNVERIFIED qualifier"
+    if qualified:
+        return "flat", "bracketed qualifier"
     if token in ("win", "loss"):
         strong, lean = ("winner", "directional_win") if token == "win" else ("loser", "directional_loss")
         if primary_p is not None:
@@ -516,7 +525,8 @@ def parse_history_lines(lines, path):
 
 def build_record(heading, start, end, fields):
     raw_outcome = field(fields, "outcome") or ""
-    unverified = bool(UNVERIFIED_RE.search(raw_outcome))
+    qualifiers = [q.strip() for q in QUALIFIER_RE.findall(raw_outcome) if q.strip()]
+    unverified = any(UNVERIFIED_RE.match(q) for q in qualifiers)
     token = outcome_token(raw_outcome) if raw_outcome else (
         outcome_token(field(fields, "status")) if field(fields, "status") else "unknown")
     primary = parse_primary(fields)
@@ -525,7 +535,7 @@ def build_record(heading, start, end, fields):
     p = primary_p or fallback_p
     p_from = "primary" if primary_p else ("outcome source" if fallback_p else None)
     lift = primary["lift"] if primary else None
-    mapping, reason = map_outcome(token, unverified, primary_p, lift, fallback_p)
+    mapping, reason = map_outcome(token, bool(qualifiers), primary_p, lift, fallback_p)
     total, days, per_day = delivered(fields)
     return {
         "heading": heading,
@@ -536,6 +546,7 @@ def build_record(heading, start, end, fields):
         "status": field(fields, "status"),
         "outcome": token,
         "unverified": unverified,
+        "qualifiers": qualifiers,
         "mapping": mapping,
         "reason": reason,
         "primary": primary,
@@ -975,9 +986,9 @@ def match_parent(records, experiment_id):
 
 
 def record_line(rec):
-    outcome = rec["outcome"] + (" [UNVERIFIED]" if rec["unverified"] else "")
+    outcome = rec["outcome"] + "".join(" [%s]" % clip(q, 80) for q in rec["qualifiers"])
     mapping = rec["mapping"] if rec["mapping"] != "not_minted" else "not minted"
-    if rec["reason"] and rec["mapping"] != "not_minted" and not rec["unverified"]:
+    if rec["reason"] and rec["mapping"] != "not_minted" and not rec["qualifiers"]:
         mapping += " (%s)" % rec["reason"]
     prim = rec["primary"]
     if prim:
@@ -1022,7 +1033,7 @@ def build_projection(history, insights):
                    "partial until they are read." % (history["stated"], len(recs)))
     written = {}
     for r in recs:
-        key = r["outcome"] + (" [UNVERIFIED]" if r["unverified"] else "")
+        key = r["outcome"] + "".join(" [%s]" % qualifier_label(q) for q in r["qualifiers"])
         written[key] = written.get(key, 0) + 1
     out.append("- Outcomes as written: " + ", ".join(
         "%s %d" % (k, v) for k, v in sorted(written.items(), key=lambda kv: (-kv[1], kv[0]))))
@@ -1034,8 +1045,15 @@ def build_projection(history, insights):
     out.append("- Mapped: " + ", ".join(
         "%s %d" % (k, mapped[k]) for k in sorted(
             mapped, key=lambda k: (order.index(k) if k in order else len(order), k))))
-    out.append("- UNVERIFIED qualifier: %d records (never mapped above flat)"
-               % sum(1 for r in recs if r["unverified"]))
+    labels = {}
+    for r in recs:
+        for q in r["qualifiers"]:
+            labels[qualifier_label(q)] = labels.get(qualifier_label(q), 0) + 1
+    out.append("- Bracketed qualifier: %d records (never mapped above flat)%s" % (
+        sum(1 for r in recs if r["qualifiers"]),
+        (": " + ", ".join("%s %d" % (k, v) for k, v in sorted(labels.items(), key=lambda kv: (-kv[1], kv[0]))))
+        if labels else ""))
+    out.append("- UNVERIFIED qualifier: %d records" % sum(1 for r in recs if r["unverified"]))
     all_items = []
     for ins in insights:
         for item in ins["items"] or []:
