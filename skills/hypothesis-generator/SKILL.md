@@ -325,7 +325,7 @@ Only B matters: a window that starts on or after B also starts after every earli
 
 | Window | Start read from | Consumers |
 |---|---|---|
-| Profile primary window | `date_range` start, else an equivalent statement in the profile body, matched by content as `phases/detect.md` `Profile Schema Equivalence` matches trends | construct Steps 2 and 5b; validate Gates 3 and 5 and Strategic Gate 1; score Steps 2, 4 and 6b |
+| Profile primary window | `date_range` start, else an equivalent statement in the profile body, matched by content as `phases/detect.md` `Profile Schema Equivalence` matches trends | construct Steps 2, 5 and 5b; validate Gates 1, 3 and 5 and Strategic Gates 1 and 3; score Steps 2, 4 and 6b |
 | Profile comparison window | `comparison_period.start`, else an equivalent body statement. A trend is read only when both profile windows count | detect Step 1c trend triggers; score Step 4 worsening-trend line |
 | History record used for sizing | The launch date in the record's full entry, matched by content in either source shape. The Phase 1 step 5b second-stage read reaches the entry, because the hypothesis targets the record's surface | construct Step 5b |
 | Planned pre-period | Counted back from the run date | construct Step 4c and Strategic Gate 1 (strategic); detect Step 1d (tactical, non-A/B) |
@@ -334,12 +334,12 @@ Only B matters: a window that starts on or after B also starts after every earli
 
 **Reads left alone.** The rule does not touch these reads:
 
-- Completed-experiment outcomes: Step 1g minting, the Outcome mapping and the score Step 4 posture matrix. A finished test compared its arms inside its own window.
+- Completed-experiment outcomes: Step 1g minting, the Outcome mapping and the score Step 4 posture matrix. A finished test compared its arms inside its own window. Rendering its absolute rates follows `Quoted figures`.
 - Detection: a refused window still fires Step 1c triggers on within-window evidence, such as a page against the site average in the same window. Trends are the exception (the comparison-window row above).
 - The history Baseline Anchors.
 - The Step 1f instrumentation inventory and Gate 2.
 
-**Quoted figures.** A figure from a refused window, a Baseline Anchors rate included, renders only with its period stated as before the change, for example "in early 2026, before the June 2026 measurement change". It never reads as a current rate. While a boundary governs, a figure whose period cannot be stated is not quoted as a rate. This holds in both deliverables.
+**Quoted figures.** A figure from a refused window, a Baseline Anchors rate included, renders only with its period stated as before the change, for example "in early 2026, before the June 2026 measurement change". It never reads as a current rate. While a boundary governs, a figure whose period cannot be stated is not quoted as a rate. The same holds for a completed experiment whose window starts before B: its absolute arm rates and counts render with that period stated, while its relative lift and significance need no qualifier. This holds in both deliverables.
 
 **No boundary.** Every branch this section adds keys on B. With no B, it changes no gate verdict, score, tier, rendered line or pre-flight line.
 

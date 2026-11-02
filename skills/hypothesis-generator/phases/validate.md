@@ -80,6 +80,8 @@ Cross-check each hypothesis's causal premise (its Observation + Principle from `
 
 **Authority order on conflict: measured performance > observed structure > inferred positioning.** When two artifacts disagree about the premise, the higher-authority artifact wins. A premise inferred from positioning that the performance profile contradicts is contradicted; a structural observation that the performance profile contradicts is contradicted; a positioning inference that a structural observation contradicts is contradicted.
 
+**Refused profile window.** When SKILL.md `Measurement-Regime Boundary` refuses the profile's primary window, its figures and classifications (`failure_mode` included) count as absent here, as for a page missing from the profile. Triangulate on the remaining artifacts. A refusal therefore still costs one gate fail (Gate 3), not two.
+
 Procedure:
 1. State the premise's testable claim in one line.
 2. Find every loaded artifact that bears on it.
@@ -190,7 +192,7 @@ Reuse tactical Gate 2's logic in full, including the live-elsewhere posture and 
 
 ### Strategic Gate 3: premise_contradicted (strategic application)
 
-Reuse tactical Gate 1's triangulation procedure and authority order unchanged. The strategic-specific note: an unresolved quantitative contradiction in the loaded data that the bet's scoping depends on (e.g., a measured average order value wildly inconsistent with the segment the bet targets, disclosed but unreconciled) is an affirmative `fail`, not a risk footnote. Disclosing the contradiction in the Key risk block does not clear the gate; reconciling it or re-scoping the bet does.
+Reuse tactical Gate 1's triangulation procedure and authority order unchanged, its SKILL.md `Measurement-Regime Boundary` refused-window rule included. The strategic-specific note: an unresolved quantitative contradiction in the loaded data that the bet's scoping depends on (e.g., a measured average order value wildly inconsistent with the segment the bet targets, disclosed but unreconciled) is an affirmative `fail`, not a risk footnote. Disclosing the contradiction in the Key risk block does not clear the gate; reconciling it or re-scoping the bet does.
 
 ### Confirm-first Confidence treatment
 

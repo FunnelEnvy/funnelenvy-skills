@@ -699,6 +699,23 @@ check "score.md Step 6b cites Measurement-Regime Boundary" \
 check "score.md Step 8 cites Measurement-Regime Boundary" \
   "sect $HG23_PH/score.md '^### Step 8: ' | grep 'Measurement-Regime Boundary'" \
   "NONZERO"
+check "construct.md Step 5 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/construct.md '^### Step 5: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "validate.md Gate 1 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/validate.md '^### Gate 1: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "validate.md Strategic Gate 3 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/validate.md '^### Strategic Gate 3: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+# (f) The Windows table lists the primary window's premise-check reader, and quoted figures reach
+# a pre-boundary completed experiment's absolute rates.
+check "Windows table lists Gate 1 among the profile primary window's consumers" \
+  "grep '^| Profile primary window |' $HG23_SKILL | grep 'Gates 1, 3 and 5'" \
+  "NONZERO"
+check "Quoted figures covers a completed experiment's absolute rates" \
+  "sect $HG23_SKILL '^## Measurement-Regime Boundary' | grep '^\\*\\*Quoted figures\\.\\*\\*' | grep 'completed experiment'" \
+  "NONZERO"
 # (e) The exhaustive Gate 3 fail claim is retired.
 check "validate.md no longer says baseline_exists fails only when a baseline was expected" \
   "grep -n 'reads .fail. only when a baseline was expected' $HG23_PH/validate.md" \

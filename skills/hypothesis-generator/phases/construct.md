@@ -378,6 +378,7 @@ Record `measurement_design` on the hypothesis record (internal field; it renders
 - Secondary metric (optional): A leading or lagging indicator that adds context
 - Avoid vanity metrics. "Page views" is almost never the right primary metric.
 - When performance-profile.md exists, reference the current baseline for the target metric. Example: "Primary metric: demo request rate (currently 1.2% on this page, 1.97% site-wide)." This grounds the expected improvement in reality.
+- When SKILL.md `Measurement-Regime Boundary` refuses the profile's primary window, quote no current rate here, as for a page missing from the profile. A figure from that window follows the section's quoted-figure rule.
 
 **Audience identification:**
 - If the experiment targets a specific persona from audience-messaging.md, name them
@@ -391,6 +392,8 @@ Pre-register the segment as the primary read when ANY of these dilution threshol
 - Bounce rate > 60% on the surface (most arrivals never see the stimulus, so an all-visitors denominator dilutes the effect).
 - New visitors > 80% of the surface's sessions when the mechanism depends on familiarity or return behavior (or, symmetrically, a returning-user mechanism on a >80%-new surface targets a minority).
 - The causal mechanism is sub-audience-only by construction (a returning-user login fix on a page whose audience is overwhelmingly new; a procurement-stage proof asset on a top-of-funnel page).
+
+When SKILL.md `Measurement-Regime Boundary` refuses the profile's primary window, the three figure thresholds above do not fire, as for a page missing from the profile. The sub-audience-by-construction trigger still applies.
 
 When a segment is pre-registered:
 - Name the segment as the primary read audience and state the dilution signal that justified it ("primary read: paid-search arrivals; Direct is 81% of this surface and is not the audience this hypothesis addresses").
