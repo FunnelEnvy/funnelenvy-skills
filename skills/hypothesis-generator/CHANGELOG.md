@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.19.0] - 2026-11-02
+
+### Added
+- Measurement-regime boundary for baselines. An engagement can declare `measurement_regime_boundaries` in the engagement-constraints frontmatter: the date its measurement changed (a consent banner, a tracking migration) and a short description. The new SKILL.md `Measurement-Regime Boundary` section refuses any baseline window that predates or straddles the latest boundary on or before the run date, or whose start no source states. A refused profile window fails Gate 3 (one Confidence cap at 3, no Quick Win), leaves Gate 5 not assessed, and takes the missing-page path: no Baseline or Test Feasibility line and no profile-driven score modifiers. Trend triggers need both profile windows to count, a pre-boundary history record no longer sizes a test, Strategic Gate 1 and construct Step 4c treat the boundary as a documented tracking discontinuity, and detect Step 1d reads each boundary as a release on every surface. Prerequisites gains one line naming the window and the change, quoted figures from a refused window state their period, and the pre-flight shows the boundary. The `Preconditions` engagement-constraints bullet now sets the convention for structured frontmatter fields. Validator block [23] checks the section and its consumers. With no boundary declared, runs are unchanged. [baseline-measurement-regime-boundary]
+
 ## [1.18.0] - 2026-10-23
 
 ### Added
