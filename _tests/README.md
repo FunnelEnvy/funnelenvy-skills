@@ -3,8 +3,9 @@ fe-managed: true
 name: tests
 description: >
   Automated test suite for this repo's Python scripts. stdlib-only unittest
-  infrastructure with fixture-based testing, three-layer architecture
-  (unit/functional/integration), and a script coverage floor.
+  infrastructure with fixture-based testing, three default layers
+  (unit/functional/integration) plus an opt-in live layer, and a script
+  coverage floor.
 governed_by: document-management
 managed_by: change-management
 version: "1.0.0"
@@ -36,19 +37,25 @@ python -m unittest discover _tests/unit -v
 python -m unittest discover _tests/functional -v
 python -m unittest discover _tests/integration -v
 
+# Live layer: only after the owner approves the run (see CLAUDE.md, Live Tests)
+FE_LIVE_TESTS=1 python -m unittest discover -s _tests/live -t . -v
+
 # Single file
 python -m unittest _tests.{layer}.test_{script_name} -v
 ```
 
 ## Architecture
 
-Three-layer test architecture with increasing scope:
+Three default layers with increasing scope, plus an opt-in `live/` layer:
 
 | Layer | Purpose | Side Effects | Speed |
 |---|---|---|---|
 | Unit | Pure function-in, value-out tests | None | Fast |
 | Functional | Public function contracts, CLI output | `tempfile` only | Medium |
 | Integration | Composition chain, import resolution | `tempfile` only | Slower |
+| Live | Checks against a live external service | Guarded writes to the real service, deleted in cleanup | Network-bound |
+
+The `live/` layer runs only when `FE_LIVE_TESTS=1` is set in the run's own environment, never from `.env`. Default runs, the change-management §5 Build and §6 QA runs included, report it as skipped, and it counts nothing toward the coverage floor. [CLAUDE.md](CLAUDE.md) `Live Tests` holds its rules.
 
 ### Directory Layout
 
@@ -63,6 +70,7 @@ _tests/
 ├── unit/           # test_{script_name}.py per script
 ├── functional/     # test_{script_name}.py per script
 ├── integration/    # test_{script_name}.py per composition
+├── live/           # Opt-in tests against a live service
 └── _dev/           # Change documents for test infrastructure changes
 ```
 
