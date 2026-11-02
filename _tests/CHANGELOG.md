@@ -13,6 +13,9 @@ title: Changelog
 
 ## [Unreleased]
 
+### Added
+- Opt-in `live/` layer synced from fe-sys-hq `_tests` v2.0.0 (fe-sys-hq v3.42.0): `CLAUDE.md` `Live Tests` section (v1.2.0), `README.md` layer row and run command, `helpers.py` `live_opt_in_skip_reason` and `LiveWriteGuard` with their unit and functional tests, and an empty `live/` package
+
 ### Changed
 - `CLAUDE.md` body synced with fe-sys-hq `_tests` v1.7.1 (fe-sys-hq v3.24.0): `Assertion causality` requires running the fail-first proof against the pre-change code and recording a partition line, a cited pre-existing test is proven by mutation, and `Change-management integration` splits the proof across Design, Build and QA
 - `CLAUDE.md` opening paragraph points to document-management's `docstring-standards` reference before any docstring write in this directory.

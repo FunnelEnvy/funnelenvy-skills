@@ -8,13 +8,13 @@ description: >
   change-management integration for the Design/Build/QA test lifecycle.
 governed_by: document-management
 managed_by: change-management
-version: "1.1.1"
+version: "1.2.0"
 created: 2026-09-22
-updated: 2026-10-14
+updated: 2026-11-02
 ---
 # Automated Test Suite
 
-Automated test suite for this repo's Python scripts. stdlib `unittest` infrastructure with a three-layer architecture, fixture-based testing, and a script coverage floor. Load `change-management` before working with test lifecycle operations. Load `document-management` before reviewing or editing managed files in this directory. Before writing or editing a docstring in this directory, load `document-management` (in the `fe-governance` plugin) and follow its `docstring-standards` reference.
+Automated test suite for this repo's Python scripts. stdlib `unittest` infrastructure with three default layers plus an opt-in `live/` layer, fixture-based testing, and a script coverage floor. Load `change-management` before working with test lifecycle operations. Load `document-management` before reviewing or editing managed files in this directory. Before writing or editing a docstring in this directory, load `document-management` (in the `fe-governance` plugin) and follow its `docstring-standards` reference.
 
 ## Architecture
 
@@ -23,19 +23,30 @@ Automated test suite for this repo's Python scripts. stdlib `unittest` infrastru
 | `unit/` | Pure function-in, value-out tests — no side effects |
 | `functional/` | Public function contracts and CLI output — `tempfile` only |
 | `integration/` | Composition chains and cross-module import resolution — `tempfile` only |
+| `live/` | Calls to a live external service. Runs only on opt-in, per `Live Tests`, counts nothing toward the coverage floor, and is skipped in the change-management §5 Build and §6 QA runs |
 | `fixtures/` | Static purpose-built `.md` files for read-only fixture tests |
 | `_dev/` | Change documents for test infrastructure changes |
 
 ## Operations
 
 - **Running tests in-session**: Use `python -m unittest discover _tests/ -v` for the full suite, `python -m unittest discover _tests/{layer} -v` for a single layer, and `python -m unittest _tests.{layer}.test_{script_name} -v` for a single file. A full-layer or full-suite run can take minutes. Let it finish rather than killing it, and run it in the background if you need the session free. A long run is not a hang, but it is not automatically a normal cost either: one file carrying most of a layer's time is a `Test Necessity` H4 target.
-- **Authoring tests**: Test files follow `test_{script_name}.py` in the correct layer directory (`unit/`, `functional/`, or `integration/`). Use `unittest` (stdlib) only — no pytest, no pip. Every script the repo owns must have at least one test case. That is a floor, not a target; `Test Necessity` H6 governs everything above it. Every test MUST satisfy `Test Necessity` and `Test-Verdict Integrity` below.
+- **Authoring tests**: Test files follow `test_{script_name}.py` in the correct layer directory (`unit/`, `functional/`, or `integration/`). A script's own tests go there; `live/` holds only checks against a live service, per `Live Tests`. Use `unittest` (stdlib) only — no pytest, no pip. Every script the repo owns must have at least one test case. That is a floor, not a target; `Test Necessity` H6 governs everything above it. Every test MUST satisfy `Test Necessity` and `Test-Verdict Integrity` below.
 - **Authoring fixtures**: Static fixtures are small purpose-built `.md` files checked into `fixtures/` for read-only patterns. Programmatic fixtures are created via `tempfile`, using the repo's shared fixture helpers where they exist. `Test Necessity` H4 governs whether a test builds its own, copies one, or shares one. Tests must clean up after themselves.
 - **Change-management integration**: Design's `Test design analysis` captures coverage planning in the change document's `Verification Design > Tests` subsection. The Build step runs `python -m unittest _tests.{layer}.test_{script_name} -v` for each new or modified script and authors new test files and fixtures per the design. The QA step runs the full suite as pre-QA verification. The `Assertion causality` proof is split across the steps:
   - **Design** classifies each planned case in `Verification Design > Tests` as fail-pre-change or positive control, with the reason. It proves any cited pre-existing test by mutation at Design and records the mutation and observed failure there, since that test already exists.
   - **Build** runs the pre-change proof and records the partition in `Verification Results > Tests Results`.
   - **QA** reconciles the recorded sum against the test file's case list. It re-runs the harness only when the sum does not hold or the cases changed after Build.
   - **A production-code fix applied at any gate** re-arms the proof for whoever applies it: a QA finding, an Open Issues resolution, or a §7 Closed fix. The applier shows the affected assertion fails against the pre-fix code.
+
+## Live Tests
+
+The `live/` layer holds tests that call a live external service. Its tests check that the doubles in the other layers still match the real service.
+
+- **Opt-in.** A live module runs only when `FE_LIVE_TESTS=1` is set in the run's own environment. Its `setUpModule` calls `live_opt_in_skip_reason` in `helpers.py` and raises `unittest.SkipTest` on the reason it returns, so every default run, §5 Build's and §6 QA's included, reports the module as skipped. Listing `FE_LIVE_TESTS` in the repo-root `.env` makes the module skip, never run.
+- **Owner approval.** You MUST set `FE_LIVE_TESTS` only after the owner approves that specific run in the session. The variable does not record an approval, so the approval comes first.
+- **Write guard.** A live module puts its outbound call behind `LiveWriteGuard` in `helpers.py`. Creates go only into targets the module declares, and other writes only to IDs the test recorded. Every recorded item is deleted in cleanup, and a failed delete names the item left behind.
+- **No coverage credit.** Live cases count nothing toward the coverage floor in `Operations`. A script's coverage comes from the other layers.
+- **Run command.** `FE_LIVE_TESTS=1 python -m unittest discover -s _tests/live -t . -v`, after the approval above.
 
 ## Test Necessity
 
