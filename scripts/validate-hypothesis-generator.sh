@@ -621,6 +621,107 @@ check "relative_mde guarded in Deliverable Purity Constraint" \
   "NONZERO"
 echo ""
 
+echo "[23] Measurement-regime boundary"
+# NONZERO checks use plain grep (not grep -c) per the block [15] note.
+# sect FILE PATTERN prints one section: from the first heading matching PATTERN to the next
+# heading of the same or a higher level. item FILE PATTERN prints one top-level list item
+# and its indented continuation lines.
+sect() {
+  awk -v pat="$2" '
+    function lvl(s) { match(s, /^#+/); return RLENGTH }
+    !on && /^#/ && $0 ~ pat { on = 1; L = lvl($0); next }
+    on && /^#/ && lvl($0) <= L { exit }
+    on { print }' "$1"
+}
+item() {
+  awk -v pat="$2" '
+    !on && $0 ~ pat { on = 1; print; next }
+    on && (/^- / || /^#/ || /^$/) { exit }
+    on { print }' "$1"
+}
+HG23_SKILL=skills/hypothesis-generator/SKILL.md
+HG23_PH=skills/hypothesis-generator/phases
+# (a) One SKILL.md section, placed after Decision Posture and before the Execution Pipeline.
+check "SKILL.md has exactly one Measurement-Regime Boundary section" \
+  "grep -c '^## Measurement-Regime Boundary$' $HG23_SKILL" \
+  "1"
+check "Measurement-Regime Boundary sits after Decision Posture and before the Execution Pipeline" \
+  "awk '/^## Decision Posture/{d=NR} /^## Measurement-Regime Boundary/{m=NR} /^## Execution Pipeline/{e=NR} END{if (d && m && e && d < m && m < e) print \"ok\"}' $HG23_SKILL" \
+  "ok"
+# (b) The Preconditions engagement-constraints bullet carries the structured-field list.
+check "Preconditions engagement-constraints bullet names testing_method" \
+  "item $HG23_SKILL '^- .engagement-constraints. [(]optional[)]' | grep 'testing_method'" \
+  "NONZERO"
+check "Preconditions engagement-constraints bullet names measurement_regime_boundaries" \
+  "item $HG23_SKILL '^- .engagement-constraints. [(]optional[)]' | grep 'measurement_regime_boundaries'" \
+  "NONZERO"
+# (c) Purity guard and pre-flight line.
+check "measurement_regime_boundaries guarded in Deliverable Purity Constraint" \
+  "sect $HG23_SKILL '^## Deliverable Purity Constraint' | grep 'measurement_regime_boundaries'" \
+  "NONZERO"
+check "pre-flight template carries the Measurement boundary line" \
+  "grep '^Measurement boundary: ' $HG23_SKILL" \
+  "NONZERO"
+# (d) Every consumer section cites the section by name.
+check "SKILL.md Phase 1 cites Measurement-Regime Boundary" \
+  "sect $HG23_SKILL '^### Phase 1: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "validate.md Gate 3 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/validate.md '^### Gate 3: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "validate.md Gate 5 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/validate.md '^### Gate 5: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "validate.md Strategic Gate 1 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/validate.md '^### Strategic Gate 1: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "construct.md Step 2 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/construct.md '^### Step 2: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "construct.md Step 4c cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/construct.md '^### Step 4c: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "construct.md Step 5b cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/construct.md '^### Step 5b: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "detect.md Step 1c cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/detect.md '^### Step 1c: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "detect.md Step 1d cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/detect.md '^### Step 1d: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "score.md Step 4 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/score.md '^### Step 4: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "score.md Step 6b cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/score.md '^### Step 6b: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "score.md Step 8 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/score.md '^### Step 8: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "construct.md Step 5 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/construct.md '^### Step 5: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "validate.md Gate 1 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/validate.md '^### Gate 1: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+check "validate.md Strategic Gate 3 cites Measurement-Regime Boundary" \
+  "sect $HG23_PH/validate.md '^### Strategic Gate 3: ' | grep 'Measurement-Regime Boundary'" \
+  "NONZERO"
+# (f) The Windows table lists the primary window's premise-check reader, and quoted figures reach
+# a pre-boundary completed experiment's absolute rates.
+check "Windows table lists Gate 1 among the profile primary window's consumers" \
+  "grep '^| Profile primary window |' $HG23_SKILL | grep 'Gates 1, 3 and 5'" \
+  "NONZERO"
+check "Quoted figures covers a completed experiment's absolute rates" \
+  "sect $HG23_SKILL '^## Measurement-Regime Boundary' | grep '^\\*\\*Quoted figures\\.\\*\\*' | grep 'completed experiment'" \
+  "NONZERO"
+# (e) The exhaustive Gate 3 fail claim is retired.
+check "validate.md no longer says baseline_exists fails only when a baseline was expected" \
+  "grep -n 'reads .fail. only when a baseline was expected' $HG23_PH/validate.md" \
+  "EMPTY"
+echo ""
+
 echo "=== Results ==="
 echo "  PASS: $PASS"
 echo "  FAIL: $FAIL"

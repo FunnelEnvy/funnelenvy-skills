@@ -122,6 +122,7 @@ Absent an entry for the target surface, the rules below apply exactly as today.
 - Record: sessions/mo, bounce rate, conversion rate (for primary conversion event), and top traffic source
 - This data populates the `**Baseline:**` line in the deliverable template
 - If the target page doesn't appear in performance-profile.md (low traffic or not tracked), note "No baseline data for this page" and skip the Baseline line
+- When SKILL.md `Measurement-Regime Boundary` refuses the profile's primary window, skip the Baseline line for every target page, as for a page missing from the profile
 - The structural observation artifact never supplies baseline metrics. Baseline lines come only from performance data; structure supplies current-state facts and element identity, exactly as before
 
 ### Step 3: Proposed Change
@@ -355,7 +356,7 @@ For the selected design, state all of:
 3. **The read condition and window** (how long the design needs to run and what counts as a read).
 4. **The design's honesty limits**: what it can and cannot causally isolate. Name the specific threat (pre/post seasonality and concurrent-change confounds; holdout contamination or matching error; cohort composition shifts; geo heterogeneity). This is the strategic analogue of Step 5a's proxy-guardrail honesty: state the limit, do not hide it.
 
-**Baseline-reliability design check.** Before finalizing `pre_post`, `cohort`, or a matched holdout, check the loaded performance context for an affirmative unreliable-baseline statement bearing on the comparison window (the same conditions `phases/validate.md` Strategic Gate 1 reads). If one exists, do not finalize a design that consumes the disqualified baseline: re-finalize toward a forward-only read, a randomized `holdout`, `geo_split`, `switchback`, or `operational_metric`. Only when no alternative design can read the lever does the original design stand, with the gate's Confidence cap and a read condition that names the comparison window as directional only. The gate improves the experiment where it can; it caps the score only where it must.
+**Baseline-reliability design check.** Before finalizing `pre_post`, `cohort`, or a matched holdout, check the loaded performance context for an affirmative unreliable-baseline statement bearing on the comparison window (the same conditions `phases/validate.md` Strategic Gate 1 reads). The check also fires when the design would consume a comparison window that SKILL.md `Measurement-Regime Boundary` refuses, loaded or planned. If either exists, do not finalize a design that consumes the disqualified baseline: re-finalize toward a forward-only read, a randomized `holdout`, `geo_split`, `switchback`, or `operational_metric`. When a governing boundary fired the check, try a pre-period that starts on or after the boundary date first. Only when no alternative design can read the lever does the original design stand, with the gate's Confidence cap and a read condition that names the comparison window as directional only. The gate improves the experiment where it can; it caps the score only where it must.
 
 **Confirm-first sequencing shape.** When the hypothesis record carries `confirm_first: true` (from `phases/detect-strategic.md` criterion 7, the context-is-silent state), the stand-up dependency list begins with the existence check: verifying whether the capability already exists in the named client-side system is sequenced as step one, the build is conditional on that check finding nothing, and the read window starts only after the check resolves. Render the check in natural language per the SKILL.md template line, never as a field token.
 
@@ -377,6 +378,7 @@ Record `measurement_design` on the hypothesis record (internal field; it renders
 - Secondary metric (optional): A leading or lagging indicator that adds context
 - Avoid vanity metrics. "Page views" is almost never the right primary metric.
 - When performance-profile.md exists, reference the current baseline for the target metric. Example: "Primary metric: demo request rate (currently 1.2% on this page, 1.97% site-wide)." This grounds the expected improvement in reality.
+- When SKILL.md `Measurement-Regime Boundary` refuses the profile's primary window, quote no current rate here, as for a page missing from the profile. A figure from that window follows the section's quoted-figure rule.
 
 **Audience identification:**
 - If the experiment targets a specific persona from audience-messaging.md, name them
@@ -390,6 +392,8 @@ Pre-register the segment as the primary read when ANY of these dilution threshol
 - Bounce rate > 60% on the surface (most arrivals never see the stimulus, so an all-visitors denominator dilutes the effect).
 - New visitors > 80% of the surface's sessions when the mechanism depends on familiarity or return behavior (or, symmetrically, a returning-user mechanism on a >80%-new surface targets a minority).
 - The causal mechanism is sub-audience-only by construction (a returning-user login fix on a page whose audience is overwhelmingly new; a procurement-stage proof asset on a top-of-funnel page).
+
+When SKILL.md `Measurement-Regime Boundary` refuses the profile's primary window, the three figure thresholds above do not fire, as for a page missing from the profile. The sub-audience-by-construction trigger still applies.
 
 When a segment is pre-registered:
 - Name the segment as the primary read audience and state the dilution signal that justified it ("primary read: paid-search arrivals; Direct is 81% of this surface and is not the audience this hypothesis addresses").
@@ -480,12 +484,12 @@ Where:
 - `relative_mde` = the `Decision Posture` relative MDE (0.20). Size on it, never on a prior result's point estimate.
 - `n_window` = the per-variant sample a fixed window accrues; `mde_achievable` is the inverse, the relative change that window can detect.
 - `monthly_sessions` = the target surface's accrual rate, resolved in this order:
-  1. **A delivered sample reported by a record in the bound experiment-history source for this surface**, when one exists. Records report what an experiment actually enrolled over a stated window (for example "2,407 cart visitors over 54 clean days"), which is the unit an experiment accrues. Page visits are not that unit: on any client whose delivery is gated by consent, bot filtering, or an injection condition, enrolled participants run materially below page sessions, and sizing on page sessions understates every window.
+  1. **A delivered sample reported by a record in the bound experiment-history source for this surface**, when one exists. Records report what an experiment actually enrolled over a stated window (for example "2,407 cart visitors over 54 clean days"), which is the unit an experiment accrues. Page visits are not that unit: on any client whose delivery is gated by consent, bot filtering, or an injection condition, enrolled participants run materially below page sessions, and sizing on page sessions understates every window. While a boundary governs, use a record only when its window counts under SKILL.md `Measurement-Regime Boundary`; the window starts at the launch date in the record's full entry. A refused or undatable record drops out, and source 2 applies.
   2. Otherwise, sessions for the target page from performance-profile.md, normalized to 30 days if the profile's date range differs.
 
   **Name the denominator in the rendered feasibility line, with its number,** so the substitution is visible to the reader: "measured on 5,600 page sessions/mo" or "measured on enrollment of 46/day, not the 95 page-visits/day". The kind of denominator alone ("page sessions") is not enough. A silent substitution is as opaque as the wrong number.
 
-  **Where a record states its own detectable-effect floor for the surface** (for example "at current traffic only a change of roughly 30% or more is detectable in eight weeks"), surface that floor rather than computing a window past it. A record's own power statement about its own surface outranks a fresh computation on a denominator it already measured. **When a profile or record states an MDE at a named basis** (for example a sizing table at 95% confidence and 80% power), rescale it to the posture with the `Decision Posture` profile rescale rule, `MDE_posture = MDE_stated * sqrt(M_posture / M_stated_basis)`, rather than re-deriving it from raw counts.
+  **Where a record states its own detectable-effect floor for the surface** (for example "at current traffic only a change of roughly 30% or more is detectable in eight weeks"), surface that floor rather than computing a window past it. A record's own power statement about its own surface outranks a fresh computation on a denominator it already measured. **When a profile or record states an MDE at a named basis** (for example a sizing table at 95% confidence and 80% power), rescale it to the posture with the `Decision Posture` profile rescale rule, `MDE_posture = MDE_stated * sqrt(M_posture / M_stated_basis)`, rather than re-deriving it from raw counts. While a boundary governs, a record's stated floor and stated MDE basis take the same condition as source 1: they apply only when the record's window counts.
 
 **Power-check extension (FM3).** The base formula above powers the primary metric on the pooled page denominator. Extend it on three axes so the power determination matches the actual test design:
 
@@ -525,6 +529,7 @@ For a non-A/B testing method (pre/post, cohort, operational; detect Step 1h), th
 - **CVR not available and no proxy is instrumentable:** Output: "Cannot estimate (no conversion rate baseline). If testing engagement metric, feasibility depends on effect size."
 - **No performance data at all:** Omit both Baseline and Test Feasibility lines (same as current behavior for Baseline).
 - **Page not in performance-profile.md:** Omit Baseline and Test Feasibility (page has insufficient data).
+- **Profile window refused under SKILL.md `Measurement-Regime Boundary`:** Omit Baseline and Test Feasibility, as for a page not in performance-profile.md. No history-record figure stands in for them.
 
 **Hard gates (check before finalizing any hypothesis):**
 - **100 conversions per variant minimum.** Below this threshold, effect sizes are unreliable regardless of statistical significance. If the page cannot produce 100 conversions per variant within the feasibility tier's time window, route to the next longer tier or to "What's Not Here" with a traffic requirement note.

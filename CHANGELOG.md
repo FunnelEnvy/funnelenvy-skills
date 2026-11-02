@@ -6,6 +6,11 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 2026-11-02 measurement-regime boundary
+
+#### Added
+- **hypothesis-generator** (1.19.0): an engagement can declare the date its measurement changed (`measurement_regime_boundaries` in the engagement-constraints frontmatter, for example a consent banner or a tracking migration). A baseline whose window predates or straddles that date, or has no stated dates, is refused: it fails the baseline gate, sizes and scores nothing, and adds one Prerequisites line asking for a baseline that starts on or after the change. Trends across the boundary are not read, a pre-boundary history record no longer sizes a test, and strategic before-and-after designs treat the boundary as a tracking discontinuity. The engagement-constraints input gains a convention for structured frontmatter fields. Runs without a declared boundary are unchanged.
+
 ### 2026-10-23 decision posture and experiment-history binding
 
 #### Added

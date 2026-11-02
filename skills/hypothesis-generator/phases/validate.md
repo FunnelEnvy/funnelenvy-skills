@@ -23,7 +23,7 @@ Each gate is evaluated only against the artifacts that exist. A gate whose backi
 |----------------|---------------|
 | performance-profile.md | `metric_instrumented` and `powerable` read `not-assessed` (no measurement inventory, no power determination). Neutral. No Confidence penalty beyond the existing performance-profile cap in `score.md`. |
 | Structural observation artifact | `control_stable` reads `not-assessed` (no capture-date or element-disagreement signal available). Neutral. |
-| No baseline for the target page | `baseline_exists` reads `fail` only when a baseline was expected and is genuinely absent on an instrumented surface; when no performance profile exists at all, it reads `not-assessed` (the global no-performance Confidence cap already applies in `score.md`). |
+| No baseline for the target page | `baseline_exists` reads `fail` when a baseline was expected and is genuinely absent on an instrumented surface, or when a governing boundary under SKILL.md `Measurement-Regime Boundary` refuses the target surface's profile window (undatable included); when no performance profile exists at all, it reads `not-assessed` (the global no-performance Confidence cap already applies in `score.md`). |
 | Fewer artifacts than KB mode (legacy mode) | Triangulate across whatever artifacts exist. `premise_contradicted` can still fire when two present artifacts disagree; it reads `not-assessed` when only one artifact bears on the premise. Absence never sets a gate to fail. |
 
 **Boundary: per-gate neutrality vs the global no-performance ceiling (these are two different mechanisms, not a contradiction).** Two absence rules coexist and must not be conflated:
@@ -40,7 +40,7 @@ Both can be true at once: in a run with no performance profile, `metric_instrume
 **Each gate is pass / fail / not-assessed. Only an affirmative fail caps Confidence. Not-assessed (the artifact backing the gate is absent) is neutral and never penalizes Confidence on its own.**
 
 - `pass`: the artifact was present and the check cleared (premise corroborated, metric instrumented, baseline present, control fresh and uncontested, powerable, segmentation satisfied).
-- `fail`: the artifact was present and the check did NOT clear (an affirmative contradiction, an uninstrumented metric, a missing-but-expected baseline, a stale or contested control, an unpowerable thesis metric, a non-isolable required segment). Only this state caps Confidence in `score.md` Step 4.
+- `fail`: the artifact was present and the check did NOT clear (an affirmative contradiction, an uninstrumented metric, a missing-but-expected baseline or one whose profile window a governing measurement-regime boundary refuses, a stale or contested control, an unpowerable thesis metric, a non-isolable required segment). Only this state caps Confidence in `score.md` Step 4.
 - `not-assessed`: the artifact backing the gate is absent, so the check could not run. This is neutral. It never caps Confidence and never blocks Confidence 4-5 on its own.
 
 A gate whose backing artifact is absent (for example `control_stable` with no structural observation artifact, or `metric_instrumented` / `powerable` with no performance profile) is `not-assessed`, NOT `fail`. A Build or run-time agent must never read "Confidence 4-5 requires all gates pass" as penalizing legacy or absent-artifact mode: a not-assessed gate satisfies that requirement, only an affirmative fail violates it.
@@ -53,7 +53,7 @@ Emit one `validation_gates` record per hypothesis with six named gates. Each gat
 validation_gates:
   premise_contradicted: <pass | fail | not-assessed>   # an affirmative FAIL means the premise IS contradicted by another loaded artifact
   metric_instrumented:  <pass | fail | not-assessed>   # FAIL = a primary or guardrail metric is genuinely dark (not documented live anywhere in loaded context); a live-elsewhere metric PASSES with a per-surface confirmation note
-  baseline_exists:      <pass | fail | not-assessed>   # FAIL = an expected baseline is genuinely absent on an instrumented surface
+  baseline_exists:      <pass | fail | not-assessed>   # FAIL = an expected baseline is genuinely absent on an instrumented surface, or a governing boundary (SKILL.md Measurement-Regime Boundary) refuses its profile window
   control_stable:       <pass | fail | not-assessed>   # FAIL = capture is stale or two artifacts contest the same element
   powerable:            <pass | fail | not-assessed>   # FAIL = the thesis metric is unpowerable (from construct.md Step 5b)
   segmentation_satisfied: <pass | fail | not-assessed> # FAIL = a required segment cannot be isolated / instrumented
@@ -80,6 +80,8 @@ Cross-check each hypothesis's causal premise (its Observation + Principle from `
 
 **Authority order on conflict: measured performance > observed structure > inferred positioning.** When two artifacts disagree about the premise, the higher-authority artifact wins. A premise inferred from positioning that the performance profile contradicts is contradicted; a structural observation that the performance profile contradicts is contradicted; a positioning inference that a structural observation contradicts is contradicted.
 
+**Refused profile window.** When SKILL.md `Measurement-Regime Boundary` refuses the profile's primary window, its figures and classifications (`failure_mode` included) count as absent here, as for a page missing from the profile. Triangulate on the remaining artifacts. A refusal therefore still costs one gate fail (Gate 3), not two.
+
 Procedure:
 1. State the premise's testable claim in one line.
 2. Find every loaded artifact that bears on it.
@@ -103,7 +105,8 @@ This is the gate that catches the pilot failure where the roadmap named element-
 
 Check whether the target surface has a baseline for the primary metric (the Baseline line from `construct.md` Step 5b / the performance profile).
 
-- Baseline present for the primary metric on the target surface: `pass`.
+- Baseline present for the primary metric on the target surface, and its window counts under SKILL.md `Measurement-Regime Boundary` (always true when no boundary governs): `pass`.
+- A boundary governs and the target surface's baseline would come from a profile primary window the section refuses, undatable included: `fail`. The note names the boundary date and its `change` text.
 - Performance profile present but the target surface has no baseline for the primary metric (homepage with no instrumented primary conversion, an uninstrumented page): `fail`. The hypothesis cannot reach Confidence 4-5 on a baseline it does not have.
 - No performance profile at all: `not-assessed` (the global no-performance Confidence cap in `score.md` already applies; this gate adds nothing on top).
 
@@ -124,6 +127,7 @@ Consume `construct.md` Step 5b (Test Feasibility) output: the per-variant MDE / 
 - Step 5b produced a per-variant MDE within the SKILL.md `Decision Posture` readable bands (<= 26 weeks: Feasible, Extended, or Challenging) for the thesis metric: `pass`. A Challenging window passes this gate; its length is a tier and sequencing question, not a power failure.
 - Step 5b returned "unpowerable" on the thesis metric (the target surface cannot reach a readable per-variant sample on the primary metric, or the segmented denominator is too small): `fail`. `score.md` Step 5b (Infeasible Routing) routes an unpowerable-on-thesis-metric hypothesis to "What's Not Here."
 - Run-level `testing_method` (detect Step 1h) is non-A/B (`pre_post` / `cohort` / `operational`): `not-assessed`. The two-proportion power formula is an A/B construct; a pre/post read applies the treatment to the full traffic and has no per-variant sample to power, so the gate is neutral, never `fail`, and never triggers the `score.md` Step 5b "What's Not Here" routing on A/B-power grounds. Under `testing_method: ab` (the default) the gate is unchanged: an unpowerable A/B thesis metric still fails and routes out.
+- The target surface's profile window is refused under SKILL.md `Measurement-Regime Boundary`, so Step 5b did not run for it: `not-assessed`. A refusal therefore counts as one gate fail (Gate 3), not two.
 - No performance profile (Step 5b was skipped): `not-assessed`. Neutral.
 
 This gate enforces what construct estimates: construct computes the MDE, validate makes "unpowerable" actually block the score rather than sit as an advisory note.
@@ -174,13 +178,13 @@ Emit a `validation_gates` record per strategic hypothesis with these gates:
 
 Applies when the finalized `measurement_design` is `pre_post`, `cohort`, or a matched (non-randomized) `holdout` whose matching depends on historical data.
 
-- The loaded performance context carries an affirmative unreliable-baseline statement bearing on the design's comparison window (a documented tracking discontinuity, a period-over-period comparison the profile itself flags as unreliable, a conversion event documented as having stopped firing, or an unreconciled contradiction in the baseline data the design would read against): `fail`. A `fail` here does two things: (a) it triggers the design-forcing branch in `construct.md` Step 4c (re-finalize toward a forward-only read, a randomized holdout, or another design that does not consume the disqualified baseline); and (b) if no alternative design exists, Confidence is capped at 2 by the Step 6b ceiling and the rendered read condition must state that the comparison window is directional only.
+- The loaded performance context carries an affirmative unreliable-baseline statement bearing on the design's comparison window (a documented tracking discontinuity, a period-over-period comparison the profile itself flags as unreliable, a conversion event documented as having stopped firing, or an unreconciled contradiction in the baseline data the design would read against): `fail`. A comparison window that SKILL.md `Measurement-Regime Boundary` refuses also reads `fail`, whether a loaded window or the final design's planned pre-period: a declared boundary counts as a documented tracking discontinuity. This arm reads the engagement input, so it applies with or without performance context. A `fail` here does two things: (a) it triggers the design-forcing branch in `construct.md` Step 4c (re-finalize toward a forward-only read, a randomized holdout, or another design that does not consume the disqualified baseline); and (b) if no alternative design exists, Confidence is capped at 2 by the Step 6b ceiling and the rendered read condition must state that the comparison window is directional only.
 - The performance context is present and does not disqualify the baseline: `pass`.
-- No performance context, or the design consumes no historical baseline (`operational_metric`, forward-only reads, randomized designs): `not-assessed`. Neutral.
+- No performance context, or the design consumes no historical baseline (`operational_metric`, forward-only reads, randomized designs): `not-assessed`. Neutral. The boundary arm above takes precedence over the no-performance-context case; randomized designs stay `not-assessed` under it.
 
 The gate reads what the skill already writes: a run that discloses "treat the pre-change window as directional only" in prose while scoring Confidence 3 on that same window is the defect this gate closes. Disclosure without enforcement is the failure mode.
 
-**Record semantics after re-finalization.** The gate evaluates the FINAL design (post construct.md Step 4c). When the Step 4c baseline-reliability design check already re-finalized the design so it no longer consumes the disqualified baseline (a forward-only read, a randomized design), the gate reads `pass` (or `not-assessed` when the final design consumes no historical baseline at all), with a note that the design was re-finalized away from the disqualified window. `fail` is reserved for a final design that still consumes the disqualified baseline (the no-alternative case), which is what triggers the Confidence-2 cap and the directional-only read condition.
+**Record semantics after re-finalization.** The gate evaluates the FINAL design (post construct.md Step 4c). When the Step 4c baseline-reliability design check already re-finalized the design so it no longer consumes the disqualified baseline (a forward-only read, a randomized design, or, under a governing boundary, a pre-period that starts on or after the boundary date), the gate reads `pass` (or `not-assessed` when the final design consumes no historical baseline at all), with a note that the design was re-finalized away from the disqualified window. `fail` is reserved for a final design that still consumes the disqualified baseline (the no-alternative case), which is what triggers the Confidence-2 cap and the directional-only read condition.
 
 ### Strategic Gate 2: metric_instrumented (strategic application)
 
@@ -188,7 +192,7 @@ Reuse tactical Gate 2's logic in full, including the live-elsewhere posture and 
 
 ### Strategic Gate 3: premise_contradicted (strategic application)
 
-Reuse tactical Gate 1's triangulation procedure and authority order unchanged. The strategic-specific note: an unresolved quantitative contradiction in the loaded data that the bet's scoping depends on (e.g., a measured average order value wildly inconsistent with the segment the bet targets, disclosed but unreconciled) is an affirmative `fail`, not a risk footnote. Disclosing the contradiction in the Key risk block does not clear the gate; reconciling it or re-scoping the bet does.
+Reuse tactical Gate 1's triangulation procedure and authority order unchanged, its SKILL.md `Measurement-Regime Boundary` refused-window rule included. The strategic-specific note: an unresolved quantitative contradiction in the loaded data that the bet's scoping depends on (e.g., a measured average order value wildly inconsistent with the segment the bet targets, disclosed but unreconciled) is an affirmative `fail`, not a risk footnote. Disclosing the contradiction in the Key risk block does not clear the gate; reconciling it or re-scoping the bet does.
 
 ### Confirm-first Confidence treatment
 
