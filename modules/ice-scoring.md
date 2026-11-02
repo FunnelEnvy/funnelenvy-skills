@@ -38,7 +38,7 @@ Impact measures the expected effect on conversion, revenue, or strategic learnin
 
 ## Confidence Calibration (1-5)
 
-Confidence measures how certain you are that the experiment will produce a measurable, interpretable result. This is NOT "how sure are you it will win." Even a well-designed experiment that loses can produce high-value learning.
+Confidence measures how certain you are that the experiment will produce a measurable, interpretable result. This is NOT "how sure are you it will win." Even a well-designed experiment that loses can produce high-value learning. "Measurable" means readable at the hypothesis-generator SKILL.md `Decision Posture` thresholds; a looser posture never adds Confidence by itself.
 
 | Score | Anchor Description |
 |-------|--------------------|
@@ -53,6 +53,7 @@ Confidence measures how certain you are that the experiment will produce a measu
 - Without audience-messaging.md, persona-based hypothesis Confidence is capped at 3
 - Without positioning-scorecard.md, gap-triggered hypothesis Confidence is capped at 3
 - Partial triggers (from Phase 2) reduce Confidence by 1
+- A proxy primary metric reduces Confidence by 1, waived only when the `Decision Posture` guarded-proxy conditions all hold (an instrumented Direct lead guardrail, a pre-registered non-inferiority margin, an additive decision rule), decided in `phases/score.md` Step 4 after the validation phase
 - Confidence 5 should only appear when calibration data from evidence modules is present
 - "Before" state based on exact copy from context: no adjustment. "Before" state inferred: Confidence -1.
 - When conversions lack page attribution but variant-level instrumentation is available: Confidence reflects the proxy read's interpretability, not revenue attribution. A high-traffic surface with a variant-instrumented proxy that reads out within the feasibility window earns its Confidence on the proxy. Note the revenue-attribution limitation separately in the hypothesis; do not cap proxy-read Confidence for it.

@@ -1,9 +1,14 @@
 # Changelog
 
-## [Unreleased]
+## [0.3.0] - 2026-10-23
 
 ### added
 - CC12 deployed-state accuracy: a standing check for an item whose stated control describes a build a prior experiment or feature release has since replaced [deployed-state-checklist-check]
+- CC13 history-backlog coverage: every lead or high-priority prior-test recommendation in the resolved experiment history must be adopted, merged into a named hypothesis, folded into a live experiment, routed to the strategic roadmap, or listed as not advanced with grounds; an unaccounted item is a finding and routes to a `/hypothesis-generator` regeneration [posture-aware-audit-and-history-coverage]
+
+### changed
+- CC2 audits tiers, feasibility lines, and read windows against the roadmap's rendered decision posture, using the pre-1.18 reference only when none is declared, and passes a stopping rule only when all six threshold parts are present; a looser declared posture is not a finding, and the measurability skeptic computes power and MDE at the declared posture [posture-aware-audit-and-history-coverage]
+- CC10 and Phase 1 resolve the legacy `experiment-history.md` and the `insight.md` experiment records, read the history by section and surface without the generator's script, read directional priors as neither flat nor wins, and never credit an unverified outcome as a win [posture-aware-audit-and-history-coverage]
 
 ## [0.2.0] - 2026-07-14
 

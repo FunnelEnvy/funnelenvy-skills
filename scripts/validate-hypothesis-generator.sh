@@ -204,12 +204,14 @@ check "Output Format has Experiment Program Continuity section" \
 # history_type/parent_outcome also appear in the in-KB interpretation contract
 # (Read-side Mapping) and the Outcome normalization table, not only the Purity
 # Constraint ban list -- counts bumped from 1 accordingly (in-kb-experiment-history-read-path).
+# parent_outcome dropped to 2 in 1.18.0: the Outcome mapping table header says "Maps to" and the
+# directional rule no longer restates the field (legacy-history-binding-and-decision-posture).
 check "history_type guarded in Deliverable Purity Constraint" \
   "grep -c 'history_type' skills/hypothesis-generator/SKILL.md" \
   "3"
 check "parent_outcome guarded in Deliverable Purity Constraint" \
   "grep -c 'parent_outcome' skills/hypothesis-generator/SKILL.md" \
-  "4"
+  "2"
 check "source_priority guarded in Deliverable Purity Constraint" \
   "grep -c 'source_priority' skills/hypothesis-generator/SKILL.md" \
   "1"
@@ -523,6 +525,100 @@ check "slot_available guarded in Deliverable Purity Constraint" \
 check "SKILL.md carries Quality Rule 20 (live-program ownership)" \
   "grep -c '^20. \*\*A running experiment owns its surface' skills/hypothesis-generator/SKILL.md" \
   "1"
+echo ""
+
+echo "[22] Decision Posture and legacy experiment-history binding"
+# (a) One SKILL.md Decision Posture section, placed before the Execution Pipeline.
+# NONZERO checks use plain grep (not grep -c) per the block [15] note.
+check "SKILL.md has the Decision Posture section" \
+  "grep -c '^## Decision Posture' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "Decision Posture precedes the Execution Pipeline" \
+  "awk '/^## Decision Posture/{d=NR} /^## Execution Pipeline/{e=NR} END{if (d && e && d < e) print \"ok\"}' skills/hypothesis-generator/SKILL.md" \
+  "ok"
+check "Decision Posture carries the z table" \
+  "grep -c '^\*\*z table\.\*\*' skills/hypothesis-generator/SKILL.md" \
+  "1"
+check "Decision Posture carries the M grid" \
+  "grep -c '^\*\*M grid\*\*' skills/hypothesis-generator/SKILL.md" \
+  "1"
+# (b) No retired threshold literal survives anywhere in the skill or the ICE module. The one
+# Decision Posture sentence that names the retired values (to forbid them) is exempted by its
+# own anchor text, "are not the posture".
+HG_FILES="skills/hypothesis-generator/SKILL.md skills/hypothesis-generator/phases/*.md modules/ice-scoring.md"
+check "no retired 15% MDE literal (any spelling)" \
+  "grep -nE '15% (MDE|relative|minimum detectable)' $HG_FILES | grep -v 'are not the posture'" \
+  "EMPTY"
+check "no retired relative_mde = 0.15 literal" \
+  "grep -nE 'relative_mde\`? *= *0?\.15' $HG_FILES" \
+  "EMPTY"
+check "no retired constant 16 in the sample-size formula" \
+  "grep -nE 'n_per_variant *= *16|16 \* p' $HG_FILES" \
+  "EMPTY"
+check "no retired six-week Quick Win literal (any spelling)" \
+  "grep -nE '\b(six|6)[- ]weeks?\b|<= ?6\b' $HG_FILES | grep -v 'are not the posture'" \
+  "EMPTY"
+check "no retired 95% significance literal" \
+  "grep -nE '95% significance|80% power, 95%' $HG_FILES" \
+  "EMPTY"
+check "no Not configurable MDE statement" \
+  "grep -n 'Not configurable' $HG_FILES" \
+  "EMPTY"
+check "no directional soft-coding (no second look, no conditional deployment)" \
+  "grep -niE 'soft-cod' $HG_FILES" \
+  "EMPTY"
+check "no MDE-without-a-number read threshold form" \
+  "grep -n \"beats control by the test's MDE\" $HG_FILES" \
+  "EMPTY"
+check "construct.md requires the six-part read threshold" \
+  "grep 'the six-part threshold defined in SKILL.md' skills/hypothesis-generator/phases/construct.md" \
+  "NONZERO"
+check "construct.md formula takes M from the Decision Posture" \
+  "grep 'n_per_variant  = M \* p' skills/hypothesis-generator/phases/construct.md" \
+  "NONZERO"
+check "score.md Step 4 computes proxy_qw_eligible after the validation phase" \
+  "grep 'Guarded-proxy eligibility (computed here, after Phase 3.5)' skills/hypothesis-generator/phases/score.md" \
+  "NONZERO"
+check "score.md Quick Win tier requires a non-proxy primary or proxy_qw_eligible" \
+  "grep 'is not proxy OR .proxy_qw_eligible.' skills/hypothesis-generator/phases/score.md" \
+  "NONZERO"
+check "construct.md Step 6 carries the directional read (no soft-coding)" \
+  "grep -c 'Directional read' skills/hypothesis-generator/phases/construct.md" \
+  "1"
+# (c) Legacy history binding: minting, surface derivation, ledger, close-out.
+check "detect.md mints new_hypothesis items" \
+  "grep 'new_hypothesis' skills/hypothesis-generator/phases/detect.md" \
+  "NONZERO"
+check "detect.md carries the Coverage ledger" \
+  "grep 'Coverage ledger' skills/hypothesis-generator/phases/detect.md" \
+  "NONZERO"
+check "detect.md replaces penalty-free surface skips with surface derivation" \
+  "grep 'Surface derivation (no item is skipped for its surface)' skills/hypothesis-generator/phases/detect.md" \
+  "NONZERO"
+check "score.md closes the ledger in Step 6c" \
+  "grep -c '^### Step 6c: Coverage Ledger Close-Out' skills/hypothesis-generator/phases/score.md" \
+  "1"
+check "SKILL.md carries Quality Rules 21 and 22" \
+  "grep -cE '^2[12]\. \*\*' skills/hypothesis-generator/SKILL.md" \
+  "2"
+check "SKILL.md has the If directional bullet" \
+  "grep 'If directional:' skills/hypothesis-generator/SKILL.md" \
+  "NONZERO"
+check "SKILL.md has a Scripts table naming history_backlog.py" \
+  "grep -A4 '^## Scripts' skills/hypothesis-generator/SKILL.md | grep 'history_backlog.py'" \
+  "NONZERO"
+check_exists "history_backlog.py script" "skills/hypothesis-generator/scripts/history_backlog.py"
+check_exists "history_backlog.py unit tests" "_tests/unit/test_history_backlog.py"
+# (d) Purity guards for the new tokens.
+check "directional_win guarded in Deliverable Purity Constraint" \
+  "grep 'directional_win' skills/hypothesis-generator/SKILL.md | grep 'producer.s raw type/outcome tokens'" \
+  "NONZERO"
+check "new_hypothesis guarded in Deliverable Purity Constraint" \
+  "grep 'new_hypothesis' skills/hypothesis-generator/SKILL.md | grep 'producer.s raw type/outcome tokens'" \
+  "NONZERO"
+check "relative_mde guarded in Deliverable Purity Constraint" \
+  "grep 'Decision-posture constant references' skills/hypothesis-generator/SKILL.md | grep 'relative_mde'" \
+  "NONZERO"
 echo ""
 
 echo "=== Results ==="

@@ -1,8 +1,8 @@
 ---
 name: cro-roadmap-red-team
-version: 0.2.0
+version: 0.3.0
 description: "When the user wants to independently red-team, stress-test, or critique a produced CRO roadmap (experiment roadmap or strategic roadmap) before it ships. Also use when the user mentions 'red team,' 'red-team the roadmap,' 'critique the roadmap,' 'stress-test the hypotheses,' 'pressure-test the experiments,' 'are these experiments sound,' or 'independent review of the roadmap.' Re-derives each hypothesis cold from its cited evidence, grades the roadmap's own self-critiques (rebut vs deflect), runs a cross-cutting structural checklist, and emits per-item dispositions plus a routed research backlog. In KB mode (see KB Mode (Dual-Mode Output)) it reads the scope's gold roadmaps. No research, no web fetches, no edits to the target."
-updated: 2026-07-14
+updated: 2026-10-23
 ---
 
 # CRO Roadmap Red-Team
@@ -38,8 +38,8 @@ You are an independent red team for a produced CRO roadmap. You did not write it
 
 Two I/O modes, resolved once in Phase 1 and held in-session. The analysis is identical in both; only the read/write targets differ. This skill is a consumer in both modes: it reads roadmaps and writes a standalone critique, and it never produces a KB artifact.
 
-- **Legacy mode** (default): reads `.claude/deliverables/experiment-roadmap.md` and (if present) `.claude/deliverables/strategic-roadmap.md`; resolves cited sources from `.claude/context/` L0 + L1 files; writes the critique to `.claude/deliverables/roadmap-red-team.md`.
-- **KB mode**: reads `{kb_root}/deliverables/{scope}-experiment-roadmap.md` and (if present) `{kb_root}/deliverables/{scope}-strategic-roadmap.md`; resolves cited sources from each roadmap's `depends_on`; writes the critique to `{kb_root}/deliverables/{scope}-roadmap-red-team.md`.
+- **Legacy mode** (default): reads `.claude/deliverables/experiment-roadmap.md` and (if present) `.claude/deliverables/strategic-roadmap.md`; resolves cited sources from `.claude/context/` L0 + L1 files (including `experiment-history.md` when present) and the `.claude/deliverables/experiments/*/insight.md` records; writes the critique to `.claude/deliverables/roadmap-red-team.md`.
+- **KB mode**: reads `{kb_root}/deliverables/{scope}-experiment-roadmap.md` and (if present) `{kb_root}/deliverables/{scope}-strategic-roadmap.md`; resolves cited sources from each roadmap's `depends_on` plus any external experiment-history producer KB; writes the critique to `{kb_root}/deliverables/{scope}-roadmap-red-team.md`.
 
 ## Invocation
 
@@ -82,7 +82,7 @@ When KB mode is confirmed, hold `kb_root`, `kb_type`, `scope` in-session for the
 | Condition | Type | If not met |
 |---|---|---|
 | At least one target roadmap resolves and is readable | Hard | STOP. Tell the user the resolved path(s) and to run `/hypothesis-generator` first (with `--scope <slug>` in KB mode). |
-| The roadmap's cited sources resolve (KB `depends_on` / legacy `.claude/context/`) | Soft | Resolve what exists; record unresolvable sources as a finding; checks needing a missing source return "cannot assess -- source absent." |
+| The roadmap's cited sources resolve (KB `depends_on` plus any external experiment-history producer / legacy `.claude/context/`, including `experiment-history.md`, plus the `.claude/deliverables/experiments/*/insight.md` records) | Soft | Resolve what exists; record unresolvable sources as a finding; checks needing a missing source return "cannot assess -- source absent." |
 | Not run concurrently with a producing skill in the same session | Soft | The roadmap and its sources must be stable during the pass. |
 
 ## Reference
@@ -97,7 +97,7 @@ Per-item recommendation, one of: **keep** (sound as-is), **reframe** (keep but r
 
 ### Altitude model
 
-The roadmap comes at two altitudes. **Tactical** items (the experiment roadmap: Quick Win / Strategic Bet / Exploration) are A/B tests with an MDE and a denominator. **Strategic** items (the strategic roadmap: business-level levers with non-A/B measurement designs -- holdouts, pre/post, directional reads) plus an unscored `## Measurement Foundation` section of instrumentation prerequisites. Checklist checks carry a tactical form and, where the tactical form is A/B-specific, a strategic analog. Foundation entries are exempt from scoring/threshold checks and get one integrity check (CC-MF).
+The roadmap comes at two altitudes. **Tactical** items (the experiment roadmap: Quick Win / Strategic Bet / Exploration) are A/B tests with an MDE and a denominator, read at the roadmap's declared decision posture. **Strategic** items (the strategic roadmap: business-level levers with non-A/B measurement designs -- holdouts, pre/post, directional reads) plus an unscored `## Measurement Foundation` section of instrumentation prerequisites. Checklist checks carry a tactical form and, where the tactical form is A/B-specific, a strategic analog. Foundation entries are exempt from scoring/threshold checks and get one integrity check (CC-MF).
 
 ### Boundary with experiment-measurement-audit
 
@@ -117,7 +117,7 @@ Spawn skeptic subagents (Task tool, `subagent_type: "general-purpose"`, `mode: "
 
 ### Phase 3 -- Cross-cutting checklist
 
-Run the authoritative, non-skippable checklist (CC1-CC12, CC-MF, plus the completeness step) across all items; each check emits a cited finding or an affirmative clean pass; gate-verdict audit where the generator's `validation_gates` cover the dimension, full re-derivation otherwise. **Procedure:** read `phases/checklist.md` and execute. **When to use:** after Phase 2, before Phase 4.
+Run the authoritative, non-skippable checklist (CC1-CC13, CC-MF, plus the completeness step) across all items; each check emits a cited finding or an affirmative clean pass; gate-verdict audit where the generator's `validation_gates` cover the dimension, full re-derivation otherwise. **Procedure:** read `phases/checklist.md` and execute. **When to use:** after Phase 2, before Phase 4.
 
 ### Phase 4 -- Self-critique grading
 
@@ -142,7 +142,7 @@ Assemble the critique document per `Output Format` and write it to the resolved 
 
 One standalone critique document, dated in the body header, written to the resolved output path. Human-readable analysis; no `kb_layer`, no system-internal references beyond naming the skills a research item routes to. Structure (mirrors the reference pass):
 
-1. **Header** -- date; target roadmap(s) + version(s); altitude(s) covered; sources read in full; a line noting this is analysis only, the target was not edited, and (if applicable) which altitude/source was absent or which schema-tolerance path was taken.
+1. **Header** -- date; target roadmap(s) + version(s); altitude(s) covered; sources read in full (the experiment history by section and surface, per Phase 1); a line noting this is analysis only, the target was not edited, and (if applicable) which altitude/source was absent or which schema-tolerance path was taken.
 2. **One-paragraph overall verdict** -- lead with the single most material finding ("the biggest hole"), then the disposition headline (how many items change).
 3. **Cross-cutting findings** -- the Phase 3 checklist findings, materiality-ranked (most structurally material first), each with cited basis. Affirmative clean passes are summarized, not omitted.
 4. **Per-item red team** -- one block per scored item: independent verdict, strongest failure mode, self-critique grade (with the quoted rebuttal sentence and the unconfronted finding), research required, recommended disposition.
@@ -175,4 +175,6 @@ One standalone critique document, dated in the body header, written to the resol
 
 | Version | Changes |
 |---|---|
+| 0.3.0 | Posture-aware audit and history-backlog coverage. CC2 audits tiers, feasibility lines, and read windows against the roadmap's declared decision posture, using the pre-1.18 reference only when none is declared, and passes a stopping rule only when all six threshold parts are present; CC10 reads directional priors at the declared posture and never credits an unverified outcome as a win; new CC12 deployed-state accuracy and CC13 history-backlog coverage (CC1-CC13 + CC-MF + completeness step); Phase 1 resolves the legacy `experiment-history.md` and `insight.md` records and reads the history by section and surface, never through the generator's script; the measurability skeptic computes power and MDE at the declared posture; CC13 gaps route to a `/hypothesis-generator` regeneration. |
+| 0.2.0 | Prose-style guidance consolidated to the shared `modules/prose-craft.md` module in `agent-header.md` and `SKILL.md`; the cite-or-it-is-not-a-finding independence posture stays local. |
 | 0.1.0 | Initial build. Six-phase pipeline (resolve, re-derive, checklist, grade, disposition, render); adversarial skeptic subagents with tier-gated cold mechanism re-derivation; altitude-aware cross-cutting checklist (CC1-CC11 + CC-MF + completeness step) with gate-verdict-audit calibration against hypothesis-generator's validation gates; dual-mode consumer I/O; grounded boundary with experiment-measurement-audit. |

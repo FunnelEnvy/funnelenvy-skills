@@ -25,6 +25,7 @@ Emit a single ranked backlog, cheapest and most-blocking first. Each row: resear
 - Pre-launch measurement-plan validation for a surviving experiment (baseline existence, downfunnel completeness, denominator, power, confounds) → `experiment-measurement-audit` (the downstream per-experiment gate).
 - Buyer-voice / qualitative comprehension reads → survey instruments (named, not built here).
 - Desk-work items (pre-register thresholds, tag guardrails readable-today vs later) → no skill; a documented analyst task.
+- CC13 history-backlog items the roadmap left unaccounted → re-run `/hypothesis-generator`. This is a regeneration, not research: accounting for each prior-test recommendation is the generator's job, and this skill never writes the missing hypothesis.
 
 Ranking rule: a trivial verification that unblocks multiple items or silently zeroes a KPI (e.g., confirming a conversion event is not a dead binding) ranks above expensive single-item research.
 
