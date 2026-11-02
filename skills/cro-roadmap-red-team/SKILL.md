@@ -117,7 +117,7 @@ Spawn skeptic subagents (Task tool, `subagent_type: "general-purpose"`, `mode: "
 
 ### Phase 3 -- Cross-cutting checklist
 
-Run the authoritative, non-skippable checklist (CC1-CC11, CC-MF, plus the completeness step) across all items; each check emits a cited finding or an affirmative clean pass; gate-verdict audit where the generator's `validation_gates` cover the dimension, full re-derivation otherwise. **Procedure:** read `phases/checklist.md` and execute. **When to use:** after Phase 2, before Phase 4.
+Run the authoritative, non-skippable checklist (CC1-CC12, CC-MF, plus the completeness step) across all items; each check emits a cited finding or an affirmative clean pass; gate-verdict audit where the generator's `validation_gates` cover the dimension, full re-derivation otherwise. **Procedure:** read `phases/checklist.md` and execute. **When to use:** after Phase 2, before Phase 4.
 
 ### Phase 4 -- Self-critique grading
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## [Unreleased]
+
+### added
+- CC12 deployed-state accuracy: a standing check for an item whose stated control describes a build a prior experiment or feature release has since replaced [deployed-state-checklist-check]
+
 ## [0.2.0] - 2026-07-14
 
 ### Changed

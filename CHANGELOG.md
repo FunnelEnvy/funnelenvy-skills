@@ -15,6 +15,12 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - **modules/section-taxonomy.md**: `pain-lead` headline names the pain and what is sold.
 - **schemas/campaign-brief.md**: qa-report reference copy re-synced to schema 2.1.
 
+### 2026-08-31 deployed-state reads
+
+#### Changed
+- **hypothesis-generator** (unreleased): reads deployed state and delivered sample from the bound experiment-history source, so a Current state block tracks the shipped control rather than a build a prior experiment replaced, and a feasibility window tracks enrolled participants rather than page visits. Change doc `skills/hypothesis-generator/_dev/7-closed/chg_2026-08-31_deployed-state-and-enrollment-denominator-reads.md`.
+- **cro-roadmap-red-team** (unreleased): CC12 deployed-state accuracy, a standing check for an item whose stated control describes a build a prior experiment or feature release has since replaced.
+
 ## [1.9.0] - 2026-07-14
 
 ### 2026-07-14 prose-craft module consolidation
