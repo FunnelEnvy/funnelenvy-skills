@@ -1,10 +1,10 @@
 ---
-version: "1.14.0"
-updated: 2026-10-28
+version: "1.15.0"
+updated: 2026-11-03
 ---
 # Claude Usage
 
-Claude Code agent behavior conventions for all managed repos. Covers skill resolution, context ownership, step tracking, question prompts, approval doctrine, and concurrency posture.
+Claude Code agent behavior conventions for all managed repos. Covers skill resolution, context ownership, step tracking, date grounding, question prompts, approval doctrine, and concurrency posture.
 
 - If multiple skills or plugins could handle an intent, you MUST resolve in this priority order: (1) repo-specific skills, (2) fe-sys-hq marketplace plugins, (3) other marketplace plugins, (4) device-level configuration. If a repo-specific skill exists, you MUST use it even if a marketplace plugin also matches.
 - If you are about to write auto memory (`~/.claude/projects/*/memory/`), stop and ask: does this belong in a repo-managed document instead? If the information is project context, architectural decisions, resource state, or workflow knowledge, you MUST use a repo file. Auto memory is ONLY for truly personal user preferences that have no repo-level home.
@@ -18,6 +18,15 @@ Claude Code agent behavior conventions for all managed repos. Covers skill resol
 - If no tracking tool is available, as in a dispatched sub-agent, write the numbered step list in your response before step 1. Then report each step's completion in one line as you finish it. This discharges the same MUST in prose. Do not treat a missing tool as a reason to skip tracking.
 - If a sub-operation runs inside a step that already has its own entry, it MAY run without entries of its own when its steps are short. Nested tracking can degrade performance.
 - Keep narration of step transitions brief. If a tool's UI shows progress, prefer it over text narration. If none does, the one-line completion reports are the tracking, so keep each to one line. Surface more text only when the agent would benefit from chain-of-thought or the task requires user input, approval, or a decision. If the user explicitly requests full narration, provide it.
+
+## Dates and Time Zones
+
+A cloud container's clock runs in UTC. You MUST ground dates as follows:
+
+- Treat the zone `date` reports as the reference for "today" and every relative date, even when the date in the system prompt looks right.
+- Run `date` before you resolve a relative date or write a date stamp, and take the date from its output.
+- If `date` reports UTC, run `TZ=America/Los_Angeles date` instead, say that Pacific Time was assumed, and tell the operator to set `TZ` on their cloud environment.
+- When you resolve a relative date, state the absolute date it resolved to.
 
 ## Question Prompts
 
