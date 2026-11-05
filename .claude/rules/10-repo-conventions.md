@@ -1,10 +1,10 @@
 ---
-version: "1.8.0"
-updated: 2026-10-16
+version: "1.9.0"
+updated: 2026-11-04
 ---
 # Repo Conventions
 
-Shared conventions for all managed repos, in six sections: credentials; scratch and temp files; file names, keys and dates; reserved directories; Python invocation; and `.gitignore` coverage.
+Shared conventions for all managed repos, in seven sections: credentials; scratch and temp files; file names, keys and dates; reserved directories; managed resources; Python invocation; and `.gitignore` coverage.
 
 ## Credentials (MANDATORY — Security Boundary)
 
@@ -41,6 +41,24 @@ You MUST NOT deviate even when creating "temporary" or "one-off" files, or when 
 
 - **Underscore-prefixed directories** (e.g., `_dev/`, `_templates/`): Reserved for directories injected by a cross-cutting governance skill into a resource it doesn't own. Directories owned by the resource itself use plain names without underscore prefix (e.g., `references/`, `operations/`, `transforms/`).
 - `.claude/rules/` is managed by fe-sys-hq rule deployment — you MUST NOT manually edit, add, or remove rule files from this directory. If you believe a rule needs changing, edit the source in `.claude/skills/fe-governance-deploy/rules/` instead.
+
+## Managed Resources
+
+A managed resource is a directory the system governs as one unit. The first row below whose signature a directory matches gives its type and governing skill.
+
+| Type | Signature | Governing skill |
+|---|---|---|
+| Marketplace | `.claude-plugin/marketplace.json` | marketplace-management |
+| Plugin | `.claude-plugin/plugin.json` | plugin-management |
+| Skill | `SKILL.md` | skill-management |
+| Knowledge base | `CLAUDE.md` whose frontmatter `governed_by` ends in `/kb-claude-md` | kb-start, plus the KB type skill that value names |
+| Repo root | The repo's top-level directory | repo-standards |
+| Component | `CHANGELOG.md` | change-management |
+
+- Directories under `_tests/fixtures/` and `_evals/fixtures/` are not resources, whatever signature they carry.
+- A path belongs to its nearest enclosing resource. A resource at the repo root covers only its signature file and the root's `README.md`, `CLAUDE.md` and `CHANGELOG.md`.
+- A resource is versioned when it carries its own `CHANGELOG.md`. A marketplace, plugin or skill MUST carry one.
+- A resource is distributed when a channel beyond the merge to `main`, such as the plugin marketplace or a governance deploy, ships it, a file in it or a resource enclosing it.
 
 ## Python
 

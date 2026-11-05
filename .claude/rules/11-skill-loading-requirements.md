@@ -1,6 +1,6 @@
 ---
-version: "1.9.0"
-updated: 2026-10-19
+version: "1.10.0"
+updated: 2026-11-04
 ---
 # Skill Loading Requirements
 
@@ -16,5 +16,5 @@ You MUST complete every load below before responding or acting, even when the qu
   - you are about to create a markdown document in a repo whose `CLAUDE.md` has a `Knowledge Bases` section, unless it is `tmp/` scratch or a document a governing skill places, such as a change document or an initiative overview.
 - If the user intent involves reading from or writing to an external service, load that service's `*-start` skill, which integration-start's `Known Integrations` names. Do this even when a connector tool for the service is already available. When `Known Integrations` names no skill for the service, or does not list it, load `integration-start`. In a repo that does not enable the `fe-integrations` plugin, skip this load.
 - If the user intent is to create a managed document, or to review one the session has not read, load the `document-management` skill. The hook covers a Read.
-- If the user intent is to create, rename, edit, or plan any change for a skill, plugin, marketplace, or any managed resource, load the resource-specific management skill and the `change-management` skill.
+- If the user intent is to create, rename, edit, or plan any change for a managed resource, such as a skill, plugin or marketplace, load its governing skill. Rule 10's `Managed Resources` section names each type's governing skill and says when a resource is versioned. Also load the `change-management` skill, unless the intent is only to edit an unversioned resource, such as a knowledge base.
 - If the user intent is to create or request a *new* change specifically — a new backlog item, or "log a change" / "file this upstream" — additionally load the `change-capture` skill, so its redundancy investigation runs before a duplicate change document is written. This narrower create/request-a-change signal is the only one that loads `change-capture`; renaming, editing, or planning an existing change does not.
