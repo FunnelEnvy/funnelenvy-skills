@@ -75,7 +75,7 @@ There is deliberately no `--kb` force flag. A failed detection of the output KB 
 
 ### Schema Authority
 
-Phase files are the authority for analytical content. In KB mode the bound type defs (`.claude/skills/{kb-type}/artifacts/gold-experiment-roadmap.md` and `gold-strategic-roadmap.md`) are the authority for output path, frontmatter contract and required section layout: read them in Phase 6 before writing. `governed_by` is composed at runtime as `{kb-type}/gold-experiment-roadmap` or `{kb-type}/gold-strategic-roadmap`. Never hardcode a KB type skill name or client path.
+Phase files are the authority for analytical content. In KB mode the bound type defs (`.claude/skills/{kb-type}/artifacts/gold-experiment-roadmap.md` and `gold-strategic-roadmap.md`) are the authority for output path and frontmatter contract: read them in Phase 6 before writing. The body follows `Output Format` (or `Strategic Roadmap Output Format`). Where a type definition's content layout differs, the output format wins. `governed_by` is composed at runtime as `{kb-type}/gold-experiment-roadmap` or `{kb-type}/gold-strategic-roadmap`. Never hardcode a KB type skill name or client path.
 
 ### Read-side Mapping
 
@@ -368,9 +368,11 @@ Provided content becomes supplementary page context for the lenses. On "skip", m
    - **Exit 3:** not an experiment history; treat it as unbound.
    - **Exit 1:** fall back to a bounded read: the frontmatter, the four named sections, at most 20 full entries, and a grep of every `Next Steps` line and every `next_experiments` block. Mark coverage partial in the completion message.
 
-   The external `gold-experiment-index` path reads the index and its linked insights directly and skips this step.
+   The external `gold-experiment-index` path reads the index and its linked insights directly and skips this step. On that path the orchestrator numbers the typed `next_experiments` items `I1..In` in index order before dispatch, and passes the numbered list to the history lens. These ids seed the ledger the same way.
 
 5c. **Measurement-regime boundary** (only when `measurement_regime_boundaries` is present). Resolve B and the profile windows' verdicts per `Measurement-Regime Boundary`.
+
+5d. **Baseline table** (only when a performance profile or a history record gives figures). Resolve one baseline per surface, per `phases/detect.md` > `Baseline`: sessions per month normalized to 30 days, rate, window start and source. Pass the table to every lens. A lens uses a listed baseline verbatim and adds one only for a surface the table lacks, so one page is never sized two ways.
 
 6. **Archetype resolution.** Read `category.primary` from the strategy context (legacy: `company-identity.md`; KB: `silver-strategy-context`). Match case-insensitively by substring, first match wins:
 
@@ -428,14 +430,18 @@ Dispatch all five lens subagents in one message, in parallel, each with `model: 
 - its brief: the surface, persona-and-journey, history and competitive-and-proof lens briefs in `phases/detect.md`, or the strategic lens brief in `phases/detect-strategic.md`;
 - the `Card Schema` section of `phases/detect.md`;
 - the resolved paths of every input from Phase 1, including supplementary silver and any cross-scope artifact reachable through a declared `depends_on` edge;
-- the prompt library paths (base plus archetype module), `--focus` categories, the spec checklist, the floor, and B when it governs;
-- for the history lens, the projection path `$PROJ` (or the producer index paths) and the full-entry budget left.
+- the prompt library paths (base plus archetype module), `--focus` categories, the spec checklist, the floor, B when it governs, and the step 5d baseline table;
+- for the history lens, the projection path `$PROJ` (or the producer index paths with the numbered item list) and the full-entry budget left.
 
 Pass paths, never pasted context bodies. Each lens returns one JSON array of cards, followed only by the optional `Exclusions:`, `Measurement Foundation:` and `Shortfall:` lists that `phases/detect.md` `Return Format` defines. A card that fails the card schema is fixed by the orchestrator from the lens's own text, or dropped and named in the completion message. Hard-rule discards a lens reports (a documented-live lever, a form swap between identical forms) go to `## Exclusions` with their grounds.
 
 ### Phase 3: Consolidate
 
-Pool every lens's array into one JSON array in a run temp file, then run:
+1. **Harmonize keys.** The script merges only on an exact `mechanism_key`, so align keys before it runs. Compare cards across lenses on overlapping surfaces:
+   - Cards that describe the same change get one key, so they merge.
+   - Cards that share a key but change a different element or claim get `<pattern-key>-<element>`, so neither title is lost.
+   - Record each change as `old -> new` for the `Completion Message`.
+2. **Consolidate.** Pool every lens's array into one JSON array in a run temp file, then run:
 
 ```
 CARDS=$(mktemp); CONS=$(mktemp)
@@ -463,7 +469,7 @@ $PY <skill-dir>/scripts/consolidate_backlog.py rank --rows "$SCORED" --write-ups
 ```
 
    - `--rows` accepts the row array or the whole `consolidate` object.
-   - `--history-items` lists every lead or high ledger id; `--excluded-history` lists those that go to `## Exclusions`.
+   - `--history-items` lists every lead or high ledger id, plus each typed item with an unrecognized priority that the history lens minted. `--excluded-history` lists those that go to `## Exclusions`. The script reports every listed id that no row carries and no exclusion covers as unaccounted.
    - The output carries ranked `rows` (each with `readiness`, `rank` and `write_up`), `history_ledger` and `history_unaccounted`.
 4. **Close the ledger** per `phases/score.md`. **Hard rule:** while `history_unaccounted` is non-empty, no roadmap is written.
 
@@ -484,21 +490,23 @@ Read and follow `phases/construct.md` for every row with `write_up: true`. Each 
 ### Completion Message
 
 ```
+Cards in: [n] (both roadmaps) | Lens cards: surface [n], persona-journey [n], history [n], strategic [n], competitive-proof [n]
+Shortfalls against the floor of 10: [lens n, ... | none]
+Keys harmonized: [old -> new, ... | none]
+Cards dropped as invalid: [titles | none]
+
 Experiment roadmap written to .claude/deliverables/experiment-roadmap.md
-  Write-ups: [n] | Backlog rows: [n]
+  Write-ups: [n] | Backlog rows: [n] | Rows out: [n]
   By readiness: ready now [n], needs a design change [n], needs measurement [n], needs a client decision [n]
   By read model: A/B [n], directional [n], pre/post [n], holdout [n], not yet sized [n]
-  Cards in: [n] | Rows out: [n]
-  Lens cards: surface [n], persona-journey [n], history [n], strategic [n], competitive-proof [n]
-  Shortfalls against the floor of 10: [lens n, ... | none]
   History ledger: [n] lead/high (A adopted, M merged, F folded, S strategic, D not advanced), 0 unaccounted; [L] medium/low considered [; coverage partial: what was not read]  [only when history is bound]
   Exclusions: [n]
   Keys: [t] carried by title, [m] carried by mechanism, [k] minted; dropped prior keys: [key (title), ... | none]
-  Cards dropped as invalid: [titles | none]
 
 Strategic roadmap written to .claude/deliverables/strategic-roadmap.md
   [the same lines, for the strategic rows]
-  [or, when skipped: "No strategic rows; no strategic roadmap written."]
+  Measurement Foundation entries: [n]
+  [or, when skipped: "No strategic rows or Foundation entries; no strategic roadmap written."]
 
 Top write-up: [title] ([readiness], ICE [total])
 ```
@@ -563,10 +571,10 @@ Numbers come from `Decision Posture`.]
 > **Variation B ([anchor]):** "[copy]"
 > **Recommended:** [A|B]: [one-sentence reason]
 
-**Read model:** [A/B: "A/B, ~N weeks, about N visitors per arm, sized for a 20% lift at 90% confidence and 80% power, on N sessions/mo at a N% conversion rate" | Directional: "Directional, read once over the full 26-week window, about N visitors per arm; it can detect a change of about N%, on N sessions/mo at a N% conversion rate" | Pre/post: "Pre/post, N-week read against a stable pre-period baseline" | Holdout: "Holdout, [group] held out for N weeks" | "Not yet sized" with the reason. Every figure comes from the row's sizing object, including the traffic and rate it echoes]
+**Read model:** [A/B: "A/B, ~N weeks, about N visitors per arm, sized for a 20% lift at 90% confidence and 80% power, on N sessions/mo at a N% conversion rate" | Directional: "Directional, read once over the full 26-week window, about N visitors per arm; it can detect a change of about N%, on N sessions/mo at a N% conversion rate" | Pre/post by design: "Pre/post, read against a stable pre-period baseline on [pre-registered criterion]; the window is set before launch from [the sales cycle, or the volume needed to reach a stated count]" | Pre/post because the traffic is too low to split: "Pre/post: over the full 26-week window a split test would gather about N conversions per arm, too few to read; read against a stable pre-period baseline on [criterion]" | Holdout: "Holdout, [group] held out; read on [pre-registered criterion]; the window is set before launch from [basis]" | "Not yet sized" with the reason. Every figure comes from the row's sizing object, including the traffic and rate it echoes. Never print a week count the sizing object does not carry]
 **Why this should work:** [the causal mechanism in 2-3 sentences, grounded in a behavioral principle]
 **Target metric:** [primary metric and direction. Where an earlier test showed the on-page metric moving against the business result, the downstream business metric is primary and the on-page metric is a leading indicator]
-**Expected effect and read threshold:** [A/B and directional reads state six parts: (1) the primary metric; (2) two-sided significance at p < 0.10; (3) the effect size and sample per arm the read is sized for; (4) one pre-registered read point, no extension, no second look; (5) the directional action; (6) the guardrail, its 20% relative margin and its own detectable change at this sample, or a clause saying the test reads no guardrail. A proxy-only read with no conversion baseline states the same six parts against an absolute threshold set before launch, or declares the first run baseline-setting. Pre/post and holdout reads state a pre-registered read criterion and window. Never a fabricated point estimate]
+**Expected effect and read threshold:** [A/B and directional reads state six parts: (1) the primary metric; (2) two-sided significance at p < 0.10; (3) the effect size and sample per arm the read is sized for; (4) one pre-registered read point, no extension, no second look; (5) the directional action; (6) the guardrail, its 20% relative margin and its own detectable change at this sample, or a clause saying the test reads no guardrail. A proxy-only read with no conversion baseline states the same six parts against an absolute threshold set before launch, or declares the first run baseline-setting. Pre/post and holdout reads state a pre-registered read criterion and the basis that sets the window before launch. Never a fabricated point estimate]
 **Guardrail metric:** [downstream metric that must not degrade; only when the primary metric is a proxy]
 **Audience:** [persona or segment, when specific]
 **Evidence:** [the sources this rests on, in plain words: what was observed, where]
@@ -580,7 +588,7 @@ Numbers come from `Decision Posture`.]
 
 **What a win proves:** [learning from a positive result]
 **What a loss teaches:** [learning from a negative result]
-**Notes:** [annotations in plain words: a partial pattern fit and what is missing, counter-evidence against the standard advice, a running experiment on this page and how this sequences after it, an engagement constraint. Omit when none]
+**Notes:** [annotations in plain words: a partial pattern fit and what is missing, counter-evidence against the standard advice, a running experiment on this page and how this sequences after it, an engagement constraint. Name any roadmap section in plain words, never in a code span. Omit when none]
 
 ## Needs a Design Change
 
@@ -601,11 +609,11 @@ Numbers come from `Decision Posture`.]
 
 | Key | Title | Surface | Mechanism | Readiness | Read model | ICE | Evidence |
 |---|---|---|---|---|---|---|---|
-| [key] | [title] | [pages] | [mechanism words] | [Ready now, or the one-line reason] | [A/B / Directional / Pre/post / Holdout / Not yet sized] | I4 C3 E2 (9) | [source, in plain words] |
+| [key] | [title] | [pages] | [mechanism words] | [Ready now; otherwise "[Tier]: [reason]", for example "Needs measurement: pull the homepage baseline"] | [A/B / Directional / Pre/post / Holdout / Not yet sized] | I4 C3 E2 (9) | [source, in plain words] |
 
 ## Exclusions
 
-[Only: opportunities set aside because they already exist or would swap identical forms; spec items not advanced; lead or high prior-test follow-ups not advanced. One line each, with its grounds. Out-of-scope spec items keep their routing text. Omit the section when empty.]
+[Only: opportunities set aside because they already exist or would swap identical forms; spec items not advanced; lead or high prior-test follow-ups not advanced. One line each, with its grounds. Out-of-scope spec items keep their routing text. A shipped winner is not an exclusion: its live-state check is a prerequisite under Prerequisites and Data Gaps. Omit the section when empty.]
 
 ## Method
 
@@ -627,7 +635,7 @@ Numbers come from `Decision Posture`.]
 
 ### Prerequisites and Data Gaps
 
-[Grouped as missing baseline data, verification needed, and infrastructure. Each item names the affected write-ups or keys and a concrete action.]
+[Grouped as missing baseline data, verification needed, and infrastructure. Verification includes checking that a shipped winner is still live before a test builds on it. Each item names the affected write-ups or keys and a concrete action.]
 
 ### If Tests Are Inconclusive
 
@@ -690,12 +698,12 @@ The body follows `Output Format` section for section, with these differences:
 **Lever:** [the named program, offer, audience motion or asset]
 **Mechanism:** [the row's mechanism words only]
 **What to stand up:** [what gets built, published, routed or changed]
-**Measurement:** [the design in plain words, for example "a regional holdout read over eight weeks"]
-**Read model:** [as the tactical line: Holdout, Pre/post, A/B, Directional or Not yet sized, with its window; A/B and directional reads carry the same sizing figures]
+**Measurement:** [the design in plain words, for example "a regional holdout"]
+**Read model:** [as the tactical line: Holdout, Pre/post, A/B, Directional or Not yet sized. A/B and directional reads carry the same sizing figures. Holdout and pre/post reads state the pre-registered criterion and the basis the window is set from before launch, never an unsized week count]
 **Business metric:** [the outcome and its direction]
 **Why this should work:** [the causal chain in 2-3 sentences]
 **Requires:** [asset, process or instrumentation that must exist first, or "none". A confirm-first item opens with the existence check: "Step one: confirm whether [capability] already exists in [system]; if it does, this becomes a connection task."]
-**Read condition and window:** [how long it runs and what counts as a read. When a page test shares this surface, one neutral line on keeping their read windows apart]
+**Read condition and window:** [what counts as a read, and the basis that sets the window before launch. When a page test shares this surface, one neutral line on keeping their read windows apart]
 **Evidence:** [sources, in plain words]
 
 **Scores:** Impact [X] | Confidence [X] | Ease [X]

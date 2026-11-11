@@ -6,9 +6,10 @@ Checks are ordered so that the most structurally material ones (guardrail readab
 
 ## Two evaluation modes per check
 
-Since v1.9.x, `hypothesis-generator` stamps per-item `validation_gates` verdicts (six tactical, three strategic). Where a check overlaps a gate the generator already runs, this skill is a **gate-verdict audit**: read the recorded verdict and verify it against the cited sources, catching gates that passed wrongly or ran against stale context. Where no gate covers the dimension, run a **full re-derivation** using the Phase 2 skeptic outputs and the sources. If the roadmap carries no `validation_gates` records, every check is a full re-derivation.
+- **2.0 roadmap (the default):** a hypothesis-generator 2.0 roadmap carries no gate records. Its per-row `validation_gates` live only in run temp files, which are deleted at render. Every check runs as a **full re-derivation** from the Phase 2 skeptic outputs and the sources.
+- **1.x roadmap that carries gate records:** where a check overlaps a recorded gate, run a **gate-verdict audit**: read the recorded verdict and verify it against the cited sources, catching gates that passed wrongly or ran against stale context. Where no gate covers the dimension, run a full re-derivation.
 
-The per-check `Mode` line below states the default for current-generator output. When the generator grows a new covering gate, re-classify that check from re-derivation to gate-audit (do not re-verify what a trustworthy gate already covers; verify the gate instead).
+The per-check `Mode` lines below that name a gate-verdict audit apply to the 1.x path only. On a 2.0 roadmap, read each as full re-derivation.
 
 ## Altitude
 

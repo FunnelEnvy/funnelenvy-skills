@@ -63,10 +63,11 @@ Write the causal chain in two or three sentences: the observation, the behaviora
 
 ### Read Model and Read Threshold
 
-- `**Read model:**` follow the `Output Format` line for the row's read model. A/B and directional lines carry the sample per arm, the weeks or window, the achievable effect, and the traffic and rate the sizing object echoes.
+- `**Read model:**` follow the `Output Format` line for the row's read model. A/B, directional and scripted pre/post lines carry the sample per arm, the weeks or window, the achievable effect, and the traffic and rate the sizing object echoes.
 - `**Expected effect and read threshold:**`
   - *A/B and directional:* state the six parts `Output Format` lists. For a proxy read with no baseline rate, state them against an absolute threshold set before launch, or declare the first run baseline-setting.
-  - *Pre/post and holdout:* state a pre-registered read criterion and the window.
+  - *Pre/post and holdout by design:* state a pre-registered read criterion. Say the window is set before launch and name its basis: the sales cycle, or the volume needed to reach a stated count. The script sizes no window for these designs, so never print a week count.
+  - *Scripted pre/post:* an A/B design the script moved to pre/post for low conversions carries a sizing object. Quote its conversions per arm over the full window as the reason a split test cannot read, then state the criterion as above.
   - *Directional result:* do not ship and do not extend; queue a fresh confirmation test of the same mechanism, sized on the posture effect.
 
 ### Evidence and Scores
@@ -86,7 +87,7 @@ Count the elements the variant changes: headline, subhead, CTA copy, CTA destina
 
 - `**What a win proves:**` what a positive result validates about positioning, messaging or audience. For variations, what it means if the recommended one wins and if another does.
 - `**What a loss teaches:**` what a negative result reveals and where to go next. For a bundle, say a loss does not isolate the element. For a proxy read, cover a proxy win with a flat guardrail.
-- `**Notes:**` the row's annotations in plain words: a partial fit and what is missing, counter-evidence, a running experiment named in plain words, an engagement constraint, unregistered proof, a comparative claim. Omit when none.
+- `**Notes:**` the row's annotations in plain words: a partial fit and what is missing, counter-evidence, a running experiment named in plain words, an engagement constraint, unregistered proof, a comparative claim. Name any roadmap section in plain words, never in a code span. Omit when none.
 - `**Readiness:**` under every tier except `Ready Now`: one line from the row's `blocker_reasons`.
 
 ## Strategic Labels
@@ -94,12 +95,12 @@ Count the elements the variant changes: headline, subhead, CTA copy, CTA destina
 - `**Key:**`, `**Mechanism:**`, `**Evidence:**`, `**Scores:**`, `**What a win proves:**`, `**What a loss teaches:**`, `**Notes:**` and `**Readiness:**` follow the tactical rules.
 - `**Lever:**` the row's surfaces: the named program, offer, motion or asset.
 - `**What to stand up:**` what gets built, published, routed or changed. Bundle the parts that serve one idea (the asset, where it lives and the copy that frames it); a second idea is a second row.
-- `**Measurement:**` the design in plain words (a regional holdout, an eight-week before-and-after window, a cohort comparison, a tracked operational metric), and its limits: what it cannot isolate, such as seasonality, contamination or mix shift. When a randomized read is available now and a qualified-layer read only after a Foundation entry lands, describe the second read as a later enrichment.
+- `**Measurement:**` the design in plain words (a regional holdout, a before-and-after window, a cohort comparison, a tracked operational metric), and its limits: what it cannot isolate, such as seasonality, contamination or mix shift. When a randomized read is available now and a qualified-layer read only after a Foundation entry lands, describe the second read as a later enrichment.
 - `**Read model:**` as the tactical line, from the sizing object.
 - `**Business metric:**` the outcome and its direction, distinct from a page micro-conversion.
 - `**Why this should work:**` the causal chain in two or three sentences.
 - `**Requires:**` the prerequisites, or "none". A confirm-first row opens with the existence check, as `Strategic Roadmap Output Format` shows. A Foundation entry the row depends on is named here.
-- `**Read condition and window:**` how long it runs and what counts as a read. When a disqualified baseline cannot be avoided, say the comparison window is directional only. When a page test shares the mechanism, one neutral line on keeping the windows apart.
+- `**Read condition and window:**` what counts as a read, and the basis that sets the window before launch, per `Read Model and Read Threshold`. When a disqualified baseline cannot be avoided, say the comparison window is directional only. When a page test shares the mechanism, one neutral line on keeping the windows apart.
 
 ## Inconclusive Guidance
 

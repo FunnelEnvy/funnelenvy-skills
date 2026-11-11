@@ -111,7 +111,7 @@ Annotations are plain words. They never name a trigger ID.
 
 **When wrong:** A device gap explained by an OS or browser-family error, not message fit.
 **Signals (any):** error-session rate concentrates by OS or browser family; a device gap coincides with a script-error family; the card proposes a device messaging or rendering change on such a surface; the structural capture records `mobile_render_clean: false` on the target surface.
-**Action:** Counter-evidence: fix the defect and re-measure the gap before reading any device-targeted test. `phases/validate.md` sets `design-change` on a broken mobile render. A clean observed render rules out the rendering family only; script-error telemetry still needs its own rule-out.
+**Action:** Counter-evidence: fix the defect and re-measure the gap before reading any device-targeted test. The `design-change` blocker for a broken mobile render has one home: `phases/detect.md` > `Structural Triggers`. A clean observed render rules out the rendering family only; script-error telemetry still needs its own rule-out.
 **Evidence basis:** Tests on error-degraded sessions cannot separate message effect from error effect.
 
 ---

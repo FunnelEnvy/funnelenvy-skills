@@ -14,7 +14,7 @@ A card is one candidate opportunity: a surface, a lever, a mechanism and an evid
 | `altitude` | string | yes | `tactical` (a page element) or `strategic` (a program, offer, motion or asset) |
 | `title` | string | yes | Short plain-words name of the test |
 | `surfaces` | array of strings | yes | At least one. Tactical: a page path such as `/pricing`. Strategic: the named program, offer, motion or asset |
-| `mechanism_key` | string | yes | Kebab-case slug, such as `form-field-reduction`. Use the pattern's `Key` when a pattern applies; coin one otherwise |
+| `mechanism_key` | string | yes | Kebab-case slug, such as `form-field-reduction`. Use the pattern's `Key` when a pattern applies; coin one otherwise. See `Shared Rules` for when a key takes an element suffix |
 | `mechanism` | string | yes | One plain sentence: why the change should move behavior |
 | `evidence` | array of strings | yes | At least one non-empty pointer: source file and section, in plain words, with the observed fact |
 | `lever_family` | string | strategic only | A kebab-case token from the family list in `phases/detect-strategic.md`, or `other` |
@@ -33,6 +33,8 @@ The script ignores any other field. A `history_items` or `spec_items` id must be
 
 Add `baseline` only when a real figure exists. Never invent one.
 
+**Baseline table:** the orchestrator resolves one baseline per surface in Phase 1 and passes the table to every lens. Copy a listed surface's baseline verbatim. Resolve one with the rules below only for a surface the table lacks.
+
 | Key | Content |
 |---|---|
 | `monthly_sessions` | Traffic for the target surface, per 30 days. Take, first match wins: (1) the delivered sample a history record reports for this surface, converted to 30 days, when its window counts under the measurement boundary; (2) the page's sessions in the performance profile, normalized to 30 days. For a pre-registered segment, use the segment's traffic, not the page's |
@@ -48,7 +50,7 @@ The script sizes every card from this object and the `Decision Posture` in `SKIL
 - **Floor:** aim for at least the floor you were given (default 10 cards). It is a target. If the evidence supports fewer, return fewer. Never pad, split one idea into several cards, or repeat a card.
 - **One floor on candidacy:** every card carries an evidence pointer. Nothing else keeps a card out. Do not drop a card for low traffic, a missing metric, a running experiment, contrary advice or a partial fit. Record those facts as `blockers` or `annotations`.
 - **One idea per card:** elements that serve one testable idea belong on one card (a headline, subhead and CTA rewritten together). Two independent ideas are two cards. The cross-surface bundling rule in `modules/hypothesis-interactions.md` decides multi-surface cases.
-- **Merging is automatic:** cards with the same `altitude`, the same `mechanism_key` and an overlapping surface merge in the script. Reuse a pattern `Key` exactly so your card merges with other lenses' cards. Use a distinct key only when the test design differs.
+- **Merging is automatic:** cards with the same `altitude`, the same `mechanism_key` and an overlapping surface merge in the script, and only one title survives. Reuse a pattern `Key` exactly only for the same change on that surface, so your card merges with other lenses' cards. A different element or claim under the same pattern gets `<pattern-key>-<element>`, such as `proof-placement-pricing-table`. Use a distinct key too when the test design differs.
 - **Hard rule, identical forms:** do not emit a form-swap test between two forms with the same fields and structure. Report the discard (see `Return Format`).
 - **Plain words:** titles, mechanisms, evidence and annotations are written for a client reader. No file names inside annotations, no pattern IDs, no field names.
 
@@ -179,7 +181,7 @@ Fire only when the structural observation is present. Fields are tri-state (`pre
 **Rules:**
 - Structure supplies targets and current state. Performance data supplies firing counts for engagement patterns. Do not fire the same pattern twice on one page from both.
 - A page block status other than clean, a low page confidence or a viewport divergence makes signals from that page a partial match.
-- `mobile_render_clean: false` on a page: annotate the defect (see CTR-14) and add the blocker `design-change`.
+- **Broken mobile render:** this rule is its one home. When `mobile_render_clean: false` on a page, the surface lens sets the blocker `design-change` on each of its cards for that page and annotates the defect: fix it and re-measure before reading any device-targeted test (the counter-evidence is CTR-14 in `modules/contrarian-triggers.md`).
 - Personalization needs cross-session data and exit paths need behavioral data; a single capture cannot fire them.
 
 ---
@@ -211,12 +213,12 @@ Persona cards are usually tactical. A card about the buying motion itself, not a
 
 **Job:** turn the experiment history into continuations. Every lead, high and medium follow-up in scope becomes a card.
 
-**Inputs:** the history projection path, the full-entry budget left, the insight records it lists, and (when bound) the producer index and its insight records.
+**Inputs:** the history projection path (or the orchestrator's numbered item list), the full-entry budget left, the insight records it lists, and (when bound) the producer index and its insight records.
 
 **Work:**
 
 1. Read the projection, then the sections and full entries it points to, inside the entry budget.
-2. Take each in-scope follow-up: typed items keep their ids (`I1`, `I2` and so on) and their stated priority. A prose next test gets the next `P` id and a priority from this rubric:
+2. Take each in-scope follow-up: typed items keep their ids (`I1`, `I2` and so on) and their stated priority. On the producer index path, use the ids the orchestrator numbered in index order. A prose next test gets the next `P` id and a priority from this rubric:
    - A gold insight guide's designated lead experiment with no typed item: `recommended_lead`.
    - The next step a record names as its primary follow-up, or the first next test its final learning names: `high`.
    - Secondary or exploratory next tests: `medium`.

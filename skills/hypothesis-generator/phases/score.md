@@ -6,7 +6,7 @@ This phase scores every row, runs `rank`, and closes the history ledger. ICE ord
 
 Read `modules/ice-scoring.md` first. Give each row `ice: {i, c, e}`, integers 1 to 5, after the checks in `phases/validate.md`.
 
-1. **Start:** a row whose `mechanism_key` is a pattern `Key` in `modules/experiment-patterns.md` or the archetype module starts at that pattern's baseline. Any other row starts at 3/3/3.
+1. **Start:** a row whose `mechanism_key` is a pattern `Key` in `modules/experiment-patterns.md` or the archetype module, alone or with an element suffix, starts at that pattern's baseline. Any other row starts at 3/3/3.
 2. **Pattern modifiers:** apply each one whose condition the context confirms.
 3. **Context adjustments:**
    - *Confidence:* exact current copy versus an inferred current state; copy from audience-messaging versus adapted from L0; a direct versus proxy primary (see `Guarded proxy` in the `Decision Posture`); page traffic and conversion data present; a failure mode that matches or contradicts the mechanism; the row's `validation_gates`, read as evidence.
@@ -41,7 +41,7 @@ $PY <skill-dir>/scripts/consolidate_backlog.py rank --rows <scored rows> --write
     [--history-items <ids>] [--excluded-history <ids>]
 ```
 
-- `--history-items`: every lead or high ledger id, plus any typed item whose priority was unrecognized.
+- `--history-items`: every lead or high ledger id, plus each typed item with an unrecognized priority that the history lens minted. On the producer index path these are the `I` ids the orchestrator numbered in Phase 1. The script reports every listed id that no row carries and no exclusion covers as unaccounted.
 - `--excluded-history`: the ids a lens listed under `Exclusions:`, each with its grounds.
 
 The output gives each row `readiness`, `rank` and `write_up`, plus `history_ledger` and `history_unaccounted`.

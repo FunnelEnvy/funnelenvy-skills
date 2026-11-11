@@ -11,6 +11,7 @@ This module is the prompt library for the hypothesis-generator lenses. The surfa
 
 - **Full match:** every `Applies when` condition holds in the loaded context. Emit a card with `pattern: true` and the pattern's `Key` as `mechanism_key`.
 - **Partial match:** at least one condition holds and at least one cannot be confirmed. Emit the card anyway, with `pattern: true`, the pattern's `Key`, and the annotation `partial match: <missing condition>`. A partial match is a card, never a discard.
+- **Same key, same change:** reuse a pattern's `Key` only for the same change on that surface. A different element or claim under the same pattern gets `<pattern-key>-<element>`, so two ideas on one page do not merge into one row.
 - **No match:** a concrete signal that fits no pattern still becomes a card. The lens coins a kebab-case `mechanism_key` and sets `pattern: false`.
 - **Scoring:** `phases/score.md` starts a pattern card at its ICE baseline and applies its modifiers. Modifiers apply only when their condition can be confirmed from context.
 - **Internal labels:** pattern IDs, keys and category names never appear in a deliverable.

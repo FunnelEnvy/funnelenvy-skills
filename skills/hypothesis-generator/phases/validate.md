@@ -7,7 +7,7 @@ This phase checks every consolidated row against the evidence already loaded. It
 Add to each row in the `consolidate` output:
 
 - **`blockers`:** append any blocker below that applies, without duplicating one the lens set.
-- **`blocker_reasons`:** an object mapping each blocker on the row to a one-line reason in plain words. It renders as the write-up's `**Readiness:**` line or the backlog row's `Readiness` cell. Lens-set blockers need a reason too; take it from the row's annotations or evidence.
+- **`blocker_reasons`:** an object mapping each blocker on the row to a one-line reason in plain words. It renders as the write-up's `**Readiness:**` line, or in the backlog row's `Readiness` cell as `[Tier]: [reason]`. Lens-set blockers need a reason too; take it from the row's annotations or evidence.
 - **`annotations`:** append any annotation below.
 - **`validation_gates`:** one verdict per gate, `pass`, `fail` or `not-assessed`, each with a one-line note.
 
@@ -20,7 +20,7 @@ Add to each row in the `consolidate` output:
 | The primary metric is genuinely dark (`metric_instrumented` fails on the primary) | `metric-not-tracked` |
 | No baseline for the primary metric on an instrumented surface, a refused or undatable window, or a documented data gap (`baseline_exists` fails) | `no-baseline` |
 | The captured control is stale or contested, or the current state cannot be confirmed (`control_stable` fails); a confirm-first lever | `verify-current-state` |
-| The read cannot work as designed but a redesign could (`powerable` or `segmentation_satisfied` fails); a broken mobile render; a strategic design that needs a disqualified baseline | `design-change` |
+| The read cannot work as designed but a redesign could (`powerable` or `segmentation_satisfied` fails); a strategic design that needs a disqualified baseline | `design-change` |
 | Another artifact contradicts the premise (`premise_contradicted` fails); a blocking engagement constraint; a change so obvious it should ship rather than be tested | `client-decision` |
 
 Traffic alone never sets a blocker. A row too slow for an A/B read already carries a directional or pre/post read model from the script.
@@ -65,10 +65,11 @@ Then, per row:
 Read the structural capture's date and compare artifacts that describe the same element.
 
 - Recent, uncontested capture: `pass`. An old but uncontested capture adds the prerequisite "verify the current page before launch".
-- Two artifacts describe the element differently (a redesign may be in progress), or the capture is stale enough that the control likely changed: `fail`.
+- The history records a shipped treatment on the surface, and the capture predates it: `pass`, with the prerequisite "verify the live page before launch". The shipped treatment is the control, per `phases/construct.md` > `Current State and Baseline`. This is not a `verify-current-state` blocker.
+- Two artifacts describe the element differently with no shipped treatment to explain it (a redesign may be in progress), or the capture is stale enough that the control likely changed: `fail`.
 - No structural capture: `not-assessed`.
 
-A broken mobile render is not a staleness signal. It sets `design-change` through the contrarian annotation, not this gate.
+A broken mobile render is not a staleness signal. Its blocker is set by the surface lens, per `phases/detect.md` > `Structural Triggers`.
 
 ### `powerable`
 
@@ -112,6 +113,6 @@ Tactical rows only; the script already pairs strategic and tactical rows that sh
 Collect, for the `Prerequisites and Data Gaps` method section, each item naming the affected rows by key:
 
 - **Missing baseline data:** what is missing, which rows, how to collect it. When the boundary refuses the profile's primary window, add one line naming the window, the boundary date and its change text, and asking for a baseline that starts on or after that date.
-- **Verification needed:** claimed-only proof, unregistered numbers, `[NEEDS CLIENT INPUT]` or `[NEEDS CONFIRMATION]` sections, verify-first contrarian checks, old captures, `live-elsewhere` confirmations.
+- **Verification needed:** claimed-only proof, unregistered numbers, `[NEEDS CLIENT INPUT]` or `[NEEDS CONFIRMATION]` sections, verify-first contrarian checks, old captures, shipped treatments the capture predates, `live-elsewhere` confirmations.
 - **Infrastructure:** dark metrics to instrument, targeting or personalization tooling, non-isolable segments.
 - **Inputs not loaded:** for example "Run /ga4-audit for data-calibrated sizing and traffic-driven hypotheses" or "Run /live-capture for structure-driven candidates".
