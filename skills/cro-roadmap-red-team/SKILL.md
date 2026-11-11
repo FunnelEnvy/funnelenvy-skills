@@ -1,8 +1,8 @@
 ---
 name: cro-roadmap-red-team
-version: 0.3.0
+version: 0.4.0
 description: "When the user wants to independently red-team, stress-test, or critique a produced CRO roadmap (experiment roadmap or strategic roadmap) before it ships. Also use when the user mentions 'red team,' 'red-team the roadmap,' 'critique the roadmap,' 'stress-test the hypotheses,' 'pressure-test the experiments,' 'are these experiments sound,' or 'independent review of the roadmap.' Re-derives each write-up cold from its cited evidence, runs a cross-cutting structural checklist with a breadth check over the whole backlog, grades any self-critiques the roadmap carries (rebut vs deflect), and emits per-item dispositions plus a routed research backlog. In KB mode (see KB Mode (Dual-Mode Output)) it reads the scope's gold roadmaps. No research, no web fetches, no edits to the target."
-updated: 2026-10-23
+updated: 2026-11-11
 ---
 
 # CRO Roadmap Red-Team
@@ -195,6 +195,7 @@ One standalone critique document, dated in the body header, written to the resol
 
 | Version | Changes |
 |---|---|
+| 0.4.0 | Reads the hypothesis-generator 2.0 roadmap body (readiness tiers, write-ups, `## Backlog`, `## Exclusions`, `### Levers Reviewed`); 1.x roadmaps are still read. New CC14 breadth check (CC1-CC14 + CC-MF + completeness step): a resolved source no write-up or backlog row cites, and a declared lever family with no row, are findings routed to a `/hypothesis-generator` re-run. Phase 2 gates by write-up versus backlog row: every write-up gets the full skeptic pass, backlog rows get checklist coverage only. CC2 audits read models and sizing against the declared posture; CC13 reads the backlog table and the ledger. Phase 4 grades self-critique blocks only when a roadmap carries them. |
 | 0.3.0 | Posture-aware audit and history-backlog coverage. CC2 audits tiers, feasibility lines, and read windows against the roadmap's declared decision posture, using the pre-1.18 reference only when none is declared, and passes a stopping rule only when all six threshold parts are present; CC10 reads directional priors at the declared posture and never credits an unverified outcome as a win; new CC12 deployed-state accuracy and CC13 history-backlog coverage (CC1-CC13 + CC-MF + completeness step); Phase 1 resolves the legacy `experiment-history.md` and `insight.md` records and reads the history by section and surface, never through the generator's script; the measurability skeptic computes power and MDE at the declared posture; CC13 gaps route to a `/hypothesis-generator` regeneration. |
 | 0.2.0 | Prose-style guidance consolidated to the shared `modules/prose-craft.md` module in `agent-header.md` and `SKILL.md`; the cite-or-it-is-not-a-finding independence posture stays local. |
 | 0.1.0 | Initial build. Six-phase pipeline (resolve, re-derive, checklist, grade, disposition, render); adversarial skeptic subagents with tier-gated cold mechanism re-derivation; altitude-aware cross-cutting checklist (CC1-CC11 + CC-MF + completeness step) with gate-verdict-audit calibration against hypothesis-generator's validation gates; dual-mode consumer I/O; grounded boundary with experiment-measurement-audit. |

@@ -1,6 +1,6 @@
 ---
 name: hypothesis-generator
-version: 1.19.0
+version: 2.0.0
 description: "When the user wants experiment hypotheses or a CRO opportunity backlog from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' 'opportunity backlog,' or 'experiment backlog.' Five parallel lens subagents generate candidate cards from L0 + L1 context (surfaces, personas and journeys, experiment history, strategic levers, competitive proof); a script deduplicates and sizes them; the result is a readiness-tiered roadmap with full write-ups for the top items and a backlog table for the rest, in .claude/deliverables/. In KB mode, reads the scope's silver CRO artifacts from a bound knowledge base and writes typed gold-experiment-roadmap and gold-strategic-roadmap artifacts. No research, no web fetches."
 updated: 2026-11-11
 ---
@@ -18,8 +18,8 @@ You are a senior CRO strategist with deep B2B experimentation expertise. You tur
 - The deliverable body stays pure in both modes. See `Deliverable Purity Constraint`.
 
 **Output location:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md`). A second deliverable, `.claude/deliverables/strategic-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-strategic-roadmap.md`), is written when the strategic lens yields at least one row or Measurement Foundation entry. See `Strategic Roadmap Output Format`.
-**Token budget:** TBD (measured at Build, R26)
-**Runtime:** TBD (measured at Build, R26)
+**Token budget:** TBD
+**Runtime:** TBD
 **Agents:** One orchestrator plus five lens subagents dispatched in parallel. See `Agent Model Selection`.
 **Model:** Opus
 

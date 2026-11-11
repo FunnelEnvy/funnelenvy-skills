@@ -1,6 +1,6 @@
 ---
 name: render-program-site
-version: "0.8.0"
+version: "1.0.0"
 description: >
   Render a two-altitude program site from two markdown inputs (a strategic layer of bets
   and a tactical roadmap of page tests): a hub plus one spoke per bet and per test, with
@@ -8,7 +8,7 @@ description: >
   program site", "program site", "strategic + tactical roadmap site", or the explicit
   /render-program-site invocation. Deterministic generator for the gate, map, and
   structure; scoped LLM pass curates spoke prose.
-updated: 2026-07-14
+updated: 2026-11-11
 ---
 
 # Render Program Site
@@ -288,6 +288,7 @@ not part of this skill).
 
 | Version | Changes |
 |---|---|
+| 1.0.0 | Reads the hypothesis-generator 2.0 roadmap body. Write-ups under the four readiness-tier H2s (`Ready Now`, `Needs a Design Change`, `Needs Measurement`, `Needs a Client Decision`) become bets and tests; backlog rows are never rendered. Spokes and the hub tag each item with its readiness tier in place of the 1.x tier. A roadmap with a pre-2.0 tier H2 fails closed with exit 3 and a message to regenerate it with hypothesis-generator 2.0. Breaking: 1.x roadmaps no longer render. |
 | 0.8.0 | Humanizer pass consolidated to the shared `modules/prose-craft.md` module. Phase 4 and the References table now point at [`modules/prose-craft.md`](../../modules/prose-craft.md) instead of the deleted skill-local humanizer reference under `references/` (the empty directory drops out). The module preserves the former 10-sign list verbatim in intent and adds 9 non-duplicative StrategyU signs (lazy descriptors, copula avoidance, synonym cycling, nominalization, fake-precision hedging, awkward verb-noun pairings, anthropomorphized data, staccato noun-phrase lists, structural tells), so the Phase 4 pass now applies the fuller sign set. No generator change; templates, gate, map, and slots are untouched. |
 | 0.7.0 | Editorial data-story design language. The output is restyled from a dashboard to an editorial data-story: mono uppercase eyebrows over full-sentence claim headlines, flat white with hairline framing instead of card shadows, a larger type scale (17px body; hub `h2` 30px/800; spoke `h1` 38px), and IBM Plex Mono leaned on as a data face (tags, numbers, labels, `tnum`). Three generator changes: (1) the five hub section headings become PROSE slots on page id `program` -- `strategy-headline`, `backlog-headline`, `sequence-headline`, `decisions-headline`, `foundation-headline` -- each pre-filled with its former label so an uncurated regen still renders, and the mono eyebrow stays as the section label; (2) a new code-emitted `.program-stats` band (deterministic, no slot; claim-captioned `.statbox` numbers derived from parsed data, placed between the hero and the map); (3) the backlog card wall becomes audit-style `.brow` rows (number + title + page + ICE + ladder + mono `.tag` tier chip) under the existing tier headers. Bet cards and account `.test off` cards stay cards but restyle flat via CSS; the retired `.badge` pill is replaced by `.tag`. Templates: `hub.html` gains the headline tokens + `{{PROGRAM_STATS}}`; `base.html` and the three spoke templates are unchanged (nav-mono, hero-scale, `.sec` grammar are CSS-only). Map geometry, edge/gate logic, and every existing slot id are untouched; four new `program` headline slots (plus `foundation-headline`) are added. The hub `sequence` slot now defaults empty (like `decisions`) instead of pre-filling the raw `## Sequencing` section, so an uncurated render degrades to the standard slot placeholder rather than a wall of text; the Phase 3 curation contract gains a concrete `.tl-row` timeline shape and a distill-not-dump directive. 1 new unit-test class (6 cases). |
 | 0.6.0 | Red-team tombstone skip. `render_site.py` now skips a red-team **tombstone** slot (a `### N.` gold section with no `**Key:**` line, kept in place by `cro-roadmap-red-team` so audit-trail "Experiment N" cross-references stay valid) in the bet/test altitudes instead of crashing on the missing `**Key:**`/`**Scores:**`, and assigns surviving bet/test ids **contiguously in document order** (`sb-01, sb-02, ...`; `p-01, p-02, ...`) so a red-teamed roadmap renders with a hole-free id sequence. This unblocks re-rendering any roadmap that has been through a red-team pass. Compatibility: a roadmap with no tombstones and no ordinal gaps renders **byte-identically** to 0.5.x (contiguous ids equal the raw ordinals); the only output shift is when a tombstone precedes a surviving item, where the survivor ids close the gap. A present-but-empty `**Key:**` is an authoring bug, not a tombstone, and still raises. Account plays are exempt and keep raw-ordinal `ap-NN` ids (unchanged). Documented in `edge-contract.md` (`Red-team tombstones` subsection + the contiguous-over-survivors `id` derivation bullet). 4 new unit-test classes. |

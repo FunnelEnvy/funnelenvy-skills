@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.0] - 2026-11-11
+
+### Added
+- CC14 breadth check: a resolved source that no write-up or backlog row cites is a finding naming the uncited passage, and a lever family the strategic roadmap's `Levers Reviewed` declares with no row is a finding. Findings route to a `/hypothesis-generator` re-run; the check never adds rows. The completeness step's range is now CC1-CC14. [hypothesis-generator-opportunity-backlog-rebuild]
+
+### Changed
+- Reads the hypothesis-generator 2.0 roadmap body: readiness tiers, write-ups, the `## Backlog` table, `## Exclusions` and `### Levers Reviewed`. A 1.x roadmap is still read, with its tier items as write-ups and What's Not Here standing in for Exclusions. [hypothesis-generator-opportunity-backlog-rebuild]
+- Phase 2 gates by write-up versus backlog row instead of tier: every write-up gets cold mechanism derivation and three perspective-diverse skeptics; backlog rows get no per-item skeptic and are covered by the checklist. [hypothesis-generator-opportunity-backlog-rebuild]
+- CC2 drops the Quick Win ceiling and audits read models and sizing against the declared posture; CC13 reads the backlog table and the history ledger. [hypothesis-generator-opportunity-backlog-rebuild]
+- Phase 4 grades self-critique blocks only when a roadmap carries them; a 2.0 roadmap has none, so the phase is skipped with a note. [hypothesis-generator-opportunity-backlog-rebuild]
+
 ## [0.3.0] - 2026-10-23
 
 ### added

@@ -1,5 +1,19 @@
 # Changelog
 
+## [2.0.0] - 2026-11-11
+
+### Changed
+- Breaking: rebuilt as a pool-then-consolidate pipeline. Five parallel Opus lens subagents (surface, persona and journey, history, strategic, competitive and proof) each return candidate cards with an evidence pointer against a floor of 10; the 32 patterns become the lenses' prompt library. The new `scripts/consolidate_backlog.py` merges cards by mechanism and surface, sizes every row from the `Decision Posture` table, assigns a read model (A/B, directional, pre/post, holdout or not yet sized), carries keys forward by title and then by mechanism, and ranks rows. Feasibility no longer removes a row. [hypothesis-generator-opportunity-backlog-rebuild]
+- Breaking: the roadmap body contract. Four readiness tiers (Ready Now, Needs a Design Change, Needs Measurement, Needs a Client Decision), ordered by ICE within each tier, replace Quick Win, Strategic Bet and Exploration. Full write-ups cover the top items and a `## Backlog` table holds every other row; `## Exclusions` replaces What's Not Here and holds only hard-rule discards and items not advanced; method detail moves to a closing `## Method` section. The strategic roadmap takes the same shape, keeps its unscored Measurement Foundation, and adds `### Levers Reviewed`. [hypothesis-generator-opportunity-backlog-rebuild]
+- Breaking: `--write-ups N` (default 10, range 8 to 12) replaces `--max`; the backlog has no ceiling. [hypothesis-generator-opportunity-backlog-rebuild]
+- Count caps, score quotas, tier thresholds, input bars and route-out rules are deleted or converted to per-row annotations, read models and readiness blockers. The kept hard rules: no build card for a documented-live lever, no swap between identical forms, never size on a refused measurement window, size only from the `Decision Posture`, the history ledger closes before the write, the 20-entry history cap, and deliverable purity as a principle. [hypothesis-generator-opportunity-backlog-rebuild]
+- `phases/validate.md` maps gate verdicts to readiness blockers; `phases/score.md` scores every row and closes the history ledger; `phases/construct.md` writes the selected write-ups. Shared modules (`ice-scoring`, `contrarian-triggers`, `experiment-patterns`, `hypothesis-interactions`, `patterns-procurement`) recast their caps and tier references as calibration guidance and annotations. [hypothesis-generator-opportunity-backlog-rebuild]
+- Validator rewritten around file, kept-hard-rule, output-shape, removed-rule, fixture and prohibited-content checks. [hypothesis-generator-opportunity-backlog-rebuild]
+
+### Removed
+- `phases/detect-contextual.md`: its gate became card fields and its open ideation is the lenses' job. [hypothesis-generator-opportunity-backlog-rebuild]
+- Rendered self-critique blocks and FM8 score deltas; independent critique stays with cro-roadmap-red-team. [hypothesis-generator-opportunity-backlog-rebuild]
+
 ## [1.19.0] - 2026-11-02
 
 ### Added
