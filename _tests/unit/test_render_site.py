@@ -1,9 +1,9 @@
 """Unit tests for render-program-site render_site.py (deterministic core).
 
 Covers the minimal YAML parser, gold-roadmap body parsing (`### N.` sections,
-tiers, `**Key:**`, `**Scores:**`), the edge-contract gate, derived data (reverse
-edges, intake, map coordinates, edge classes, tier grouping), the display
-helpers, and end-to-end emit. The skill consumes hypothesis-generator's prose
+readiness tiers, `**Key:**`, `**Scores:**`, the pre-2.0 body refusal), the
+edge-contract gate, derived data (reverse edges, intake, map coordinates, edge
+classes, readiness-tier grouping), the display helpers, and end-to-end emit. The skill consumes hypothesis-generator's prose
 gold roadmaps (strategic + tactical) plus a render-owned edge sidecar; all three
 fixtures here are synthetic (non-client).
 """
@@ -45,7 +45,7 @@ version: "1.0.0"
 ## How to Read This Roadmap
 Synthetic strategic roadmap for testing.
 
-## Strategic Bets
+## Ready Now
 
 ### 1. Speed to first value
 **Key:** speed-to-first-value
@@ -63,17 +63,20 @@ Impact is 5 because activation is the dominant lever.
 Impact is 5 because proof is the top evaluation blocker.
 **What a win proves:** That peer proof moves evaluation conversion.
 
-## Explorations
+## Needs a Client Decision
 
 ### 3. Offer ladder
 **Key:** offer-ladder
+**Readiness:** Needs sign-off on a lower-commitment offer.
 **Lever:** One high-commitment ask suppresses pipeline entry.
 **What to stand up:** A lower-commitment offer tier.
 **Scores:** Impact 4 | Confidence 3 | Ease 3
 Impact is 4 because the single ask is a known drop point.
 **What a win proves:** That a commitment ladder lifts entry.
 
-## Sequencing Rationale
+## Method
+
+### Sequencing
 Run speed-to-value first; build the proof asset in parallel.
 """
 
@@ -87,7 +90,7 @@ version: "1.0.0"
 ## How to Read This Roadmap
 Synthetic tactical roadmap for testing.
 
-## Quick Wins
+## Ready Now
 
 ### 1. Intake-only CTA label test
 **Key:** cta-label-test
@@ -98,7 +101,7 @@ Synthetic tactical roadmap for testing.
 **Scores:** Impact 3 | Confidence 4 | Ease 4
 Ease is 4 because it is a copy change.
 
-## Strategic Bets
+## Needs a Design Change
 
 ### 2. Conversational signup form
 **Key:** conversational-signup-form
@@ -115,7 +118,7 @@ Ease is 3 because it is a form rebuild.
 **Scores:** Impact 4 | Confidence 3 | Ease 3
 This variant has been replaced by a later iteration.
 
-## Explorations
+## Needs Measurement
 
 ### 4. Proof block on pricing
 **Key:** proof-block-on-pricing
@@ -259,7 +262,7 @@ STRATEGIC_TOMBSTONE = (STRATEGIC
     .replace("### 1. Speed to first value", "### 2. Speed to first value")
     .replace("### 2. Proof and ROI", "### 3. Proof and ROI")
     .replace("### 3. Offer ladder", "### 4. Offer ladder")
-    .replace("## Strategic Bets\n", """## Strategic Bets
+    .replace("## Ready Now\n", """## Ready Now
 
 ### 1. Deprecated activation bet -- REMOVED
 Removed during the 2026-07-10 red-team pass: the premise was contradicted by the
@@ -272,12 +275,31 @@ TACTICAL_TOMBSTONE = (TACTICAL
     .replace("### 2. Conversational signup form", "### 3. Conversational signup form")
     .replace("### 3. Old form test", "### 4. Old form test")
     .replace("### 4. Proof block on pricing", "### 5. Proof block on pricing")
-    .replace("## Quick Wins\n", """## Quick Wins
+    .replace("## Ready Now\n", """## Ready Now
 
 ### 1. Abandoned hero copy test -- RECAST
 Recast during the red-team pass into the CTA label test below; heading kept so
 audit-trail "Experiment 1" cross-references resolve. No **Key:** / **Scores:**.
 """, 1))
+
+
+# A 2.0 tail: the `## Backlog` table and `## Method` that follow the write-ups.
+BACKLOG_AND_METHOD = """
+## Backlog
+
+| Key | Title | Surface | Mechanism | Readiness | Read model | ICE | Evidence |
+|---|---|---|---|---|---|---|---|
+| backlog-row-one | Pricing FAQ expansion | /pricing | objection handling | Needs Measurement | Not yet sized | I2 C3 E4 (9) | Sales call notes |
+
+## Exclusions
+
+None.
+
+## Method
+
+### Sequencing
+Run the ready tests first.
+"""
 
 
 def _write_triple(strategic=STRATEGIC, tactical=TACTICAL, sidecar=SIDECAR):
@@ -380,14 +402,15 @@ class TestParser(unittest.TestCase):
         secs = rs.extract_sections(body, "bet")
         self.assertIn("sb-02", secs)
         self.assertEqual(secs["sb-02"]["key"], "proof-and-roi")
-        self.assertEqual(secs["sb-02"]["tier"], "strategic-bet")
+        self.assertEqual(secs["sb-02"]["tier"], "ready-now")
         self.assertEqual(secs["sb-02"]["labels"]["Lever"], "Buyers need proof from peers like them.")
 
     def test_tactical_tier_and_page_derivation(self):
         _, body = rs.parse_frontmatter(TACTICAL)
         secs = rs.extract_sections(body, "test")
-        self.assertEqual(secs["p-01"]["tier"], "quick-win")
-        self.assertEqual(secs["p-04"]["tier"], "exploration")
+        self.assertEqual(secs["p-01"]["tier"], "ready-now")
+        self.assertEqual(secs["p-02"]["tier"], "needs-design-change")
+        self.assertEqual(secs["p-04"]["tier"], "needs-measurement")
         self.assertEqual(secs["p-01"]["labels"]["Page"], "Sitewide")
 
     def test_change_type_field_tolerated(self):
@@ -399,14 +422,47 @@ class TestParser(unittest.TestCase):
         self.assertEqual(secs["p-01"]["labels"]["Change type"], "replace-copy")
         # the additive line does not perturb the other labels or derivation
         self.assertEqual(secs["p-01"]["key"], "cta-label-test")
-        self.assertEqual(secs["p-01"]["tier"], "quick-win")
+        self.assertEqual(secs["p-01"]["tier"], "ready-now")
         self.assertEqual(secs["p-01"]["labels"]["What to test"],
                          "Clearer, more specific CTA labels.")
+
+    def test_backlog_table_not_parsed_as_tests(self):
+        """Positive control: a `## Backlog` table and `## Method` H3s yield no tests.
+
+        Guards the parse the readiness contract relies on: backlog rows never
+        become `p-NN` items, and the last write-up's block stops at `## Backlog`.
+        """
+        body_2x = TACTICAL + BACKLOG_AND_METHOD
+        s, t, sc = _load_all(tactical=body_2x)
+        self.assertEqual([x["key"] for x in t["tests"]],
+                         ["cta-label-test", "conversational-signup-form",
+                          "old-form-test", "proof-block-on-pricing"])
+        last = t["tests"][-1]["section"]
+        self.assertNotIn("backlog-row-one", " ".join(last["paras"]))
+        rs.run_gate(s, t, sc)  # the backlog row needs no sidecar entry
 
 
 # --------------------------------------------------------------------------
 # Gate
 # --------------------------------------------------------------------------
+
+class TestBodyContract(unittest.TestCase):
+    def test_1x_body_fails_closed(self):
+        """A pre-2.0 tier H2 raises ContractError; `main` exits 3 with the regenerate message."""
+        old = TACTICAL.replace("## Ready Now", "## Quick Wins")
+        d, sp, tp, ep = _write_triple(tactical=old)
+        sc = rs.load_sidecar(ep)
+        with self.assertRaises(rs.ContractError):
+            rs.load_tactical(tp, sc)
+        err = io.StringIO()
+        with contextlib.redirect_stderr(err):
+            rc = rs.main(["--strategic", sp, "--tactical", tp, "--edges", ep,
+                          "--out", os.path.join(d, "site")])
+        self.assertEqual(rc, 3)
+        self.assertIn("%s: 1.x roadmap body (heading 'Quick Wins'); regenerate it with "
+                      "hypothesis-generator 2.0 before rendering." % tp, err.getvalue())
+        self.assertFalse(os.path.exists(os.path.join(d, "site")))
+
 
 class TestGate(unittest.TestCase):
     def test_valid_passes(self):
@@ -466,6 +522,22 @@ class TestGate(unittest.TestCase):
     def test_bind_unknown_sidecar_key(self):
         bad = SIDECAR.replace("  - key: offer-ladder", "  - key: offer-ladder-typo")
         self._expect_violation("[bind]", sidecar=bad)
+
+    def test_bind_orphan_tactical_sidecar_key(self):
+        """Positive control: a sidecar test key with no tactical write-up fails `[bind]`.
+
+        Every bet stays bound, so the orphan-key guard is the only violation. This
+        is the failure a write-up demoted to a backlog row produces.
+        """
+        bad = SIDECAR.replace("  - key: cta-label-test\n",
+                              "  - key: demoted-to-backlog\n    mechanism_class: cta\n"
+                              "  - key: cta-label-test\n")
+        s, t, sc = _load_all(sidecar=bad)
+        with self.assertRaises(rs.GateError) as cm:
+            rs.run_gate(s, t, sc)
+        self.assertEqual(cm.exception.violations,
+                         ["[bind] sidecar test key 'demoted-to-backlog' resolves to no "
+                          "tactical gold Key"])
 
     def test_missing_mechanism_class(self):
         bad = SIDECAR.replace("  - key: conversational-signup-form\n    mechanism_class: form",
@@ -567,8 +639,10 @@ class TestDerive(unittest.TestCase):
 
     def test_tier_grouping_and_superseded(self):
         g = self.d["tier_groups"]
-        self.assertEqual([t["id"] for t in g["quick-win"]], ["p-01"])
-        self.assertEqual([t["id"] for t in g["exploration"]], ["p-04"])
+        self.assertEqual([t["id"] for t in g["ready-now"]], ["p-01"])
+        self.assertEqual([t["id"] for t in g["needs-design-change"]], ["p-02"])
+        self.assertEqual([t["id"] for t in g["needs-measurement"]], ["p-04"])
+        self.assertEqual(g["needs-client-decision"], [])
         self.assertEqual([t["id"] for t in self.d["superseded"]], ["p-03"])
 
     def test_edge_class_split(self):
@@ -819,7 +893,7 @@ class TestAccountEndToEnd(unittest.TestCase):
 # hub section only: no spokes, no map presence, no gate participation.
 
 STRATEGIC_MF = STRATEGIC.replace(
-    "## Strategic Bets",
+    "## Ready Now",
     """## Measurement Foundation
 
 **Qualified-lead definition:** Define the qualified-lead event in the analytics
@@ -829,7 +903,7 @@ qualifying fields. Experiments 1 and 2 below depend on it.
 - **Form-step instrumentation:** Instrument per-step form abandonment in the tag
 manager; no step-level events exist today. Experiment 2 depends on it.
 
-## Strategic Bets""", 1)
+## Ready Now""", 1)
 
 
 class TestFoundationParser(unittest.TestCase):
@@ -1097,6 +1171,14 @@ class TestAuditDesignRestyle(unittest.TestCase):
         html = self._hub(strategic=STRATEGIC_MF)
         self.assertIn("<!--PROSE id=program slot=foundation-headline-->"
                       "The measurement foundation<!--/PROSE-->", html)
+
+    def test_stats_band_counts_ready_now(self):
+        """The second stats box counts `ready-now` tests over active tests."""
+        html = self._hub()
+        band = html[html.index('class="program-stats"'):]
+        band = band[:band.index("</section>")]
+        self.assertIn('<div class="n green">1/3</div>'
+                      '<div class="k">are ready now: they can run as designed today</div>', band)
 
     def test_stats_band_renders_and_holds_no_prose(self):
         html = self._hub()

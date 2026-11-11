@@ -28,10 +28,16 @@ Three files, all markdown:
 
 ### Derived from each gold roadmap body (never authored)
 
-Both gold roadmaps share the same body shape: `### N. Title` experiment sections
-nested under tier H2s (`## Quick Wins` / `## Strategic Bets` / `## Explorations`),
-each carrying a `**Key:**` line, a `**Scores:**` line, and bold-labeled prose.
-`render_site.py` derives:
+Both gold roadmaps share the same body shape, hypothesis-generator's 2.0 body
+contract (its SKILL.md `Output Format` and `Strategic Roadmap Output Format`):
+`### N. Title` write-ups nested under readiness-tier H2s (`## Ready Now` /
+`## Needs a Design Change` / `## Needs Measurement` / `## Needs a Client
+Decision`), each carrying a `**Key:**` line, a `**Scores:**` line, and
+bold-labeled prose. Only the write-ups are parsed. The `## Backlog` table,
+`## Exclusions` and `## Method` hold no `### N.` sections, so a backlog row
+never becomes a test and the sidecar binds write-ups only. A sidecar key whose
+write-up became a backlog row resolves to no gold Key and fails the `[bind]`
+check. The site does not render the backlog table. `render_site.py` derives:
 
 - `id` -- assigned **contiguously over the surviving `### N.` sections in
   document order** for the bet/test altitudes: strategic survivors -> `sb-01,
@@ -43,12 +49,22 @@ each carrying a `**Key:**` line, a `**Scores:**` line, and bold-labeled prose.
 - `key` -- the `**Key:** <slug>` value. Stable and immutable across re-renders
   (hypothesis-generator's Key carry-forward rule). The sidecar binds by Key.
 - `title` -- the `### N. Title` heading text.
-- `tier` -- the enclosing tier H2 (`quick-win` / `strategic-bet` / `exploration`).
+- `tier` -- the enclosing readiness H2's key: `ready-now`, `needs-design-change`,
+  `needs-measurement` or `needs-client-decision`. Its CSS suffix is `rn`, `dc`,
+  `nm` or `cd`.
 - `ice` -- parsed from `**Scores:** Impact X | Confidence Y | Ease Z` (trailing
   rationale on the line is ignored).
 - `target_page` -- the tactical `**Page:**` label.
 - prose slots -- the bold-labeled paragraphs, mapped to spoke prose regions and
   rewritten by the curation pass.
+
+**Pre-2.0 bodies fail closed.** Before any section is read, each roadmap body
+is checked for an H2 whose text starts with one of the three tier names of the
+pre-2.0 contract, matched case-insensitively. Such a body cannot be parsed:
+`render_site.py` exits 3, before the gate runs, and writes to stderr
+`<path>: 1.x roadmap body (heading '<H2>'); regenerate it with
+hypothesis-generator 2.0 before rendering.` Exit 3 is distinct from the gate's
+exit 2. The remedy is to regenerate the roadmap, not to edit its headings.
 
 The gold frontmatter `version` of each roadmap is read for the version lock
 (gate check 7). Legacy-mode roadmaps carry no YAML frontmatter at all
@@ -172,7 +188,9 @@ the `routing` vs `cta` mismatch.
   the data.
 - **Edge line class** -- `expresses` -> `pf-link` (solid); `informs` and `gates`
   -> `pf-link-soft` (dashed). Chips follow the same split (`chip` vs `chip soft`).
-- **Tier grouping** for the backlog, and **superseded** dimming.
+- **Readiness-tier grouping** for the hub's experiment list, in the order Ready
+  Now, Needs a Design Change, Needs Measurement, Needs a Client Decision, and
+  **superseded** dimming.
 
 ## Type-label map (printed verbatim, never paraphrased)
 

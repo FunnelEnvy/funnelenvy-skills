@@ -59,6 +59,11 @@ is code; only prose wording is agent-authored.
   (`#measurement-foundation`) only: no ICE, no tier, no map presence, no cross-altitude
   edges, no spokes, no sidecar entries (see `edge-contract.md`). A roadmap without the
   section renders byte-identically to a 0.4.x site.
+- Both roadmaps follow hypothesis-generator's 2.0 body contract: write-ups as `### N.` sections
+  under readiness-tier H2s (`## Ready Now`, `## Needs a Design Change`, `## Needs Measurement`,
+  `## Needs a Client Decision`), then `## Backlog`, `## Exclusions` and `## Method`. Only the
+  write-ups become bets and tests; backlog rows are never rendered. A roadmap with a pre-2.0
+  tier H2 fails closed with exit 3 and a message to regenerate it (see `edge-contract.md`).
 - The edge sidecar (`{scope}-program-edges.md`), the one net-new authored input, carrying the
   cross-altitude edge binding and the gate-classification fields (see `edge-contract.md`).
 - The sidecar's `strategic_version` / `tactical_version` match the live gold roadmaps'
@@ -173,9 +178,12 @@ never enter the seven edge checks or the portfolio map. On success the hub gains
 emitted per play. When the flag is absent the account altitude is skipped entirely and the render
 is byte-identical to a two-altitude site.
 
-If the script exits non-zero, the gate failed: surface its printed violations verbatim and
-STOP. Do not edit inputs to "make it pass" without the user -- a gate failure is a real
-contract violation (mechanism mismatch, dangling target, version skew, ...).
+If the script exits non-zero, surface its stderr verbatim and STOP:
+
+- **Exit 2:** the gate failed. Do not edit inputs to "make it pass" without the user. A gate
+  failure is a real contract violation (mechanism mismatch, dangling target, version skew, ...).
+- **Exit 3:** a roadmap carries a pre-2.0 body. Tell the user to regenerate that scope's
+  roadmaps with hypothesis-generator 2.0, then re-render. Do not rename its headings by hand.
 
 ### Phase 3 -- Curate spoke prose (scoped LLM pass)
 
@@ -188,7 +196,7 @@ detail, inconclusive-protocol detail, full score rationale, win/loss/key-risk bl
 bundled-element disclosures stay in the source markdown and are NOT rendered to the site.
 
 You MUST NOT alter anything outside the prose slots -- the gate result, map coordinates
-(cx/cy), edge type labels, ICE values, tier tags, chips, links, the portfolio stats band, and
+(cx/cy), edge type labels, ICE values, readiness-tier tags, chips, links, the portfolio stats band, and
 all structure are emitted by the script and are never agent-authored. The hub `sequence` and
 `decisions` slots default empty and MUST be authored by this pass: **distill** the source
 `## Sequencing` / decisions sections into the `.tl` / `.dec-grid` structures the comps use --
@@ -239,7 +247,7 @@ not part of this skill).
 
 | Script | Description | Use when |
 |---|---|---|
-| [`scripts/render_site.py`](scripts/render_site.py) | Deterministic generator: parse the two gold roadmaps + the edge sidecar, derive per-item data (id/key/title/tier/ICE/page) from the gold bodies -> validate the edge contract (fail-closed, non-zero exit) -> derive reverse edges, intake flags, Impact-by-Ease coordinates, edge classes, tier groups -> emit `styles.css` + `site.js` + `index.html` + `sb-NN`/`p-NN` spokes from `templates/`, with labeled prose slots. Parses the strategic roadmap's optional `## Measurement Foundation` section into unscored, keyless foundation entries rendered as a conditional `#measurement-foundation` hub section (never on the edge gate, map, or spokes). When `--account-program` is given, additionally validates the account-binding leg and emits the `#account-program` hub section + one `ap-NN` spoke per play (never on the edge gate or map). CLI: `render_site.py --strategic <path> --tactical <path> --edges <path> --out <dir> [--account-program <path>] [--templates <dir>]`. Stdlib only. | Phase 2 (every render) |
+| [`scripts/render_site.py`](scripts/render_site.py) | Deterministic generator: parse the two gold roadmaps + the edge sidecar, derive per-item data (id/key/title/tier/ICE/page) from the gold bodies (a pre-2.0 body exits 3) -> validate the edge contract (fail-closed, exit 2) -> derive reverse edges, intake flags, Impact-by-Ease coordinates, edge classes, readiness-tier groups -> emit `styles.css` + `site.js` + `index.html` + `sb-NN`/`p-NN` spokes from `templates/`, with labeled prose slots. Parses the strategic roadmap's optional `## Measurement Foundation` section into unscored, keyless foundation entries rendered as a conditional `#measurement-foundation` hub section (never on the edge gate, map, or spokes). When `--account-program` is given, additionally validates the account-binding leg and emits the `#account-program` hub section + one `ap-NN` spoke per play (never on the edge gate or map). CLI: `render_site.py --strategic <path> --tactical <path> --edges <path> --out <dir> [--account-program <path>] [--templates <dir>]`. Stdlib only. | Phase 2 (every render) |
 
 ## References
 

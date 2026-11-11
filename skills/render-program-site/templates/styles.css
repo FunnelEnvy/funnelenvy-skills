@@ -160,13 +160,13 @@ section:first-of-type{border-top:none}
 .exec .rel{margin-bottom:12px}
 .exec .rel:last-of-type{margin-bottom:0}
 
-/* backlog: audit-style rows grouped under tier headers (no card wall) */
+/* backlog: audit-style rows grouped under readiness-tier headers (no card wall) */
 .tier{margin-top:34px}
 .tier:first-of-type{margin-top:10px}
 .tier-head{display:flex;align-items:baseline;gap:12px;margin-bottom:6px;padding-bottom:10px;border-bottom:1px solid var(--line-strong)}
 .tier-head h3{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
 .tier-head .ct{font-family:var(--mono);font-size:11px;color:var(--faint)}
-.tier-head.qw h3{color:var(--qw)} .tier-head.sb h3{color:var(--sb)} .tier-head.ex h3{color:var(--ex)}
+.tier-head.rn h3{color:var(--qw)} .tier-head.dc h3{color:var(--sb)} .tier-head.nm h3{color:var(--ex)} .tier-head.cd h3{color:var(--purple-deep)}
 .brows{display:flex;flex-direction:column}
 .brow{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:14px;align-items:center;padding:15px 4px;border-bottom:1px solid var(--line);scroll-margin-top:84px}
 .brow:hover{background:var(--bg-section)}
@@ -181,11 +181,13 @@ section:first-of-type{border-top:none}
 .brow .b-ice{font-family:var(--mono);font-size:12.5px;color:var(--faint);white-space:nowrap;font-feature-settings:"tnum" 1}
 .brow .b-ice b{color:var(--ink);font-weight:700}
 
-/* tier tag chips (audit .tag grammar; existing tier hues) */
+/* readiness-tier tag chips (audit .tag grammar): rn ready now, dc needs a design
+   change, nm needs measurement, cd needs a client decision */
 .tag{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap}
-.tag.qw{background:var(--qw-soft);color:var(--qw)}
-.tag.sb{background:var(--sb-soft);color:var(--sb)}
-.tag.ex{background:var(--ex-soft);color:var(--ex)}
+.tag.rn{background:var(--qw-soft);color:var(--qw)}
+.tag.dc{background:var(--sb-soft);color:var(--sb)}
+.tag.nm{background:var(--ex-soft);color:var(--ex)}
+.tag.cd{background:var(--purple-tint);color:var(--purple-deep)}
 .tag.sup{background:var(--bg-soft);color:var(--muted)}
 
 .ladder{font-family:var(--mono);font-size:11px;font-weight:500;text-decoration:none;color:var(--blue-deep);white-space:nowrap}
