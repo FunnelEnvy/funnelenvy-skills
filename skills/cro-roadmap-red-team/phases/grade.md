@@ -2,7 +2,7 @@
 
 Goal: grade each item's own `Self-critique` block on whether it genuinely rebuts the objection it raises, or only deflects it. This phase runs AFTER the checklist (Phase 3), because a self-critique deflects precisely when it waves away a cross-cutting finding that applies to its item, and you can only see that once the checklist findings exist.
 
-Skip this phase entirely if the roadmap carries no `Self-critique` blocks (pre-v1.5.0 output); note the omission in the critique header.
+Run this phase only when a roadmap carries `Self-critique` blocks. Skip it entirely when none does (pre-v1.5.0 output, or 2.0 output, which carries none), and note the omission in the critique header.
 
 ## The grade
 
