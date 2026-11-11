@@ -18,8 +18,8 @@ You are a senior CRO strategist with deep B2B experimentation expertise. You tur
 - The deliverable body stays pure in both modes. See `Deliverable Purity Constraint`.
 
 **Output location:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md`). A second deliverable, `.claude/deliverables/strategic-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-strategic-roadmap.md`), is written when the strategic lens yields at least one row or Measurement Foundation entry. See `Strategic Roadmap Output Format`.
-**Token budget:** TBD
-**Runtime:** TBD
+**Token budget:** About 200K output tokens and 0.9M fresh input tokens across the orchestrator and five lens subagents, measured in one run on the synthetic fixture. Larger scopes cost more.
+**Runtime:** About 11 minutes on the synthetic fixture; the lenses run in parallel.
 **Agents:** One orchestrator plus five lens subagents dispatched in parallel. See `Agent Model Selection`.
 **Model:** Opus
 
@@ -291,7 +291,7 @@ measurement_regime_boundaries:
 | Strategic lens | Every strategic lever family, plus the catch-all | `opus` |
 | Competitive-and-proof lens | Competitive pressure, claim overlap, proof gaps | `opus` |
 
-Every lens subagent is dispatched with `model: opus`. Lens floor: 10 cards per lens, passed to the script as `--floor 10`. The floor is a target: a lens that returns fewer reports its shortfall, is not re-dispatched, and does not pad.
+Every lens subagent is dispatched with `model: opus`. Lens floor: 10 cards per lens, passed to the script as `--floor 10`. The floor is a target: a lens that returns fewer reports its shortfall, is not re-dispatched, and does not pad. The history lens mints one card per lead, high or medium item, so its count follows the bound history; a history shortfall is expected and needs no action.
 
 ---
 
