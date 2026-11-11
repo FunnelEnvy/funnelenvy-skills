@@ -1,38 +1,36 @@
 ---
 name: hypothesis-generator
 version: 1.19.0
-description: "When the user wants to generate experiment hypotheses from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' or 'experiment backlog.' Reads L0 + L1 context files from .claude/context/, applies CRO reasoning patterns, and produces a prioritized, sequenced experiment plan in .claude/deliverables/. In KB mode (see KB Mode (Dual-Mode Output)), reads the scope's silver CRO artifacts from a bound knowledge base (the full scope silver set, not a fixed enumeration) and writes a typed gold-experiment-roadmap artifact instead. No research, no web fetches. Analysis-grade synthesis using embedded CRO expertise."
-updated: 2026-11-02
+description: "When the user wants experiment hypotheses or a CRO opportunity backlog from existing positioning context. Also use when the user mentions 'hypotheses,' 'experiment ideas,' 'test roadmap,' 'what should we test,' 'CRO opportunities,' 'A/B test plan,' 'opportunity backlog,' or 'experiment backlog.' Five parallel lens subagents generate candidate cards from L0 + L1 context (surfaces, personas and journeys, experiment history, strategic levers, competitive proof); a script deduplicates and sizes them; the result is a readiness-tiered roadmap with full write-ups for the top items and a backlog table for the rest, in .claude/deliverables/. In KB mode, reads the scope's silver CRO artifacts from a bound knowledge base and writes typed gold-experiment-roadmap and gold-strategic-roadmap artifacts. No research, no web fetches."
+updated: 2026-11-11
 ---
 
 # Hypothesis Generator
 
-You are a senior CRO strategist with deep B2B experimentation expertise. Your job is to analyze existing positioning context, detect testable opportunities, construct rigorous experiment hypotheses with causal reasoning, and deliver a prioritized, sequenced experiment plan.
+You are a senior CRO strategist with deep B2B experimentation expertise. You turn existing positioning context into a wide, evidence-backed opportunity backlog, then write up the items most ready to run.
 
-**You are an analytical deliverable skill.** You read L0 + L1 context and apply CRO-specific reasoning frameworks to produce new analytical output. This means:
-- You NEVER perform web research, API calls, or data collection
-- You CAN and SHOULD apply analytical reasoning beyond what context files literally state
-- You match observed patterns in context files against known CRO experiment patterns
-- You produce hypotheses with causal mechanisms, not just "fix this gap"
-- Your output goes to the deliverable location (legacy: `.claude/deliverables/`; KB mode: the bound KB), never to `.claude/context/`
-- The deliverable BODY is human-readable and stays pure in both modes: no confidence scores inline, no references to agents, skills, context files, schemas, or any system internals. In legacy mode the deliverable carries no frontmatter. In KB mode the deliverable carries the gold artifact frontmatter block (per the gold type def), which is the only system surface permitted; the body remains pure exactly as in legacy mode. See `Deliverable Purity Constraint`.
+**You are an analytical deliverable skill.** You read L0 + L1 context and produce new analysis:
 
-**Output location:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md` -- see `KB Mode (Dual-Mode Output)`). A second, conditional deliverable, `.claude/deliverables/strategic-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-strategic-roadmap.md`, a `gold-strategic-roadmap` artifact), is produced only when a business-level lever qualifies -- see `Strategic Roadmap Output Format`.
-**Token budget:** ~40-60K (reading and analysis only, no web fetches), plus up to ~50K when an experiment history is bound, read only through `scripts/history_backlog.py` and never as a full body (measured on a history of about 150 records: a ~19K projection, ~7K of named sections read by line range, and at most 20 full entries)
-**Runtime:** ~5-8 minutes
-**Agents:** Single agent. No multi-agent pipeline.
+- You NEVER perform web research, API calls or data collection.
+- You reason beyond what the context literally states, but every candidate cites the evidence it rests on.
+- Each hypothesis has a causal mechanism, not just "fix this gap".
+- Output goes to the deliverable location (legacy: `.claude/deliverables/`; KB mode: the bound KB), never to `.claude/context/`.
+- The deliverable body stays pure in both modes. See `Deliverable Purity Constraint`.
+
+**Output location:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md`). A second deliverable, `.claude/deliverables/strategic-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-strategic-roadmap.md`), is written when the strategic lens yields at least one row or Measurement Foundation entry. See `Strategic Roadmap Output Format`.
+**Token budget:** TBD (measured at Build, R26)
+**Runtime:** TBD (measured at Build, R26)
+**Agents:** One orchestrator plus five lens subagents dispatched in parallel. See `Agent Model Selection`.
 **Model:** Opus
 
 ---
 
 ## Operating Modes
 
-This skill runs in one of two I/O modes, resolved once at Phase 1 step 0 and held in-session. The analysis is identical in both; only the read/write targets and the deliverable's frontmatter differ.
+The I/O mode is resolved once at Phase 1 step 0 and held in-session. The analysis is identical in both modes; only read and write targets and the deliverable frontmatter differ.
 
-- **Legacy mode** (default): reads L0 + L1 context from `.claude/context/*.md` and writes the tactical roadmap to `.claude/deliverables/experiment-roadmap.md`. The deliverable carries no frontmatter. When `.claude/context/experiment-history.md` declares `schema: experiment-history`, it is bound as the run's experiment history (read through `scripts/history_backlog.py`, never as a full body), enriched by the per-experiment insight records at `.claude/deliverables/experiments/*/insight.md` (read-only). When a business-level lever qualifies, it also writes the separate strategic roadmap to `.claude/deliverables/strategic-roadmap.md` (no frontmatter).
-- **KB mode**: invoked under the KB harness (`governed_by: {kb-type}/gold-experiment-roadmap`). Reads the scope's silver artifacts from the bound knowledge base, resolved by artifact type per `Read-side Mapping`, and writes a typed gold `experiment-roadmap` artifact into the KB (the artifact's `depends_on` then records which silver artifacts were actually consumed). When a business-level lever qualifies, it also writes a separate `gold-strategic-roadmap` artifact (`{kb_root}/deliverables/{scope}-strategic-roadmap.md`). The gold artifact frontmatter block (per the bound gold type def) is the only system surface on either deliverable; the body stays free of system internals per the `Deliverable Purity Constraint`, exactly as in legacy mode.
-
-The full KB-mode contract (mode resolution, read-side mapping, output path, frontmatter contract, validation gate) is documented in `KB Mode (Dual-Mode Output)` below. Sections that name only the legacy `.claude/` paths are labeled "(legacy mode)"; their KB-mode equivalents live in that section.
+- **Legacy mode** (default): reads `.claude/context/*.md`. Writes the tactical roadmap to `.claude/deliverables/experiment-roadmap.md` and, when it qualifies, the strategic roadmap to `.claude/deliverables/strategic-roadmap.md`. Neither carries frontmatter. A `.claude/context/experiment-history.md` declaring `schema: experiment-history` is bound as the experiment history, enriched by `.claude/deliverables/experiments/*/insight.md` (read-only).
+- **KB mode:** reads the scope's artifacts from the bound knowledge base per `Read-side Mapping`. Writes typed gold artifacts (`gold-experiment-roadmap`, and `gold-strategic-roadmap` when it qualifies). The gold frontmatter block is the only system surface on either deliverable.
 
 ---
 
@@ -40,221 +38,179 @@ The full KB-mode contract (mode resolution, read-side mapping, output path, fron
 
 ```
 /hypothesis-generator
-/hypothesis-generator --focus "headlines"
-/hypothesis-generator --focus "forms"
-/hypothesis-generator --max 8
+/hypothesis-generator --focus "headlines,forms"
+/hypothesis-generator --write-ups 12
+/hypothesis-generator --spec path/to/brief.md
+/hypothesis-generator --scope acme-main
 ```
-
-**Flags:**
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--focus` | all | Restrict to one or more pattern categories. Comma-separated. Valid: `headlines`, `forms`, `navigation`, `personalization`, `layout`, `pricing`, `social-proof`, `content`, `trust`, `element-engagement` |
-| `--max` | 10 | Maximum number of hypotheses to produce (min 5, max 15) |
-| `--spec` | none | Path to a spec/brief file OR inline text of client-requested items. When provided, every spec item must either map to a hypothesis or be explicitly addressed in "What's Not Here." Out-of-scope items (SEO/GEO, interlinking, content audit) are flagged with routing guidance. |
-| `--scope` | none | KB mode only. Selects which KB scope the run targets (the type skill defines valid scopes). Required in KB mode; warn-and-ignore in legacy mode. See `KB Mode (Dual-Mode Output)`. |
-| `--no-kb` | off | Force legacy `.claude/context/` I/O even when a KB binding is detected. See `KB Mode (Dual-Mode Output)`. |
+| `--focus` | all | Comma-separated pattern categories: `headlines`, `forms`, `navigation`, `personalization`, `layout`, `pricing`, `social-proof`, `content`, `trust`, `element-engagement`. Every lens except the strategic lens works only the named categories of the prompt library. A history item outside the focus goes to `## Exclusions` with the grounds "outside the requested focus". |
+| `--write-ups` | 10 | Full write-ups per roadmap, 8 to 12. Applies to each roadmap separately. Every other row renders in the backlog table, which has no ceiling. |
+| `--spec` | none | Path to a spec or brief file, or inline text of client-requested items. Every spec item ends as a write-up, a backlog row or an `## Exclusions` entry. Out-of-scope items keep their routing guidance (Phase 0). |
+| `--scope` | none | KB mode only. Selects the KB scope. Required in KB mode; warn and ignore in legacy mode. |
+| `--no-kb` | off | Force legacy I/O even when a KB binding is detected. |
 
 ---
 
 ## KB Mode (Dual-Mode Output)
 
-The two I/O modes are summarized in `Operating Modes`; this section specifies the full KB-mode contract. Mode is resolved ONCE as Phase 1 step 0 and held in-session.
-
-In KB mode, only the read/write targets, the addition of gold frontmatter, and performance-profile schema tolerance (see `phases/detect.md` > `Profile Schema Equivalence`) change. All analysis -- Phases 2-4 reasoning, the pattern library, ICE scoring, spec intake, `--focus`, `--max`, contrarian triggers -- is identical in both modes.
-
-This is a single-agent skill: there is no agent parameter-block threading. Mode resolution produces in-session KB state (`kb_root`, `kb_type`, `scope`, type-def paths) consulted by Phase 1 (reads) and Phase 5 (write).
+`Operating Modes` summarizes the two modes; this section is the full KB-mode contract. In KB mode only the read and write targets, the gold frontmatter, and performance-profile schema tolerance (`phases/detect.md` > `Profile Schema Equivalence`) change. Mode resolution produces in-session KB state (`kb_root`, `kb_type`, `scope`, type-def paths). The orchestrator passes the resolved input paths to every lens subagent; lenses never resolve mode themselves.
 
 ### Mode Resolution Procedure (Phase 1, step 0)
 
 > Canonical contract: `modules/kb-mode.md`. When KB-mode semantics change, edit that module first, then re-sync every dual-mode skill it lists. The procedure below is this skill's runtime copy.
 
 1. If `--no-kb` is set: legacy mode. Done.
-2. Read the working repo's `CLAUDE.md`. Find a `Knowledge Bases` section. If absent: legacy mode, and note in the run output: "No `Knowledge Bases` section in CLAUDE.md; using legacy I/O."
-3. Parse the KB root path (e.g., `docs/`) and KB type skill name from that section. Verify the type skill exists at `.claude/skills/{kb-type}/` and its `artifacts/` directory defines `gold-experiment-roadmap`, `silver-strategy-context`, and `bronze-company-facts` -- the output type plus the two types backing the hard L0 precondition. If any check fails: legacy mode, and report which check failed. Optional silver types are NOT mode-resolution requirements: a missing optional silver artifact degrades gracefully exactly like a missing optional legacy context file.
+2. Read the working repo's `CLAUDE.md` and find a `Knowledge Bases` section. If absent: legacy mode, noted in the run output: "No `Knowledge Bases` section in CLAUDE.md; using legacy I/O."
+3. Parse the KB root path and KB type skill name from that section. Verify the type skill exists at `.claude/skills/{kb-type}/` and its `artifacts/` directory defines `gold-experiment-roadmap`, `silver-strategy-context` and `bronze-company-facts`. If any check fails: legacy mode, and report which check failed. Optional silver types are not mode-resolution requirements.
 4. KB mode confirmed. Resolve scope: `--scope <slug>` must match a valid scope defined by the type skill. If `--scope` is missing or invalid: HARD STOP. Display the valid scope list and ask the user to re-run with `--scope`. Do not guess a scope.
-5. **Experiment-history producer discovery (optional, KB mode only).** After the output KB is confirmed, enumerate every knowledge base declared in the `Knowledge Bases` section -- the section body and any `###` subsections -- and for each resolve its type skill (`.claude/skills/{kb-type}/`) and KB root. Bind as the experiment-history producer the declared KB, *other than the output KB*, whose type skill's `artifacts/` directory defines a completed-experiment gold index type (`gold-experiment-index`); resolve that KB's root and its gold index (`{producer-kb-root}/index.md`) from the declaration. This keys on the `gold-experiment-index` type name exactly as step 3 keys the output KB on `gold-experiment-roadmap` -- no client KB type name and no client path is hardcoded. Resolution rules: if no declared KB defines `gold-experiment-index`, no producer is bound. If more than one does, prefer the producer whose gold index carries records for the run `--scope`; if still ambiguous, bind the first declared and note the choice in the run output. A producer that is declared but unresolvable (type skill missing, index file absent, or empty for the scope) degrades to penalty-free absence. The experiment-history input is NOT a mode-resolution requirement (per `Read-side Mapping` and `Preconditions`): unlike the output KB, a missing or broken producer binding never flips the run to legacy and never hard-stops -- it is skipped silently except for a one-line note in the run output. The bound producer's gold index plus the silver insights it links are then read per `Read-side Mapping` (read-only, scope-filtered, no `depends_on` edge).
-   - **In-output-KB fallback (tried ONLY when the external-producer discovery above binds nothing).** When no declared KB defines `gold-experiment-index` (or the one that does is unresolvable), search the **output KB** for a silver artifact whose frontmatter carries `schema: experiment-history`, plus the per-experiment gold insight guides that artifact summarizes; bind them **read-only** as the experiment-history source. This is an additive third path, not a merge: the external dedicated producer takes precedence and the two sources MUST NOT be merged or unioned -- when an external producer binds, the in-KB artifact is not read at all (a cross-source union is out of scope for v1; it would raise cross-source dedup complexity this change does not take on). **Self-containment guard:** the in-KB bind is valid ONLY for an artifact declaring `schema: experiment-history` (a `silver-reference-doc`); it MUST NEVER bind the skill's own `gold-experiment-roadmap` output (that would be a read-your-own-output cycle), mirroring the `Read-side Mapping` guard ("never this skill's own `gold-experiment-roadmap` output"). Carve an explicit, narrow exception to the "producer must differ from the output KB" rule for this in-KB source only -- it is the run's own scope, so scope isolation still holds. **Backward compatibility (MUST hold):** when neither an external producer nor an in-KB `schema: experiment-history` artifact exists, the experiment-history input is unbound exactly as today -- optional, penalty-free, never flips the run to legacy, never hard-stops. A failed or absent in-KB bind degrades penalty-free (like external-producer discovery), never triggering the loud legacy fallback that only an output-KB failure triggers. The in-KB source is read and interpreted per `Read-side Mapping` (`depends_on` edge recorded for the silver history doc; gold insight guides cited by attribution).
+5. **Experiment-history producer discovery (optional).** Enumerate every KB declared in the `Knowledge Bases` section, including `###` subsections. Bind as the producer the declared KB, other than the output KB, whose type skill defines `gold-experiment-index`; its gold index is `{producer-kb-root}/index.md`. No client type name or path is hardcoded.
+   - **Several candidates:** prefer the one whose index carries records for the run `--scope`, else bind the first declared and note the choice.
+   - **None, or unresolvable:** no producer is bound, with a one-line note. This never flips the run to legacy and never hard-stops.
+   - **In-output-KB fallback:** tried only when no external producer binds. Search the output KB for a silver artifact declaring `schema: experiment-history`, plus the gold insight guides it summarizes, and bind them read-only. The two sources are never merged. The bind is valid only for an artifact declaring that schema; it never binds this skill's own `gold-experiment-roadmap` output.
 
-There is deliberately no `--kb` force flag. A failed detection of the *output* KB falls back to legacy loudly so a broken KB binding gets fixed instead of worked around. (Producer-KB discovery in step 5 is the exception: it is optional, so a failed producer detection degrades to penalty-free absence rather than a legacy fallback.)
+There is deliberately no `--kb` force flag. A failed detection of the output KB falls back to legacy loudly, so a broken binding gets fixed instead of worked around. Producer discovery in step 5 is optional and degrades silently instead.
 
 ### Schema Authority
 
-Phase files remain the authority for analytical content. In KB mode, the bound type def (`.claude/skills/{kb-type}/artifacts/gold-experiment-roadmap.md`) is the authority for output path, frontmatter contract, and required section layout -- read it during Phase 5 before writing. `governed_by` is composed at runtime as `{kb-type}/gold-experiment-roadmap`. This skill never hardcodes a KB type skill name or client-specific path.
+Phase files are the authority for analytical content. In KB mode the bound type defs (`.claude/skills/{kb-type}/artifacts/gold-experiment-roadmap.md` and `gold-strategic-roadmap.md`) are the authority for output path, frontmatter contract and required section layout: read them in Phase 6 before writing. `governed_by` is composed at runtime as `{kb-type}/gold-experiment-roadmap` or `{kb-type}/gold-strategic-roadmap`. Never hardcode a KB type skill name or client path.
 
 ### Read-side Mapping
 
-In KB mode, Phase 1 replaces the `.claude/context/*.md` glob with reads of the scope's artifacts. **The input set is open, not a closed enumeration:** glob **every** silver artifact in `reference/cro-{scope}/`, map the known artifact types to their analytical roles per the table below, and ingest any other in-scope `silver-reference-doc` as **supplementary scope context** under the `Supplementary Silver (Non-Enumerated) Consumption Contract` below. This means no roadmap-relevant silver ever strands merely because it is not one of the enumerated types, and there are no hardcoded rows a new artifact can be misfiled against.
+In KB mode, Phase 1 reads the scope's artifacts instead of the `.claude/context/` glob. Glob every silver artifact in `reference/cro-{scope}/`. Map the known types below to their roles, and pass every other in-scope silver artifact to the lenses as supplementary scope context. Resolve each input by its artifact type, not by basename: the basename column shows the default, and a KB type may name its files differently. A basename mismatch is not a missing artifact.
 
-**Resolve each enumerated input by its KB artifact TYPE** (the type declared in the artifact frontmatter, which the KB type skill defines as the schema authority), NOT by an assumed basename. KB mode always changes the directory (`.claude/context/` -> `reference/cro-{scope}/`); the basename is **KB-type-dependent**. The "Path under KB root" column shows the funnelenvy-default basename: the funnelenvy producer (positioning-framework) names most silver artifacts after the artifact type (writing `competitive-analysis.md` / `audience-analysis.md` for `silver-competitive-analysis` / `silver-audience-analysis`), but a KB type may name its artifacts differently (for example, the legacy-derived `competitive-landscape.md` / `audience-messaging.md`, or the type-derived `performance-analysis.md` for `silver-performance-analysis` where the default column shows `performance-profile.md`). Match on the artifact type within `reference/cro-{scope}/`; do NOT treat a basename that differs from the column as a missing artifact. Reading a basename mismatch as "artifact absent" would wrongly degrade the run, silently dropping every performance-driven trigger and applying the global no-baseline Confidence ceiling when the data is actually present.
-
-| Legacy context file | KB artifact type | Path under KB root | Required |
+| Legacy context file | KB artifact type | Default path under KB root | Required |
 |---|---|---|---|
 | `company-identity.md` | `bronze-company-facts` + `silver-strategy-context` | `captures/company-facts/{scope}-company-facts.md` + `reference/cro-{scope}/strategy-context.md` | REQUIRED |
 | `positioning-scorecard.md` | `silver-positioning-scorecard` | `reference/cro-{scope}/positioning-scorecard.md` | optional |
 | `competitive-landscape.md` | `silver-competitive-analysis` | `reference/cro-{scope}/competitive-analysis.md` | optional |
 | `audience-messaging.md` | `silver-audience-analysis` | `reference/cro-{scope}/audience-analysis.md` | optional |
 | `performance-profile.md` | `silver-performance-analysis` | `reference/cro-{scope}/performance-profile.md` | optional |
-| (none -- KB-native) | `silver-structural-observation` | `reference/cro-{scope}/live-structure.md` | optional |
-| `experiment-history.md` (+ `.claude/deliverables/experiments/*/insight.md`) | `gold-experiment-index` (producer KB) + the silver insight records it links, OR (fallback) an in-output-KB `schema: experiment-history` silver artifact + the per-experiment gold insight guides it summarizes | producer KB root `index.md` (resolved by discovery, see `Mode Resolution Procedure` step 5) + linked silver insight paths, else the in-KB `schema: experiment-history` artifact path + linked gold insight guide paths | optional |
-| `engagement-constraints.md` | engagement-context reference artifact (as the bound type skill defines it) | type-skill-defined path | optional |
+| `live-observation.md` + `live-copy.md` | `silver-structural-observation` | `reference/cro-{scope}/live-structure.md` | optional |
+| `experiment-history.md` + `insight.md` records | producer `gold-experiment-index` + linked silver insights, or the in-KB `schema: experiment-history` silver + its gold insight guides | per `Mode Resolution Procedure` step 5 | optional |
+| `engagement-constraints.md` | engagement-context reference artifact, as the type skill defines it | type-skill-defined | optional |
 | `_fetch-registry.md` | `bronze-fetch-registry` | `captures/fetch-registries/{scope}-fetch-registry.md` | optional (page-block check only) |
-| (none -- KB-native, open-ended) | any other in-scope `silver-reference-doc` (any silver artifact NOT matched by a row above and not this skill's own gold output) | `reference/cro-{scope}/*.md` | optional (supplementary context, see contract below) |
+| (KB-native) | any other in-scope silver artifact | `reference/cro-{scope}/*.md` | optional (supplementary) |
 
-- **L0 precondition:** the LOWER of `bronze-company-facts.confidence` and `silver-strategy-context.confidence` must be >= 3. Together these two artifacts carry what `company-identity.md` carries in legacy mode (the facts/analysis split).
-- **Scope isolation is absolute, with one narrow read-only exception:** this skill never resolves a cross-scope artifact path on its own initiative. The exception: when a consumed in-scope artifact's OWN frontmatter declares a `depends_on` edge into a cross-scope reference artifact (e.g., an audience-messaging silver artifact built on a persona taxonomy that lives in a shared parent or sibling scope), that cross-scope artifact is readable, read-only, transitively through the edge the consuming artifact already declares. This never adds a new cross-scope `depends_on` edge to this skill's OWN output (`Output Mapping and Frontmatter Contract` / `Strategic Roadmap Output Format` still list gold-to-silver edges within the run's own scope only); it is a read to fill in analysis already relied upon by an artifact this skill was going to consume anyway. Absent a declared edge, scope isolation is unqualified: an artifact from another scope is never read.
-- Each loaded artifact maps to its legacy equivalent per the table; Phases 2-4 consume the bodies identically in both modes.
-- The engagement-context row is the KB-mode home of the optional `engagement-constraints` input (see `Preconditions`) AND of Phase 2c's optional soft input: when the bound KB defines such a reference artifact for the scope, it MUST be read when it exists (per `phases/detect-strategic.md` > `Optional Soft Input`). Absence stays penalty-free. Its structured frontmatter fields follow the `Preconditions` convention, and the bound type skill needs no edit for them: KB validation checks only the fields a type declares.
-- The `silver-structural-observation` row has no legacy `.claude/context/` equivalent: it is a KB-native structural projection consumed only in KB mode. Its body carries factual page-structure observations, consumed by the Step 1 structural extraction stanza and the Step 1e field-keyed structural triggers in `phases/detect.md`. An absent artifact skips Step 1e with no confidence penalty (structure was not assessed), degrading like any optional silver read.
-- **The bound experiment-history source is read for four things, not one.** (1) Completed-result evidence and continuation fuel, (2) the displacement / inverted-proxy mechanism, (3) live-program occupancy for the Gate 7 fold, and (4) **deployed state plus delivered sample** (net-new). Read (4) is what makes a Current state block track the shipped control rather than a retired build, and a feasibility window track enrolled participants rather than page visits. It is satisfied **only when the producer surfaces it**: a producer whose index reports occupancy alone leaves `deployed_state` empty and the run behaves exactly as before, penalty-free. Occupancy and deployed state are not interchangeable, because a concluded experiment whose variant ships frees its slot and remains the control.
-- The experiment-history row has a legacy equivalent: `.claude/context/experiment-history.md`, bound only when its frontmatter declares `schema: experiment-history`. Legacy mode reads the whole file through `scripts/history_backlog.py` (Phase 1 step 5b), and the per-experiment insight records at `.claude/deliverables/experiments/*/insight.md` enrich the records they cover. In KB mode the row is read **read-only** from the producer KB's gold index plus the silver insight records that index links. There is **no `depends_on` graph edge** into the producer KB: the evidence is cited by natural attribution / source pointer only, which preserves both KBs' self-containment and the skill's no-research charter (a KB read is not web research). **Scope mapping of the producer index to the run `--scope`:** if the producer's records carry the run scope's vocabulary -- a producer KB shared across strategy scopes tags each record with the consuming scope -- filter the index to the run `--scope`. If the producer carries **no record matching the run scope's vocabulary** (the common case for a dedicated experiments KB whose program corresponds 1:1 to the consuming strategy scope, with records addressed by experiment id / program tag rather than the strategy scope), read the **whole index** as the run's experiment history -- this whole-index read IS the documented cross-scope read, made the default here because a dedicated experiments KB declared in the same repo is that repo's experiment history. (A producer serving multiple disjoint strategy scopes in one KB should tag records with the consuming scope to re-enable filtering and avoid cross-scope leakage.) The input enables all-outcome continuation: rollouts off winners, plus iterations and discriminating tests off losses and flats, minted as first-class hypotheses in `phases/detect.md` Step 1g. An absent producer-KB binding **skips the completed-experiment-evidence section and the experiment-history continuation paths with NO confidence penalty and NO global cap** (absence means no prior-experiment evidence was available, not that a hypothesis is weak), degrading like any optional silver read. The producer KB is resolved by the `Mode Resolution Procedure` (step 5) as the declared KB whose type defines a completed-experiment gold index (`gold-experiment-index`) -- distinct from the output KB, which defines `gold-experiment-roadmap`. The gold index referenced here is the producer's `gold-experiment-index`, never this skill's own `gold-experiment-roadmap` output. **Beyond completed-experiment evidence and continuation, this same bound source is also read for live-program state** (which experiments are currently running or queued, and which fold / consolidation decisions are on record), surfaced by `phases/detect.md` Step 1g as the `live_program` annotation and consumed by the `phases/validate.md` Gate 7 (`slot_available`) live-program fold, so a tactical candidate is never minted for a surface + lever a running experiment already owns. The read spans both source shapes identically (external `gold-experiment-index` and in-KB `schema: experiment-history`); an absent source makes program state unreadable (penalty-free, surfaced as a caveat), never a confidence penalty.
-- **`schema: experiment-history` source (in-KB fallback and legacy file) -- source shape and interpretation contract.** Two paths bind this shape. In KB mode, when `Mode Resolution Procedure` step 5's external-producer discovery binds nothing, the in-output-KB `schema: experiment-history` silver artifact plus the per-experiment gold insight guides it summarizes. In legacy mode, `.claude/context/experiment-history.md` plus the insight records at `.claude/deliverables/experiments/*/insight.md`. Both are read through `scripts/history_backlog.py` (see `Scripts`), which emits a deterministic projection: a record index carrying each record's page, outcome and mapping, primary read, delivered sample, deployed-state cues and line range; the last Learning sentences of settled records; and every typed insight item, numbered for the coverage ledger. The history is prose, so the LLM applies this interpretation contract: `Outcome` -> `parent_outcome` (per the **Outcome mapping** below, which the script pre-computes per record); `Page` -> target surfaces (`source_surfaces`); `Next Steps` (when the record carries the field) + `Learning` + each insight record's `next_experiments` -> continuation opportunities. A record with no `Next Steps` field names its next tests in its final Learning sentences, so read those. Typed insight items keep their `type`, `priority` and `surfaces` as written (`new_hypothesis` included); only prose-derived items get a derived `priority` (per the priority-derivation rubric in `phases/detect.md` Step 1g) and a `history_type` from the mapping's earn column. `Learning` / mechanism narrative -> the validated mechanism that makes a winner rollout eligible for the `phases/score.md` Step 4 replication `+1`. The insight records **enrich** the records they cover; the history file is the spine. **Scope read (MUST hold):** read the **whole** history file. For a single-scope output KB the in-KB doc corresponds 1:1 to the run scope, mirroring the whole-index cross-scope read above, and a legacy run has no scope. Multi-scope-CRO-KB filtering of an in-KB history doc is a documented follow-on, out of scope for this change. **`depends_on` for the in-KB source (KB mode only) DIVERGES from the external path:** the in-KB `schema: experiment-history` silver artifact is a normal SAME-KB gold-to-silver consumption with a real KB-root-relative path, so it **IS recorded** in the run's `depends_on` (unlike the external producer, whose cross-KB edge is excluded, see `Output Mapping and Frontmatter Contract`); the per-experiment gold insight guides are **gold** artifacts, so they stay OUT of `depends_on` (gold-to-silver edges only) and are cited by natural attribution.
+- **L0 precondition:** the lower of `bronze-company-facts.confidence` and `silver-strategy-context.confidence` must be 3 or more.
+- **Scope isolation:** never resolve a cross-scope path on your own initiative. One exception, read-only: when a consumed in-scope artifact declares its own `depends_on` edge into a cross-scope artifact, that artifact is readable through the edge. This adds no cross-scope edge to this skill's output.
+- **Supplementary silver:** any in-scope silver artifact can ground a card like any enumerated input. One consumed is recorded in `depends_on`; one globbed and not used is not.
+- **Engagement context:** read when it exists. Its structured frontmatter fields follow the `Preconditions` convention.
 
-  **Outcome mapping** (minting keys on the settled `Outcome`; `Status` decides read-eligibility only; `scripts/history_backlog.py` pre-computes the mapping per record). "Stated p" means the p on the record's `(primary)` metric line. Only a record with no primary line at all may use the p in its Outcome Source, and only to confirm a win or loss at p <= 0.05; a directional mapping always needs a stated primary p.
+**Experiment history.** Both source shapes are read for four things: completed results and their continuations; the displacement or inverted-proxy mechanism; live-program occupancy; and deployed state plus delivered sample. Deployed state is read only when the producer surfaces it. A concluded experiment whose variant shipped frees its slot and stays the control.
 
-  | Record `Outcome` | Maps to | What it earns |
-  |---|---|---|
-  | verified win (stated p <= 0.05, no bracketed qualifier) | `winner` | rollout, `+1`/`+1` |
-  | verified loss (stated p <= 0.05, no bracketed qualifier) | `loser` | iteration / discriminating test |
-  | win or loss with a stated p above 0.05 and below 0.20 | `directional_win` / `directional_loss` | as the directional rows below |
-  | directional-win, or inconclusive with a stated p below 0.20 and positive lift | `directional_win` | confirm-and-extend, `+1` Confidence |
-  | directional-loss, or inconclusive with a stated p below 0.20 and negative lift | `directional_loss` | iteration |
-  | any outcome carrying a bracketed qualifier (for example `[UNVERIFIED ...]`, `[UNREADABLE: ...]`, `[CONTRADICTORY: ...]`) | `flat` | aims in the leaning direction, no `+1` |
-  | win or loss with no stated p (or a stated p of 0.20 or more) | `flat` | aims in the leaning direction, no `+1` |
-  | inconclusive (other) | `flat` | iteration / discriminating test on learning value |
-  | monitoring (no control group) | not minted | feeds deployed state only |
-  | in-progress | not minted | occupied slot |
+- **External producer:** read-only, cross-KB, cited by natural attribution, with no `depends_on` edge. Filter the index to the run `--scope` when records carry the scope's vocabulary. When none do, read the whole index: a dedicated experiments KB declared in the same repo is that repo's history.
+- **`schema: experiment-history` source** (the in-KB fallback, or the legacy file): read only through `scripts/history_backlog.py` (Phase 1 step 5b), never as a full body. Read the whole file. The in-KB silver doc is recorded in `depends_on`; the gold insight guides are cited by attribution only.
+- **Interpretation:** `Outcome` gives the parent outcome (mapping below, pre-computed by the script). `Page` gives the source surfaces. `Next Steps`, the final `Learning` sentences and each insight record's `next_experiments` give continuations. Typed insight items keep their `type`, `priority` and `surfaces` as written; prose-derived items get a derived priority per the history lens brief in `phases/detect.md`.
 
-  Any bracketed qualifier on the Outcome caps the mapping at `flat`, whatever its wording (UNVERIFIED, UNREADABLE, CONTRADICTORY, or any other): a qualified readout is never a win, a loss or directional. The projection carries the qualifier text into the record's index line, so the ledger shows why. Directionals map to `directional_win` / `directional_loss`, never `winner`, and MUST NEVER take `history_type: rollout` (a typed `rollout` item on any non-winner parent scores as a `follow_up` for that parent, `phases/score.md` Step 4), so they never inherit the `score.md` Step 4 winner-rollout `+1`/`+1`, the ONLY path to a replication-grade Quick Win. A `directional_win` earns the `Decision Posture` directional action: a confirm-and-extend `follow_up` of the same mechanism, sized on the posture MDE, scored Confidence `+1` and Ease `0`, and never a rollout. A `directional_loss` is read as a loss (`iteration` / `discriminating_test`). **No after-the-fact promotion:** a record keeps the outcome it was sized, stopped and classified under; the posture's 90% bar applies to new tests only, so a prior result with p between 0.05 and 0.10 stays directional and is never re-read as a win. **`Status` -> read-eligibility** (Status never mints on its own): a settled Outcome is read by the table even when Status is `monitoring` or the record is still live (a still-live record also occupies its slot, per the live-program read); `in-progress` / `on-hold` / `shipped_untested` / `idea` with no settled Outcome -> `not-yet-read`, usable as a dedup signal only, NEVER minted into a continuation.
+**Outcome mapping.** Minting keys on the settled `Outcome`; `Status` decides read-eligibility only. "Stated p" is the p on the record's `(primary)` metric line. A record with no primary line may use the p in its Outcome Source only to confirm a win or loss at p <= 0.05.
 
-#### Supplementary Silver (Non-Enumerated) Consumption Contract
+| Record `Outcome` | Maps to | What it earns |
+|---|---|---|
+| verified win (stated p <= 0.05, no bracketed qualifier) | `winner` | rollout continuation |
+| verified loss (stated p <= 0.05, no bracketed qualifier) | `loser` | iteration or discriminating test |
+| win or loss with a stated p above 0.05 and below 0.20 | `directional_win` / `directional_loss` | as the rows below |
+| directional-win, or inconclusive with a stated p below 0.20 and positive lift | `directional_win` | the `Decision Posture` directional action |
+| directional-loss, or inconclusive with a stated p below 0.20 and negative lift | `directional_loss` | iteration |
+| any outcome with a bracketed qualifier (`[UNVERIFIED ...]`, `[UNREADABLE: ...]`, `[CONTRADICTORY: ...]` or any other) | `flat` | aims in the leaning direction |
+| win or loss with no stated p, or p of 0.20 or more | `flat` | aims in the leaning direction |
+| inconclusive (other) | `flat` | iteration or discriminating test on learning value |
+| monitoring (no control group) | not carded | feeds deployed state only |
+| in-progress | not carded | occupied slot |
 
-Any in-scope silver artifact that does not match an enumerated row (the open-ended row above) is ingested as **supplementary scope context**. This dissolves the class of bug where a coherent, roadmap-relevant silver artifact (e.g., a measurement/lead-lifecycle reference distilled from many discovery calls) contributes nothing to a regen merely because it is not one of the enumerated types. The consumption is deliberately bounded:
-
-- **What it MAY do.** Inform framing, constraints, and guardrails. It may tighten guardrail and readability reasoning (measurement reality, lead-quality / disqualification definitions, down-funnel attribution limits, routing constraints) and may be cited as evidence inside a hypothesis's rationale or guardrail statement. Treat it exactly like the engagement-constraints input (`phases/detect.md` Step 1d): it feeds constraints, never the opportunity list.
-- **What it MUST NOT do.** It is **never a standalone hypothesis source**: it never mints a scored hypothesis on its own, and it never enters pattern matching (Step 2) or the trigger tables. It does **not** touch ICE: no baseline inflation, no Impact/Confidence/Ease modifier derived from it alone (same posture as performance data, which provides evidence for modifiers only when it corroborates an already-detected opportunity).
-- **Interaction with the no-baseline Confidence cap (MUST hold).** The global Confidence ceiling keys on the presence of a `performance-profile.md` / `silver-performance-analysis` artifact, and supplementary measurement context does **not** substitute for it. Supplementary context may *refine* guardrail reasoning within an already-permitted Confidence, but it can never lift the global no-baseline cap and never raise a per-hypothesis Confidence above what the enumerated inputs justify. It can only tighten (add a guardrail, narrow a claim), never loosen.
-- **`depends_on`.** A supplementary `silver-reference-doc` that is actually consumed IS recorded in the run's `depends_on` (a normal same-KB gold-to-silver edge with a real KB-root-relative path), consistent with the in-KB experiment-history rule. A doc globbed but not materially used is not edged.
-- **Scope isolation** is unchanged: only `reference/cro-{scope}/` is globbed; the narrow transitive cross-scope `depends_on` read-exception above still applies and is not widened by this contract.
-
-Consumption is a read into the analysis, not a new phase: the supplementary bodies are available to `detect.md` (constraints), `construct.md` (guardrails/framing), and `validate.md` (measurement-reality gates) exactly as the engagement-context input already is. Absent any non-enumerated silver, behavior is unchanged.
+- A directional result is never a rollout and never re-read as a win after the fact. The 90% bar applies to new tests only.
+- `Status` alone creates no card. A record with no settled Outcome (`in-progress`, `on-hold`, `shipped_untested`, `idea`) is a dedup signal only.
 
 ### Output Mapping and Frontmatter Contract
 
-The deliverable is written to `{kb_root}/deliverables/{scope}-experiment-roadmap.md` (path per the type def). The body is the unchanged `Output Format` render; KB mode prepends frontmatter:
+KB mode prepends this frontmatter to the tactical body; the body is the unchanged `Output Format` render:
 
-`fe-managed: true`, `name: {scope}-experiment-roadmap`, `description` (one line, generated), `kb_layer: gold`, `governed_by: {kb-type}/gold-experiment-roadmap`, `scope`, `data_provenance` (`client` when any consumed silver artifact is `client`-provenance, else `public`), `generated_by: hypothesis-generator`, `depends_on`, `tags` (3-7 semantic), `version`, `created`, `updated`.
+`fe-managed: true`, `name: {scope}-experiment-roadmap`, `description` (one generated line), `kb_layer: gold`, `governed_by: {kb-type}/gold-experiment-roadmap`, `scope`, `data_provenance` (`client` when any consumed silver artifact is `client`-provenance, else `public`), `generated_by: hypothesis-generator`, `depends_on`, `tags` (3-7 semantic), `version`, `created`, `updated`.
 
-**`depends_on`:** KB-root-relative paths of the silver artifacts actually consumed, omitting missing optional ones -- gold-to-silver edges only. This includes any non-enumerated supplementary `silver-reference-doc` that materially informed the run (per the `Supplementary Silver (Non-Enumerated) Consumption Contract`): a consumed supplementary silver doc is a normal same-KB gold-to-silver edge; one globbed but not materially used is not edged. Bronze inputs are excluded: company facts flow transitively through the strategy-context artifact's own bronze edge, and the fetch registry is an operational read (page-block status), not a content source. The experiment-history input's edge treatment DIVERGES by source: the **external producer** path is a read-only cross-KB read of a separate producer KB, cited by natural attribution only, with **no** `depends_on` graph edge into that KB (a cross-KB edge would break self-containment); but the **in-output-KB `schema: experiment-history` silver artifact** (the step-5 fallback) is a normal same-KB gold-to-silver consumption with a real KB-root-relative path, so it **IS recorded** in `depends_on`. The per-experiment gold insight guides are **gold** artifacts, not silver, so they stay OUT of `depends_on` (gold-to-silver edges only) and are cited by natural attribution. Net: in-KB silver history doc -> edge recorded; gold insight guides -> attribution only; external producer index -> no edge (unchanged).
+**`depends_on`:** KB-root-relative paths of the silver artifacts actually consumed, gold-to-silver edges only. Omit missing optionals. Bronze inputs are excluded: company facts flow through the strategy-context edge, and the fetch registry is an operational read. History edges follow `Read-side Mapping`.
 
-### Prior Work Detection (KB Mode)
+The strategic roadmap takes the same block with `name: {scope}-strategic-roadmap` and `governed_by: {kb-type}/gold-strategic-roadmap`. Its `depends_on` lists every silver or reference artifact that grounded a strategic row; the default input list is a floor, not a ceiling.
 
-1. Glob `{kb_root}/deliverables/{scope}-experiment-roadmap.md`.
-2. If present, the run supersedes it in place: preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch for a re-render of unchanged inputs), set `updated` to today, overwrite the body. "Consumed silver artifacts changed" includes a change in the SET of consumed artifacts: a newly consumed input triggers the minor bump even when every previously consumed artifact is itself unchanged. No diffing, no merging -- the roadmap is always a complete projection of current context (same semantics as `Re-render Behavior`). Before overwriting, build the `prior normalized-title -> prior **Key:**` map from this prior roadmap and apply the **Key carry-forward rule** (defined once in `Re-render Behavior`): reuse a prior key on a normalized-title match, mint a fresh `slugify(title)` otherwise. Only the key value is carried forward; the rest of the body is a fresh projection.
+### Prior Work and Supersede
+
+For each deliverable, glob its KB path. When present, the run supersedes it in place:
+
+- Preserve `created`, set `updated` to today, overwrite the body.
+- Bump `version`: minor when the consumed silver set or any consumed artifact changed since the prior render, patch for a re-render of unchanged inputs.
+- Pass the prior file to `consolidate_backlog.py consolidate --prior` for key carry-forward (`Re-render Behavior`).
 
 ### Post-Write Validation Gate
 
-After writing the gold artifact:
+After writing each gold artifact:
 
 ```
 PY=$(python3 --version >/dev/null 2>&1 && echo python3 || echo python)
-$PY <kb-start-scripts>/kb_type_validate.py validate {kb_root}/deliverables/{scope}-experiment-roadmap.md
+$PY <kb-start-scripts>/kb_type_validate.py validate <written-artifact-path>
 ```
 
-Resolve `<kb-start-scripts>` from the fe-knowledge-base plugin's kb-start skill `scripts/` directory (marketplace plugin cache or source repo). If validation reports errors, fix the artifact frontmatter/sections and re-validate. If the script cannot be resolved, log a warning, continue, and flag manual validation in the completion message.
+Resolve `<kb-start-scripts>` from the fe-knowledge-base plugin's kb-start skill `scripts/` directory. On errors, fix and re-validate. If the script cannot be resolved, warn, continue and flag manual validation in the completion message.
 
-### KB Mode Completion Message
-
-Replace the first line of the standard completion summary with the KB artifact lines and append validation status:
-
-```
-Experiment roadmap written to {kb_root}/deliverables/{scope}-experiment-roadmap.md
-  Type: gold-experiment-roadmap | Scope: {scope} | Version: {v}
-  depends_on: [silver artifacts consumed]
-
-  [standard counts unchanged]
-
-  Key churn: [re-minted this run: titles whose key was freshly minted | "all keys minted fresh (first run)" | "no key churn"]
-  Orphaned prior keys: [prior keys matching no experiment this run | "none"]
-
-  Validation: kb_type_validate.py passed | failed (fixed and re-validated) | unresolved (manual validation needed)
-```
-
-Key churn reporting (the same re-minted / orphaned lines as the legacy summary) is informational, not a gate.
+**Strategic type registration.** Before writing the strategic artifact, check that the bound type skill defines `gold-strategic-roadmap`. If it does not, still write the artifact, and lead the completion message with: "`gold-strategic-roadmap` is not registered in the bound KB type skill. The strategic roadmap was written but will not pass type validation until the type is registered." A validation failure caused only by that missing type is expected; do not "fix" the artifact for it. Registering the type in a client type skill is that client's follow-on.
 
 ---
 
 ## Preconditions
 
-**Hard requirement (legacy mode):**
-- `company-identity.md` must exist in `.claude/context/` with confidence >= 3
+**Hard requirement (legacy mode):** `company-identity.md` exists in `.claude/context/` with confidence >= 3.
 
-**Soft requirements (legacy mode, degrade gracefully):**
-- `positioning-scorecard.md`: If missing, opportunity detection relies on context gap analysis instead of scorecard ratings. Hypotheses will have lower Confidence scores.
-- `competitive-landscape.md`: If missing, competitive pressure patterns (pricing transparency, differentiator crowding triggers) are unavailable. Those patterns are skipped.
-- `audience-messaging.md`: If missing, persona-based patterns (segment hero personalization, industry proof matching, nav intent mismatch) lose specificity. Generic versions are produced with a note.
-- `performance-profile.md`: If missing, all 22 performance-driven triggers in the Phase 2 Step 1c table are skipped (that table is the authoritative trigger list and count). Confidence capped at 4 globally (no baseline data to validate assumptions). ICE scoring uses qualitative estimates only. Add "Run /ga4-audit for data-calibrated scores and traffic-driven hypotheses" to Prerequisites.
-  When performance-profile.md schema_version >= "2.1":
-    - All v2.0 features plus element-level interaction data
-    - Element-interaction triggers fire in Phase 2 Step 1c
-    - Element data enriches hypotheses targeting pages with interaction baselines
-    - New patterns EE-01 (CTA Click-Through) and EE-02 (Element Engagement Drop-off) become available
-  When performance-profile.md schema_version >= "2.0":
-    - Page groups, source mismatches, trends, failure modes, and sized opportunities are available
-    - The v2.0-field triggers fire in Phase 2 Step 1c
-    - ICE modifiers in Phase 4 use sized opportunities and trend data
-  When performance-profile.md schema_version = "1.0":
-    - Existing v1 triggers still fire
-    - New v2/v2.1 triggers are skipped (fields won't exist in frontmatter)
-    - Backwards compatible, no breaking changes
-- `engagement-constraints` (optional): a capture of delivery and governance state, including release calendar, approval/governance bandwidth, measurement-infrastructure timeline, internal-tester/QA constraints, and delivery-match risks. If present, the skill reasons over it (Phase 2 Step 1d) to derive sequencing and tier constraints. If absent, sequencing uses LIFT and dependencies only. This input never produces hypotheses; it produces constraints on hypotheses already generated. In legacy mode it is an optional context file (`.claude/context/engagement-constraints.md`, loaded by the Phase 1 glob like any other context file). In KB mode it maps to an engagement-context artifact in the bound knowledge base, read per the type skill's artifact definitions.
-  **Structured fields.** The input may also carry structured fields, which the skill reads directly:
-    - A structured field is a top-level YAML frontmatter key, with the same key and shape in both modes. The prose body stays free-form, and Step 1d keeps reasoning over it.
-    - Keys are snake_case, dates are `YYYY-MM-DD`, and free-text values are quoted.
-    - Fields are written by hand; no producer is needed.
-    - Each field is optional and independent. An absent field changes nothing. An unreadable value is skipped with a pre-flight note, never changes the mode and never hard-stops, per `modules/kb-mode.md` `Optional-input exception`. Each field's own rules say how much is skipped.
-    - The structured fields this skill reads: `testing_method` (`phases/detect.md` Step 1h) and `measurement_regime_boundaries` (`Measurement-Regime Boundary`).
-- `experiment-history.md` (optional): `.claude/context/experiment-history.md`, bound only when its frontmatter declares `schema: experiment-history` (the experiment-history-builder output, or a hand-built file to the same schema), plus any per-experiment insight records at `.claude/deliverables/experiments/*/insight.md`, read-only. It is excluded from the Phase 1 full-body load and read through `scripts/history_backlog.py` (Phase 1 step 5b). When bound it enables what the KB-mode experiment-history input enables: Step 1g continuation minting and the coverage ledger, the deployed-state and live-program reads (Gate 7), the Step 1h method inference, the Step 4 outcome-aware posture, Step 7 continuation sequencing, and the `Evidence From Completed Experiments` and `Experiment Program Continuity` sections. When absent, or present without that schema declaration: nothing is rendered, no Prerequisite line is added, and no caveat appears.
+**Optional inputs.** Each one a lens can read widens what it can card. An absent input skips the reads that need it, with no score cap and no global ceiling. The run adds a Prerequisite line where one is named.
+
+| Input | When absent |
+|---|---|
+| `positioning-scorecard.md` | Lenses work from context gaps instead of scorecard ratings |
+| `competitive-landscape.md` | The competitive-and-proof lens works from the company's own claims and proof only |
+| `audience-messaging.md` | Persona-specific cards and copy variations lose specificity |
+| `performance-profile.md` | No performance triggers and no baselines, so A/B rows size as not yet sized. Prerequisite: "Run /ga4-audit for data-calibrated sizing and traffic-driven hypotheses." Schema version gates which triggers fire, per `phases/detect.md` > `Profile Schema Equivalence` |
+| Structural observation (`live-observation.md` / `live-copy.md`, or `silver-structural-observation`) | No structural triggers and no observed current state. Prerequisite: "Run /live-capture for structure-driven triggers and observed current-state documentation." |
+| `engagement-constraints` | No constraint annotations; sequencing uses LIFT and dependencies only |
+| Experiment history | No history lens cards, no completed-experiment evidence, no continuity section. KB mode only: Prerequisite "Connect a completed-experiment knowledge base for continuation experiments and completed-experiment evidence," plus a "live program not reconciled" note in `### Prerequisites and Data Gaps` |
+
+**Experiment history (legacy).** `.claude/context/experiment-history.md` is bound only when its frontmatter declares `schema: experiment-history`. A file without that line is excluded from the full-body load and not bound; the pre-flight says so.
+
+**Engagement constraints.** A capture of delivery and governance state: release calendar, approval bandwidth, measurement timeline, QA constraints, delivery-match risks. In legacy mode it is `.claude/context/engagement-constraints.md`; in KB mode, the engagement-context artifact. It sets readiness and sequencing annotations, never candidacy. It may carry structured fields:
+
+- A structured field is a top-level YAML frontmatter key, the same in both modes. The prose body stays free-form.
+- Keys are snake_case, dates `YYYY-MM-DD`, free-text values quoted. Fields are written by hand.
+- Each field is optional and independent. An unreadable value is skipped with a pre-flight note, never changes the mode and never hard-stops, per `modules/kb-mode.md` `Optional-input exception`.
+- Fields read: `testing_method` (the read-method inference in `phases/detect.md`) and `measurement_regime_boundaries` (`Measurement-Regime Boundary`).
 
 **Error states (legacy mode):**
-- No context files found: Exit with "No context files found in .claude/context/. Run /positioning-framework first."
-- L0 only, confidence < 3: Exit with "Company identity exists but confidence is too low. Run /positioning-framework --depth standard first."
-- L0 only, confidence >= 3: Proceed with limited pattern matching. Report reduced coverage in output.
 
-**In KB mode** (see `KB Mode (Dual-Mode Output)` > `Read-side Mapping`):
-- The hard requirement becomes: the LOWER of `bronze-company-facts.confidence` and `silver-strategy-context.confidence` for the scope must be >= 3.
-- Soft requirements map to the scope's optional silver artifacts with identical degradation semantics.
-- The optional `engagement-constraints` input maps to the scope's engagement-context artifact, if the bound KB defines one. Absent maps to absent: Step 1d is skipped and sequencing falls back to LIFT plus dependencies, identical to legacy.
-- The scope's `silver-performance-analysis` artifact may lack `schema_version`. When absent, the version gating above is bypassed and `phases/detect.md` > `Profile Schema Equivalence` governs which performance-driven triggers fire by content equivalence.
-- The scope's `silver-structural-observation` artifact is an optional soft input. When present, it enables the Step 1 structural extraction stanza and the Step 1e structural triggers in `phases/detect.md`, plus observed current-state documentation and site-wide scope correction in `phases/construct.md`. When missing, those are skipped with NO confidence penalty and NO global cap: absence means page structure was not assessed, not that structure is sound or broken. Add "Run /live-capture for structure-driven triggers and observed current-state documentation" to Prerequisites.
-- The scope's experiment-history input (the external producer KB's gold index plus its linked silver insight records, OR the in-output-KB `schema: experiment-history` silver artifact plus the per-experiment gold insight guides it summarizes, per `KB Mode (Dual-Mode Output)` > `Read-side Mapping`) is an optional soft input. When present, it enables the completed-experiment-evidence section (`Output Format` > `Evidence From Completed Experiments`), the `Experiment Program Continuity` output section, the Step 7 "Experiment-History Continuation Priority" sequencing path, the Step 4 outcome-aware experiment-history posture in `phases/score.md`, and the Step 1g all-outcome experiment-history minting in `phases/detect.md`. When missing, those are skipped with NO confidence penalty and NO global cap: absence means no prior-experiment evidence was available, not that a hypothesis is weak. Add "Connect a completed-experiment knowledge base for replication-grade Quick Wins, iteration experiments off prior losses and flats, and completed-experiment evidence" to Prerequisites. Per the `Mode Resolution Procedure`, this experiment-history input is an optional silver-class input and is NOT a mode-resolution requirement: a missing producer-KB binding is invisible to mode resolution and the skill runs unchanged. This same input additionally supplies live-program state (running/queued experiments + recorded fold decisions) to the `phases/validate.md` Gate 7 live-program fold; when it is absent in KB mode, program state is unreadable, so the roadmap surfaces a visible "live program not reconciled" caveat (see `Output Format` > "What's Not Here") alongside that Prerequisite, so the un-reconciled program is explicit rather than latent. The Prerequisite and the "live program not reconciled" caveat stay KB-mode-only: a legacy run with no history file adds neither.
-- Error states reword for KB artifacts: "No silver CRO artifacts found for scope {scope}. Run /positioning-framework --scope {scope} first." / "Scope L0 artifacts exist but confidence is too low. Run /positioning-framework --scope {scope} --depth standard first."
+- No context files: exit with "No context files found in .claude/context/. Run /positioning-framework first."
+- L0 confidence < 3: exit with "Company identity exists but confidence is too low. Run /positioning-framework --depth standard first."
+- L0 only, confidence >= 3: proceed, and report reduced coverage.
+
+**KB mode:** the hard requirement is the L0 precondition in `Read-side Mapping`. Error states read: "No silver CRO artifacts found for scope {scope}. Run /positioning-framework --scope {scope} first." and "Scope L0 artifacts exist but confidence is too low. Run /positioning-framework --scope {scope} --depth standard first."
 
 ---
 
 ## Decision Posture
 
-Every threshold this skill uses to size, tier, or read a test is defined here, once. Phases and rules cite "SKILL.md > Decision Posture" instead of writing a number. Never substitute a remembered or library-default value: the pre-1.18 numbers (95% confidence, a 15% minimum detectable effect, a six-week Quick Win ceiling) are not the posture. These defaults are fixed in this version; an engagement-level override is a filed follow-on, not a supported input.
+Every threshold used to size or read a test is defined here, once. `scripts/consolidate_backlog.py` reads this table at run time, and phases cite "SKILL.md > Decision Posture" instead of writing a number. Never substitute a remembered or library-default value.
 
 | Constant | Default | Cited by |
 |---|---|---|
-| Significance (two-sided confidence) | 0.90: a result counts at p < 0.10. Two-sided only. | construct Steps 5a and 5b; the read-threshold line; red-team CC2 |
-| Power | 0.80 | construct Step 5b |
-| Multiplier M = 2(z_sig + z_power)^2 | 12.37 | construct Step 5b formula |
-| Relative MDE | 0.20 | construct Step 5b; the feasibility and read-threshold lines |
-| Feasibility bands | <=8 weeks Feasible / 9-16 Extended / 17-26 Challenging / >26 weeks or <100 sessions/mo Infeasible. Bands apply to the unrounded estimate: above 8.0 weeks is Extended, above 16.0 Challenging, above 26.0 Infeasible. | construct Step 5b; validate Gate 5; score Step 5b |
-| Quick Win ceiling | 8 weeks | score Step 6, the calendar-duration override, Step 6b; Quality Rule 16; How to Read |
-| Directional band | 0.10 <= p < 0.20 with the primary lift in the predicted direction. The history Outcome mapping deliberately reads any stated p below 0.20 that missed its own record's bar as directional, which is wider than this band for new reads. | construct Step 6 item 6; `if_inconclusive.directional_read`; the history Outcome mapping |
-| Directional action | Confirm-and-extend iteration: Confidence +1, Ease 0. Never a rollout, never +1/+1. | score Step 4 posture matrix |
-| Guarded-proxy Quick Win | Allowed only when all three hold: an instrumented Direct lead guardrail, a pre-registered non-inferiority margin, and an additive decision rule. The proxy Confidence -1 is waived only then. | construct Step 5a; score Step 4 |
-| Guardrail margin | Equal to the relative MDE (20% relative). State the guardrail's own detectable change at the test's sample next to it. | construct Step 5a; the read-threshold line |
-| Hard gates (unchanged) | 100 conversions per variant; 7-day minimum | construct Step 5b |
-
-The proxy Confidence -1 is softened, not dropped: on-page proxies can move far apart between identical arms (an always-on A/A has shown clicks per visitor differing several-fold), so a proxy read earns Quick Win standing only behind a guarded Direct metric.
+| Significance (two-sided confidence) | 0.90: a result counts at p < 0.10. Two-sided only. | `consolidate_backlog.py` sizing; construct read threshold; red-team CC2 |
+| Power | 0.80 | `consolidate_backlog.py` sizing |
+| Multiplier M = 2(z_sig + z_power)^2 | 12.37 | `consolidate_backlog.py` checks it against the two rows above |
+| Relative MDE | 0.20 | `consolidate_backlog.py` sizing; construct read threshold |
+| Maximum A/B read window | 26 weeks: the boundary between an A/B read and a directional or pre/post read | `consolidate_backlog.py` read model; red-team CC2 |
+| Directional band | 0.10 <= p < 0.20 with the primary lift in the predicted direction. The history Outcome mapping reads any stated p below 0.20 that missed its own record's bar as directional, which is wider than this band for new reads. | construct read threshold; the history Outcome mapping |
+| Directional action | Confirm-and-extend iteration: Confidence +1, Ease 0. Never a rollout. | score ICE |
+| Guarded proxy | A proxy primary metric is allowed only when all three hold: an instrumented Direct lead guardrail, a pre-registered non-inferiority margin, and an additive decision rule. The proxy Confidence -1 is waived only then. | construct guardrail; score ICE |
+| Guardrail margin | Equal to the relative MDE (20% relative). State the guardrail's own detectable change at the test's sample next to it. | construct read threshold |
+| Hard gates | 100 conversions per variant; 7-day minimum | `consolidate_backlog.py` sizing and read model |
 
 **z table.** Two-sided confidence 0.80 -> 1.2816, 0.90 -> 1.6449, 0.95 -> 1.9600, 0.99 -> 2.5758. Power 0.80 -> 0.8416, 0.90 -> 1.2816.
 
-**M grid** (M = 2(z_sig + z_power)^2):
+**M grid:**
 
 | Two-sided confidence | Power 0.80 | Power 0.90 |
 |---|---|---|
@@ -263,35 +219,35 @@ The proxy Confidence -1 is softened, not dropped: on-page proxies can move far a
 | 0.95 | 15.70 | 21.02 |
 | 0.99 | 23.36 | 29.76 |
 
-**Formulas.**
+**Formulas.** The script owns them; they are stated here for the reader.
 
 ```
-n_per_variant  = M * p * (1 - p) / (p * relative_mde)^2
-weeks          = K * n_per_variant / weekly accrual across all arms      (K = arms)
-mde_achievable = sqrt(M * p * (1 - p) / n_window) / p                    (n_window = per-variant sample the window accrues)
+n_per_variant  = ceil(M * p * (1 - p) / (p * relative_mde)^2)
+weeks          = max(arms * n_per_variant / (monthly_sessions / 30) / 7, minimum days / 7)
+mde_achievable = sqrt(M * p * (1 - p) / n_window) / p     (n_window = per-variant sample the window accrues)
 ```
 
-**Profile rescale rule.** When a profile or record states an MDE at a named basis (for example a sizing table computed at 95% confidence and 80% power), rescale it to the posture: `MDE_posture = MDE_stated * sqrt(M_posture / M_stated_basis)`, with the exact M values from the grid for both. Do not re-derive it from raw counts when the source already states its basis.
+**Profile rescale rule.** When a source states an MDE at a named basis, such as a sizing table at 95% confidence and 80% power, rescale it: `MDE_posture = MDE_stated * sqrt(M_posture / M_stated_basis)`, with exact M values from the grid.
 
-**Fixed guardrails** (these hold under any posture):
-- One pre-registered read per test. Do not extend a running test, and do not take a second look at a larger sample.
-- A harm stop is allowed only if it is one-sided and declared before launch.
-- Size every test on the posture MDE, never on a prior result's point estimate. A significant estimate from a modestly powered test overstates the true effect.
-- History records are never promoted to a win after the fact. They were sized and stopped under their own plan (typically 95%), so the 90% bar applies to new tests only.
-- Two-sided tests only. Guarded proxies only. The Quick Win share stays honest: when more than half the tactical roadmap tiers Quick Win, `phases/score.md` Step 6 re-tiers the lowest-ICE Quick Wins until at most half remain.
+**Fixed guardrails:**
 
-**Rendering.** The deliverable states the posture in plain numbers (90% confidence, 80% power, a 20% minimum detectable effect, an 8-week Quick Win ceiling): once in the How to Read note, and again in every Test Feasibility line and every read-threshold line. Constant names never render (see `Deliverable Purity Constraint`).
+- One pre-registered read per test. Do not extend a running test or take a second look.
+- A harm stop is allowed only if one-sided and declared before launch.
+- Size every test on the posture MDE, never on a prior result's point estimate.
+- History records are never promoted to a win after the fact. The 90% bar applies to new tests only.
+- Two-sided tests only. Guarded proxies only.
+
+**Hard rule: size only from this table.** Every sized figure in either roadmap comes from `consolidate_backlog.py` output, which reads this table. Never compute a sample size, duration or achievable effect by hand.
+
+**Rendering.** Each roadmap states the posture in plain numbers once, in `## How to Read This Roadmap`, and again in every read-threshold line. Constant names never render.
 
 ---
 
 ## Measurement-Regime Boundary
 
-An engagement can declare the date its measurement regime changed, such as a consent banner that began gating analytics or a tag-manager migration. A rate measured before that date is not comparable with a test read after it. This section is the rule's one home: phases and rules cite "SKILL.md > Measurement-Regime Boundary" and do not restate it.
+An engagement can declare the date its measurement regime changed, such as a consent banner that began gating analytics or a tag-manager migration. A rate measured before that date is not comparable with a test read after it. This section is the rule's one home.
 
-**Field.** `measurement_regime_boundaries` is a list in the engagement-constraints frontmatter, carried per the `Preconditions` structured-field convention. Each entry has two keys:
-
-- `date`: the first full day the new measurement applied (`YYYY-MM-DD`).
-- `change`: a short description in client words. It renders as written.
+**Field.** `measurement_regime_boundaries` is a list in the engagement-constraints frontmatter. Each entry has `date` (the first full day the new measurement applied, `YYYY-MM-DD`) and `change` (a short description in client words, rendered as written).
 
 ```yaml
 measurement_regime_boundaries:
@@ -299,85 +255,76 @@ measurement_regime_boundaries:
     change: "consent banner now gates analytics"
 ```
 
-The field is a list because one engagement can go through more than one change, such as a consent banner followed by a tag-manager migration.
+**Governing boundary B.** The latest valid `date` on or before the run date, resolved at Phase 1 step 5c.
 
-**Governing boundary B.** The latest valid `date` on or before the run date. Phase 1 step 5c resolves it.
-
-- An entry dated after the run date is a planned change. This rule ignores it; `phases/detect.md` Step 1d reads it.
-- An entry with a missing or malformed `date` is skipped and raised as a pre-flight handoff item. A date the operator gives there applies to this run only; the file is not edited.
+- An entry dated after the run date is a planned change. This rule ignores it; the engagement-constraint reading in `phases/detect.md` uses it.
+- An entry with a missing or malformed `date` is skipped and raised as a pre-flight handoff item. A date the operator gives there applies to this run only.
 - An entry with a valid `date` and no `change` still applies.
-- A field value that is not a list is skipped whole, with one pre-flight note, per `modules/kb-mode.md` `Optional-input exception`.
-- With no B (no field, or every entry future or skipped), the rule is inert.
+- A field value that is not a list is skipped whole, with one pre-flight note.
+- With no B, the rule is inert and changes nothing.
 
-**Window verdict.** A window counts as a baseline only when it starts on or after B.
+**Window verdict.** A window counts as a baseline only when it starts on or after B. A window that ends before B, straddles B, or has no stated start is refused.
 
-| Window | Verdict |
+| Window | Start read from |
 |---|---|
-| Starts on B | Counts. B is the first full day of the new measurement. |
-| Starts after B | Counts. |
-| Ends before B | Refused: it predates the change. |
-| Starts before B and ends on or after it | Refused: it straddles the change. |
-| Start cannot be determined | Refused as undatable. |
+| Profile primary window | `date_range` start, else an equivalent statement in the profile body |
+| Profile comparison window | `comparison_period.start`, else an equivalent body statement. A trend is read only when both profile windows count |
+| History record used for sizing | The launch date in the record's full entry |
+| Planned pre-period | Counted back from the run date |
 
-Only B matters: a window that starts on or after B also starts after every earlier boundary. A window is undatable only when no source states its start.
+**Hard rule: never size on a refused window.** Lenses set each card's `baseline.window_start` from the window the baseline came from. Phase 3 passes `--boundary B` to `consolidate_backlog.py` whenever B governs, and the script sizes nothing on a refused or undated window: the row's read model is "Not yet sized" and it lands in `## Needs Measurement`. A refused profile is still a present profile, so it adds no ga4-audit Prerequisite.
 
-**Windows.** Each window's start is read from its own source, and its verdict goes to the consumers listed:
+**Reads left alone:** completed-experiment outcomes and the Outcome mapping; trigger detection on within-window evidence (trends excepted, above); the history Baseline Anchors; the instrumentation inventory.
 
-| Window | Start read from | Consumers |
+**Quoted figures.** A figure from a refused window renders only with its period stated as before the change, for example "in early 2026, before the June 2026 measurement change". It never reads as a current rate. While a boundary governs, a figure whose period cannot be stated is not quoted as a rate. A completed experiment whose window starts before B renders its absolute arm rates with the period stated; its relative lift and significance need no qualifier.
+
+---
+
+## Agent Model Selection
+
+| Agent | Role | Model |
 |---|---|---|
-| Profile primary window | `date_range` start, else an equivalent statement in the profile body, matched by content as `phases/detect.md` `Profile Schema Equivalence` matches trends | construct Steps 2, 5 and 5b; validate Gates 1, 3 and 5 and Strategic Gates 1 and 3; score Steps 2, 4 and 6b |
-| Profile comparison window | `comparison_period.start`, else an equivalent body statement. A trend is read only when both profile windows count | detect Step 1c trend triggers; score Step 4 worsening-trend line |
-| History record used for sizing | The launch date in the record's full entry, matched by content in either source shape. The Phase 1 step 5b second-stage read reaches the entry, because the hypothesis targets the record's surface | construct Step 5b |
-| Planned pre-period | Counted back from the run date | construct Step 4c and Strategic Gate 1 (strategic); detect Step 1d (tactical, non-A/B) |
+| Orchestrator | Phases 0, 1, 3, 4, 5 and 6: intake, context, consolidation, checks and scoring, write-ups, render | `opus` |
+| Surface lens | Page by page: performance and structural triggers, prompt-library patterns per surface | `opus` |
+| Persona-and-journey lens | Personas, segments and buying journeys across surfaces | `opus` |
+| History lens | One card per lead, high or medium experiment-history item | `opus` |
+| Strategic lens | Every strategic lever family, plus the catch-all | `opus` |
+| Competitive-and-proof lens | Competitive pressure, claim overlap, proof gaps | `opus` |
 
-**Refused-window effects.** A refused window sizes and scores nothing, in either lane. Its figures count as absent for those reads, and each consumer takes the path it already has for a page missing from the profile. A refused profile is still a present profile, so the no-performance Confidence ceiling and its ga4-audit Prerequisite do not apply. A refused surface does not route to "What's Not Here": its traffic and power were never judged.
-
-**Reads left alone.** The rule does not touch these reads:
-
-- Completed-experiment outcomes: Step 1g minting, the Outcome mapping and the score Step 4 posture matrix. A finished test compared its arms inside its own window. Rendering its absolute rates follows `Quoted figures`.
-- Detection: a refused window still fires Step 1c triggers on within-window evidence, such as a page against the site average in the same window. Trends are the exception (the comparison-window row above).
-- The history Baseline Anchors.
-- The Step 1f instrumentation inventory and Gate 2.
-
-**Quoted figures.** A figure from a refused window, a Baseline Anchors rate included, renders only with its period stated as before the change, for example "in early 2026, before the June 2026 measurement change". It never reads as a current rate. While a boundary governs, a figure whose period cannot be stated is not quoted as a rate. The same holds for a completed experiment whose window starts before B: its absolute arm rates and counts render with that period stated, while its relative lift and significance need no qualifier. This holds in both deliverables.
-
-**No boundary.** Every branch this section adds keys on B. With no B, it changes no gate verdict, score, tier, rendered line or pre-flight line.
+Every lens subagent is dispatched with `model: opus`. Lens floor: 10 cards per lens, passed to the script as `--floor 10`. The floor is a target: a lens that returns fewer reports its shortfall, is not re-dispatched, and does not pad.
 
 ---
 
 ## Execution Pipeline
 
-### Phase 0: Spec Intake (when --spec is provided)
+| Phase | Work | Home |
+|---|---|---|
+| 0 | Spec intake | this file |
+| 1 | Mode, context load, history projection, boundary, archetype, pre-flight | this file |
+| 2 | Dispatch the five lens subagents in parallel; each returns a JSON card array | `phases/detect.md`, `phases/detect-strategic.md` |
+| 3 | Pool the cards in a temp file and run `consolidate` | this file |
+| 4 | Per-row checks that add blockers, ICE for every row, then `rank` | `phases/validate.md`, `phases/score.md` |
+| 5 | Full write-ups for the selected rows | `phases/construct.md` |
+| 6 | Render both roadmaps, remove temp files, print the completion message | this file |
 
-**Skip this phase entirely if `--spec` was not passed.**
+### Phase 0: Spec Intake
 
-Parse the spec before loading context. Build a coverage checklist that Phase 5 will check against.
+Skip this phase unless `--spec` was passed. Parse the spec before loading context.
 
-1. If `--spec` is a file path, read the file. If it is inline text, parse it directly.
-
-2. Extract discrete spec items. Each bullet point, numbered item, or sentence describing a requested action or analysis area is one item.
-
+1. Read the file, or parse the inline text.
+2. Extract discrete items: each bullet, numbered item or sentence that requests an action or analysis area. Number them `S1..Sn`.
 3. Categorize each item:
 
 | Category | Definition | Handling |
-|----------|-----------|---------|
-| **CRO/on-page** | Layout changes, messaging, CTAs, forms, personalization, hero content, scroll depth | Must map to at least one hypothesis. If it doesn't, goes to "What's Not Here" with reason. |
-| **Content audit** | Review of named page sections (e.g., "key features", "services & software", "valuation inputs") | Requires actual page content. If page was EMPTY:BLOCKED and no screenshot is available, flag as blocked and tell the user to share a screenshot or manual content before this spec item can be addressed. |
-| **SEO/organic** | Keyword strategy, GEO/AEO/LLM optimization, ranking, search intent, meta tags | Out of scope for this skill. Route to `/marketing-skills:seo-audit` or `/marketing-skills:ai-seo`. |
-| **Interlinking/architecture** | Internal link structure, page placement, site taxonomy, cross-linking strategy | Out of scope for this skill. Requires site architecture analysis. Note in "What's Not Here" and recommend a manual audit or a future interlinking skill. |
-| **Analytics/tracking** | Metrics setup, data gaps, instrumentation | Handled via Prerequisites section if performance-profile.md data is available. Otherwise note in "What's Not Here". |
+|---|---|---|
+| CRO/on-page | Layout, messaging, CTAs, forms, personalization, hero content, scroll depth | Ends as a write-up or backlog row, or as an `## Exclusions` entry with its grounds |
+| Content audit | Review of named page sections | Needs page content. If the page was blocked and no screenshot exists, mark it blocked |
+| SEO/organic | Keywords, GEO/AEO/LLM optimization, ranking, search intent, meta tags | Out of scope. Route to `/marketing-skills:seo-audit` or `/marketing-skills:ai-seo` |
+| Interlinking/architecture | Internal links, page placement, taxonomy, cross-linking | Out of scope. Recommend a manual audit of navigation and cross-linking, or a separate work item |
+| Analytics/tracking | Metrics setup, data gaps, instrumentation | Feeds `### Prerequisites and Data Gaps` |
 
-4. Build the checklist (internal, not written to disk):
-
-```
-Spec checklist:
-  [ ] [item text] -- category: CRO/on-page
-  [ ] [item text] -- category: content audit -- BLOCKED: no page content available
-  [ ] [item text] -- category: SEO/organic -- OUT OF SCOPE: route to /marketing-skills:seo-audit
-  [ ] [item text] -- category: interlinking -- OUT OF SCOPE: route to /marketing-skills:ai-seo or manual audit
-```
-
-5. If any content audit items are present and page content is not in context files, output a single prompt before proceeding:
+4. Keep the checklist in-session, one line per item with its id, text and category.
+5. When a content audit item is present and the page content is missing, ask once before proceeding:
 
 ```
 The spec requests a content audit of [section names]. The page was not extracted automatically (access blocked).
@@ -390,51 +337,60 @@ To cover this spec item, share one of:
 Reply with the content or "skip" to proceed without it.
 ```
 
-Wait for response. If content is provided, treat it as supplementary page context for Phase 2 opportunity detection. If "skip" or no content, mark the item as blocked in the checklist and continue.
+Provided content becomes supplementary page context for the lenses. On "skip", mark the item blocked.
 
 ### Phase 1: Context Discovery and Loading
 
-**Module resolution and availability (do this before loading any module).** Every `modules/<name>.md` reference in this skill and its phase files is repository-root-relative: the shared library lives in the `modules/` directory at the repo root, a sibling of `skills/`, NOT inside this skill's own folder. When the skill is invoked from a symlinked or installed location (e.g., `~/.claude/skills/hypothesis-generator/`), resolve this skill's real path first (follow the symlink), then load `modules/` from the repository root (the parent of `skills/`). If the required library (`experiment-patterns.md`, `ice-scoring.md`, `contrarian-triggers.md`, `hypothesis-interactions.md`, `copy-craft.md`, `prose-craft.md`, `slugify.md`) cannot be located and read, STOP and report that the shared pattern library is unavailable. Do NOT substitute embedded or remembered CRO patterns, ICE calibration, contrarian/interaction logic, copy-craft rules, prose-craft rules, or slug-minting rules: a roadmap produced without the library is not valid output, and a plausible-looking silent fallback is the exact failure this guard prevents. (`copy-craft.md` governs every copy-bearing hypothesis via `phases/construct.md`; `prose-craft.md` governs roadmap prose style under Quality Rule 8; `slugify.md` governs key minting under Quality Rule 18.) **Thresholds resolve from `Decision Posture` only.** Every significance level, power, minimum detectable effect, feasibility band, Quick Win ceiling and directional band comes from the `Decision Posture` section of this file; never use a remembered value or one stated in a module, a profile, or a prior roadmap.
+**Module resolution.** Every `modules/<name>.md` reference in this skill and its phase files is repository-root-relative: `modules/` is a sibling of `skills/`. When the skill runs from a symlinked or installed location, resolve this skill's real path first, then load `modules/` from the repository root. If any required module (`experiment-patterns.md`, `ice-scoring.md`, `contrarian-triggers.md`, `hypothesis-interactions.md`, `copy-craft.md`, `prose-craft.md`, `slugify.md`) cannot be read, STOP and report that the shared library is unavailable. Never substitute remembered patterns, calibration, copy rules or slug rules.
 
-0. **Mode resolution** -- run the `Mode Resolution Procedure` from `KB Mode (Dual-Mode Output)`. In legacy mode, continue below unchanged. In KB mode, steps 1-2 read the scope's artifacts per `Read-side Mapping` instead of the `.claude/context/` glob, and the handoff check uses the KB-mode branches noted below. In KB mode, the optional experiment-history input (the external producer KB's gold index plus the silver insights it links, OR the in-output-KB `schema: experiment-history` silver artifact plus the per-experiment gold insight guides it summarizes, per `Read-side Mapping`) is resolved and loaded alongside the other optional silver reads here -- read-only; its `depends_on` treatment diverges by source (external producer: no edge; in-KB silver history doc: edge recorded), per `Read-side Mapping` and `Output Mapping and Frontmatter Contract` -- and is consumed by `phases/detect.md` (Step 1g enrichment leg) and `phases/score.md` (Step 4 replication modifier + Step 7 sequencing). It adds no phase/module file.
-1. Glob `.claude/context/*.md`
-2. Read YAML frontmatter only for each file
-3. Build context inventory (file, schema type, confidence, depth)
-4. Check preconditions (see above)
-5. Load full body of all available context files, except `experiment-history.md` (in KB mode, the in-KB `schema: experiment-history` artifact), which is never loaded as a full body (step 5b reads it). A `.claude/context/experiment-history.md` WITHOUT the `schema: experiment-history` line is still excluded (it is far too large to load raw) and is not bound; the pre-flight says "experiment-history.md present but not in the experiment-history schema; not bound".
-5b. **Experiment-history projection (only when a `schema: experiment-history` source is bound).** The external `gold-experiment-index` path does not use this step. Set the two inputs per mode, then run the script from this skill's resolved real path (see `Module resolution and availability`):
+0. **Mode resolution:** run the `Mode Resolution Procedure`. In KB mode, steps 1 to 5 read the scope's artifacts per `Read-side Mapping`.
+1. Glob `.claude/context/*.md`.
+2. Read the YAML frontmatter of each file.
+3. Build the context inventory: file, schema type, confidence, depth.
+4. Check `Preconditions`.
+5. Record the resolved path of every input a lens reads. The orchestrator reads full bodies only where its own phases need them. The experiment history is never read as a full body.
+
+5b. **Experiment-history projection** (only when a `schema: experiment-history` source is bound). Set the inputs per mode, then run the script from this skill's resolved real path:
 
    - **Legacy:** `HIST=.claude/context/experiment-history.md` and `INS=$(ls .claude/deliverables/experiments/*/insight.md 2>/dev/null)`.
-   - **KB mode (in-KB fallback, step 5 of `Mode Resolution Procedure`):** `HIST=<the in-output-KB schema: experiment-history artifact path>` and `INS=<the paths of the gold insight guides it summarizes>`.
+   - **KB mode (in-KB fallback):** `HIST=<the in-KB schema: experiment-history artifact path>` and `INS=<the gold insight guide paths it summarizes>`.
 
    ```
    PY=$(python3 --version >/dev/null 2>&1 && echo python3 || echo python)
-   $PY <skill-dir>/scripts/history_backlog.py --history "$HIST" ${INS:+--insights $INS}
+   PROJ=$(mktemp)
+   $PY <skill-dir>/scripts/history_backlog.py --history "$HIST" ${INS:+--insights $INS} > "$PROJ"
    ```
 
-   Read the projection in full. Then read the four sections it reports (Cross-Experiment Patterns, Baseline Anchors, Discovered Mechanisms, Coverage Gaps) by their reported line ranges. Second-stage reads: read a full record entry, by its reported line range, only when a candidate hypothesis targets its surface, its deployed-state cue needs the detail, or a coverage-ledger disposition rests on it; cap these at 20 entries. Then act on the projection's warnings: for each insight record it lists under COVERAGE PARTIAL (one that could not be parsed; the rest of the projection is still valid), read that file's `next_experiments` block directly and open its ledger rows by hand; on a stated/parsed WARNING, read the Experiment Log headings to find the unparsed entries. Exit 3: the file is not an experiment history; treat it as unbound. Exit 1: the history itself could not be parsed; fall back to a bounded read: the frontmatter, the four named sections, at most 20 full entries chosen by surface, plus a grep of every `Next Steps` line in the history and every `next_experiments` block in the insight records, so the ledger still sees every named follow-up. Mark coverage partial in the completion-summary ledger line and note the fallback in the completion message.
-5c. **Measurement-regime boundary (only when the engagement-constraints frontmatter carries `measurement_regime_boundaries`).** Resolve B and give the profile's primary and comparison windows their verdicts, per `Measurement-Regime Boundary`. History records and planned pre-periods get theirs where they are consumed (`phases/construct.md` Steps 4c and 5b, `phases/detect.md` Step 1d). Skip this step when the field is absent.
-6. Check for evidence augmentation modules (glob `modules/evidence-*.md`). If any exist, load them. These modules provide additional pattern-matching data and scoring calibration beyond what context files contain. The skill works without them; they enrich when present.
-7. **Archetype resolution and pattern loading.** Read `category.primary` from the strategy context loaded above (legacy mode: `company-identity.md` frontmatter; KB mode: the scope's `silver-strategy-context`, per `Read-side Mapping`). Resolve the archetype via the mapping table below (case-insensitive substring match against `category.primary`, first match wins). Load the base pattern library AND the matched archetype module. On no match, load the base library only and flag reduced archetype coverage in the pre-flight summary.
+   - The projection numbers every typed insight item `I1..In`. Prose next tests the orchestrator rates get `P1..Pn`. These ids seed the history ledger.
+   - The history lens reads the projection, then the four named sections it reports (Cross-Experiment Patterns, Baseline Anchors, Discovered Mechanisms, Coverage Gaps) by line range.
+   - **Full-entry cap (hard rule):** across the run, read at most 20 full record entries, by line range, chosen by surface. The ledger still covers every lead or high item.
+   - **COVERAGE PARTIAL:** read each listed insight record's `next_experiments` block directly. On a stated/parsed WARNING, read the Experiment Log headings to find the unparsed entries.
+   - **Exit 3:** not an experiment history; treat it as unbound.
+   - **Exit 1:** fall back to a bounded read: the frontmatter, the four named sections, at most 20 full entries, and a grep of every `Next Steps` line and every `next_experiments` block. Mark coverage partial in the completion message.
 
-   | `category.primary` contains | Archetype | Module to load (in addition to the base library) |
+   The external `gold-experiment-index` path reads the index and its linked insights directly and skips this step.
+
+5c. **Measurement-regime boundary** (only when `measurement_regime_boundaries` is present). Resolve B and the profile windows' verdicts per `Measurement-Regime Boundary`.
+
+6. **Archetype resolution.** Read `category.primary` from the strategy context (legacy: `company-identity.md`; KB: `silver-strategy-context`). Match case-insensitively by substring, first match wins:
+
+   | `category.primary` contains | Archetype | Added to the prompt library |
    |---|---|---|
    | "procurement", "punchout", "e-procurement", "CPQ", "contract catalog", "authenticated" | procurement | `modules/patterns-procurement.md` |
-   | "SaaS", "software platform", subscription software | b2b-saas | `modules/patterns-b2b-saas.md` (when it exists; skip if absent) |
-   | "ecommerce", "online store", "DTC", "retail", "(online)" | b2c-ecommerce | base library (current default) |
-   | no match | base only | base library (current default) |
+   | "SaaS", "software platform", subscription software | b2b-saas | `modules/patterns-b2b-saas.md`, when it exists |
+   | "ecommerce", "online store", "DTC", "retail", "(online)" | b2c-ecommerce | base library only |
+   | no match | base only | base library only; flag reduced archetype coverage |
 
-   "Base library" in this rollout means the current `modules/experiment-patterns.md`. A later refactor will split it into `patterns-base.md` + `patterns-b2c-ecommerce.md`; until then the current library is the default and archetype modules load additively on top. If an archetype module named in the table does not exist on disk, skip it silently and proceed (graceful degradation, consistent with the skill's existing missing-input behavior). This layer is additive: until an archetype module exists, every scope loads the base library only and behavior is unchanged. An archetype module may also define a `## Strategic Lever Families` section; when it does, Phase 2c loads those families additively as strategic families 7+ (see `phases/detect-strategic.md` > `Archetype Family Extension`; no archetype module defines any today).
-8. Check for missing handoff items and present the pre-flight summary.
+   `modules/experiment-patterns.md` is the base library. A missing archetype module is skipped silently. An archetype module may define a `## Strategic Lever Families` section, which the strategic lens loads as families 7+.
 
-**Handoff check -- run before displaying the summary.** Look for the following and flag each gap:
+7. **Handoff check and pre-flight.** Flag each gap that applies:
 
-- **No spec provided** (`--spec` was not passed): Flag. The skill can run without a spec, but spec items are frequently missed without one. Prompt for it.
-- **Page blocked** (check `.claude/context/_fetch-registry.md` if it exists -- look for `[EMPTY:BLOCKED]` or `[EMPTY:SPA]` entries for the target page): Flag. Section-level content analysis requires a screenshot. In KB mode: read the same markers from `{kb_root}/captures/fetch-registries/{scope}-fetch-registry.md` instead.
-- **External deliverables** (check `.claude/deliverables/` -- if files exist, a prior ideation deck or external doc may be relevant; ignore `.claude/deliverables/experiments/`, which holds the insight records this skill reads as history input, and this skill's own prior roadmaps): Flag only if no spec was provided and deliverables are present. Ask if there is an external deck or document to reference. In KB mode: check `{kb_root}/deliverables/` for `{scope}-`prefixed files; an existing `{scope}-experiment-roadmap.md` is prior work handled by `Prior Work Detection (KB Mode)` (supersede), not an external-deck flag.
-- **Unreadable boundary date** (only when the engagement-constraints frontmatter carries `measurement_regime_boundaries`): flag each entry whose `date` is missing or malformed, quoting its `change` text, per `Measurement-Regime Boundary`. A field value that is not a list gets one note saying it was skipped.
+   - **No spec:** the run works without one, but spec items are often missed. Prompt for it.
+   - **Page blocked:** `[EMPTY:BLOCKED]` or `[EMPTY:SPA]` for the target page in `.claude/context/_fetch-registry.md` (KB: the scope's fetch registry). Section-level analysis needs a screenshot.
+   - **External deliverables:** files in `.claude/deliverables/` other than `experiments/` and this skill's own roadmaps, when no spec was given. Ask whether an external deck applies. In KB mode, check `{kb_root}/deliverables/` for other `{scope}-` files.
+   - **Unreadable boundary date:** each `measurement_regime_boundaries` entry with a missing or malformed `date`, quoting its `change` text.
 
-Consolidate all flags into a single pre-flight prompt. Do not issue separate prompts for each gap:
+   Consolidate every flag into one prompt:
 
 ```
 Context available:
@@ -443,529 +399,384 @@ Context available:
   competitive-landscape.md (confidence: 3, depth: standard)
   audience-messaging.md (confidence: 4, depth: standard)
   performance-profile.md (confidence: 3, 30 days, 45.2K sessions)  [or: not found]
-  performance-profile.md (confidence: 3, 30 days, 45.2K sessions; predates the measurement boundary; not used as a baseline)  [instead, when a governing boundary refuses the primary window; when the window is undatable the note reads "no stated date range; not used as a baseline under the measurement boundary"]
+  performance-profile.md (...; predates the measurement boundary; not used as a baseline)  [when B refuses the primary window]
   experiment-history.md (150 experiments, 5 insight records; projected)  [only when bound]
-  experiment-history.md present but not in the experiment-history schema; not bound  [instead, when the file lacks the schema line]
+  experiment-history.md present but not in the experiment-history schema; not bound  [when the schema line is missing]
 
-Pattern categories active: all 10 (32 patterns loaded)
-Archetype: [resolved value] (resolved from category.primary)
-Patterns loaded: base library + [archetype module name, or "none"]
-Performance-driven triggers: [active | inactive (no performance-profile.md)]
-Evidence augmentation: [none | list loaded modules]
-Decision posture: 90% confidence (two-sided), 80% power, 20% MDE, Quick Win <= 8 weeks
-Measurement boundary: 2026-06-22 (consent banner now gates analytics)  [only when a boundary governs]
-Max hypotheses: 10
+Archetype: [value] (resolved from category.primary); prompt library: base + [module or "none"]
+Focus: [all | categories]
+Lenses: 5, floor 10 cards each; write-ups per roadmap: 10
+Decision posture: 90% confidence (two-sided), 80% power, 20% MDE, A/B read window up to 26 weeks
+Measurement boundary: 2026-06-22 (consent banner now gates analytics)  [only when B governs]
 
 --- Handoff items needed ---
-[Only include lines that apply. Omit this section entirely if nothing is missing.]
-
+[Only lines that apply. Omit the block when nothing is missing.]
   Spec not provided. Paste the client's brief or requested items, or pass --spec.
-  Target page was blocked (Akamai CDN). Share a screenshot to enable section-level content analysis.
-  Existing deliverables found. Is there an external deck or document (e.g., a Google Slides link) to reference?
+  Target page was blocked. Share a screenshot to enable section-level content analysis.
+  Existing deliverables found. Is there an external deck or document to reference?
   Measurement boundary "[change text]" has no readable date. Reply with its YYYY-MM-DD date, or "skip".
 
 Reply with any handoff items above, or "skip" to proceed without them.
 ```
 
-If nothing is missing (spec provided, no blocked pages, no deliverables without a deck reference, no unreadable boundary date), omit the "Handoff items needed" block and show only "Proceed? [Y/n]".
+   With nothing missing, show only "Proceed? [Y/n]". In KB mode, list KB artifact paths and add the line `KB mode: {kb-type} | scope: {scope}`.
 
-In KB mode, the `Context available` list shows the KB artifact paths (per `Read-side Mapping`) and the summary header includes one extra line: `KB mode: {kb-type} | scope: {scope}`. A measurement-boundary note goes on the performance artifact's line.
+### Phase 2: Lens Dispatch
 
-### Phase 2: Opportunity Detection
+Dispatch all five lens subagents in one message, in parallel, each with `model: opus`. Each subagent gets:
 
-Read and follow `phases/detect.md`.
+- its brief: the surface, persona-and-journey, history and competitive-and-proof lens briefs in `phases/detect.md`, or the strategic lens brief in `phases/detect-strategic.md`;
+- the `Card Schema` section of `phases/detect.md`;
+- the resolved paths of every input from Phase 1, including supplementary silver and any cross-scope artifact reachable through a declared `depends_on` edge;
+- the prompt library paths (base plus archetype module), `--focus` categories, the spec checklist, the floor, and B when it governs;
+- for the history lens, the projection path `$PROJ` (or the producer index paths) and the full-entry budget left.
 
-Scan all loaded context for testable signals. Match signals against the trigger conditions defined in `modules/experiment-patterns.md`. Each match produces a raw opportunity.
+Pass paths, never pasted context bodies. Each lens returns one JSON array of cards and nothing else. A card that fails the card schema is fixed by the orchestrator from the lens's own text, or dropped and named in the completion message. Hard-rule discards a lens reports (a documented-live lever, a form swap between identical forms) go to `## Exclusions` with their grounds.
 
-Output: Internal opportunity list (not written to disk). Typically 15-25 raw opportunities before filtering.
+### Phase 3: Consolidate
 
-### Phase 2b: Context-Derived Opportunity Detection
+Pool every lens's array into one JSON array in a run temp file, then run:
 
-Read and follow `phases/detect-contextual.md`.
+```
+CARDS=$(mktemp); CONS=$(mktemp)
+# write the pooled card array to "$CARDS"
+$PY <skill-dir>/scripts/consolidate_backlog.py consolidate --cards "$CARDS" \
+    [--prior <prior tactical roadmap>] [--prior <prior strategic roadmap>] \
+    [--boundary B] --floor 10 > "$CONS"
+```
 
-Evaluate unmatched signals from Phase 2 (Step 6) for novel testable experiments that don't match any pattern. Apply the six-criterion quality gate. Surviving signals become context-derived opportunities that merge into the Phase 2 opportunity list.
+- Pass each prior roadmap that exists. In legacy mode these are `.claude/deliverables/experiment-roadmap.md` and `strategic-roadmap.md`; in KB mode, the scope's gold roadmaps.
+- Pass `--boundary` only when B governs. `--posture` defaults to this file.
+- Exit 1 names the bad card index and field: fix the card and re-run. Exit 3 means this file's `Decision Posture` table is unreadable: STOP and report the row named.
+- The output carries `posture`, `rows`, `lens_counts`, `lens_shortfalls`, `cards_in`, `rows_out` and `dropped_prior_keys`. Each row carries its key, read model and sizing; every sizing object echoes `monthly_sessions` and `rate`.
 
-Output: Context-derived opportunities appended to the opportunity list. Tagged `type: "context-derived"` for scoring adjustments.
+### Phase 4: Check, Score and Rank
 
-### Phase 2c: Strategic-Lever Detection
+1. **Per-row checks:** read and follow `phases/validate.md` for every row. It records `validation_gates` and adds blockers with a one-line reason each.
+2. **ICE:** read and follow `phases/score.md` for every row. Add `ice: {i, c, e}` (integers 1 to 5) to each row. ICE orders rows within a readiness tier; it never removes one.
+3. **Rank:** write the scored rows to a temp file and run:
 
-Read and follow `phases/detect-strategic.md`.
+```
+SCORED=$(mktemp); RANKED=$(mktemp)
+$PY <skill-dir>/scripts/consolidate_backlog.py rank --rows "$SCORED" --write-ups <N> \
+    [--history-items I1,I2,P1,...] [--excluded-history <ids>] > "$RANKED"
+```
 
-Read the loaded context for business-level levers (not page elements) via the inline lever-family checklist, apply the relaxed quality gate, and emit strategic opportunities that each carry a measurement design. On an interactive run where no optional soft input (stated objective, dominant lever, real alternative) is present in any loaded source, the phase first asks one consolidated pre-flight question for it; non-interactive runs and unanswered questions proceed penalty-free (see `phases/detect-strategic.md` > `Optional Soft Input`). After the six families, a family-agnostic Catch-All Leg reads the full context for business-level levers fitting no family, under the identical quality gate with a raised two-artifact signal bar; it is expected to produce zero survivors on most runs. The phase is default-on and context-gated: when no qualifying lever is present in the loaded context, it emits nothing, no strategic deliverable is produced, and the tactical roadmap is unchanged.
+   - `--rows` accepts the row array or the whole `consolidate` object.
+   - `--history-items` lists every lead or high ledger id; `--excluded-history` lists those that go to `## Exclusions`.
+   - The output carries ranked `rows` (each with `readiness`, `rank` and `write_up`), `history_ledger` and `history_unaccounted`.
+4. **Close the ledger** per `phases/score.md`. **Hard rule:** while `history_unaccounted` is non-empty, no roadmap is written.
 
-Output: Strategic opportunities route to the strategic construction, scoring, and render path (NOT appended to the Phase 2 / 2b tactical opportunity list); they render into the separate strategic deliverable (`Strategic Roadmap Output Format`) when any qualify. Ordering across detection phases is 2 then 2b then 2c then 3.
+### Phase 5: Write-Ups
 
-### Phase 3: Hypothesis Construction
+Read and follow `phases/construct.md` for every row with `write_up: true`. Each write-up carries the labels in `Output Format` (tactical) or `Strategic Roadmap Output Format` (strategic). Sized figures come from the row's sizing object only.
 
-Read and follow `phases/construct.md`.
+### Phase 6: Render
 
-Transform raw opportunities into complete, testable hypotheses with causal reasoning, specific page targets, before/after examples, and audience mapping.
+1. **Spec coverage** (when `--spec` was given): every spec id maps to a write-up, a backlog row (via the row's `spec_items`) or an `## Exclusions` entry. Out-of-scope and blocked items go to `## Exclusions` with their routing text:
+   - SEO/GEO/organic: "This requires keyword and search intent analysis outside the scope of this roadmap. Run `/marketing-skills:seo-audit` for technical SEO or `/marketing-skills:ai-seo` for GEO/LLM optimization."
+   - Interlinking/architecture: "Internal link structure and page placement need a site architecture review. Audit the navigation and cross-linking manually, or raise a separate work item."
+2. **Tactical roadmap:** render the tactical rows per `Output Format` and write it. KB mode prepends the frontmatter, applies `Prior Work and Supersede`, and runs the `Post-Write Validation Gate`.
+3. **Strategic roadmap:** when the strategic rows or Measurement Foundation entries number at least one, render per `Strategic Roadmap Output Format` and write it the same way. Otherwise write no strategic file, and leave any prior strategic file untouched.
+4. Remove every run temp file (`$PROJ`, `$CARDS`, `$CONS`, `$SCORED`, `$RANKED`).
+5. Print the `Completion Message`.
 
-Filter and deduplicate. Cap at `--max` value.
-
-Output: Internal hypothesis list (not written to disk).
-
-### Phase 3.5: Premise & Measurement Validation
-
-Read and follow `phases/validate.md`.
-
-Validate each hypothesis's premise, metric instrumentation, baseline, control stability, statistical power, and segmentation against the artifacts already loaded (no web research, no disk writes). Emits a per-hypothesis `validation_gates` record (six tri-state gates: `premise_contradicted`, `metric_instrumented`, `baseline_exists`, `control_stable`, `powerable`, `segmentation_satisfied`) that Phase 4 consumes as hard caps on Confidence and as Quick Win / infeasible-routing gates. Each gate is pass / fail / not-assessed; only an affirmative fail caps Confidence, and a not-assessed gate (backing artifact absent) is neutral and never penalizes.
-
-Strategic-lane hypotheses pass through this phase via the Strategic Lane Gates subset (`baseline_reliable`, `metric_instrumented`, `premise_contradicted`; tri-state, non-A/B-aware); Step 6b consumes the record as a hard Confidence ceiling.
-
-Output: Internal `validation_gates` record per hypothesis (not written to disk), plus Prerequisites and "What's Not Here" routing flags for Phase 4.
-
-### Phase 4: ICE Scoring and Sequencing
-
-Read and follow `phases/score.md`.
-
-Score each hypothesis using the ICE framework. Read `modules/ice-scoring.md` for calibration anchors, modifier rules, and scoring discipline.
-
-This phase branches by lane. **Tactical hypotheses** (pattern-matched and context-derived) score and tier as today into Quick Wins, Strategic Bets, and Explorations for the tactical roadmap. **Strategic opportunities** run the separate strategic scoring and tiering path in `phases/score.md` (business-outcome Impact, measurement-rigor Confidence, non-A/B feasibility judgment), producing a separate scored, tiered strategic list for the strategic deliverable. The two never share one ICE table.
-
-Output: a scored, sequenced, tiered tactical hypothesis list, plus (when any strategic lever qualifies) a separately scored and tiered strategic experiment list.
-
-### Phase 5: Render
-
-#### Step 5a: Spec Coverage Check (when --spec was provided)
-
-Before writing the file, check every CRO/on-page spec item from the Phase 0 checklist against the generated hypothesis list.
-
-For each CRO/on-page item:
-- If at least one hypothesis targets it: mark covered. Note the hypothesis number in the checklist.
-- If no hypothesis targets it: add an entry to the "What's Not Here" section explaining why it wasn't converted into a testable experiment (e.g., "this is a 'just do it' fix, not a hypothesis" or "insufficient page content to scope the experiment").
-
-For each content audit item:
-- If page content was provided and the section was analyzed: note what was found and whether it produced a hypothesis.
-- If blocked: add to "What's Not Here" with the instruction to share page content.
-
-For each out-of-scope item (SEO/organic, interlinking):
-- Add to "What's Not Here" with explicit routing:
-  - SEO/GEO/organic: "This requires keyword and search intent analysis outside the scope of hypothesis-generator. Run `/marketing-skills:seo-audit` for technical SEO or `/marketing-skills:ai-seo` for GEO/LLM optimization opportunities."
-  - Interlinking/architecture: "Internal link structure and strategic page placement require site architecture analysis outside the scope of this skill. Conduct a manual audit of the site's navigation and cross-linking patterns, or raise as a separate work item."
-
-The "What's Not Here" section must be non-empty when a spec is provided. A roadmap that silently ignores spec items is a failure.
-
-#### Step 5b: Write tactical deliverable
-
-Write `.claude/deliverables/experiment-roadmap.md` following the tactical Output Format specification below. The tactical roadmap is built ONLY from the tactical (pattern-matched and context-derived) hypothesis list; no strategic experiment renders here.
-
-In KB mode: write to `{kb_root}/deliverables/{scope}-experiment-roadmap.md` instead -- same body, with the frontmatter contract prepended and the supersede rule applied (see `KB Mode (Dual-Mode Output)` > `Output Mapping and Frontmatter Contract` and `Prior Work Detection (KB Mode)`). After writing, run the `Post-Write Validation Gate` and use the `KB Mode Completion Message` in place of the summary below.
-
-Display completion summary:
+### Completion Message
 
 ```
 Experiment roadmap written to .claude/deliverables/experiment-roadmap.md
+  Write-ups: [n] | Backlog rows: [n]
+  By readiness: ready now [n], needs a design change [n], needs measurement [n], needs a client decision [n]
+  By read model: A/B [n], directional [n], pre/post [n], holdout [n], not yet sized [n]
+  Cards in: [n] | Rows out: [n]
+  Lens cards: surface [n], persona-journey [n], history [n], strategic [n], competitive-proof [n]
+  Shortfalls against the floor of 10: [lens n, ... | none]
+  History ledger: [n] lead/high (A adopted, M merged, F folded, S strategic, D not advanced), 0 unaccounted; [L] medium/low considered [; coverage partial: what was not read]  [only when history is bound]
+  Exclusions: [n]
+  Keys: [t] carried by title, [m] carried by mechanism, [k] minted; dropped prior keys: [key (title), ... | none]
+  Cards dropped as invalid: [titles | none]
 
-  [X] hypotheses produced ([Y] Quick Wins, [Z] Strategic Bets, [W] Explorations)
-  [N] patterns matched, [M] context-derived, [K] performance-driven, [P] patterns skipped (insufficient context)
-  [F] experiments routed to "What's Not Here" (infeasible at current traffic)
-  History backlog: N lead/high (A adopted, M merged, F folded, S strategic, D not advanced), 0 unaccounted; L medium/low considered [; coverage partial: what was not read]  [only when a history source is bound]
-  [Q] Quick Wins re-tiered to keep Quick Wins at or under half the roadmap  [only when the Quick Win share rule fired]
-  [D] data gaps identified (see Prerequisites section)
-  Performance data: [available (N sessions, N days) | not available]
-  Element interaction data: [available (N events) | not available]
+Strategic roadmap written to .claude/deliverables/strategic-roadmap.md
+  [the same lines, for the strategic rows]
+  [or, when skipped: "No strategic rows; no strategic roadmap written."]
 
-  Key churn: [re-minted this run: list of experiment titles whose key was freshly minted because no prior normalized-title matched | "all keys minted fresh (first run)" when there was no prior roadmap | "no key churn" when every key carried forward]
-  Orphaned prior keys: [prior keys that match no experiment in this run, with their prior titles | "none"]
-
-  Top experiment: [name] (ICE: [score])
-
-Review the roadmap and let me know if any hypotheses need adjustment.
+Top write-up: [title] ([readiness], ICE [total])
 ```
 
-Key churn reporting is informational, not a gate -- it lets a human review whether a reworded title produced a fresh key (which would re-orphan its mockup) or whether an experiment was dropped (orphaning its prior key).
+In KB mode, each roadmap block opens with its artifact lines and closes with validation:
 
-#### Step 5c: Write strategic deliverable (conditional)
-
-**Run this step ONLY when the strategic path produced at least one scored strategic experiment OR at least one Measurement Foundation entry.** A Foundation-entry-only output is complete and correct (per `phases/detect-strategic.md` family 1) and IS rendered: the deliverable then carries the Measurement Foundation section without tier sections. When neither exists, skip this step entirely: write no strategic file (not an empty file, not a stub), and report "No qualifying strategic levers; no strategic roadmap produced" in the completion summary. In that case the tactical `experiment-roadmap.md` is the only output.
-
-When at least one strategic experiment or Foundation entry qualifies, write the strategic deliverable following `Strategic Roadmap Output Format`:
-- Legacy mode: `.claude/deliverables/strategic-roadmap.md` (no frontmatter).
-- KB mode: `{kb_root}/deliverables/{scope}-strategic-roadmap.md` as a `gold-strategic-roadmap` artifact with the frontmatter contract from `Strategic Roadmap Output Format`. After writing, run the post-write validation gate and apply the supersede / prior-work rule per that section.
-
-Append the strategic deliverable's path, type, scope (KB mode), version, `depends_on` (KB mode), strategic experiment count, and validation status to the completion summary. The strategic deliverable is a complete fresh projection of current context, scored and rendered independently of the tactical roadmap.
+```
+Experiment roadmap written to {kb_root}/deliverables/{scope}-experiment-roadmap.md
+  Type: gold-experiment-roadmap | Scope: {scope} | Version: {v}
+  depends_on: [silver artifacts consumed]
+  [the lines above]
+  Validation: kb_type_validate.py passed | failed (fixed and re-validated) | unresolved (manual validation needed)
+```
 
 ---
 
 ## Output Format
 
-This is the tactical experiment roadmap: **page-element experiments only**. Business-level levers render in the separate `Strategic Roadmap Output Format` deliverable.
+The tactical roadmap holds page-level experiments. Business-level levers render in the strategic roadmap.
 
-**File:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md` with the KB frontmatter contract prepended; body unchanged)
+**File:** `.claude/deliverables/experiment-roadmap.md` (KB mode: `{kb_root}/deliverables/{scope}-experiment-roadmap.md`, frontmatter prepended, body unchanged).
+
+H2 sections render in this order. Readiness H2s render only when non-empty. Nothing else is an H2.
 
 ```markdown
 # [Company Name]: Experiment Roadmap
 
 ## How to Read This Roadmap
 
-Experiments are scored using the ICE framework:
-- **Impact** (1-5): Expected effect on conversion or revenue if the variant wins
-- **Confidence** (1-5): How certain we are this will produce a measurable result. A high Confidence here means the premise holds against what we measured, the metric is actually tracked, a baseline exists, the current page is verified, and the test has the traffic to read. Where any of those does not hold, Confidence is held down and the experiment carries a launch-readiness note rather than an inflated score.
-- **Ease** (1-5): Implementation effort (5 = trivial, 1 = major engineering)
-
-Experiments are grouped into three tiers:
-- **Quick Wins:** High confidence, high ease, fast signal (<=8 weeks at a 20% minimum detectable effect, 90% confidence, 80% power). Run these first to build momentum.
-- **Strategic Bets:** High impact, moderate confidence. Higher effort, higher payoff.
-- **Explorations:** Lower confidence, high learning potential. Run when you have bandwidth.
-
-**Decision posture:** each test is planned and read once at 90% confidence (two-sided, so a result counts at p < 0.10) with 80% power to detect a 20% relative change; a lift in the expected direction with p between 0.10 and 0.20 is directional, is not shipped, and earns a fresh confirmation test. These are FunnelEnvy's standard thresholds for this roadmap.
-
-[Render the numbers in the tier line and the posture note from `Decision Posture`; the defaults are shown.]
+[Short. State four things once, in plain words:
+- The four readiness groups: ready now; needs a design change before it can run; needs measurement in place first; needs a client decision.
+- Within each group, items are ordered by ICE: Impact, Confidence and Ease, each 1 to 5.
+- The first [N] items are written up in full. Every other opportunity is a row in the backlog table, ordered the same way.
+- The decision posture: each test is planned and read once at 90% confidence (two-sided, so a result counts at p < 0.10) with 80% power to detect a 20% relative change. A lift in the expected direction with p between 0.10 and 0.20 is directional: it is not shipped and earns a fresh confirmation test. A test that would need more than 26 weeks is read directionally or before-and-after instead.
+Numbers come from `Decision Posture`.]
 
 ## Roadmap Summary
 
-| # | Experiment | Page | Tier | I | C | E | ICE |
-|---|-----------|------|------|---|---|---|-----|
-| 1 | [name] | [page] | Quick Win | 4 | 4 | 5 | 13 |
-| 2 | ... | ... | ... | ... | ... | ... | ... |
+| # | Experiment | Readiness | Read model | I | C | E | ICE |
+|---|---|---|---|---|---|---|---|
+| 1 | [title] | Ready now | A/B | 4 | 4 | 3 | 11 |
 
-## Evidence From Completed Experiments
+## Ready Now
 
-[Present ONLY when any completed-experiment source is bound (either mode) and carries at least one relevant record. Omit this section entirely otherwise (no history source bound, or no relevant records). This is evidence narrative that frames the tiers below with what has already been learned, not a scored tier. It presents evidence from completed experiments of all outcomes (wins, losses, and flats), not just wins: a loss is evidence the obvious version fails and points at the bolder iteration; a flat points at a measurement or dosage fix.
+### 1. [Title]
 
-For each surfaced completed experiment, render in natural language:
-- **Outcome:** what was tested and what happened (e.g., "a specific-claim hero beat the generic control on demo-request rate", or "a single-step contact form did not move completions, so the obvious simplification failed"). Quantified results from completed experiments (lift percentages, statistical significance, sample sizes) are permitted and encouraged here as natural-language attribution without identifiers; do not over-redact them into vague phrasing.
-- **Mechanism:** why it worked or failed, the transferable behavioral principle.
-- **Transferable rule:** the generalizable lesson and where it plausibly applies next.
-- **Attribution:** natural source reference only (e.g., "a prior test on the pricing page"). No experiment identifiers or activity numbers, no system internals.
+**Key:** [row key]
+**Page:** [page or URL path; comma-separated when the test spans pages]
+**Mechanism:** [the row's mechanism key with hyphens as spaces, and nothing else]
+**What to test:** [the concrete change]
+**Change type:** [insert | replace-copy | modify | remove | reorder; primary first, comma-separated for a bundle. Derived per `phases/construct.md`]
 
-Where a record carries a next-experiment that maps to a hypothesis in this roadmap, name the connection in prose: "Hypothesis N below rolls this out on the solutions page", or "Hypothesis N below re-tests this with a bolder variant after the first attempt fell flat."]
-
-## Experiment Program Continuity
-
-[Present ONLY when a history source is bound (either mode) AND at least one continuation was emitted; omit entirely otherwise (no history source bound, or zero continuations).
-
-For each prior test this roadmap advances, one natural-language line: what the prior test found, and which experiment number here continues it and how. A line may name a merge, when two prior follow-ups advance as one experiment here. Winners that roll out, directional results that get a fresh confirmation test, losses that get an isolating or bolder re-test, flats that get a dosage or measurement fix. No experiment identifiers, no outcome-label jargon, no internal type names. The program spine.
-
-Continuation experiments themselves remain scored and placed in their normal tiers (Quick Wins / Strategic Bets / Explorations) and compete on ICE; this section is the narrative spine that makes the advancement visible, not a separate scored tier.]
-
-## Quick Wins
-
-### 1. [Experiment Name]
-
-**Key:** [stable slug minted once from the title; see key-minting rule below]
-**Page:** [specific page or URL path]
-**What to test:** [concrete, specific change]
-**Change type:** [one primary type from the enum, comma-separated when a bundled test spans types, primary first: insert | replace-copy | modify | remove | reorder. Derived per construct.md Step 3 (Change-type derivation). Projection content: re-derived on every render from the proposed change, NOT carried forward like `**Key:**`.]
-
-**Current state:** [what exists now, with specific copy or structure referenced from the website]
-**Baseline:** [if performance-profile.md exists: sessions/mo, bounce rate, conversion rate for the target page. Omit this line entirely if no performance data, or when `Measurement-Regime Boundary` refuses the profile's window.]
-**Test Feasibility:** [if Baseline exists and includes CVR: "~N weeks at a 20% MDE, 90% confidence, 80% power (2 variants, N per variant, measured on [the traffic figure with its number, for example 5,600 page sessions/mo or enrollment of 46/day]). [Tier]." Numbers from `Decision Posture`. Within 0.5 week of a band edge, render one decimal ("8.3 weeks, Extended"). If Baseline exists but no CVR: "Cannot estimate (no conversion rate baseline)." Omit this line entirely if no performance data, or when `Measurement-Regime Boundary` refuses the profile's window. Under a non-A/B testing method (pre/post, cohort, operational; detect Step 1h), use the read-window form instead: "Read window: ~N weeks against a stable pre-period baseline." No MDE, no samples-per-arm, no weeks-to-power.]
+**Current state:** [what exists now, with specific copy or structure]
+**Baseline:** [sessions/mo and conversion rate for the target page. Omit when there is no usable baseline]
 **Proposed change:** [what the variant looks like]
 
-> **Before:** "[current headline or copy]"
-> **After:** "[proposed headline or copy]"
+> **Before:** "[current copy]"
+> **After:** "[proposed copy]"
 
-For messaging-led hypotheses (headline, hero, positioning, value-proposition categories), show multiple variations:
+[Messaging-led tests show variations instead:]
+> **Variation A ([anchor]):** "[copy]"
+> **Variation B ([anchor]):** "[copy]"
+> **Recommended:** [A|B]: [one-sentence reason]
 
-> **Variation A ([anchor]):** "[proposed copy]"
-> **Variation B ([anchor]):** "[proposed copy]"
-> **Variation C ([anchor]):** "[proposed copy, if applicable]"
-> **Recommended:** [A|B|C] -- [1-sentence reason]
-
-**Why this should work:** [causal mechanism, 2-3 sentences, grounded in behavioral principle]
-**Proof status:** [Verified | Needs verification -- see Prerequisites. Only shown when proof points are referenced.]
-
-**Target metric:** [primary metric and expected direction. On a surface where an earlier test showed the on-page engagement metric moving opposite to the downstream business result, make the downstream business metric (contact / consultation / qualified-lead rate) the primary read and name the on-page engagement metric as a leading indicator, in plain language, so the read is not keyed to the misleading proxy. Never name the internal displacement annotation or any system field (see Deliverable Purity Constraint).]
-**Expected effect and read threshold:** [direction plus the ship/abandon condition, stated as the six-part threshold, every part required on an A/B read: (1) the primary metric; (2) two-sided significance at the posture (p < 0.10); (3) the MDE and the sample per arm the read is sized for; (4) a single pre-registered read point, with no extension and no second look; (5) the directional action (a positive lift with p between 0.10 and 0.20 is not shipped and earns a fresh confirmation test sized on the posture MDE); (6) the guardrail, its margin (20% relative) and its own detectable change at this sample, or, when the test reads no guardrail, a clause saying so. Numbers from `Decision Posture`. Example: "Read once at ~7 weeks (about 3,000 visitors per arm, sized to detect a 20% lift). Ship if form-converting visitors rise at p < 0.10 (two-sided). If the lift is positive with p between 0.10 and 0.20, do not ship; run a fresh confirmation test sized for a 20% lift. Qualified meetings must not fall more than 20% relative; at this sample that is a harm check able to detect only a drop of about 30%." A proxy-only scope with no CVR baseline has no computable MDE, so it states the same six parts against an absolute threshold pre-registered before launch ("ship if CTA click-through reaches 4.0% or more at the single read and beats control at p < 0.10, two-sided"), or declares the first run baseline-setting (it sets the baseline and ships nothing; its follow-on test is sized on the posture MDE from that baseline). Never a fabricated point estimate. Under a non-A/B testing method (pre/post, cohort, operational), use the pre/post form: "ship if the treated period beats the stable pre-period baseline over the read window; abandon if flat or negative over the window." Every A/B read, proxy-only included, carries all six parts.]
-**Guardrail metric:** [downstream business metric that must not degrade. Only shown when primary is a proxy metric.]
-**Audience:** [persona or segment, if specific]
-**Readiness:** [natural-language launch readiness, shown only when the validation pass surfaced something to act on. Covers: launch-blocking prerequisites in plain terms for a metric that is genuinely not tracked anywhere (e.g., "this metric is not yet tracked; add tracking before running"); a per-surface **confirmation** for a metric that is already live in production but documented outside the performance profile (a `live-elsewhere` metric per the instrumentation gate) -- frame it as verification, never as a build (e.g., "the qualified-lead measurement is live; confirm it fires on this form before launch", NOT "stand up qualified-lead tracking"); a "verify the current page before launch" note when the captured page state may be stale or contested; and the pre-registered read audience when this test reads a specific segment rather than all visitors (e.g., "Read on paid-search arrivals, who are the audience this addresses; site traffic here is mostly direct"). The build phrasing ("add tracking") and the verification phrasing ("confirm it fires here") are not interchangeable: a capability documented live must never be rendered as tracking to stand up. Plain language only: never name a gate field, a metric-inventory term, or any system internal (see Deliverable Purity Constraint). Omit the line entirely when nothing blocks launch, the page state is fresh, and the read is all-visitors.]
+**Read model:** [A/B: "A/B, ~N weeks, about N visitors per arm, sized for a 20% lift at 90% confidence and 80% power, on N sessions/mo at a N% conversion rate" | Directional: "Directional, read once over the full 26-week window, about N visitors per arm; it can detect a change of about N%, on N sessions/mo at a N% conversion rate" | Pre/post: "Pre/post, N-week read against a stable pre-period baseline" | Holdout: "Holdout, [group] held out for N weeks" | "Not yet sized" with the reason. Every figure comes from the row's sizing object, including the traffic and rate it echoes]
+**Why this should work:** [the causal mechanism in 2-3 sentences, grounded in a behavioral principle]
+**Target metric:** [primary metric and direction. Where an earlier test showed the on-page metric moving against the business result, the downstream business metric is primary and the on-page metric is a leading indicator]
+**Expected effect and read threshold:** [A/B and directional reads state six parts: (1) the primary metric; (2) two-sided significance at p < 0.10; (3) the effect size and sample per arm the read is sized for; (4) one pre-registered read point, no extension, no second look; (5) the directional action; (6) the guardrail, its 20% relative margin and its own detectable change at this sample, or a clause saying the test reads no guardrail. A proxy-only read with no conversion baseline states the same six parts against an absolute threshold set before launch, or declares the first run baseline-setting. Pre/post and holdout reads state a pre-registered read criterion and window. Never a fabricated point estimate]
+**Guardrail metric:** [downstream metric that must not degrade; only when the primary metric is a proxy]
+**Audience:** [persona or segment, when specific]
+**Evidence:** [the sources this rests on, in plain words: what was observed, where]
 
 **Scores:** Impact [X] | Confidence [X] | Ease [X]
-[1 sentence explaining each score]
+[One sentence per score]
 
-**Bundled elements:** [N elements: list. Only shown when bundled_test is true.]
-> This test will teach: [will_teach summary]
-> This test will not isolate: [wont_teach summary]
+**Bundled elements:** [N elements: list; only for a bundled test]
+> This test will teach: [summary]
+> This test will not isolate: [summary]
 
-**What a win proves:** [learning unlocked by positive result]
-**What a loss teaches:** [learning from negative result]
+**What a win proves:** [learning from a positive result]
+**What a loss teaches:** [learning from a negative result]
+**Notes:** [annotations in plain words: a partial pattern fit and what is missing, counter-evidence against the standard advice, a running experiment on this page and how this sequences after it, an engagement constraint. Omit when none]
 
-**Behavioral evidence ([source], [date]):** [the specific friction finding (dead clicks, quickbacks, error rates) that corroborates or qualifies the mechanism, with its source. Required only when a behavioral-friction signal exists for the target surface; omit the line entirely when none does.]
+## Needs a Design Change
 
-**Self-critique:** [Required on every hypothesis.]
-> **Thesis challenge:** [strongest argument the causal thesis is wrong, 1-3 sentences]
-> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
->
-> **Design challenge:** [strongest argument the test won't prove the thesis, or "Covered by bundled disclosure above"]
-> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
->
-> **Outcome challenge:** [strongest argument a metric win could mask a business loss, or "Covered by guardrail metric above"]
-> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
+### N. [Title]
+[Same labels, plus **Readiness:** one plain line naming what must change in the design before it can run]
 
-**Key field (minting rule).** The `**Key:**` value is `slugify(title)` (per `modules/slugify.md`), minted **once** at first generation and then **immutable**. It is **position-independent** (does not embed the roadmap number `N`) and is **never re-derived from the title** on any later run. On a fresh roadmap (no prior to read), every experiment's key is minted fresh as `slugify(title)`. On a re-render, keys are carried forward from the prior roadmap per `Re-render Behavior` (the carry-forward rule), not re-derived. The key is the stable join key downstream skills use to resolve a mockup to its experiment, so it must survive title edits. The same minting and carry-forward rule applies to the strategic deliverable's per-experiment `**Key:**` field (see `Strategic Roadmap Output Format`); the two deliverables draw keys from independent title spaces but follow the identical rule.
+## Needs Measurement
 
-This roadmap contains **page-element experiments only**. Business-level levers (programs, offers, audience motions, assets) are not rendered here; they have their own deliverable (see `Strategic Roadmap Output Format`). Nothing in this tactical template carries strategic-lane fields or per-experiment strategic content; the one permitted cross-reference is the neutral scheduling line in the Sequencing Rationale for a different-measurement-altitude dedup pair (detect-strategic.md Step 3 case 2).
+### N. [Title]
+[Same labels, plus **Readiness:** one plain line naming what must be measured or verified first]
 
----
+## Needs a Client Decision
 
-### 2. [Experiment Name]
-[Same structure]
+### N. [Title]
+[Same labels, plus **Readiness:** one plain line naming the decision needed]
 
-## Strategic Bets
+## Backlog
 
-### [N]. [Experiment Name]
-[Same structure, plus context on why effort is higher]
+| Key | Title | Surface | Mechanism | Readiness | Read model | ICE | Evidence |
+|---|---|---|---|---|---|---|---|
+| [key] | [title] | [pages] | [mechanism words] | [Ready now, or the one-line reason] | [A/B / Directional / Pre/post / Holdout / Not yet sized] | I4 C3 E2 (9) | [source, in plain words] |
 
-## Explorations
+## Exclusions
 
-### [N]. [Experiment Name]
-[Same structure, plus explicit note on what makes confidence lower]
+[Only: opportunities set aside because they already exist or would swap identical forms; spec items not advanced; lead or high prior-test follow-ups not advanced. One line each, with its grounds. Out-of-scope spec items keep their routing text. Omit the section when empty.]
 
-## Sequencing Rationale
+## Method
 
-[3-5 paragraphs. Why this order. What early experiments teach. How quick wins build evidence for strategic bets. Dependencies between experiments. Where to branch based on win/loss results. When a page-level experiment here shares a surface with a strategic experiment's read window (the different-measurement-altitude dedup case), add ONE neutral natural-language line stating that it is sequenced to avoid overlapping that read window, or how the overlap is accounted for.]
+### How Tests Are Read
 
-## What's Not Here (and Why)
+[The general protocol, once: one pre-registered read; segment signals after the read earn a confirmation test, never a ship; check the leading indicator when the main metric is flat; directional results earn a fresh confirmation test.]
 
-[Patterns evaluated but excluded, with reasons. Example: "Pricing page experiments were considered but [Company] already publishes transparent pricing with clear tier differentiation." Prevents the reader from wondering about obvious omissions.
+### Evidence From Completed Experiments
 
-Also includes:
-- Patterns that COULD NOT be evaluated due to missing data. Cross-reference the Prerequisites section for what to collect.
-- Experiments flagged as infeasible due to insufficient traffic. Include the page, the hypothesis summary, and the reason (e.g., "~45 weeks at a 20% MDE, 90% confidence, 80% power, only 120 sessions/mo"). These are real opportunities that can't be validated with A/B testing at current traffic levels. Suggest alternative approaches: pre/post analysis, proxy metrics, or qualitative testing.
-- Candidates folded into a live experiment (from the live-program fold, `phases/score.md` Step 5b). When a running or queued experiment already tests the same idea on the same page, the candidate belongs here, not in the scored roadmap. Name the live experiment in plain language, phrase the recommendation as an iteration inside it (re-sync and read it cleanly), and carry any variation copy or evidence the idea developed so it feeds the running test rather than being lost. Example: "A specific-claim hero test on the [page] was considered, but an experiment is already running on that page testing a sharper hero and clearer value framing. Rather than open a competing test, re-sync with that experiment and read it cleanly; the variation copy drafted here can feed its next iteration." Never re-propose it as a standalone 'clean re-open'; never name experiment identifiers or system internals.
-- Prior-test follow-ups considered but not advanced, shown ONLY when a history source is bound and at least one recommended follow-up is not run here. One plain-language line per lead or high-priority follow-up a prior test recommended that this roadmap does not run, with the reason it is not here (for example: its surface sits off this site, it waits on the result of an experiment above, it is unreadable at current traffic, it ranked below the cut, or newer evidence superseded it). Medium and low follow-ups that were considered render aggregated: one line per surface with a count and up to five named examples, at most ten lines in total. Folded follow-ups use the fold entry above, and business-level ones live in the strategic roadmap. Never name experiment identifiers, priority labels, or system internals.
-- A "live program not reconciled" caveat, shown ONLY when program state could not be read (KB mode with no completed-experiment / program-state knowledge base bound). One plain-language line noting that the roadmap could not be reconciled against the client's live experiment program, so any overlap with in-flight tests should be confirmed before launch. Cross-reference the "connect a completed-experiment knowledge base" Prerequisite. Omit entirely when program state was read (or in legacy mode with no history file bound).]
+[Only when a history source is bound and holds relevant records. Per experiment, in plain words: what was tested and what happened, why, the transferable rule, and a natural attribution ("a prior test on the pricing page"). Name the connection to a write-up or backlog row here when one exists.]
 
-## If Tests Are Inconclusive
+### Experiment Program Continuity
 
-A/B tests produce inconclusive results 41-50% of the time. This is normal, not a failure. Each experiment below has a predefined response for a flat result.
+[Only when a history source is bound. For each lead or high prior-test follow-up: the write-up number or backlog key that carries it, or its Exclusions entry. Medium and low follow-ups may aggregate by surface.]
 
-**General protocol for any inconclusive test:**
-1. Verify test integrity: check for tracking errors, bot traffic, external events (holidays, PR incidents, product changes) that may have contaminated results.
-2. Run the segment analysis specified below as a diagnostic. A segment signal found after the read is a second look, so it never ships: it earns a fresh confirmation test pre-registered on that segment and sized on the posture MDE.
-3. Check the micro-conversion specified below. If the leading indicator improved but the macro conversion didn't, downstream friction exists. The "next test" recommendation addresses it.
-4. If no signal in segments or micro-conversions: follow the "if flat" action below.
+### Sequencing
 
-### Quick Wins
+[Short. What runs first and why, dependencies, one test per surface at a time, and any page test that must not overlap a strategic read window.]
 
-**[Experiment Name]**
-- **Check first:** [segment dimension and what to look for]
-- **Micro-conversion:** [leading indicator that should move even if macro is flat]
-- **If segment shows signal:** Pre-register a confirmation test on [segment], sized for the posture's minimum detectable effect; do not deploy on the post-hoc segment read. Run the next experiment on the remaining traffic.
-- **If flat across segments:** [iterate bolder description OR "Move on to [next experiment]. This hypothesis lacked strong enough context support to justify a second iteration."]
-- **If directional:** [a lift in the predicted direction with p between 0.10 and 0.20 (numbers from `Decision Posture`) is not shipped and the test is not extended; queue a fresh confirmation test of the same mechanism, sized for the posture's minimum detectable effect, and name what it sharpens, if anything. A directional result against the prediction is read as a loss.]
-- **Leads to:** [next experiment in the sequence if this line is abandoned]
+### Prerequisites and Data Gaps
 
-### Strategic Bets
+[Grouped as missing baseline data, verification needed, and infrastructure. Each item names the affected write-ups or keys and a concrete action.]
 
-**[Experiment Name]**
-[Same structure, with more emphasis on the "iterate bolder" path since Strategic Bets have stronger causal backing]
+### If Tests Are Inconclusive
 
-### Explorations
-
-**[Experiment Name]**
-[Same structure, with more emphasis on "move on" since Explorations have lower confidence by definition]
-
-## Prerequisites and Data Gaps
-
-[Grouped into three categories:
-
-### Missing Baseline Data
-[Analytics, form metrics, traffic data not available. Names specific affected experiments and what to measure.]
-
-### Context Verification Needed
-[Claims needing client confirmation. Unverified proof points that affected scoring. Specific verification actions.]
-
-### Infrastructure Prerequisites
-[Personalization tools, CMS capabilities, testing platform requirements. Which experiments need what.]
-
-Each item names specific affected experiments and a concrete collection or verification action.]
+[One short block per write-up: check first, leading indicator, if flat, if directional, leads to.]
 
 ---
 *Analysis produced by FunnelEnvy | [Date]*
 *Based on positioning analysis across [N] sources*
 ```
 
+**Write-up rules:**
+
+- Write-ups are numbered from 1 across the whole roadmap, in rank order, under the readiness H2 the row's readiness names.
+- **Required labels:** `**Key:**`, `**Page:**`, `**Mechanism:**`, `**What to test:**`, `**Change type:**`, `**Current state:**`, `**Proposed change:**`, `**Read model:**`, `**Why this should work:**`, `**Target metric:**`, `**Expected effect and read threshold:**`, `**Evidence:**`, `**Scores:**`, `**What a win proves:**`, `**What a loss teaches:**`. Add `**Readiness:**` under every readiness H2 except `## Ready Now`.
+- **Conditional labels:** `**Baseline:**`, `> **Before:**` and `> **After:**`, the variation block with `**Recommended:**`, `**Guardrail metric:**`, `**Audience:**`, `**Bundled elements:**`, `**Notes:**`.
+- `**Mechanism:**` holds the row's mechanism words only, so a later run can match the write-up to its row. The mechanism sentence goes in `**Why this should work:**`.
+- A backlog row is not a mockup target until a later run promotes it to a write-up.
+- **Live-program note:** a row that sequences after a running or queued experiment names that experiment in plain words: on a write-up's `**Notes:**` line, or in a backlog row's `Readiness` cell ("Ready now; runs after the current hero test on this page").
+
+**Renderer contract.** `render-program-site` parses both roadmaps, so these hold in every render:
+
+- Readiness H2 text is exactly `Ready Now`, `Needs a Design Change`, `Needs Measurement` or `Needs a Client Decision`.
+- No H2 is named for a 1.x tier.
+- In every write-up, `**Key:**` sits on its own line, and so does `**Scores:** Impact X | Confidence Y | Ease Z` in exactly that shape.
+- A `### N.` numbered heading appears only on a write-up. `## Method` H3s are unnumbered.
+- A tactical write-up's page sits in `**Page:**`; a strategic write-up's lever sits in `**Lever:**`.
+
 ---
 
 ## Strategic Roadmap Output Format
 
-This is a **second, separate, conditional deliverable**, distinct from the tactical experiment roadmap above. It holds business-level levers (programs, offers, audience motions, assets) as scored strategic experiments measured by designs fit to the lever. It is produced ONLY when at least one strategic lever survives Phase 2c's quality gate and strategic scoring. The tactical roadmap above is unchanged whether or not this deliverable is produced.
+The strategic roadmap holds business-level levers: programs, offers, audience motions and assets, each read by the design that fits it.
 
-### When this deliverable is produced
+**When it is written:** when the strategic rows plus Measurement Foundation entries number at least one. Otherwise no file is written, not even a stub.
 
-Produced only when the strategic path (Phase 2c -> strategic construction -> strategic scoring) yields at least one scored strategic experiment or at least one Measurement Foundation entry. When neither qualifies, NO strategic roadmap file is written at all: not an empty file, not a stub. In that case the tactical `experiment-roadmap.md` is the only output and is byte-identical to a run with this feature absent. This mirrors the Phase 2c graceful-degradation contract (`phases/detect-strategic.md` > `Graceful Degradation`).
+**File:** legacy `.claude/deliverables/strategic-roadmap.md`, no frontmatter. KB mode `{kb_root}/deliverables/{scope}-strategic-roadmap.md` as a `gold-strategic-roadmap` artifact, with the frontmatter in `Output Mapping and Frontmatter Contract`.
 
-### Deliverable contract (paths and KB artifact type)
-
-- **Legacy mode:** `.claude/deliverables/strategic-roadmap.md`, written alongside `experiment-roadmap.md`. No frontmatter (same body-purity rule as the tactical roadmap in legacy mode).
-- **KB mode:** `{kb_root}/deliverables/{scope}-strategic-roadmap.md`, written as a **distinct gold artifact type, `gold-strategic-roadmap`** (NOT a reuse of `gold-experiment-roadmap`). Prepend the KB gold frontmatter block:
-
-  `fe-managed: true`, `name: {scope}-strategic-roadmap`, `description` (one line, generated), `kb_layer: gold`, `governed_by: {kb-type}/gold-strategic-roadmap` (composed at runtime; never hardcode a KB type name), `scope`, `data_provenance` (`client` when any consumed silver artifact is `client`-provenance, else `public`), `generated_by: hypothesis-generator`, `depends_on` (KB-root-relative paths of the silver and reference artifacts actually consumed by strategic detection: the strategy-context artifact plus whichever loaded artifacts fed a surviving lever, including but not limited to positioning-scorecard / competitive-landscape / audience-messaging / performance-profile / structural-observation / an engagement-context reference artifact / a scope reference doc such as a lead-lifecycle or measurement-definitions reference -- the enumeration is a floor, not a ceiling, so an artifact type absent from this list is not exempt from being recorded when it is genuinely load-bearing; omit missing optionals; gold-to-silver edges only), `tags` (3-7 semantic), `version`, `created`, `updated`.
-
-  The body stays free of all `Deliverable Purity Constraint` prohibited terms exactly as in legacy mode; the gold frontmatter block is the only permitted system surface.
-
-  **Scope boundary:** this skill emits the `gold-strategic-roadmap` artifact with correct frontmatter. Registering the `gold-strategic-roadmap` type in a specific client KB type skill's `artifacts/` directory is a per-client follow-on, NOT part of this skill (the `silver-structural-observation` precedent). A KB-mode run against a client whose type skill has not yet registered the type is that adopter's coordinated dependency. Legacy mode needs no registration. The pre-write registration check (`KB-mode validation, prior work, and completion`) surfaces a missing registration at the head of the completion message instead of letting the post-write gate fail cold; the artifact is still written either way.
-
-### Body specification
+The body follows `Output Format` section for section, with these differences:
 
 ```markdown
 # [Company Name]: Strategic Experiment Roadmap
 
 ## How to Read This Roadmap
 
-These are program-, offer-, audience-motion-, and asset-level experiments: changes one altitude above a single page element. Each is measured by the design that reads its business outcome cleanly (a regional holdout, a before-and-after window against a stable baseline, a cohort comparison, a geographic split, operational tracking, or an on-page A/B when the lever is on-page-testable), and each is scored on the business outcome it moves.
+[As the tactical note, plus: these experiments change a program, offer, audience motion or asset, and each is read by the design that reads its business outcome cleanly: a regional holdout, a before-and-after window against a stable baseline, a cohort comparison, a geographic split, operational tracking, or an on-page A/B when the lever allows. Impact is scored on the business outcome.]
 
-Experiments are scored using the ICE framework:
-- **Impact** (1-5): Expected effect on the business outcome if the experiment wins
-- **Confidence** (1-5): How certain we are the measurement design produces a clean, interpretable read
-- **Ease** (1-5): Effort to stand up the experiment, including any asset or instrumentation it depends on
+## Roadmap Summary
 
-Experiments are grouped into the same three tiers used across our roadmaps: Quick Wins (fast, high-confidence reads), Strategic Bets (high-impact, higher-effort moves), and Explorations (higher-uncertainty or lower-scoring bets carried for their learning value). Most strategic levers land in Strategic Bets.
-
-## Strategic Roadmap Summary
-
-| # | Experiment | Lever | Measurement | Business metric | I | C | E | ICE |
-|---|-----------|-------|-------------|-----------------|---|---|---|-----|
-| 1 | [name] | [the named program/offer/motion/asset] | [design in plain words] | [outcome + direction] | 4 | 3 | 2 | 9 |
-| 2 | ... | ... | ... | ... | ... | ... | ... | ... |
-
-[If only one or two levers qualify, a flat ranked list under a single `## Strategic Experiments` heading is acceptable in place of sparse tier sections. Render whichever reads cleaner; never pad empty tiers.]
+[Same columns as the tactical summary.]
 
 ## Measurement Foundation
 
-[Present ONLY when at least one instrumentation or measurement stand-up was identified as a prerequisite for the experiments below. Omit entirely otherwise. Entries here are not scored experiments: they carry no ICE scores and no tier. Each entry names, in natural language: what gets defined or instrumented, the system where the work happens, whether the first step is confirming an existing capability (the confirm-first case) or building one (the documented-absence case), and which experiments below depend on it. Audience note: these entries are actionable by the client's analytics or operations team independently of the experiment program; write them so that team can execute without reading the rest of the document.]
+[Only when an instrumentation or measurement stand-up is a prerequisite for experiments below. Unscored: no ICE, no readiness, no key. One bold-labeled entry each: what gets defined or instrumented, the system where the work happens, whether the first step confirms an existing capability or builds one, and which experiments depend on it. Written so the client's analytics team can act on it alone.]
 
-## Strategic Bets
+## Ready Now
 
-### 1. [Experiment Name]
+### 1. [Title]
 
-**Key:** [stable slug minted once from the title; same minting and carry-forward rule as the tactical roadmap]
-**Lever:** [the named program, offer, audience motion, or asset this experiment introduces or changes]
-**What to stand up:** [the concrete intervention: what gets built, published, routed, or changed]
-
-**Measurement:** [the design in natural language, e.g., "a regional holdout read over eight weeks" or "a before-and-after comparison against a stable quarterly baseline." Never a raw design token.]
-**Business metric:** [the outcome it moves and the direction, e.g., "qualified-demo rate, up" or "speed-to-lead, down (faster); downstream qualified-meeting rate, up." This is a business outcome, not a page-level micro-conversion.]
-**Mechanism / Why this should work:** [the causal chain, 2-3 sentences, grounded in a behavioral, economic, or buying-process principle]
-**Stand-up dependency / Requires:** [the asset, operational process, or instrumentation that must exist before the experiment can run, e.g., "a named-client ROI one-pager built and published," or "none." For a confirm-first experiment, this line begins with the existence check in natural language, e.g., "Step one: confirm whether [capability] already exists in [system class]; if it does, this becomes a connection task and the build below is skipped." Neutral phrasing only, per the Client-Facing Register: "confirm whether X exists" is correct; a critique of prior instrumentation work is a breach.]
-**Read condition and window:** [how long the design runs and what counts as a read; the ship/abandon condition stated as the design's read, e.g., "ship if the holdout group's qualified-demo rate trails the treated group by the test's margin at full read; abandon if the two are flat at full read." When a page-level test in the companion tactical roadmap shares this experiment's surface (the different-measurement-altitude dedup case), add ONE neutral natural-language line stating that the page-level test should not run overlapping this read window, or how the read accounts for it.]
+**Key:** [row key]
+**Lever:** [the named program, offer, audience motion or asset]
+**Mechanism:** [the row's mechanism words only]
+**What to stand up:** [what gets built, published, routed or changed]
+**Measurement:** [the design in plain words, for example "a regional holdout read over eight weeks"]
+**Read model:** [as the tactical line: Holdout, Pre/post, A/B, Directional or Not yet sized, with its window; A/B and directional reads carry the same sizing figures]
+**Business metric:** [the outcome and its direction]
+**Why this should work:** [the causal chain in 2-3 sentences]
+**Requires:** [asset, process or instrumentation that must exist first, or "none". A confirm-first item opens with the existence check: "Step one: confirm whether [capability] already exists in [system]; if it does, this becomes a connection task."]
+**Read condition and window:** [how long it runs and what counts as a read. When a page test shares this surface, one neutral line on keeping their read windows apart]
+**Evidence:** [sources, in plain words]
 
 **Scores:** Impact [X] | Confidence [X] | Ease [X]
-[1 sentence per dimension]
+[One sentence per score]
 
-**What a win proves:** [the business learning a positive read unlocks]
-**What a loss teaches:** [what a flat or negative read reveals; the experiment must carry learning either way]
+**What a win proves:** [the business learning]
+**What a loss teaches:** [what a flat or negative read reveals]
+**Notes:** [annotations, when any]
 
-**Key risk:** [the mandatory self-critique, rendered under this client-appropriate heading. Fair thesis, design, and outcome challenges with proportionate evidence language; see Quality Rule 17 and the Client-Facing Register.]
-> **Thesis challenge:** [strongest argument the causal thesis is wrong, 1-3 sentences]
-> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
->
-> **Design challenge:** [strongest argument the measurement design will not read the outcome cleanly, 1-3 sentences]
-> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
->
-> **Outcome challenge:** [strongest argument a clean read could still mask a business loss, 1-3 sentences]
-> **Response:** [rebuttal or acknowledgment, 1-2 sentences]
+[Needs a Design Change, Needs Measurement and Needs a Client Decision follow, as in the tactical roadmap, each write-up adding **Readiness:**.]
 
----
+## Backlog
 
-### 2. [Experiment Name]
-[Same structure]
+[Same header and cells as the tactical backlog. `Surface` holds the lever.]
 
-## Quick Wins
+## Exclusions
 
-### [N]. [Experiment Name]
-[Same structure. Present this tier only if a strategic lever qualifies for it.]
+[Levers set aside because the capability already exists and operates, framed neutrally with no build recommendation; spec items and lead or high history items not advanced. Omit when empty.]
 
-## Explorations
+## Method
 
-### [N]. [Experiment Name]
-[Same structure, with an explicit note on what makes confidence lower.]
+### How Tests Are Read
+### Levers Reviewed
 
-## Sequencing Rationale
+[Every lever family the strategic lens walked, in plain words, with its row count, zero included. One line each.]
 
-[A short note ordering the strategic experiments. Stand-up dependencies order the work: an experiment that needs an asset or instrumentation built first runs after that dependency exists. Where two or more experiments share a stand-up dependency, group them so the shared build is done once. Keep the prose neutral and confident per the Client-Facing Register.]
-
-## What's Not Here (and Why)
-
-[Levers that are genuinely NOT measurable by any design at any altitude: no baseline exists for a holdout, no instrumentation is possible, or the lever is out of scope. Frame each as a productization, positioning, or data-coverage decision with its demand evidence (who is asking, how often) and its blocker (data coverage, entitlement scope, compliance). This section ALSO holds short existing-capability notes: levers discarded by the quality gate's documented-live state (the capability already exists and operates) are noted here as existing capabilities, per `phases/detect-strategic.md` criterion 7, framed neutrally and without a build recommendation. It also holds decision-blocked items: levers that pass the quality gate but are documented as blocked pending an explicit client decision, carried with their demand evidence and the decision that unblocks them (per the blocked-pending-decision routing in `phases/detect-strategic.md`). This is NOT a low-traffic A/B infeasibility list: a lever that some design CAN measure is a scored experiment above, not an exclusion here. This exclusions list is distinct from the tactical roadmap's "What's Not Here."]
+### Sequencing
+### Prerequisites and Data Gaps
+### If Tests Are Inconclusive
 
 ---
 *Analysis produced by FunnelEnvy | [Date]*
 *Based on positioning analysis across [N] sources*
 ```
 
-The strategic deliverable body is held to the `Deliverable Purity Constraint` and the `Client-Facing Register` in full: render every measurement design and lever in natural language (never a raw internal token), present each experiment on its own business terms, and never define a strategic experiment by what a page-element or A/B test cannot do.
-
-The Measurement Foundation section is part of the strategic deliverable, never a third deliverable or a new artifact type. It adds no KB type registration and no governance surface. It is held to the Deliverable Purity Constraint and Client-Facing Register in full.
-
-### KB-mode validation, prior work, and completion
-
-- **Pre-write registration check.** Before writing, check whether the bound type skill's `artifacts/` directory defines `gold-strategic-roadmap` (a single glob; cheap). If it does not, still write the artifact exactly as specified, but LEAD the completion message with the missing-registration note: "`gold-strategic-roadmap` is not registered in the bound KB type skill. The strategic roadmap was written, but it will not pass type validation until the type is registered -- a per-client follow-on, per the Scope boundary in `Strategic Roadmap Output Format`." The post-write gate below then reports the unregistered type as a known, already-announced condition instead of failing cold.
-- **Post-write validation.** After writing the KB strategic artifact, run the same `kb_type_validate.py` post-write gate as the tactical roadmap (resolve `<kb-start-scripts>` the same way; if validation reports errors, fix and re-validate; if the script cannot be resolved, warn, continue, and flag manual validation). A failure caused solely by the unregistered `gold-strategic-roadmap` type is expected when the pre-write registration check flagged it; do not attempt to "fix" the artifact for that case.
-- **Prior work / supersede.** Glob the strategic deliverable. If present, the run supersedes it in place: preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch on an unchanged re-render; a change in the SET of consumed artifacts, such as a newly consumed input, counts as changed and triggers the minor bump), set `updated`, overwrite the body. Apply the **Key carry-forward rule** (`Re-render Behavior`) to the strategic prior, independently of the tactical roadmap's keys.
-- **Completion reporting.** The completion message reports the strategic deliverable's path, type (`gold-strategic-roadmap`), scope, version, `depends_on`, strategic experiment count, and validation status. When no strategic lever qualifies (the produce-only-when-qualify rule), it reports a single line instead: "No qualifying strategic levers; no strategic roadmap produced."
+The strategic body is held to the `Deliverable Purity Constraint` and the `Client-Facing Register` in full. The Measurement Foundation section belongs to this deliverable only; it adds no artifact type.
 
 ---
 
 ## Deliverable Purity Constraint
 
-The experiment roadmap must contain ZERO references to internal system concepts. The same constraint governs the strategic roadmap deliverable (`Strategic Roadmap Output Format`): its rendered body is held to every prohibited term below exactly as the tactical roadmap is. In KB mode, the required gold frontmatter block (on either deliverable) is the sole exception to the markup-artifacts rule below; the rendered body remains free of all prohibited terms in both modes.
+Both roadmap bodies are written for a client reader. They name no internal identifier: no field, token, enum value, file, phase, script, lens, gate, module, pattern ID, trigger ID or posture constant name. They render every fact in plain words, for example "this metric is not yet tracked; add tracking before running" rather than a gate name, or "a regional holdout" rather than a design token.
 
-**Prohibited terms:**
-- Layer references: "L0," "L1," "L2," "Layer 0," "Layer 1," "Layer 2"
-- File references: "company-identity.md," "competitive-landscape.md," "positioning-scorecard.md," "audience-messaging.md," "live-structure.md," "experiment-history.md," "insight.md," "engagement-constraints.md," "context file," "context directory"
-- Structural observation references: "structural observation artifact," "structural observation," and raw observation field names (e.g., "form_recurs_sitewide," "mobile_render_clean," "named_client_proof_present"). Describe the observed fact in natural language instead ("the demo form renders 13 fields on every page it appears")
-- Experiment-history references: `experiment_history_available`, `prior_winner`, `replication_candidate`, `transferable_rule`, `replication_target_surfaces`, `history_type`, `parent_outcome`, `source_priority`, `source_surfaces`, `displacement_surfaces`, the producer's raw type/outcome tokens (`discriminating_test`, `new_hypothesis`, `recommended_lead`, `winner` / `loser` / `flat`, `directional_win` / `directional_loss`), the insight-record field names (`next_experiments`, `if_true`, `if_false`, `result_classification`), the coverage-ledger status tokens used as labels (`adopted`, `merged`, `folded`, `strategic`, `not_advanced`, `considered`) and the phrase "coverage ledger", the projection script's name (`history_backlog`), the history's bracketed Outcome qualifier text (`[UNVERIFIED ...]`, `[UNREADABLE: ...]`, `[CONTRADICTORY: ...]`; describe it in plain words instead, for example "an unverified readout" or "a test whose arms were unbalanced"), experiment identifiers / activity numbers (e.g., experiment ids like `EXP-12`, external task-tracker ids, spreadsheet URLs), the producer KB's type name.
-- Deployed-state references (the deployed-state read, `phases/detect.md` Step 1g / `phases/construct.md` Step 2): `deployed_state`, `shipped_from`, `treatment`, `evidence_pointer` as a field token, and the raw `concluded experiment` / `feature build` provenance tokens. Describe the control in natural language instead: "the cart currently ships the quantity-first line layout, which a prior test full-scaled" or "the configurator currently hides its empty option sections", never a field token. When a control claim is bounded to named accounts, say so in plain language ("this treatment is live only on the accounts entitled to it"), never as a `scope` token.
-- Live-program fold references (the live-program occupancy check, `phases/detect.md` Step 1g / `phases/validate.md` Gate 7): `live_program`, `occupied_slots`, `recorded_folds`, `lever_class`, `slot_available`, `slot_note`, `program_state_readable`, `live_program_unreconciled`. Describe the fold in natural language instead: name the running experiment plainly and phrase the recommendation as an iteration inside it ("an experiment is already running on this page testing a sharper hero; re-sync with it and read it cleanly"), and render the un-reconciled case as the plain "live program not reconciled" caveat -- never a field token. Describe the prior result in natural language instead ("an earlier test on the pricing page lifted demo requests"). NOTE: quantified completed-experiment results (lift percentages, statistical significance, sample sizes) are NOT prohibited; they are permitted and encouraged as natural-language attribution without identifiers (see the allowance below).
-- Validation-gate internal field references (Phase 3.5 / premise-rigor): `validation_gates`, `premise_contradicted`, `metric_instrumented`, `baseline_exists`, `control_stable`, `powerable`, `segmentation_satisfied`, `instrumented_metrics`, `dark_metrics`, and `score_effect`. Render the underlying fact in natural language instead: "verify the current page before launch" (not `control_stable`), "this metric is not yet tracked" (not `dark_metrics` / `metric_instrumented`) for a genuinely-dark metric, "the [capability] is live; confirm it fires on this surface before launch" (the `live-elsewhere` verification note, distinct from the dark-metric build phrasing and never written as tracking to stand up), "primary read: paid-search arrivals" (describe the pre-registered segment in plain language, never a field token).
-- Testing-method field reference: `testing_method` (the run-level A/B-vs-pre/post feasibility classification from detect Step 1h) and its raw enum value tokens. Render the read model in natural language instead: "read window against a stable pre-period baseline" for a pre/post read, the existing A/B feasibility line for an A/B read. Never name the field or its tokens in the deliverable.
-- Measurement-regime boundary references (`Measurement-Regime Boundary`): `measurement_regime_boundaries`, and the profile window fields `date_range` and `comparison_period`. Render the boundary in plain words instead, for example "the June 22, 2026 measurement change (consent banner now gates analytics)", and a window as its dates.
-- Decision-posture constant references: `relative_mde`, `n_per_variant`, `mde_achievable`, `z_sig`, `z_power`, the multiplier symbol `M`, `directional_band`, `proxy_qw_eligible`, `directional_read`. Render plain numbers instead ("a 20% minimum detectable effect at 90% confidence and 80% power"). The How to Read "Decision posture" note is the permitted plain-language statement of the posture.
-- Strategic-lane internal field references: `lane`, `lane: "strategic"`, `strategic-lever`, `lever_family`, the lever-family enum tokens (`objective-mismatch`, `dominant-off-page-lever`, `proof-gap`, `status-quo-alternative`, `buying-group-motion`, `offer-architecture`, `catch-all`, and any archetype-defined lever-family token), `measurement_design`, the raw `measurement_design` enum tokens (`randomized_ab`, `holdout`, `geo_split`, `switchback`, `cohort`, `pre_post`, `operational_metric`), the confirm-first field tokens (`absence_verified`, `confirm_first`), the strategic gate token (`baseline_reliable`), and internal-routing vocabulary around the Foundation slot ("Measurement Foundation entry" as routing language, e.g., "routes to the Foundation slot"; the rendered section heading "Measurement Foundation" itself is permitted). The natural-language phrasings ("regional holdout," "pre/post," "operational tracking," "a buying-group motion," "the first step is confirming whether the capability already exists") remain permitted; only the raw snake_case / hyphenated field tokens and routing vocabulary are banned. Render the design and lane in natural language instead (e.g., "Measurement: regional holdout, 8-week read").
-- System references: "Agent," "orchestrator," "phase file," "skill file," "SKILL.md," "frontmatter," "schema," "fetch registry"
-- Pattern references: "pattern ID," "HM-01," "FO-02," "experiment-patterns.md," "pattern matching"
-- Process references: "from L0," "per the context file," "the scoring phase determined," "opportunity detection found"
-- Markup artifacts: YAML frontmatter blocks, HTML comments, confidence scores. **The banned "confidence scores" means the skill's own ICE Confidence sub-scores, NOT the measured statistical confidence / significance of a completed experiment** (the latter is permitted per the allowance below).
-- Decision framework references: "LIFT model," "LIFT category," "contrarian trigger," "CTR-01," "interaction matrix," "AND-gate," "OR-gate," "multiplicative," "additive"
-
-**Allowance: quantified completed-experiment results.** Quantified results from completed experiments (lift percentages, statistical significance, sample sizes) ARE permitted and encouraged in the `Evidence From Completed Experiments` and `Experiment Program Continuity` prose, rendered as natural-language attribution without identifiers (e.g., "an earlier test on the pricing page lifted demo requests by about a third at statistical significance"). Do not over-redact these into vague phrasing ("roughly a third", "more than half") that loses the evidence that makes the roadmap persuasive. This allowance is distinct from the banned ICE Confidence sub-scores above: measured statistical confidence from a real experiment is evidence, not a system internal.
-
-**Attribution:** Use natural source references. "Based on [Company]'s website," "According to G2 reviews," "Competitive analysis shows..."
+- **One exception:** the KB-mode gold frontmatter block. Legacy deliverables carry no frontmatter, no HTML comments and no YAML.
+- **Allowed: completed-experiment results.** Lift percentages, statistical significance and sample sizes from completed experiments are encouraged, as natural attribution without experiment identifiers ("an earlier test on the pricing page lifted demo requests by about a third at statistical significance"). Measured significance is evidence; it is not the ICE Confidence score.
+- **Allowed: ICE scores** in the `**Scores:**` line, the summary and the backlog `ICE` cell.
+- **Attribution:** natural source references, such as "based on [Company]'s website", "according to G2 reviews" or "a prior test on the solutions page".
+- **Qualified history outcomes** render in plain words, such as "an unverified readout", never the bracketed qualifier text.
 
 ---
 
 ## Client-Facing Register
 
-This is a sibling rule to the Deliverable Purity Constraint, distinct from it. Purity bans system internals; this rule governs the tone and self-positioning of the **standalone strategic roadmap deliverable** (`Strategic Roadmap Output Format`). That deliverable must read as a confident, standalone, client-ready strategic roadmap, never as an internal critique of FunnelEnvy's own page-level work. It is a separate document and need not reference the tactical roadmap at all.
+This rule governs the tone of the strategic roadmap. It must read as a confident, standalone, client-ready strategic roadmap, never as a critique of FunnelEnvy's own page-level work.
 
-**Scope: every line of the strategic deliverable, not only the experiment blocks.** This rule governs every line of the strategic roadmap deliverable. It applies equally to document-level framing that introduces, explains the measurement of, or sequences the strategic experiments: the roadmap overview or "How to Read" note, any measurement preamble, and the Sequencing Rationale. A register breach in a framing sentence is as much a violation as one inside an experiment block.
-
-**Prohibited language (the register's own list, distinct from purity's).** The strategic output must never reference the page-element roadmap's shortcomings. Banned phrasings include: "optimizes the wrong metric," "altitude error," "sits above the page-level work," "exiled to What's Not Here," "what the page-level layer cannot reach," "corrects the page-level approach," and any meta or internal-process framing. The ban covers any paraphrase of these constructions, not only the literal strings. In particular, never define a strategic experiment by what page-element or A/B testing *cannot* do: phrasings like "business outcomes an on-page A/B test cannot reach," "beyond what a page test can measure," or "the page-level work can't get at this" are banned exactly as the literal list above is. If a sentence's point depends on what the tactical approach fails to do, it is a breach regardless of wording.
-
-**Neutral, connective cross-references only.** When the strategic output references the page-element work, the language is neutral and connective ("works alongside," "complements"), never evaluative ("corrects," "fixes the gap in," "rises above").
-
-**Positive measurement framing.** Explain a strategic experiment's non-A/B measurement design on its own terms: the design (holdout, pre/post, cohort, geo split, operational tracking) fits because the change is a program, offer, audience motion, or asset rather than a page element. State why the chosen design reads the business outcome cleanly. Do not justify the design by contrast to what an A/B test cannot do. This is the deliverable-facing companion to the construct phase's rule to state a non-A/B design's feasibility in its own terms.
-
-**Each strategic hypothesis stands on its own business rationale**, not on a comparison to the tactical set. The case for a strategic experiment is the business outcome it moves and the mechanism behind it, not that it is better-aimed than a page-element test.
-
-**Self-critique relabel.** For strategic-lane hypotheses, the mandatory self-critique (Quality Rule 17) renders under the client-appropriate heading "Key risk," never the literal "Self-critique." This is the register reason for the relabel; Quality Rule 17's substance (fair thesis/design/outcome challenges with proportionate evidence language) is unchanged.
-
-**Cold-read test.** Read by a client who never saw the page-element roadmap, the strategic output should look like a deliberate strategic roadmap, not an internal critique of FunnelEnvy's own page-level work. If any line only makes sense as a comparison to the tactical lane, rewrite it.
+- **Scope:** every line, including the How to Read note, measurement preambles and `### Sequencing`.
+- **Banned framing:** any line whose point depends on what page-level or A/B testing fails to do. Examples: "optimizes the wrong metric", "altitude error", "sits above the page-level work", "corrects the page-level approach", "business outcomes an on-page A/B test cannot reach". Paraphrases are banned too.
+- **Cross-references stay neutral and connective:** "works alongside", "complements". Never "corrects" or "fixes the gap in".
+- **Measurement framing is positive:** the design fits because the change is a program, offer, audience motion or asset. State why it reads the outcome cleanly.
+- **Each experiment stands on its own business rationale.**
+- **Cold-read test:** a client who never saw the tactical roadmap should read a deliberate strategic roadmap. Rewrite any line that only makes sense as a comparison.
 
 ---
 
 ## Re-render Behavior
 
-This behavior governs BOTH deliverables: the tactical `experiment-roadmap.md` and (when produced) the strategic `strategic-roadmap.md`. Each is overwritten as a complete fresh projection of current context; the Key carry-forward rule applies to each independently.
+Each run overwrites both deliverables as a complete fresh projection of current context. No diffing, no merging. The key is the one body value carried forward.
 
-If `.claude/deliverables/experiment-roadmap.md` already exists:
-- Overwrite with fresh render from current context
-- No diffing, no merging
-- The roadmap is always a complete projection of current context + current patterns
+**Key carry-forward rule.** `consolidate_backlog.py consolidate --prior` applies it per altitude, against that altitude's prior roadmap:
 
-**Key carry-forward rule (the canonical carry-forward rule, referenced from both modes and both deliverables).** The `**Key:**` field is the one body value preserved across a re-render; everything else is a complete fresh projection. Before overwriting an existing roadmap, read it (if it exists) and build a `prior normalized-title -> prior **Key:**` map from every prior experiment that carries a `**Key:**` field. Normalized-title match = case-insensitive comparison after trimming surrounding whitespace (no slugify; the map key is the human title text). During render, for each experiment:
-- If its normalized title matches a prior entry, **reuse that prior key verbatim**.
-- Otherwise, **mint a fresh `slugify(title)`**.
+1. **Title pass:** a row whose normalized title (case-insensitive, trimmed) equals a prior entry's title reuses that entry's key.
+2. **Mechanism pass:** a remaining row reuses the key of a remaining prior entry with the same mechanism words and an intersecting surface set.
+3. **Mint:** otherwise the key is `slugify(title)` per `modules/slugify.md`, with `-2`, `-3` appended on a collision within the run.
 
-This keeps the "complete projection, no merging" framing for body content -- only the key value is carried forward, nothing else. The common case (a human edits the displayed title without re-running this skill) needs none of this: the persisted `**Key:**` field is simply left untouched. The strategic deliverable applies this same rule against its own prior strategic roadmap, drawing keys from its own title space. A prior scored strategic experiment demoted to a Measurement Foundation entry on regeneration orphans its `**Key:**` by design (Foundation entries are keyless); report it in the completion message as a demotion, not key churn.
+- Prior entries are every `### N.` write-up with a `**Key:**` line plus every `## Backlog` row. Each prior key is used at most once.
+- A row keeps its key when it moves between the backlog and the write-ups.
+- A 1.x prior roadmap has no mechanism field, so only the title pass can match it.
+- Prior keys matched by no row are listed in the completion message as dropped.
+- A human edit to a displayed title needs none of this: leave the persisted `**Key:**` untouched.
 
-**Strategic deliverable, no-lever case (produce-only-when-qualify).** The strategic deliverable is written only when at least one scored strategic experiment or Measurement Foundation entry qualifies (`Strategic Roadmap Output Format` > Step 5c). Overwriting a deliverable to an empty body is banned. So when a prior `strategic-roadmap.md` (or `{scope}-strategic-roadmap.md`) exists but the current run yields no qualifying lever, the run does NOT rewrite it to a stale or empty state: it leaves the prior file untouched and reports in the completion message that no current levers qualified (mirroring the graceful-degradation no-write rule). The tactical roadmap is unaffected either way.
-
-In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope}-experiment-roadmap.md` and `{kb_root}/deliverables/{scope}-strategic-roadmap.md`, with KB versioning per deliverable -- preserve `created`, bump `version` (minor when the consumed silver artifacts changed since the prior render, patch otherwise), set `updated`, overwrite the body. The same key carry-forward rule applies to each KB-mode prior roadmap. See `Prior Work Detection (KB Mode)` and `Strategic Roadmap Output Format`.
+**No strategic rows.** When a prior strategic roadmap exists and the run yields no strategic row or Foundation entry, leave the prior file untouched and say so in the completion message. Never overwrite a deliverable to an empty body.
 
 ---
 
@@ -973,74 +784,48 @@ In KB mode: the same supersede semantics apply to `{kb_root}/deliverables/{scope
 
 | Script | Description | Use when |
 |---|---|---|
-| [scripts/history_backlog.py](scripts/history_backlog.py) | Deterministic projection of a `schema: experiment-history` file plus its per-experiment insight records: meta and outcome tallies, line ranges for the Cross-Experiment Patterns / Baseline Anchors / Discovered Mechanisms / Coverage Gaps sections, a one-line record index (page, outcome and its mapping, primary lift / p / n, delivered sample per day, deployed-state cues, line range), the last Learning sentences of settled records, and every typed `next_experiments` item numbered I1..In with the coverage-ledger seed. CLI `--history <file> [--insights <files...>]`, markdown on stdout. Exit 0 OK (an unparseable insight record is skipped and reported as COVERAGE PARTIAL; a stated/parsed count mismatch prints a WARNING); 1 history parse error (bounded-read fallback, noted in the completion message); 2 usage error; 3 not an experiment history (treated as unbound). Reads `next_experiments` from any fenced yaml block, at top level or under a root key; unstated or unrecognized priorities are seeded with the lead/high items. Stdlib only. | Phase 1 step 5b, whenever a `schema: experiment-history` source is bound (the legacy file or the in-KB artifact) |
+| [scripts/consolidate_backlog.py](scripts/consolidate_backlog.py) | Consolidates, sizes, keys and ranks lens cards. `consolidate --cards <path\|-> [--prior <roadmap.md> ...] [--boundary YYYY-MM-DD] [--posture <SKILL.md>] [--floor N]` validates the card array, merges cards on altitude, mechanism and overlapping surfaces, sizes every row against this file's `Decision Posture` (read model `ab`, `directional`, `pre-post`, `holdout` or `unsized`), carries prior keys forward, and reports lens counts and shortfalls. `rank --rows <path\|-> --write-ups N [--history-items ID,...] [--excluded-history ID,...]` takes the scored rows (or the whole `consolidate` object), assigns readiness from blockers and read model, orders each altitude by readiness then ICE, marks the first N per altitude as write-ups, and maps history ids to rows. JSON on stdout. Exit 0 OK; 1 input error, naming the card or row index and field; 2 usage error, including `--write-ups` outside 8 to 12; 3 posture unreadable, naming the row. Stdlib only. Its module docstring is the full contract. | `consolidate` in Phase 3; `rank` in Phase 4 |
+| [scripts/history_backlog.py](scripts/history_backlog.py) | Deterministic projection of a `schema: experiment-history` file plus its insight records: outcome tallies, line ranges for the Cross-Experiment Patterns, Baseline Anchors, Discovered Mechanisms and Coverage Gaps sections, a one-line record index (page, outcome and mapping, primary lift, p and n, delivered sample per day, deployed-state cues, line range), the last Learning sentences of settled records, and every typed `next_experiments` item numbered I1..In. CLI `--history <file> [--insights <files...>]`, markdown on stdout. Exit 0 OK (an unparseable insight record is reported as COVERAGE PARTIAL; a count mismatch prints a WARNING); 1 history parse error; 2 usage error; 3 not an experiment history. Stdlib only. | Phase 1 step 5b, when a `schema: experiment-history` source is bound |
 
 ## Module Dependencies
 
-Modules resolve from the repository-root `modules/` directory (a sibling of `skills/`), not from this skill's own folder. See Phase 1 `Module resolution and availability` for symlink-aware resolution and the hard load-failure guard.
+Modules resolve from the repository-root `modules/` directory. See Phase 1 `Module resolution`.
 
 ```
 SKILL.md (this file)
-  ├── phases/detect.md              Phase 2: opportunity detection from context
-  ├── phases/detect-contextual.md   Phase 2b: context-derived opportunity detection
-  ├── phases/detect-strategic.md    Phase 2c: strategic-lever detection (business-level levers, non-A/B measurement designs); routes to the separate strategic deliverable, not the tactical opportunity list
-  ├── phases/construct.md           Phase 3: hypothesis construction with causal reasoning
-  ├── phases/validate.md            Phase 3.5: premise & measurement validation (six tri-state gates, hard caps for Phase 4)
-  ├── phases/score.md               Phase 4: ICE scoring and sequencing
-  ├── scripts/history_backlog.py    Phase 1 step 5b: deterministic experiment-history projection (record index, typed insight items, coverage-ledger seed)
-  ├── modules/experiment-patterns.md   CRO pattern library (32 patterns, 10 categories; the base library)
-  ├── modules/patterns-procurement.md  procurement archetype patterns (loaded by archetype resolver; see Phase 1)
-  ├── modules/patterns-b2b-saas.md     b2b-saas archetype patterns (planned, not yet on disk; resolver skips if absent -- see Phase 1)
-  ├── modules/ice-scoring.md           ICE calibration anchors, empirical benchmarks, B2B SaaS calibration, and predictive scoring reference
-  ├── modules/contrarian-triggers.md   Contrarian filter: context conditions where standard CRO advice backfires (14 triggers)
-  ├── modules/hypothesis-interactions.md  Interaction-effect model: AND/OR/XOR gates between hypothesis pairs, empirical interaction effects
-  ├── modules/copy-craft.md            Evidence-graded copywriting rules for proposed variant copy (headline/subhead/CTA/form microcopy; construct.md Step 3/3b/4b)
-  ├── modules/prose-craft.md           Humanizer / anti-AI-writing rules for roadmap prose (em dashes, hedging, full sign set; Quality Rule 8)
-  └── modules/evidence-*.md            (optional) additional evidence sources and calibration data
+  ├── phases/detect.md                 Phase 2: card schema; surface, persona-and-journey, history and competitive-and-proof lens briefs
+  ├── phases/detect-strategic.md       Phase 2: strategic lens brief and the lever family list
+  ├── phases/validate.md               Phase 4: per-row checks that add blockers
+  ├── phases/score.md                  Phase 4: ICE for every row; closing the history ledger
+  ├── phases/construct.md              Phase 5: full write-ups
+  ├── scripts/consolidate_backlog.py   Phases 3 and 4: consolidation, sizing, keys, ranking
+  ├── scripts/history_backlog.py       Phase 1 step 5b: experiment-history projection
+  ├── modules/experiment-patterns.md   Lens prompt library (base)
+  ├── modules/patterns-procurement.md  Procurement archetype prompt library (Phase 1 step 6)
+  ├── modules/ice-scoring.md           ICE calibration guidance
+  ├── modules/contrarian-triggers.md   Counter-evidence annotations
+  ├── modules/hypothesis-interactions.md  Interactions between tests on one page
+  ├── modules/copy-craft.md            Rules for proposed variant copy
+  ├── modules/prose-craft.md           Roadmap prose style
+  └── modules/slugify.md               Key minting
 ```
 
 ## Quality Rules
 
-1. **When a spec is provided, every spec item is accounted for.** CRO/on-page items map to a hypothesis or appear in "What's Not Here" with a reason. Out-of-scope items (SEO/GEO, interlinking, content audit without page content) appear in "What's Not Here" with routing guidance. A roadmap that silently skips spec items is a failure.
-
-2. **Every hypothesis names a specific, named unit of intervention and a concrete change.** The unit is a page element OR a lever / offer / audience-motion / asset. "Improve homepage messaging" is a failure. "Replace the homepage H1 from '[current copy]' to '[proposed copy]'" is correct; so is "Introduce a named-client ROI proof asset and measure its effect on qualified-demo rate via a holdout." Vagueness fails at either altitude.
-
-3. **Every hypothesis has a causal mechanism.** "This should increase conversions" is a failure. "Outcome-oriented headlines reduce cognitive load for first-time visitors evaluating relevance, which should decrease bounce rate" is correct.
-
-4. **ICE scores vary.** If every hypothesis scores 7+ on all three dimensions, the scoring is broken. Real portfolios have range. Some high-impact bets have low confidence. Some easy wins have moderate impact.
-
-5. **Before/after examples for copy experiments are mandatory.** The "before" must come from context files (what the site actually says). The "after" must be adapted from audience-messaging channel adaptations or value themes. Do not invent copy from scratch. For messaging-led categories (headline, hero, positioning, value-proposition), produce 2-3 variations per Step 3b, each anchored to a different strategic direction.
-
-6. **"What a loss teaches" is mandatory.** Every experiment should have value even if it loses. If you can't articulate what a negative result teaches, the hypothesis isn't well-formed.
-
-7. **No padding.** If only 6 strong hypotheses exist, produce 6. A tight roadmap beats a bloated one.
-
-8. **Prose follows `modules/prose-craft.md`.** All roadmap prose obeys the shared humanizer / anti-AI-writing reference: no em dashes (use commas, periods, or colons), no hedge-word clusters, and the full sign set. The signs are not restated here; the module is canonical. (Rule 9 folded into this rule; 10+ unchanged.)
-
-10. **Test feasibility is honest, and method-aware.** When performance data exists, every hypothesis with a Baseline line also gets a Test Feasibility line. Under an A/B testing method (the default; detect Step 1h), experiments estimated beyond the `Decision Posture` Infeasible line are routed to "What's Not Here" with an explanation, not buried in the roadmap with optimistic scores. Under a non-A/B testing method (pre/post, cohort, operational), honesty means a defined read window against a stable pre-period baseline: the A/B duration and per-arm-traffic routing-out does not apply, and no tactical hypothesis is demoted or excluded on A/B-traffic grounds.
-
-11. **Proof hierarchy is strict.** Never upgrade "claimed" evidence to "verified."
-
-12. **FunnelEnvy branding in footer.**
-
-13. **The unit of testing is the hypothesis, not the variable.** When multiple page elements (H1, subhead, CTA copy, proof strip, form intro, testimonial placement) all serve the same hypothesis, they MUST be combined into a single experiment. This is not a traffic optimization; it is correct experiment design. Testing a differentiation-led H1 while the subhead still says generic aspirational copy does not test whether differentiation-led messaging works. It tests one line in a hostile context, and a loss is uninterpretable. Bundle everything that serves the idea. When a hypothesis bundles multiple elements, Step 5c's bundled variable disclosure must be populated. See `phases/construct.md` "Experiment Scope Rule" for bundling rules and examples.
-
-14. **Proof point integrity.** Hypotheses referencing quantified claims or proof points must pass the Step 4b integrity check. Claims combining elements from multiple proof points must be flagged (`proof_braid: true`) and justified. Comparative advertising claims naming specific competitors require verified-level proof and legal review annotation.
-
-15. **Proxy metric guardrails.** When the primary metric is a proxy (not a direct business outcome), a guardrail metric must be specified (Step 5a). The decision rule (additive or guardrail-primary) and filter risk note must be documented. A proxy-only win without guardrail validation is not conclusive.
-
-16. **Quick Wins require fast signal.** Quick Win tier requires fast signal (estimated duration at or under the `Decision Posture` Quick Win ceiling) in addition to Confidence >= 4 and Ease >= 4. Under an A/B testing method the fast-signal bar is the estimated A/B test duration. Under a non-A/B testing method (pre/post, cohort, operational; detect Step 1h) the bar keys on the read-window length instead (still at or under the same ceiling), not on A/B test duration. A test past the ceiling labeled Quick Win burns stakeholder trust. If duration data is unavailable, the constraint does not apply but Confidence is already capped by graceful degradation rules.
-
-17. **Self-critique is visible, not hidden.** Every hypothesis, regardless of tier, must include a Self-critique section in the deliverable (Step 10). The counterarguments must be stated fairly, not strawmanned. Evidence-strength language must be proportionate to actual evidence (one data point is a "signal," not a "pattern"). Internal consistency issues must be resolved before emission, not acknowledged and ignored. For strategic-lane hypotheses, the self-critique renders under the client-appropriate heading "Key risk" (not the literal "Self-critique"); the substance (fair thesis/design/outcome challenges with proportionate evidence language) is unchanged. See the Client-Facing Register.
-
-18. **Every emitted experiment carries a `**Key:**` field.** The key is minted once via `slugify(title)` and preserved verbatim across regens and title edits; it is never re-derived from a changed title. It is the stable join key downstream skills use to resolve a mockup to its experiment.
-
-19. **Every emitted tactical experiment carries a `**Change type:**` field** with a value from the enum (insert | replace-copy | modify | remove | reorder), primary first, comma-separated when a bundled test spans types. It is derived per construct.md Step 3 from the proposed change and re-derives on every render (projection content, not carried forward like `**Key:**`). The strategic roadmap does not carry this field; its levers are not page-element treatments.
-
-20. **A running experiment owns its surface and lever; never mint a standalone test for an occupied slot.** Before a tactical candidate is scored, reconcile it against the client's live experiment program (`phases/validate.md` Gate 7, fed by `phases/detect.md` Step 1g `live_program`). When a running or queued experiment already tests the same idea on the same page (same surface + same lever class), or a fold decision covering that surface + lever is on record, fold the candidate: it is not scored, it appears in "What's Not Here" naming the live experiment, and the recommendation is phrased as an iteration inside that experiment (re-sync and read cleanly), carrying any variation copy or evidence it developed. A recorded fold decision in loaded context is binding even under ambiguous status; a regeneration must never silently reverse it. A concluded experiment frees its slot, so a legitimate successor still mints. A running experiment on the same surface with a different lever does not fold the candidate; it keeps it with a one-test-per-surface sequencing note. When program state cannot be read (KB mode, no completed-experiment / program-state knowledge base bound), surface the "live program not reconciled" caveat so the omission is visible. This gate is tactical-only and method-agnostic; a legacy run with no history file bound has no live-program state and is unaffected (with one bound, the legacy run reads program state like a KB run).
-
-21. **Every lead or high-priority prior-test recommendation is accounted for.** When a history source is bound, every typed `recommended_lead` / `high` `next_experiments` item, every typed item whose priority is unstated or unrecognized (fail safe), and every prose next test the Step 1g rubric rates that high, is adopted as a hypothesis, merged into a named hypothesis, folded into a live experiment, routed to the strategic roadmap, or listed in "What's Not Here" as a prior-test follow-up not advanced, with its grounds. The coverage ledger (`phases/detect.md` Step 1g, closed in `phases/score.md` Step 6c) shows zero unaccounted lead/high items before the roadmap is written. Medium and low items are listed as considered. No item is skipped for its surface: surface derivation maps it or records why it is off-site.
-
-22. **Thresholds come from `Decision Posture` and are stated where used.** No phase, rule, or rendered line takes a significance level, power, minimum detectable effect, feasibility band, Quick Win ceiling or directional band from anywhere else. The deliverable states the posture in plain numbers in the How to Read note, every Test Feasibility line, and every read-threshold line, and every read threshold carries all six parts.
-
----
+1. **Every spec item is accounted for** as a write-up, a backlog row or an `## Exclusions` entry. A roadmap that silently skips a spec item is a failure.
+2. **Every card carries an evidence pointer:** a source and section in plain words. This is the one floor every candidate meets.
+3. **Every write-up names a concrete unit and change.** "Improve homepage messaging" fails; "replace the homepage H1 '[current]' with '[proposed]'" passes. At the strategic altitude the unit is a named lever.
+4. **Every write-up has a causal mechanism.** "This should increase conversions" fails.
+5. **Copy write-ups show before and after.** The before comes from the context; the after adapts the audience messaging or value themes. Messaging-led tests show 2-3 variations, each anchored to a different direction.
+6. **"What a loss teaches" is mandatory.**
+7. **The unit of testing is the hypothesis.** Elements that serve one hypothesis are bundled into one test, with the bundle disclosed (`phases/construct.md`).
+8. **Prose follows `modules/prose-craft.md`.**
+9. **Proof hierarchy is strict.** Never upgrade claimed evidence to verified. A claim combining several proof points is flagged; a comparative claim naming a competitor needs verified proof and a legal-review note.
+10. **A proxy primary metric needs a guardrail** per the `Decision Posture` `Guarded proxy` row.
+11. **Every write-up and backlog row carries a `**Key:**`** per `Re-render Behavior`.
+12. **Every tactical write-up carries `**Change type:**`**, re-derived on each render. Strategic write-ups do not.
+13. **A running experiment owns its surface and lever.** A row whose surface and lever a running or queued experiment already tests keeps its place, carries a note naming that experiment, and sequences after it. A recorded fold decision is binding. A concluded experiment frees its slot.
+14. **Every lead or high prior-test recommendation is accounted for** (`phases/score.md`), and no roadmap is written while any is unaccounted.
+15. **Thresholds come from `Decision Posture`**, sizing from `consolidate_backlog.py`, and every A/B or directional read threshold carries all six parts.
+16. **Lenses do not pad.** A lens below the floor reports its shortfall.
+17. **FunnelEnvy branding in the footer.**

@@ -95,8 +95,6 @@ class TestCli(unittest.TestCase):
         self.assertEqual(result.returncode, 2)
         self.assertIn("--write-ups", result.stderr)
 
-    # Slice 2 removes this decorator when R16 adds the Maximum A/B read window row to SKILL.md.
-    @unittest.expectedFailure
     def test_posture_reads_shipped_skill_md(self):
         result = self.cli("consolidate", "--cards", self.write("cards.json", [CARD]))
         self.assertEqual(result.returncode, 0, result.stderr)
