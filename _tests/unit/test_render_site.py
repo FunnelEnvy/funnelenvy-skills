@@ -1142,8 +1142,8 @@ class TestAuditDesignRestyle(unittest.TestCase):
     """v0.7.0 editorial data-story restyle: five hub headline PROSE slots, a
     code-emitted stats band, and audit-style backlog rows (not a card wall)."""
 
-    def _hub(self, strategic=STRATEGIC, account=None):
-        d, sp, tp, ep = _write_triple(strategic=strategic)
+    def _hub(self, strategic=STRATEGIC, account=None, tactical=TACTICAL):
+        d, sp, tp, ep = _write_triple(strategic=strategic, tactical=tactical)
         out = os.path.join(d, "site")
         argv = ["--strategic", sp, "--tactical", tp, "--edges", ep, "--out", out]
         if account is not None:
@@ -1173,11 +1173,19 @@ class TestAuditDesignRestyle(unittest.TestCase):
                       "The measurement foundation<!--/PROSE-->", html)
 
     def test_stats_band_counts_ready_now(self):
-        """The second stats box counts `ready-now` tests over active tests."""
-        html = self._hub()
+        """The second stats box counts `ready-now` tests over active tests.
+
+        The fixture moves the pricing proof block into `## Ready Now`, giving an uneven
+        split (2 ready now, 1 needs a design change, 0 need measurement) so a count of
+        any other tier gives a different number.
+        """
+        proof = TACTICAL[TACTICAL.index("### 4. Proof block on pricing"):]
+        tactical = TACTICAL.replace("## Needs Measurement\n\n" + proof, "").replace(
+            "## Needs a Design Change", proof + "\n## Needs a Design Change")
+        html = self._hub(tactical=tactical)
         band = html[html.index('class="program-stats"'):]
         band = band[:band.index("</section>")]
-        self.assertIn('<div class="n green">1/3</div>'
+        self.assertIn('<div class="n green">2/3</div>'
                       '<div class="k">are ready now: they can run as designed today</div>', band)
 
     def test_stats_band_renders_and_holds_no_prose(self):

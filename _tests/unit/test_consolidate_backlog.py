@@ -94,6 +94,19 @@ class TestPosture(unittest.TestCase):
         with self.assertRaisesRegex(cb.PostureError, "Multiplier M"):
             cb.parse_posture(text)
 
+    def test_posture_percent_form_reads_as_fraction(self):
+        text = POSTURE_TABLE.replace("| 0.20 |", "| 20% |").replace("| 0.80 |", "| 80 % |")
+        p = cb.parse_posture(text)
+        self.assertEqual((p["power"], p["relative_mde"]), (0.80, 0.20))
+
+    def test_posture_fraction_row_out_of_range_fails(self):
+        for name, old, new in (("Relative MDE", "| 0.20 |", "| 20 |"),
+                               ("Relative MDE", "| 0.20 |", "| 100% |"),
+                               ("Power", "| 0.80 |", "| 80 |")):
+            with self.subTest(name=name, value=new):
+                with self.assertRaisesRegex(cb.PostureError, r"row '%s': .* outside \(0, 1\)" % name):
+                    cb.parse_posture(POSTURE_TABLE.replace(old, new))
+
 
 class TestSizing(unittest.TestCase):
 
@@ -147,6 +160,13 @@ class TestMerges(unittest.TestCase):
         out = run([card(surfaces=["/a", "/b"]), card(surfaces=["/B/"])])
         self.assertEqual(out["rows_out"], 1)
         self.assertEqual(out["rows"][0]["surfaces"], ["/a", "/b"])
+
+    def test_bridging_card_merges_transitively(self):
+        # A and C share no surface; only B, last in input, bridges them.
+        out = run([card(title="A", surfaces=["/a"]), card(title="C", surfaces=["/b"]),
+                   card(title="B", surfaces=["/a", "/b"])])
+        self.assertEqual(out["rows_out"], 1)
+        self.assertEqual(out["rows"][0]["merged_from"], 3)
 
     def test_different_mechanism_stays_separate(self):
         out = run([card(), card(mechanism_key="cta-specificity", title="CTA label")])
@@ -208,6 +228,28 @@ class TestKeys(unittest.TestCase):
         row = run([card(title="Proof beside the pricing CTA", surfaces=["/pricing/"])],
                   priors=priors())["rows"][0]
         self.assertEqual((row["key"], row["key_source"]), ("pricing-proof", "mechanism"))
+
+    def test_key_mechanism_pass_needs_shared_surface(self):
+        row = run([card(title="Proof beside the demo CTA", surfaces=["/demo"])],
+                  priors=priors())["rows"][0]
+        self.assertEqual((row["key"], row["key_source"]),
+                         ("proof-beside-the-demo-cta", "minted"))
+
+    def test_minted_key_skips_dropped_prior_key(self):
+        out = run([card(title="Old Headline.", mechanism_key="hero-rewrite", surfaces=["/x"])],
+                  priors=priors())
+        self.assertIn("old-headline", [d["key"] for d in out["dropped_prior_keys"]])
+        self.assertEqual((out["rows"][0]["key"], out["rows"][0]["key_source"]),
+                         ("old-headline-2", "minted"))
+
+    def test_duplicate_prior_key_used_once(self):
+        dup = PRIOR_TACTICAL + ("| pricing-proof | Pricing proof row | /pricing | proof near cta "
+                                "| Ready now | A/B | I3 C3 E3 (9) | profile |\n")
+        out = run([card(), card(title="Pricing proof row", mechanism_key="proof-row")],
+                  priors=priors(dup))
+        keys = [r["key"] for r in out["rows"]]
+        self.assertEqual(sorted(keys), ["pricing-proof", "pricing-proof-row"])
+        self.assertNotIn("pricing-proof", [d["key"] for d in out["dropped_prior_keys"]])
 
     def test_key_from_backlog_row(self):
         new = card(title="Shorter demo form", surfaces=["/demo"], mechanism_key="form-field-reduction")
@@ -295,6 +337,11 @@ class TestRank(unittest.TestCase):
         del bad["ice"]
         with self.assertRaisesRegex(cb.InputError, r"row 0: field 'ice'"):
             cb.rank([bad], 8)
+
+    def test_duplicate_row_key_rejected(self):
+        rows = [row("x", (3, 3, 3)), row("y", (3, 3, 3)), row("x", (2, 2, 2), altitude="strategic")]
+        with self.assertRaisesRegex(cb.InputError, r"row 2: field 'key' repeats key 'x' from row 0"):
+            cb.rank(rows, 8)
 
     def test_history_unaccounted(self):
         out = cb.rank([row("x", (3, 3, 3), history=["I1"])], 8, ["I1", "I2", "I3"], ["I3"])

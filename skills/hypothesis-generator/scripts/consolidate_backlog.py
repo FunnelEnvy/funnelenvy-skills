@@ -18,19 +18,23 @@ Both subcommands print one JSON object on stdout. Errors go to stderr.
 
 Exit codes:
     0  OK
-    1  input error: invalid card or row JSON, or an unreadable --prior file. stderr
-       names the card or row index and the field.
+    1  input error: invalid card or row JSON, two rank rows sharing a key, or an
+       unreadable --prior file. stderr names the card or row index and the field.
     2  usage error (argparse), including --write-ups outside 8 to 12 and a malformed
        --boundary date
     3  posture unreadable: the --posture file has no `## Decision Posture` table, a
-       row is missing, a number is unreadable, or the stated M disagrees with the M
-       computed from the significance and power rows. stderr names the row.
+       row is missing, a number is unreadable or out of range, or the stated M
+       disagrees with the M computed from the significance and power rows. stderr
+       names the row.
 
 Posture (consolidate only). Read at run time from the `## Decision Posture` table in
 --posture, which defaults to ../SKILL.md beside this script's real path. Each row is
 found by the start of its Constant cell, and the first number in its Default cell is
 taken: Significance, Power, Relative MDE, Maximum A/B read window (weeks), and Hard
-gates (two numbers: conversions per variant, then minimum days). M is computed as
+gates (two numbers: conversions per variant, then minimum days). Significance, Power
+and Relative MDE accept a fraction (0.20) or a percent (20%, read as 0.20) and must
+lie strictly between 0 and 1; the other numbers must be positive. Swapped Hard gates
+numbers are not detected. M is computed as
 2 * (z(1 - (1 - significance) / 2) + z(power))^2 and used unrounded; rounded to two
 decimals it must equal the first number in the `Multiplier M` row. Cards are
 validated before the posture is read, so a bad card exits 1 even when the posture
@@ -88,14 +92,19 @@ mechanism_key and whose surfaces intersect its own. Mechanism words come from th
 `**Mechanism:**` label or the `Mechanism` column, lowercased with runs of whitespace
 replaced by hyphens and a trailing period dropped; surfaces come from `**Page:**`,
 `**Lever:**` or the `Surface` column, split on commas. (3) Mint: slugify(title) per
-modules/slugify.md, with -2, -3 and so on appended on a collision within the run.
-Each prior key is used at most once, first unused entry in document order.
+modules/slugify.md, with -2, -3 and so on appended on a collision with a key already
+assigned in the run or with any prior key, dropped ones included. Each prior key is
+used at most once: when a key repeats across prior entries (a write-up and a backlog
+row, say), the first entry stands (tactical prior first, then document order) and the
+later ones are ignored. Within a pass, a row takes the first unused entry in document
+order.
 
 consolidate output keys: posture, rows, lens_counts, lens_shortfalls, cards_in,
 rows_out, dropped_prior_keys. Rows are ordered by altitude (tactical first), then key.
 
 rank input: the consolidate rows (a JSON array, or the whole consolidate object) with
-ice {i, c, e} (integers 1 to 5) added to every row. Readiness, first match wins:
+ice {i, c, e} (integers 1 to 5) added to every row; keys must be unique across the
+input. Readiness, first match wins:
 client-decision blocker -> needs-client-decision; metric-not-tracked, no-baseline or
 verify-current-state blocker, or read_model unsized -> needs-measurement;
 design-change blocker -> needs-design-change; otherwise ready-now. Within each
@@ -129,6 +138,7 @@ LIST_FIELDS = ("surfaces", "evidence", "lenses", "blockers", "annotations", "his
 
 KEBAB_RX = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 NUMBER_RX = re.compile(r"\d+(?:\.\d+)?")
+PERCENT_RX = re.compile(r"(\d+(?:\.\d+)?)\s*(%)?")
 SECTION_RX = re.compile(r"^###\s+\d+\.\s+(.*?)\s*$")
 LABEL_RX = re.compile(r"^\s*(?:[-*]\s+)?\*\*(Key|Mechanism|Page|Lever):\*\*\s*(.*?)\s*$")
 
@@ -172,25 +182,28 @@ def parse_posture(text):
         if len(cells) >= 2:
             rows.append(cells)
 
-    def numbers(name, count):
+    def numbers(name, count, percent=False):
         for cells in rows:
             if cells[0].startswith(name):
-                found = NUMBER_RX.findall(cells[1])
+                found = (PERCENT_RX if percent else NUMBER_RX).findall(cells[1])
                 if len(found) < count:
                     raise PostureError("row '%s': no readable number in its Default cell" % name)
-                return [float(n) for n in found[:count]]
+                if not percent:
+                    return [float(n) for n in found[:count]]
+                return [float(n) / 100 if pct else float(n) for n, pct in found[:count]]
         raise PostureError("row '%s' is missing from the Decision Posture table" % name)
 
-    significance = numbers("Significance", 1)[0]
-    power = numbers("Power", 1)[0]
-    relative_mde = numbers("Relative MDE", 1)[0]
+    significance = numbers("Significance", 1, percent=True)[0]
+    power = numbers("Power", 1, percent=True)[0]
+    relative_mde = numbers("Relative MDE", 1, percent=True)[0]
     max_ab_weeks = numbers("Maximum A/B read window", 1)[0]
     min_conv, min_days = numbers("Hard gates", 2)
     stated_m = numbers("Multiplier M", 1)[0]
-    for name, value in (("Significance", significance), ("Power", power)):
+    for name, value in (("Significance", significance), ("Power", power),
+                        ("Relative MDE", relative_mde)):
         if not 0 < value < 1:
             raise PostureError("row '%s': value %s is outside (0, 1)" % (name, value))
-    for name, value in (("Relative MDE", relative_mde), ("Maximum A/B read window", max_ab_weeks),
+    for name, value in (("Maximum A/B read window", max_ab_weeks),
                         ("Hard gates", min_conv), ("Hard gates", min_days)):
         if value <= 0:
             raise PostureError("row '%s': value %s is not positive" % (name, value))
@@ -589,12 +602,19 @@ def parse_prior(text, path):
 def assign_keys(rows, priors):
     """Set key and key_source on every row; return the dropped prior keys.
 
-    `priors` maps altitude to that altitude's prior entries.
+    `priors` maps altitude to that altitude's prior entries. A repeated prior key is used
+    once: the first entry stands (tactical prior first, then document order) and later
+    ones are ignored. A minted key never equals any prior key, dropped ones included.
     """
     dropped = []
+    prior_keys = set()
     for altitude in ALTITUDES:
         alt_rows = [r for r in rows if r["altitude"] == altitude]
-        prior = priors.get(altitude, [])
+        prior = []
+        for entry in priors.get(altitude, []):
+            if entry["key"] not in prior_keys:
+                prior_keys.add(entry["key"])
+                prior.append(entry)
         taken = [False] * len(prior)
         for row in alt_rows:
             title = row["title"].strip().lower()
@@ -615,7 +635,7 @@ def assign_keys(rows, priors):
                     break
         dropped.extend({"key": e["key"], "title": e["title"]}
                        for j, e in enumerate(prior) if not taken[j])
-    used = set(r["key"] for r in rows if r.get("key"))
+    used = set(r["key"] for r in rows if r.get("key")) | prior_keys
     for altitude in ALTITUDES:
         for row in rows:
             if row["altitude"] != altitude or row.get("key"):
@@ -708,13 +728,21 @@ def readiness(row):
 
 
 def rank(rows_data, write_ups, history_items=(), excluded_history=()):
-    """Return the rank output object for scored rows; a bad row raises InputError."""
+    """Return the rank output object for scored rows.
+
+    A bad row, or a row repeating an earlier row's key, raises InputError.
+    """
     if isinstance(rows_data, dict) and "rows" in rows_data:
         rows_data = rows_data["rows"]
     if not isinstance(rows_data, list):
         raise InputError("rows input must be a JSON array or a consolidate object")
+    seen = {}
     for idx, row in enumerate(rows_data):
         validate_row(row, idx)
+        if row["key"] in seen:
+            raise InputError("row %d: field 'key' repeats key '%s' from row %d"
+                             % (idx, row["key"], seen[row["key"]]))
+        seen[row["key"]] = idx
     ranked = []
     for altitude in ALTITUDES:
         alt_rows = [dict(r) for r in rows_data if r["altitude"] == altitude]

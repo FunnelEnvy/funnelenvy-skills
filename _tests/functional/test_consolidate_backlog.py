@@ -98,6 +98,10 @@ class TestCli(unittest.TestCase):
     def test_posture_reads_shipped_skill_md(self):
         result = self.cli("consolidate", "--cards", self.write("cards.json", [CARD]))
         self.assertEqual(result.returncode, 0, result.stderr)
+        p = json.loads(result.stdout)["posture"]
+        self.assertEqual((p["significance"], p["power"], p["relative_mde"]), (0.90, 0.80, 0.20))
+        self.assertEqual((p["max_ab_weeks"], p["min_conversions_per_variant"], p["min_days"]),
+                         (26, 100, 7))
 
 
 if __name__ == "__main__":
