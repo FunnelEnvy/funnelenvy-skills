@@ -204,7 +204,7 @@ Every threshold used to size or read a test is defined here, once. `scripts/cons
 | Maximum A/B read window | 26 weeks: the boundary between an A/B read and a directional or pre/post read | `consolidate_backlog.py` read model; red-team CC2 |
 | Directional band | 0.10 <= p < 0.20 with the primary lift in the predicted direction. The history Outcome mapping reads any stated p below 0.20 that missed its own record's bar as directional, which is wider than this band for new reads. | construct read threshold; the history Outcome mapping |
 | Directional action | Confirm-and-extend iteration: Confidence +1, Ease 0. Never a rollout. | score ICE |
-| Guarded proxy | A proxy primary metric is allowed only when all three hold: an instrumented Direct lead guardrail, a pre-registered non-inferiority margin, and an additive decision rule. The proxy Confidence -1 is waived only then. | construct guardrail; score ICE |
+| Guarded proxy | A proxy primary metric counts as guarded when all three hold: an instrumented Direct lead guardrail, a pre-registered non-inferiority margin, and an additive decision rule. The proxy Confidence -1 is waived only then; an unguarded proxy keeps it. | construct guardrail; score ICE |
 | Guardrail margin | Equal to the relative MDE (20% relative). State the guardrail's own detectable change at the test's sample next to it. | construct read threshold |
 | Hard gates | 100 conversions per variant; 7-day minimum | `consolidate_backlog.py` sizing and read model |
 
@@ -381,7 +381,7 @@ Provided content becomes supplementary page context for the lenses. On "skip", m
    | "ecommerce", "online store", "DTC", "retail", "(online)" | b2c-ecommerce | base library only |
    | no match | base only | base library only; flag reduced archetype coverage |
 
-   `modules/experiment-patterns.md` is the base library. A missing archetype module is skipped silently. An archetype module may define a `## Strategic Lever Families` section, which the strategic lens loads as families 7+.
+   `modules/experiment-patterns.md` is the base library. A missing archetype module is skipped silently. An archetype module may define a `## Strategic Lever Families` section, which the strategic lens loads after the base list.
 
 7. **Handoff check and pre-flight.** Flag each gap that applies:
 
@@ -431,7 +431,7 @@ Dispatch all five lens subagents in one message, in parallel, each with `model: 
 - the prompt library paths (base plus archetype module), `--focus` categories, the spec checklist, the floor, and B when it governs;
 - for the history lens, the projection path `$PROJ` (or the producer index paths) and the full-entry budget left.
 
-Pass paths, never pasted context bodies. Each lens returns one JSON array of cards and nothing else. A card that fails the card schema is fixed by the orchestrator from the lens's own text, or dropped and named in the completion message. Hard-rule discards a lens reports (a documented-live lever, a form swap between identical forms) go to `## Exclusions` with their grounds.
+Pass paths, never pasted context bodies. Each lens returns one JSON array of cards, followed only by the optional `Exclusions:`, `Measurement Foundation:` and `Shortfall:` lists that `phases/detect.md` `Return Format` defines. A card that fails the card schema is fixed by the orchestrator from the lens's own text, or dropped and named in the completion message. Hard-rule discards a lens reports (a documented-live lever, a form swap between identical forms) go to `## Exclusions` with their grounds.
 
 ### Phase 3: Consolidate
 

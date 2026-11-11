@@ -1,276 +1,112 @@
-# ICE Scoring: Calibration Anchors and Rules
+# ICE Scoring: Calibration Anchors
 
-Version: 1.3.0
-Last updated: 2026-07-02
+Version: 2.0.0
+Last updated: 2026-11-11
 
-This module defines the scoring calibration for the ICE framework used by the hypothesis generator. Read this before scoring any hypothesis. The purpose of calibration anchors is to prevent score inflation and ensure consistency across runs.
-
----
+This module holds the calibration anchors for ICE scoring in hypothesis-generator. Read it before scoring. Every row in the backlog gets a score. ICE orders rows within a readiness tier; it never decides whether a row appears. The anchors and adjustments below are calibration guidance, not caps, quotas or thresholds.
 
 ## Scoring Philosophy
 
-ICE scores are relative within a single roadmap, not absolute across companies. A "4 Impact" for Company A doesn't need to mean the same thing as a "4 Impact" for Company B. What matters is that within a single roadmap, the scores differentiate hypotheses from each other meaningfully.
-
-The most common failure mode is score clustering: everything lands at 3-4, making the roadmap useless for prioritization. The anchors below exist to prevent this.
-
----
-
-## Impact Calibration (1-5)
-
-Impact measures the expected effect on conversion, revenue, or strategic learning if the variant wins.
-
-| Score | Anchor Description |
-|-------|--------------------|
-| 1 | Cosmetic change. No measurable conversion effect expected. (These shouldn't be in the roadmap.) |
-| 2 | Minor improvement. Affects a secondary metric or low-traffic page. Measurable but not material. |
-| 3 | Moderate improvement. Affects a primary metric on a secondary page, or a secondary metric on a primary page. |
-| 4 | Significant improvement. Affects the primary conversion metric on a high-traffic page. Would change quarterly numbers. |
-| 5 | Transformational. Changes the company's core conversion rate, repositions against competitors, or opens a new revenue path. (Strategic-deliverable scoring guidance: this anchor also governs the separate strategic roadmap's scoring pass, where Impact-5 includes off-page levers such as a positioning/proof asset, a buying-group motion, or a speed-to-lead/routing change whose business-outcome effect is measured by a non-A/B design like a holdout, before-and-after, or operational tracking. A strategic lever does not score lower on Impact merely because it is not an on-page A/B. On the strategic pass, instrumentation and measurement stand-ups are never scored on any Impact anchor: they are Measurement Foundation entries, not experiments, per `phases/detect-strategic.md` family 1; value-of-information is not a conversion effect. This guard governs the strategic deliverable's scoring only. The tactical lane's variant-instrumented measurement-enablement prerequisite-experiment (the conversions-lack-page-attribution case in `phases/score.md`) remains a scored tactical object, unchanged.) Reserved for 1-2 hypotheses per roadmap at most. |
-
-**Calibration rules:**
-- No more than 2 hypotheses should score Impact 5 in a single roadmap
-- At least 1 hypothesis should score Impact 2 or below
-- Homepage experiments default to Impact 3+ (highest-traffic page). Secondary pages default to Impact 2-3 unless evidence suggests otherwise.
-- Impact scores should NOT all cluster in the 3-4 range. If they do, force differentiation.
-- The portfolio spread rules (the Impact spread, the at-least-one-low rule above, and the forced-spread remedy in `phases/score.md`) are tactical-portfolio rules: on the strategic pass (`phases/score.md` Step 6b) they apply proportionally and are never used to force artificial variance at three or fewer experiments.
-
----
-
-## Confidence Calibration (1-5)
-
-Confidence measures how certain you are that the experiment will produce a measurable, interpretable result. This is NOT "how sure are you it will win." Even a well-designed experiment that loses can produce high-value learning. "Measurable" means readable at the hypothesis-generator SKILL.md `Decision Posture` thresholds; a looser posture never adds Confidence by itself.
-
-| Score | Anchor Description |
-|-------|--------------------|
-| 1 | Pure speculation. No data supporting the hypothesis. Testing a hunch. |
-| 2 | Informed guess. Pattern is common in CRO, but trigger conditions are partially confirmed. Limited context support. |
-| 3 | Solid reasoning. Trigger conditions confirmed in context. Causal mechanism is sound. But no baseline data to estimate effect size. |
-| 4 | Strong basis. Full context support, clear causal chain, and either baseline data or strong historical precedent for this type of test. |
-| 5 | Near certainty. Confirmed trigger, strong causal chain, historical data showing this pattern wins frequently. Reserved for patterns with calibration data from evidence modules. |
-
-**Calibration rules:**
-- Without any baseline analytics data, Confidence is capped at 4 globally
-- Without audience-messaging.md, persona-based hypothesis Confidence is capped at 3
-- Without positioning-scorecard.md, gap-triggered hypothesis Confidence is capped at 3
-- Partial triggers (from Phase 2) reduce Confidence by 1
-- A proxy primary metric reduces Confidence by 1, waived only when the `Decision Posture` guarded-proxy conditions all hold (an instrumented Direct lead guardrail, a pre-registered non-inferiority margin, an additive decision rule), decided in `phases/score.md` Step 4 after the validation phase
-- Confidence 5 should only appear when calibration data from evidence modules is present
-- "Before" state based on exact copy from context: no adjustment. "Before" state inferred: Confidence -1.
-- When conversions lack page attribution but variant-level instrumentation is available: Confidence reflects the proxy read's interpretability, not revenue attribution. A high-traffic surface with a variant-instrumented proxy that reads out within the feasibility window earns its Confidence on the proxy. Note the revenue-attribution limitation separately in the hypothesis; do not cap proxy-read Confidence for it.
-- Strategic-deliverable scoring guidance: for a strategic experiment with a non-A/B measurement design (scored on the separate strategic pass, `phases/score.md` Step 6b), Confidence reflects the interpretability of that design (a clean regional holdout with an adequate baseline reads near a well-powered A/B; an uncontrolled before-and-after with confounds reads lower), NOT the absence of an A/B. State the design's read strength in the score rationale. The de-novo no-precedent -1 penalty still applies to strategic levers with no precedent. A strategic lever carrying the confirm-first contingency (`phases/detect-strategic.md` criterion 7, context-is-silent state) takes a further -1 on raw Confidence for the unverified existence assumption; the contingency is lifted on a later run where the capability's status is documented. A catch-all lever (no family template; `phases/detect-strategic.md` Catch-All Leg) takes one additional -1 on raw Confidence beyond the de-novo penalty, stacking with the confirm-first contingency when both apply. This clause governs strategic-deliverable scoring only; tactical Confidence scoring is unchanged.
-- Gated-Confidence anchor: a Confidence of 4 or 5 requires the validation gates (`phases/validate.md`) to pass with no affirmative fail. A hypothesis whose premise is contradicted by another loaded artifact, whose primary or guardrail metric is not instrumented, that lacks a baseline, whose captured control is stale or contested, that is unpowerable on its thesis metric, or whose required segment cannot be isolated, cannot earn Confidence 4-5: the gated rubric (`phases/score.md` Step 4d) caps it at 3 (one fail) or 2 (multiple fails). This is consistent with the "Confidence 4 capped without baseline" rule above; the gated rubric generalizes that single cap to the full set of premise/measurement conditions. Tri-state: only an affirmative fail caps; a gate that could not be assessed because its backing artifact is absent is neutral and never caps Confidence on its own. The same gated anchor governs the strategic deliverable's scoring pass: a strategic experiment whose comparison baseline is affirmatively disqualified by the loaded performance context, whose business metric is not yet readable, or whose premise rests on an unreconciled data contradiction cannot earn Confidence 4-5, per the strategic gates in `phases/validate.md` and the Step 6b ceiling.
-
----
-
-## Ease Calibration (1-5)
-
-Ease measures implementation effort. Higher = easier.
-
-| Score | Anchor Description |
-|-------|--------------------|
-| 1 | Major engineering effort. New infrastructure, cross-team coordination, multi-sprint implementation. |
-| 2 | Significant effort. Structural page changes, CMS modifications, new tooling integration. Likely requires developer involvement. |
-| 3 | Moderate effort. Layout restructuring, multi-step form implementation, or changes requiring both design and development. |
-| 4 | Low effort. Copy changes, image swaps, minor layout adjustments. Can be done by a marketer with CMS access. |
-| 5 | Trivial. Single text change. Copy-paste into CMS. Deployed in under an hour. |
-
-**Calibration rules:**
-- Copy-only changes: Ease 4-5
-- Layout restructuring: Ease 2-3
-- Personalization requiring new infrastructure: Ease 1-2
-- Personalization with existing tooling: Ease 2-3
-- Form changes on owned forms: Ease 3-4
-- Form changes on embedded third-party (Marketo, HubSpot): Ease 2-3
-- If implementation requires stakeholder approval beyond the testing team (e.g., pricing changes): Ease -1
-- Strategic-deliverable scoring guidance: for strategic-lane stand-ups (scored on the separate strategic pass, `phases/score.md` Step 6b), anchor Ease on stand-up scope rather than page-implementation effort: 4-5 for content or configuration-level work, 3 for a cross-team operational definition (an offer scoped and delivered by existing staff), 2 for a new-capability build on contended engineering capacity, 1 for a business-model, compliance, or channel change. This clause governs strategic-deliverable scoring only; tactical Ease anchors are unchanged.
-
----
-
-## Empirical Calibration Data
-
-The anchors above are heuristic. The data below provides empirically observed effort-to-impact ratios from real A/B tests, drawn from empirical CRO testing data (35,000+ experiments across verticals). Use these as reference points when the heuristic anchors feel uncertain.
-
-### Effort-Impact Reference Points
-
-| Test Pattern | Implementation Effort | Observed Lift | Key Metric | ICE Calibration Note |
-|---|---|---|---|---|
-| Form field label micro-copy change | 3 hours | +7.3% | Referred leads (deep funnel) | Ease 5, Impact 3-4. Do not cap Impact at 2 just because Ease is 5. |
-| Hero text alignment (CSS only) | Minutes | +4% leads, +20% clicks | Leads + engagement | Ease 5, Impact 3. |
-| Icon to "Log In" text label | Single element change | +4.1% orders, +5.3% RPV | Revenue | Ease 5, Impact 4. Described as biggest client win in 2 years. |
-| Placeholder example text in form fields | Minimal | +19% | Leads (directional significance) | Ease 5, Impact 3. Directional but consistent with validated pattern on same site. |
-| CTA copy "Subscribe" to "View Demo" | Trivial text change | +249% CTA clicks | SaaS engagement | Ease 5, Impact 4-5 for engagement metric. Downstream conversion impact varies. |
-| CTA copy "Subscribe" to "Free Trial" | Trivial text change | +68% CTA clicks | SaaS engagement | Ease 5, Impact 4. |
-| Social proof relocation above fold | Low (content move) | +22% | Form submissions | Ease 4, Impact 3-4. |
-| Countdown calendar + hero shrink | Moderate (auto-updating element) | +45-65% | Subscriptions | Ease 3, Impact 5. Combined with ad creative parity (see EIE-03). |
-| Conversational form replacement | Moderate (new form build) | +12% conversions, then 17% CAC reduction | Conversions + CAC | Ease 3, Impact 4. Compounded when replicated site-wide. |
-| Button enlargement (donation page) | Low | +35% conversion, +13% revenue | Revenue | Ease 5, Impact 4. |
-| Handwritten text + arrow to checkbox | Low (design asset) | +207% monthly donations | Monthly conversion | Ease 4, Impact 5. Outlier but reproducible on donation/selection pages. |
-
-**Key calibration correction:** Micro-copy and UI label changes (Ease 5) routinely produce 4-20% lifts in primary metrics. The heuristic assumption that high-Ease tests have low Impact is empirically wrong for this pattern category. When scoring FO-04 (micro-copy), NX-07 (login prominence), EE-03 (commitment language), or any label/micro-copy hypothesis: do NOT automatically cap Impact at 2-3 just because Ease is 5.
-
-### Industry Win Rate Baselines
-
-Use these as Confidence calibration anchors:
-
-| Context | Win Rate | Confidence Calibration |
-|---|---|---|
-| Industry average (all verticals) | 20-40% | A randomly selected hypothesis has ~30% chance of winning. Confidence 3 is the neutral starting point. |
-| Pattern-matched with confirmed triggers | Substantially higher than baseline | Hypotheses matching validated patterns with full trigger conditions confirmed in context should start at Confidence 3-4, not 2-3. The pattern library filters for higher-probability tests. |
-| Novel/untested pattern (no library match) | ~20-25% | Context-derived hypotheses (Phase 2b) without pattern library support should start at Confidence 2. |
-
-**Scoring implication:** Pattern-matched hypotheses (Phase 2a) with full trigger confirmation have meaningfully higher probability than context-derived hypotheses (Phase 2b). Consider these Confidence floors:
-- Pattern-matched with full trigger match: Confidence floor of 3
-- Pattern-matched with partial trigger match: Confidence floor of 2
-- Context-derived (Phase 2b): Confidence cap of 3 unless strong corroborating evidence exists (consistent with existing context-derived scoring rules)
-
-**Base-rate anchor (most A/B effects are true nulls).** The 20-40% win rate above is the rate at which a variant beats control at all. The deeper calibration fact is that the majority of A/B tests produce no real effect: roughly 70% of well-run tests are true nulls, and many "wins" in low-powered tests are noise that does not replicate. Anchor expectations on that base rate, NOT on the headline lifts in vendor case studies. A case study reporting "+249% CTA clicks" is a single observed outcome from an unknown number of attempts, selected because it succeeded; it is not the expected effect of a similar change on a different site. When a hypothesis's Confidence or Impact leans on a cited lift, discount toward the base rate rather than toward the cited number. The honest prior for a new hypothesis is "probably no effect," which the data must move, not the other way around.
-
-**Evidence-source-quality note.** Not all cited evidence moves Confidence the same amount. Treat evidence in tiers, strongest first:
-- Peer-reviewed meta-analysis or a large multi-site experiment program (controlled, replicated across contexts): can support Confidence 4 on its own.
-- A prior win on the SAME site/program with controlled variance (the experiment-history input): supports a replication lift, strongest when the mechanism is the dominant change.
-- A vendor case study or single published result: a directional signal only. It justifies running the test; it does not by itself justify Confidence 4. Treat one case study as one data point (a "prior signal," not a "pattern," per the construct Step 10 evidence-strength audit).
-- A behavioral principle with no experiment data: principle-based, Confidence 3 at most absent other support.
-How much a cited lift should move Confidence is governed by which tier it sits in, not by the size of the lift.
-
-**FM6 dilution thresholds (tunable, one-engagement heuristics).** The segmentation pre-registration in `phases/construct.md` Step 5 pre-registers the primary read as a segment when the persuadable audience is a diluted minority. The trigger thresholds are: Direct traffic > 75% of the surface's sessions, bounce rate > 60%, or new visitors > 80% (when the mechanism depends on familiarity or return behavior). These are heuristics calibrated on a single engagement, the same hedge this module applies to its empirical anchors above: treat them as defaults to adjust against a specific client's traffic shape, not as fixed constants. The principle (pre-register the segment when an all-visitors denominator would dilute the effect below readability) holds regardless of the exact cutoffs; the numbers are where to start.
-
-### Minimum Test Thresholds
-
-These thresholds complement the feasibility estimation in phases/construct.md (Step 5b). Use them as hard gates before finalizing any hypothesis:
-
-- **100 conversions per variant** minimum (below this, effect sizes are unreliable)
-- **7 days minimum** test duration (one full business cycle to capture day-of-week variation)
-- If the page cannot produce 100 conversions per variant within the feasibility tier's time window: route to the next longer tier or to "What's Not Here" with a traffic requirement note
-- If 3+ hypotheses in the roadmap target the same low-traffic page: flag as a prioritization conflict. Only the highest-ICE hypothesis should run; others queue behind it.
-
----
-
-## B2B SaaS Calibration Anchors
-
-These benchmarks apply specifically when `company-identity.md` category indicates a SaaS or B2B SaaS company. They supplement, not replace, the general calibration anchors.
-
-### CTA Commitment Language (EE-03 Calibration)
-
-| CTA Change | Observed Lift | Context |
-|---|---|---|
-| "Subscribe" to "Free Trial" | +68% CTA clicks | SaaS |
-| "Subscribe" to "View Demo" | +249% CTA clicks | SaaS |
-| Specific CTA ("Get Your Free Assessment") vs. generic ("Learn More") | +202% | All verticals (HubSpot, 330K CTAs) |
-
-**Scoring rule:** When a B2B SaaS company's primary CTA uses high-commitment language (Subscribe, Buy, Purchase) and the audience is solution-aware or earlier, the Impact baseline for EE-03 should be 4 (not 3). The commitment gap in SaaS is larger than in other verticals because "Subscribe" implies ongoing financial obligation.
-
-### Lead-Gen Benchmarks
-
-| Metric | Value | Source |
-|---|---|---|
-| Average SaaS lead-gen conversion rate | ~7% | industry benchmark |
-| New visitor sensitivity to form friction | 5-7x higher than returning visitors | agency testing data |
-| Form field reduction (8 to 6): new visitors | +15.31% | B2B SaaS client |
-| Form field reduction (8 to 6): returning visitors | +2.42% | B2B SaaS client |
-
-**Scoring rule:** For FO-01 and FO-04 targeting SaaS lead-gen forms: if `performance-profile.md` shows new visitors >60% of form page traffic, add Impact +1. If returning visitors >60%, add Impact -1. (See also EIE-06 in hypothesis-interactions.md.)
-
-### SaaS Copy Anti-Patterns
-
-When constructing hypotheses for B2B SaaS companies, flag and penalize headlines that match these anti-patterns (Confidence -1 for any hypothesis that proposes copy containing them):
-- Meaningless jargon: "Transform Your Business Processes!"
-- Vague superlatives: "The leading platform for X"
-- Feature-first framing without outcome: "AI-powered analytics dashboard"
-
-Positive calibration: direct, specific copy consistently outperforms vague generalities. "Submit" beats clever CTAs on most signup forms.
-
-### SaaS LTV Framework for Test Prioritization
-
-LTV = (Avg Monthly Payment x Gross Margin %) / Churn Rate. Benchmark LTV:CAC ratio is 3:1.
-
-When prioritizing experiments for SaaS clients, weight hypotheses that target:
-- **Onboarding** (initial experience determines LTV trajectory): Impact +1 for hypotheses improving first-session experience
-- **Upgrade paths** (freemium to paid, tier upgrades): Impact +1 for hypotheses on pricing/plan selection pages
-- **Retention touchpoints** (in-app vs. email vs. website): note cross-channel propagation potential in Sequencing Rationale
-
----
-
-## Predictive Scoring Reference
-
-This section describes a predictive scoring system trained on 35,000+ experiments. It is included as reference for future calibration refinement. It does NOT replace ICE scoring in the current system.
-
-### Predictive Scoring Decomposition
-
-The system breaks prediction into three sub-scores:
-
-1. **Predictive modeling factors:** Device targeting, page targeting, test type, and psychological principles yield a base probability (e.g., 35%)
-2. **Industry comparisons:** Matching against similar tests in the same vertical adjusts probability (e.g., "similar tests have 60% win rate in eCommerce/apparel")
-3. **Insight alignment:** Concordance with prior experiments on the same site adjusts further
-
-Blended probability x estimated revenue impact = weighted impact estimate. Output actions: Prioritize / Revisit / Delete.
-
-### Relevance to the Current System
-
-This decomposition suggests a future refinement path for Confidence scoring:
-- Sub-score 1 (predictive factors) is already partially captured by the pattern library's trigger conditions
-- Sub-score 2 (industry comparisons) could be approximated with vertical-specific calibration tables (not yet built)
-- Sub-score 3 (insight alignment) requires per-client experiment history data. When the experiment-history context layer is operational, Confidence scoring could be augmented with: "Prior experiments on this site that tested similar mechanisms had a Y% win rate."
-
-Not actionable until the experiment-history system is operational. Documented here so the refinement path is visible when that system comes online.
-
----
-
-## Anti-Patterns (Check Before Finalizing)
-
-### Score Clustering
-**Symptom:** >70% of hypotheses have ICE totals within 2 points of each other.
-**Fix:** Re-examine the strongest and weakest hypotheses. Score those two first, then spread the rest between them.
-
-### Impact Inflation
-**Symptom:** Every hypothesis has Impact >= 4.
-**Fix:** Impact 4+ means "changes quarterly numbers." Most copy changes on secondary pages don't do that. Recalibrate against the anchors.
-
-### Confidence Without Data
-**Symptom:** Hypotheses score Confidence 4 despite no baseline analytics.
-**Fix:** Without analytics, Confidence is capped at 4. Without positioning-scorecard, capped at 3. Without audience-messaging, persona hypotheses capped at 3.
-
-### Ease Optimism
-**Symptom:** Structural changes and personalization hypotheses score Ease 4+.
-**Fix:** Anything requiring developer involvement is Ease 3 at most. Anything requiring new tooling or infrastructure is Ease 2 at most.
-
-### "Everything is a Quick Win"
-**Symptom:** >50% of hypotheses tier as Quick Wins.
-**Fix:** Quick Wins require Confidence >= 4 AND Ease >= 4. That's a high bar. If most hypotheses clear it, either the context is unusually strong or scoring is too generous.
-
-### Micro-Copy Impact Underestimation (NEW)
-**Symptom:** All Ease-5 hypotheses (micro-copy, label changes) score Impact 2.
-**Fix:** Empirical data shows Ease-5 changes routinely produce 4-20% lifts. Reference the Effort-Impact Reference Points table above. FO-04, NX-07, and EE-03 are Ease 5 patterns that can legitimately score Impact 3-4.
-
----
-
-## Modifier Application Order
-
-When multiple modifiers apply to the same dimension:
-
-1. Start with pattern baseline
-2. Apply pattern-specific modifiers (from experiment-patterns.md)
-3. Apply calibration overrides (from this module's empirical data and B2B SaaS anchors)
-4. Apply contextual adjustments (from phases/score.md)
-5. Apply interaction effect modifiers (from hypothesis-interactions.md EIE-06 and similar)
-6. Clamp to 1-5
-
-If calibration overrides exist (step 3), they replace the result of steps 1-2 for the overridden dimension. Steps 4-5 still apply on top.
-
----
-
-## Context-Derived Hypothesis Scoring
-
-Context-derived hypotheses (from Phase 2b) lack pattern precedent. They represent novel observations that don't fit any predefined CRO pattern. Score them with these calibration notes:
-
-**Starting point:** 3/3/3 with Confidence -1 penalty applied at Step 1. This means context-derived hypotheses start at 3/2/3 before any adjustments.
-
-**General calibration:**
-- Context-derived hypotheses should generally score LOWER confidence than pattern-matched hypotheses. Patterns encode structural knowledge from repeated CRO observations. Novel hypotheses lack this foundation.
-- If a context-derived hypothesis scores higher total ICE than most pattern-matched hypotheses in the same roadmap, re-examine. It's not impossible, but it's a signal to double-check the scoring.
-- The Confidence -1 penalty can be neutralized (+1) only with a specific evidence citation from context files. "Strong evidence" as a general claim doesn't qualify. Name the context file section and the specific data point.
-
-**Anti-pattern: Context-derived inflation.** If context-derived hypotheses are consistently scoring Confidence 3+ (after the penalty), the penalty isn't doing its job. At least half of context-derived hypotheses should remain at Confidence 2 after all adjustments.
-
-**Exceeding the Confidence-3 cap.** A context-derived hypothesis may exceed Confidence 3 when it BOTH cites a specific, named piece of corroborating evidence from context (a verified before-state quote, a quantified performance signal, or a named behavioral-friction finding) AND targets a high-traffic, proxy-readable surface. Either alone holds the cap at 3. This is the path by which a pattern-starved scope with strong evidence can still earn a Quick Win. It is a narrow exit, not a loophole: the inflation anti-pattern above still governs the general population.
-
-**Skip steps 2-3:** Context-derived hypotheses have no pattern modifiers or calibration overrides. Jump from Step 1 directly to Step 4 (contextual adjustments) then Step 5 (interaction modifiers).
+- **Relative within one roadmap:** a 4 for one company need not equal a 4 for another. Scores must separate rows from each other.
+- **Evidence-led:** each score follows from the row's evidence. Missing inputs lower certainty because there is less evidence, not because a rule demands it.
+- **Clustering defeats the purpose:** when most rows land at 3 or 4, re-score the strongest and weakest rows first and place the rest between them.
+
+## Impact (1-5)
+
+Expected effect on conversion, revenue or strategic learning if the variant wins.
+
+| Score | Anchor |
+|---|---|
+| 1 | Cosmetic. No measurable conversion effect expected |
+| 2 | Minor. A secondary metric or a low-traffic page |
+| 3 | Moderate. A primary metric on a secondary page, or a secondary metric on a primary page |
+| 4 | Significant. The primary conversion metric on a high-traffic page; would change quarterly numbers |
+| 5 | Transformational. Changes the core conversion rate, repositions against competitors, or opens a revenue path |
+
+**Guidance:**
+- Homepage rows usually start at 3 or above; secondary pages at 2 or 3 unless evidence says otherwise.
+- Impact 5 should be rare. If many rows reach it, re-read the anchor.
+- **Strategic rows:** an off-page lever (a proof asset, a buying-group motion, a routing change) can earn Impact 5 when its business outcome is large, whatever its read model. A lever does not score lower for not being an on-page A/B. Measurement Foundation entries are never scored: value of information is not a conversion effect.
+
+## Confidence (1-5)
+
+How certain it is that the experiment yields a measurable, interpretable result. It is not the probability of winning. "Measurable" means readable at the `Decision Posture` in `SKILL.md`.
+
+| Score | Anchor |
+|---|---|
+| 1 | Speculation. No supporting data |
+| 2 | Informed guess. A common CRO pattern with conditions only partly confirmed |
+| 3 | Solid reasoning. Conditions confirmed, mechanism sound, no baseline to size the effect |
+| 4 | Strong basis. Full context support, clear causal chain, and baseline data or strong precedent |
+| 5 | Near certainty. Confirmed conditions, strong chain, and repeated prior wins for this mechanism on comparable surfaces |
+
+**Guidance:**
+- With no performance profile there is no baseline, so Confidence 5 is hard to justify.
+- With no audience-messaging, persona rows rest on less evidence; with no scorecard, gap-triggered rows do.
+- A partial pattern match, an inferred current state, or copy adapted from L0 rather than audience-messaging each weaken the basis.
+- A proxy primary is less certain than a direct one, unless all three `Guarded proxy` conditions in the `Decision Posture` hold.
+- **Validation gates:** read each row's `validation_gates` as evidence. A premise contradicted by another artifact, a dark metric, a missing baseline, a contested control, an unpowerable thesis or a non-isolable segment are reasons for a lower score. They are not ceilings. `not-assessed` is neutral.
+- **Non-pattern rows:** a card with no pattern precedent starts with less structural certainty. Specific corroborating evidence (a quoted current state, a measured signal, a named friction finding) can make up for it.
+- **Strategic rows:** Confidence reflects how interpretable the read model is. A clean holdout with an adequate baseline reads close to a powered A/B; an uncontrolled before-and-after with confounds reads lower. A confirm-first row carries an unverified existence assumption, which also lowers it.
+
+## Ease (1-5)
+
+Implementation effort. Higher is easier.
+
+| Score | Anchor |
+|---|---|
+| 1 | Major engineering: new infrastructure, cross-team, multi-sprint |
+| 2 | Significant: structural changes, CMS work, new tooling; needs a developer |
+| 3 | Moderate: layout restructuring, multi-step forms, design plus development |
+| 4 | Low: copy changes, image swaps, minor layout; a marketer with CMS access |
+| 5 | Trivial: one text change, deployed in under an hour |
+
+**Guidance:**
+- Copy-only 4 to 5. Layout 2 to 3. Personalization 1 to 2 without tooling, 2 to 3 with it. Owned forms 3 to 4; embedded third-party forms 2 to 3.
+- Approval beyond the testing team (pricing, legal) lowers Ease by 1.
+- Anything needing a developer is rarely above 3; new tooling rarely above 2.
+- **Strategic rows:** anchor on stand-up scope. Content or configuration 4 to 5; a cross-team operational definition 3; a new capability on contended engineering 2; a business-model, compliance or channel change 1.
+
+## Evidence and Base Rates
+
+- **Base rate:** most well-run A/B tests are true nulls, and many low-powered wins do not replicate. A variant beats control in roughly 20% to 40% of tests. The honest prior for a new row is "probably no effect."
+- **Cited lifts:** a vendor case study is one selected outcome. Discount toward the base rate, not toward the cited number.
+- **Evidence strength, strongest first:**
+  - A meta-analysis or large multi-site program: can support Confidence 4 alone.
+  - A prior win on the same site with controlled variance: supports a replication, strongest when that mechanism is the dominant change.
+  - One case study or published result: a directional signal that justifies running the test, not Confidence 4.
+  - A behavioral principle with no experiment data: about Confidence 3 at most without other support.
+
+## Effort-Impact Reference Points
+
+High-Ease label and micro-copy changes often move primary metrics 4% to 20%. Do not hold Impact at 2 because Ease is 5.
+
+| Test | Effort | Observed lift | Calibration note |
+|---|---|---|---|
+| Form label micro-copy | 3 hours | +7.3% referred leads | E5, I3 to 4 |
+| Hero text alignment (CSS) | Minutes | +4% leads | E5, I3 |
+| Icon to "Log In" text | One element | +4.1% orders | E5, I4 |
+| Placeholder examples in fields | Minimal | +19% leads (directional) | E5, I3 |
+| "Subscribe" to "View Demo" | Trivial | +249% CTA clicks | E5, I4 to 5 on the click metric; downstream varies |
+| Proof moved above the fold | Low | +22% submissions | E4, I3 to 4 |
+| Countdown plus hero shrink plus ad parity | Moderate | +45% to +65% subscriptions | E3, I5; combined change |
+| Conversational form | Moderate | +12% conversions | E3, I4 |
+| Larger donation button | Low | +35% conversion | E5, I4 |
+
+## B2B SaaS Anchors
+
+Apply when `company-identity.md` places the company in SaaS.
+
+- **Commitment language:** with "Subscribe", "Buy" or "Purchase" as the primary CTA and a solution-aware or earlier audience, the commitment-level pattern (EE-03) scores Impact 4. Specific CTAs beat generic ones broadly.
+- **Form friction by visitor type:** new visitors are far more sensitive to field count. For field reduction or micro-copy on a SaaS lead form: Impact +1 when new visitors exceed 60% of form traffic, -1 when returning visitors do.
+- **Copy anti-patterns:** proposed copy with meaningless jargon, vague superlatives ("the leading platform") or feature-first framing without an outcome rests on weaker ground; lower Confidence by 1.
+- **Lifetime value:** rows that improve first-session onboarding or the pricing and plan-selection path weigh more (Impact +1).
+
+## Adjustment Order
+
+1. Start from the pattern baseline, or 3/3/3 for a non-pattern card.
+2. Apply the pattern's modifiers whose conditions are confirmed.
+3. Apply this module's empirical and SaaS anchors.
+4. Apply the contextual adjustments in `phases/score.md`.
+5. Apply interaction modifiers from `modules/hypothesis-interactions.md` (for example EIE-06).
+6. Clamp each score to 1-5.
