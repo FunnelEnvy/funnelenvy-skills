@@ -67,19 +67,43 @@ strategic rows with a different design match, both rows stay and each carries
 
 Sizing and read model, first match wins:
     design holdout                                  -> holdout, no sizing
-    design pre-post                                 -> pre-post, no sizing
+    design pre-post, baseline missing or refused    -> pre-post, no sizing
+    design pre-post                                 -> pre-post: count read
     no baseline, missing rate or monthly_sessions   -> unsized, reason no-baseline
-      (a rate outside (0, 1) or sessions <= 0 count as missing)
+      (a rate outside (0, 1) or sessions <= 0 count as missing; on a pre-post
+      design a rate of exactly 0 is a measured zero, not missing)
     --boundary B and window_start null or before B  -> unsized, reason refused-window
     weeks <= Maximum A/B read window                -> ab: n_per_variant, weeks
     conversions per variant over the window >= gate -> directional: mde_achievable
-    otherwise                                       -> pre-post: conversions per variant
+    otherwise                                       -> pre-post: conversions per
+                                                       variant, plus the count read
 where n_per_variant = ceil(M * p * (1 - p) / (p * relative_mde)^2),
 weeks = max(arms * n_per_variant / (monthly_sessions / 30) / 7, min_days / 7),
 n_window = (monthly_sessions / 30) * window_weeks * 7 / arms, and
-mde_achievable = sqrt(M * p * (1 - p) / n_window) / p. Every sizing object echoes
-monthly_sessions and rate. weeks rounds to 2 decimals and mde_achievable to 4 in the
-output; comparisons use the unrounded values.
+mde_achievable = sqrt(M * p * (1 - p) / n_window) / p. A pre-post design is refused
+on the same boundary rule as any other. Every sizing object echoes monthly_sessions
+and rate. weeks and weeks_for_mde round to 2 decimals, baseline_events to 1 and
+mde_achievable to 4 in the output; comparisons use the unrounded values.
+
+Count read, on every pre-post row that carries sizing. The read compares the count in
+a post-launch period with the count in a pre-launch period of the same length, each
+one Maximum A/B read window long, so window_weeks is that window. With
+L = (monthly_sessions / 30) * window_weeks * 7 * rate, the expected baseline count in
+one period, and k = sqrt(M) / 2, the count read adds three fields:
+    baseline_events = L
+    mde_achievable  = ((sqrt(L) + k) / sqrt(L))^2 - 1
+    weeks_for_mde   = max(L_mde / (L / window_weeks), min_days / 7),
+                      where L_mde = (k / (sqrt(1 + relative_mde) - 1))^2
+mde_achievable is the smallest relative increase the window detects at the posture's
+significance and power, read by the two-sided count test
+z = (post - pre) / sqrt(post + pre). weeks_for_mde is the length each period needs to
+detect a change the size of the relative MDE, and can exceed window_weeks. The form
+is the square-root comparison of two Poisson counts. It assumes counts, two periods of
+equal length, and no trend or seasonality between them. mde_achievable is therefore a
+floor on what the read can detect: drift between the periods only raises it. A rate of
+exactly 0 with positive sessions on a pre-post design is a measured zero:
+baseline_events is 0, and mde_achievable and weeks_for_mde are null, because a
+relative change from zero does not exist.
 
 Key carry-forward, per altitude. Each --prior file is assigned to an altitude by its
 H1 (an H1 containing "Strategic Experiment Roadmap" is strategic, any other H1 is
@@ -465,21 +489,60 @@ def merge_cards(cards):
 # Sizing
 # --------------------------------------------------------------------------
 
+def usable_baseline(baseline, boundary=None, allow_zero=False):
+    """Return (sessions, rate, reason) for a card baseline.
+
+    reason is None when the baseline is usable, "no-baseline" when sessions or rate is
+    missing, sessions is not positive or rate is outside (0, 1), and "refused-window"
+    when `boundary` is set and window_start is null or before it. With allow_zero, a
+    rate of exactly 0 is usable.
+    """
+    base = baseline or {}
+    sessions = base.get("monthly_sessions")
+    rate = base.get("rate")
+    rate_ok = rate is not None and (0 < rate < 1 or (allow_zero and rate == 0))
+    if sessions is None or sessions <= 0 or not rate_ok:
+        return sessions, rate, "no-baseline"
+    if boundary is not None:
+        start = base.get("window_start")
+        if start is None or start < boundary:
+            return sessions, rate, "refused-window"
+    return sessions, rate, None
+
+
+def count_read(sessions, rate, posture):
+    """Return the count read fields for a pre-post window, per the module's count read rules.
+
+    The dict carries window_weeks, baseline_events, mde_achievable and weeks_for_mde. At
+    zero baseline events the last two are None.
+    """
+    window_weeks = posture["max_ab_weeks"]
+    events = sessions / 30.0 * window_weeks * 7 * rate
+    read = {"window_weeks": window_weeks, "baseline_events": round(events, 1),
+            "mde_achievable": None, "weeks_for_mde": None}
+    if events > 0:
+        k = math.sqrt(posture["M"]) / 2
+        root = math.sqrt(events)
+        events_for_mde = (k / (math.sqrt(1 + posture["relative_mde"]) - 1)) ** 2
+        weeks = max(events_for_mde / (events / window_weeks), posture["min_days"] / 7.0)
+        read["mde_achievable"] = round(((root + k) / root) ** 2 - 1, 4)
+        read["weeks_for_mde"] = round(weeks, 2)
+    return read
+
+
 def size_row(design, arms, baseline, posture, boundary=None):
     """Return (read_model, sizing, unsized_reason) for one row, per the module's sizing table."""
     if design == "holdout":
         return "holdout", None, None
+    sessions, rate, reason = usable_baseline(baseline, boundary, allow_zero=design == "pre-post")
     if design == "pre-post":
-        return "pre-post", None, None
-    base = baseline or {}
-    sessions = base.get("monthly_sessions")
-    rate = base.get("rate")
-    if sessions is None or rate is None or sessions <= 0 or not 0 < rate < 1:
-        return "unsized", None, "no-baseline"
-    if boundary is not None:
-        start = base.get("window_start")
-        if start is None or start < boundary:
-            return "unsized", None, "refused-window"
+        if reason is not None:
+            return "pre-post", None, None
+        sizing = count_read(sessions, rate, posture)
+        sizing.update({"monthly_sessions": sessions, "rate": rate})
+        return "pre-post", sizing, None
+    if reason is not None:
+        return "unsized", None, reason
     m = posture["M"]
     daily = sessions / 30.0
     variance = m * rate * (1 - rate)
@@ -502,7 +565,8 @@ def size_row(design, arms, baseline, posture, boundary=None):
         }
         sizing.update(echo)
         return "directional", sizing, None
-    sizing = {"conversions_per_variant": round(conversions, 1), "window_weeks": window_weeks}
+    sizing = {"conversions_per_variant": round(conversions, 1)}
+    sizing.update(count_read(sessions, rate, posture))
     sizing.update(echo)
     return "pre-post", sizing, None
 

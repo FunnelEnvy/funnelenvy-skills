@@ -63,11 +63,12 @@ Write the causal chain in two or three sentences: the observation, the behaviora
 
 ### Read Model and Read Threshold
 
-- `**Read model:**` follow the `Output Format` line for the row's read model. A/B, directional and scripted pre/post lines carry the sample per arm, the weeks or window, the achievable effect, and the traffic and rate the sizing object echoes.
+- `**Read model:**` follow the `Output Format` line for the row's read model. Every line that has a sizing object carries the figures it holds: sample per arm, weeks or window, achievable effect, and the traffic and rate it echoes.
 - `**Expected effect and read threshold:**`
   - *A/B and directional:* state the six parts `Output Format` lists. For a proxy read with no baseline rate, state them against an absolute threshold set before launch, or declare the first run baseline-setting.
-  - *Pre/post and holdout by design:* state a pre-registered read criterion. Say the window is set before launch and name its basis: the sales cycle, or the volume needed to reach a stated count. The script sizes no window for these designs, so never print a week count.
-  - *Scripted pre/post:* an A/B design the script moved to pre/post for low conversions carries a sizing object. Quote its conversions per arm over the full window as the reason a split test cannot read, then state the criterion as above.
+  - *Pre/post with a sizing object:* state a pre-registered read criterion and the count test in `SKILL.md` > `Decision Posture` > `Count read`. Then state three figures from the sizing object: `baseline_events` as the conversions each period expects, `mde_achievable` as the smallest rise that period can detect, and `weeks_for_mde` as the weeks each period needs for a 20% change. For example: "Read once, the post-launch count against the pre-launch count, two-sided at p < 0.10. Each 26-week period expects about 121 booked calls, enough to detect a rise of about 34%; a 20% rise would need about 73 weeks per period." A scripted pre/post row also quotes its conversions per arm as the reason a split test cannot read. Never name the fields in the roadmap.
+  - *Zero expected conversions:* say the pre-period recorded none, so no relative change can be stated, and set the criterion as a count fixed before launch.
+  - *Pre/post with no sizing object, and holdout:* state a pre-registered read criterion. Say the window is set before launch and name its basis: the sales cycle, or the volume needed to reach a stated count. Print no week count.
   - *Directional result:* do not ship and do not extend; queue a fresh confirmation test of the same mechanism, sized on the posture effect.
 
 ### Evidence and Scores
@@ -105,7 +106,7 @@ Count the elements the variant changes: headline, subhead, CTA copy, CTA destina
 - `**Business metric:**` the outcome and its direction, distinct from a page micro-conversion.
 - `**Why this should work:**` the causal chain in two or three sentences.
 - `**Requires:**` the prerequisites, or "none". A confirm-first row opens with the existence check, as `Strategic Roadmap Output Format` shows. A Foundation entry the row depends on is named here.
-- `**Read condition and window:**` what counts as a read, and the basis that sets the window before launch, per `Read Model and Read Threshold`. When a disqualified baseline cannot be avoided, say the comparison window is directional only. When a page test shares the mechanism, one neutral line on keeping the windows apart.
+- `**Read condition and window:**` what counts as a read, and the window, per `Read Model and Read Threshold`: a sized pre/post read states the count test and its three figures here. When a disqualified baseline cannot be avoided, say the comparison window is directional only. When a page test shares the mechanism, one neutral line on keeping the windows apart.
 
 ## Inconclusive Guidance
 

@@ -132,6 +132,9 @@ check "Never size on a refused window (Measurement-Regime Boundary)" \
 check "Size only from the Decision Posture (Decision Posture)" \
   "sect $SKILL '^## Decision Posture' | grep -F '**Hard rule: size only from this table.**'" \
   "NONZERO"
+check "Pre/post reads state their detectable change from the sizing object (construct.md Read Model and Read Threshold)" \
+  "sect $PH/construct.md '^### Read Model and Read Threshold' | grep -F '*Pre/post with a sizing object:*' | grep -F 'mde_achievable' | grep -F 'Count read'" \
+  "NONZERO"
 check "History ledger blocks the write while any id is unaccounted (score.md)" \
   "sect $PH/score.md '^## Step 3: Close the History Ledger' | grep 'Hard rule' | grep 'not written while .history_unaccounted. is non-empty'" \
   "NONZERO"

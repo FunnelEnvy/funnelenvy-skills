@@ -142,6 +142,76 @@ class TestSizing(unittest.TestCase):
         self.assertEqual(sized(5000, 0.02, start="2026-06-22", boundary=boundary)[0], "ab")
 
 
+def pre_post(sessions, rate, **kwargs):
+    return cb.size_row("pre-post", 2, {"monthly_sessions": sessions, "rate": rate,
+                                       "window_start": kwargs.pop("start", None)}, POSTURE, **kwargs)
+
+
+class TestCountRead(unittest.TestCase):
+    """Count read on pre-post rows. Expected values come from the formulas in the
+    module docstring, computed outside the module."""
+
+    def test_pre_post_design_states_detectable_change(self):
+        # 100 baseline events per 26-week period detect about +38% at 90% and 80%.
+        result = run([card(design="pre-post",
+                           baseline={"monthly_sessions": 3000 / 3.64, "rate": 0.02})])
+        row = result["rows"][0]
+        self.assertEqual((row["read_model"], row["unsized_reason"]), ("pre-post", None))
+        sizing = row["sizing"]
+        self.assertEqual(sizing["window_weeks"], 26)
+        self.assertAlmostEqual(sizing["baseline_events"], 100.0, places=1)
+        self.assertAlmostEqual(sizing["mde_achievable"], 0.3826, places=4)
+        self.assertAlmostEqual(sizing["weeks_for_mde"], 88.23, places=2)
+        self.assertEqual(sizing["rate"], 0.02)
+
+    def test_weeks_for_mde_matches_window_and_floor(self):
+        # At about 339 events per period the window detects exactly the 20% MDE in 26
+        # weeks; very high traffic floors at the 7-day minimum.
+        sizing = pre_post(2796.730440929179, 0.02)[1]
+        self.assertAlmostEqual(sizing["mde_achievable"], 0.20, places=4)
+        self.assertAlmostEqual(sizing["weeks_for_mde"], 26.0, places=2)
+        self.assertEqual(pre_post(1000000, 0.5)[1]["weeks_for_mde"], 1.0)
+
+    def test_scripted_pre_post_adds_count_read(self):
+        # An A/B design too thin to split keeps its per-arm count and gains the count read,
+        # whose period count is the whole page's, not one arm's.
+        model, sizing, _ = sized(1000, 0.02)
+        self.assertEqual(model, "pre-post")
+        self.assertAlmostEqual(sizing["conversions_per_variant"], 60.7, places=1)
+        self.assertAlmostEqual(sizing["baseline_events"], 121.3, places=1)
+        self.assertAlmostEqual(sizing["mde_achievable"], 0.3447, places=4)
+        self.assertAlmostEqual(sizing["weeks_for_mde"], 72.71, places=2)
+
+    def test_zero_baseline_has_no_relative_change(self):
+        model, sizing, reason = pre_post(1000, 0)
+        self.assertEqual((model, reason), ("pre-post", None))
+        self.assertEqual((sizing["baseline_events"], sizing["mde_achievable"],
+                          sizing["weeks_for_mde"]), (0.0, None, None))
+        self.assertEqual(sized(1000, 0)[::2], ("unsized", "no-baseline"))
+
+    def test_pre_post_refused_window_sizes_nothing(self):
+        boundary = "2026-06-22"
+        refused = ("pre-post", None, None)
+        self.assertEqual(pre_post(1000, 0.02, start="2026-05-01", boundary=boundary), refused)
+        self.assertEqual(pre_post(1000, 0.02, start=None, boundary=boundary), refused)
+        counted = pre_post(1000, 0.02, start="2026-06-22", boundary=boundary)[1]
+        self.assertAlmostEqual(counted["mde_achievable"], 0.3447, places=4)
+
+    def test_pre_post_without_baseline_keeps_no_sizing(self):
+        # Positive control: a pre-post design with no usable baseline is unchanged.
+        self.assertEqual(cb.size_row("pre-post", 2, None, POSTURE), ("pre-post", None, None))
+        self.assertEqual(cb.size_row("pre-post", 2, {"monthly_sessions": 1000}, POSTURE),
+                         ("pre-post", None, None))
+
+    def test_ab_and_directional_sizing_unchanged(self):
+        # Positive control: the count read adds no field to an A/B or directional read.
+        self.assertEqual(sized(5000, 0.02)[1], {"n_per_variant": 15148, "weeks": 25.97,
+                                                "monthly_sessions": 5000, "rate": 0.02})
+        self.assertEqual(sized(3000, 0.02)[1], {"mde_achievable": 0.258, "window_weeks": 26,
+                                                "n_window": 9100, "conversions_per_variant": 182.0,
+                                                "monthly_sessions": 3000, "rate": 0.02})
+
+
 class TestMerges(unittest.TestCase):
 
     def test_same_surface_mechanism_merges(self):
