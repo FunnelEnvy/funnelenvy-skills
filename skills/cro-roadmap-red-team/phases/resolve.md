@@ -25,22 +25,34 @@ Record which sources resolved and which did not. An unresolvable cited source is
 
 ## Step 1.3 -- Cold load
 
-Read every resolved source in full first, except the experiment history (below). Only then read the roadmap. Read the roadmap's structure (hypotheses/levers, tiers, ICE, `Self-critique` blocks, `validation_gates` records if present, `What's Not Here`, sequencing, Measurement Foundation for strategic). Do NOT read the `Self-critique` blocks as settled truth; you will grade them in Phase 4, and Phase 2 must run before you internalize them.
+Read every resolved source in full first, except the experiment history (below). Only then read the roadmap, in this order:
+
+- `## How to Read This Roadmap`, for the declared decision posture.
+- The write-ups under the readiness H2s, with their labels (`**Key:**`, `**Readiness:**`, `**Read model:**`, `**Evidence:**`, the read threshold).
+- The `## Backlog` table, every row.
+- `## Exclusions`, every entry and its grounds.
+- `## Method`, including `### Experiment Program Continuity`, `### Evidence From Completed Experiments` and, on the strategic roadmap, `### Levers Reviewed`.
+- `## Measurement Foundation` (strategic), `validation_gates` records if present, and any `Self-critique` blocks.
+
+A 1.x roadmap is read per SKILL.md `1.x Roadmaps`. Do NOT read any `Self-critique` block as settled truth; Phase 4 grades it, and Phase 2 must run before you internalize it.
 
 **History exception.** The experiment history is the one source not read in full, because a full history file can exceed this skill's whole token budget. From the legacy `experiment-history.md` or the in-KB `schema: experiment-history` artifact, read the frontmatter; the cross-experiment patterns, discovered mechanisms, and coverage gaps sections; the full entry for every experiment on a surface the roadmap targets (find them by each entry's page field); and, for every other entry, its Next Steps field or, where it has none, its final Learning sentences, since that is where a prose next test is named. Read every insight record's `next_experiments` block in full. Parse all of it yourself, by section and by surface. Never run the generator's history script (`history_backlog.py`) or read its output as a substitute: a parser bug must not be able to pass both skills.
 
 ## Step 1.4 -- Schema tolerance (degrade, do not fail)
 
-- **No `Self-critique` blocks** (pre-v1.5.0 roadmap output): skip Phase 4 (self-critique grading) and note the omission in the critique header. All other phases run.
+- **No `Self-critique` blocks** (pre-v1.5.0 output, or 2.0 output, which carries none): skip Phase 4 (self-critique grading) and note the omission in the critique header. All other phases run.
 - **No `validation_gates` records** (pre-v1.9.x output): treat every checklist item as full re-derivation (no gate-verdict-audit shortcut is available). Note it.
 - **Absent or partial `depends_on`** (KB) or missing context files (legacy): resolve what exists, record the unresolvable sources, and continue. Checks that depend on a missing source return "cannot assess -- source absent," which is itself a finding, not a silent pass.
 - **Strategic roadmap present but no `## Measurement Foundation` section:** normal; the Foundation-specific check simply finds nothing to check.
-- **No "Decision posture" line** (output from a generator before 1.18): CC2 audits against its fallback reference. Name the posture audited in the critique header.
+- **No `## Backlog` table** (1.x output): read the roadmap per SKILL.md `1.x Roadmaps`. Every scored item is a write-up, and CC14's lever test returns "cannot assess: no lever declaration".
+- **No declared posture** (output from a generator before 1.18): CC2 audits against its fallback reference. Name the posture audited in the critique header.
 
 ## Output of this phase (held in-session)
 
 - Resolved mode, roadmap path(s), altitude(s) in scope.
 - The evidence base (resolved source paths) and the unresolved-source list.
-- The parsed roadmap item inventory: per item its title, altitude, tier, ICE, chosen mechanism, named metric, named guardrail(s), stopping rule, `validation_gates` verdicts (if present), and whether it is a scored item or an unscored Measurement Foundation entry.
-- The declared decision posture: the roadmap's rendered "Decision posture" line (confidence and sidedness, power, relative MDE, directional band) and the Quick Win ceiling its tier definitions state; or "none declared" when the line is absent, which sends CC2 to its fallback reference.
+- The parsed roadmap item inventory: per item its key, title, altitude, class (write-up, backlog row, or unscored Measurement Foundation entry), readiness and its blocker, read model and its sizing (sample per arm, weeks, achievable effect, traffic figure), ICE, chosen mechanism, surface, named metric, named guardrail(s), read threshold, evidence pointer, and `validation_gates` verdicts (if present).
+- The declared decision posture, from `How to Read This Roadmap`: confidence and sidedness, power, relative MDE, directional band, and the maximum A/B read window; or "none declared", which sends CC2 to its fallback reference.
+- The `Exclusions` entries with their grounds, and the `Experiment Program Continuity` mapping from each history item to the key or entry that carries it.
+- The lever declaration: each family `### Levers Reviewed` names, with its row count; or "no lever declaration" when the strategic roadmap is absent or carries none.
 - The history backlog: every `recommended_lead` or `high` item, typed or prose, with each prose priority derived from the record text by CC13's rubric, each with its parent record, surface, and priority; medium and low items listed separately as considered, never as gaps; or "no history source" when none resolved. CC13 audits the roadmap against this list.

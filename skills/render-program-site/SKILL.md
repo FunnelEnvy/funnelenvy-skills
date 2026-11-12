@@ -1,6 +1,6 @@
 ---
 name: render-program-site
-version: "0.8.0"
+version: "1.0.0"
 description: >
   Render a two-altitude program site from two markdown inputs (a strategic layer of bets
   and a tactical roadmap of page tests): a hub plus one spoke per bet and per test, with
@@ -8,7 +8,7 @@ description: >
   program site", "program site", "strategic + tactical roadmap site", or the explicit
   /render-program-site invocation. Deterministic generator for the gate, map, and
   structure; scoped LLM pass curates spoke prose.
-updated: 2026-07-14
+updated: 2026-11-11
 ---
 
 # Render Program Site
@@ -59,6 +59,11 @@ is code; only prose wording is agent-authored.
   (`#measurement-foundation`) only: no ICE, no tier, no map presence, no cross-altitude
   edges, no spokes, no sidecar entries (see `edge-contract.md`). A roadmap without the
   section renders byte-identically to a 0.4.x site.
+- Both roadmaps follow hypothesis-generator's 2.0 body contract: write-ups as `### N.` sections
+  under readiness-tier H2s (`## Ready Now`, `## Needs a Design Change`, `## Needs Measurement`,
+  `## Needs a Client Decision`), then `## Backlog`, `## Exclusions` and `## Method`. Only the
+  write-ups become bets and tests; backlog rows are never rendered. A roadmap with a pre-2.0
+  tier H2 fails closed with exit 3 and a message to regenerate it (see `edge-contract.md`).
 - The edge sidecar (`{scope}-program-edges.md`), the one net-new authored input, carrying the
   cross-altitude edge binding and the gate-classification fields (see `edge-contract.md`).
 - The sidecar's `strategic_version` / `tactical_version` match the live gold roadmaps'
@@ -158,6 +163,12 @@ The script validates the 7-check edge contract and, on success, emits `styles.cs
 `mockups/<id>/` assets. Spoke prose regions are emitted as labeled `<!--PROSE ...-->` slots,
 pre-filled with the verbatim source body text as raw material.
 
+Every bet and test shows its readiness tier: a tag on the hub bet card and backlog row, and a
+pill in the spoke's hero. Each spoke's hero also shows what the item waits on: one line per
+`**Readiness:**`, `**Requires:**` and `**Before launch:**` label the write-up carries, each
+under its own label. A write-up with none of the three gets no such block, and its spoke is
+byte-identical to one rendered without this feature.
+
 When the strategic roadmap carries a `## Measurement Foundation` section, the hub gains a
 conditional `#measurement-foundation` section (one card per entry: the bold label as the
 data-bound title, the prose through curation slots, no score chips) between the strategy
@@ -173,9 +184,12 @@ never enter the seven edge checks or the portfolio map. On success the hub gains
 emitted per play. When the flag is absent the account altitude is skipped entirely and the render
 is byte-identical to a two-altitude site.
 
-If the script exits non-zero, the gate failed: surface its printed violations verbatim and
-STOP. Do not edit inputs to "make it pass" without the user -- a gate failure is a real
-contract violation (mechanism mismatch, dangling target, version skew, ...).
+If the script exits non-zero, surface its stderr verbatim and STOP:
+
+- **Exit 2:** the gate failed. Do not edit inputs to "make it pass" without the user. A gate
+  failure is a real contract violation (mechanism mismatch, dangling target, version skew, ...).
+- **Exit 3:** a roadmap carries a pre-2.0 body. Tell the user to regenerate that scope's
+  roadmaps with hypothesis-generator 2.0, then re-render. Do not rename its headings by hand.
 
 ### Phase 3 -- Curate spoke prose (scoped LLM pass)
 
@@ -183,12 +197,14 @@ For each emitted page, rewrite ONLY the content between `<!--PROSE id=.. slot=..
 `<!--/PROSE-->` markers. The generator pre-fills each slot with its verbatim source body
 text (carrying the source's bold label) under a marker that names the slot; curate per
 those pre-filled slot labels, rewriting each slot's source text into pitch-quality prose.
-Apply the curation drop-list: measurement-design
+The spoke blocker slots `readiness`, `requires` and `before-launch` map from the write-up's
+labels of the same names. Keep each one a short, plain statement of what the item waits on;
+never merge them or drop one. Apply the curation drop-list: measurement-design
 detail, inconclusive-protocol detail, full score rationale, win/loss/key-risk blocks, and
 bundled-element disclosures stay in the source markdown and are NOT rendered to the site.
 
 You MUST NOT alter anything outside the prose slots -- the gate result, map coordinates
-(cx/cy), edge type labels, ICE values, tier tags, chips, links, the portfolio stats band, and
+(cx/cy), edge type labels, ICE values, readiness-tier tags, chips, links, the portfolio stats band, and
 all structure are emitted by the script and are never agent-authored. The hub `sequence` and
 `decisions` slots default empty and MUST be authored by this pass: **distill** the source
 `## Sequencing` / decisions sections into the `.tl` / `.dec-grid` structures the comps use --
@@ -239,7 +255,7 @@ not part of this skill).
 
 | Script | Description | Use when |
 |---|---|---|
-| [`scripts/render_site.py`](scripts/render_site.py) | Deterministic generator: parse the two gold roadmaps + the edge sidecar, derive per-item data (id/key/title/tier/ICE/page) from the gold bodies -> validate the edge contract (fail-closed, non-zero exit) -> derive reverse edges, intake flags, Impact-by-Ease coordinates, edge classes, tier groups -> emit `styles.css` + `site.js` + `index.html` + `sb-NN`/`p-NN` spokes from `templates/`, with labeled prose slots. Parses the strategic roadmap's optional `## Measurement Foundation` section into unscored, keyless foundation entries rendered as a conditional `#measurement-foundation` hub section (never on the edge gate, map, or spokes). When `--account-program` is given, additionally validates the account-binding leg and emits the `#account-program` hub section + one `ap-NN` spoke per play (never on the edge gate or map). CLI: `render_site.py --strategic <path> --tactical <path> --edges <path> --out <dir> [--account-program <path>] [--templates <dir>]`. Stdlib only. | Phase 2 (every render) |
+| [`scripts/render_site.py`](scripts/render_site.py) | Deterministic generator: parse the two gold roadmaps + the edge sidecar, derive per-item data (id/key/title/tier/ICE/page) from the gold bodies (a pre-2.0 body exits 3) -> validate the edge contract (fail-closed, exit 2) -> derive reverse edges, intake flags, Impact-by-Ease coordinates, edge classes, readiness-tier groups -> emit `styles.css` + `site.js` + `index.html` + `sb-NN`/`p-NN` spokes from `templates/`, with labeled prose slots. Parses the strategic roadmap's optional `## Measurement Foundation` section into unscored, keyless foundation entries rendered as a conditional `#measurement-foundation` hub section (never on the edge gate, map, or spokes). When `--account-program` is given, additionally validates the account-binding leg and emits the `#account-program` hub section + one `ap-NN` spoke per play (never on the edge gate or map). CLI: `render_site.py --strategic <path> --tactical <path> --edges <path> --out <dir> [--account-program <path>] [--templates <dir>]`. Stdlib only. | Phase 2 (every render) |
 
 ## References
 
@@ -280,6 +296,7 @@ not part of this skill).
 
 | Version | Changes |
 |---|---|
+| 1.0.0 | Reads the hypothesis-generator 2.0 roadmap body. Write-ups under the four readiness-tier H2s (`Ready Now`, `Needs a Design Change`, `Needs Measurement`, `Needs a Client Decision`) become bets and tests; backlog rows are never rendered. Every bet and test carries its readiness tier in place of the 1.x tier: a tag on the hub bet cards and backlog rows, a pill on both spoke types. Each spoke's hero shows the write-up's `**Readiness:**`, `**Requires:**` and `**Before launch:**` lines, each under its own label and through its own prose slot (`readiness`, `requires`, `before-launch`); a write-up with none of the three renders as before. A roadmap with a pre-2.0 tier H2 fails closed with exit 3 and a message to regenerate it with hypothesis-generator 2.0. Breaking: 1.x roadmaps no longer render. |
 | 0.8.0 | Humanizer pass consolidated to the shared `modules/prose-craft.md` module. Phase 4 and the References table now point at [`modules/prose-craft.md`](../../modules/prose-craft.md) instead of the deleted skill-local humanizer reference under `references/` (the empty directory drops out). The module preserves the former 10-sign list verbatim in intent and adds 9 non-duplicative StrategyU signs (lazy descriptors, copula avoidance, synonym cycling, nominalization, fake-precision hedging, awkward verb-noun pairings, anthropomorphized data, staccato noun-phrase lists, structural tells), so the Phase 4 pass now applies the fuller sign set. No generator change; templates, gate, map, and slots are untouched. |
 | 0.7.0 | Editorial data-story design language. The output is restyled from a dashboard to an editorial data-story: mono uppercase eyebrows over full-sentence claim headlines, flat white with hairline framing instead of card shadows, a larger type scale (17px body; hub `h2` 30px/800; spoke `h1` 38px), and IBM Plex Mono leaned on as a data face (tags, numbers, labels, `tnum`). Three generator changes: (1) the five hub section headings become PROSE slots on page id `program` -- `strategy-headline`, `backlog-headline`, `sequence-headline`, `decisions-headline`, `foundation-headline` -- each pre-filled with its former label so an uncurated regen still renders, and the mono eyebrow stays as the section label; (2) a new code-emitted `.program-stats` band (deterministic, no slot; claim-captioned `.statbox` numbers derived from parsed data, placed between the hero and the map); (3) the backlog card wall becomes audit-style `.brow` rows (number + title + page + ICE + ladder + mono `.tag` tier chip) under the existing tier headers. Bet cards and account `.test off` cards stay cards but restyle flat via CSS; the retired `.badge` pill is replaced by `.tag`. Templates: `hub.html` gains the headline tokens + `{{PROGRAM_STATS}}`; `base.html` and the three spoke templates are unchanged (nav-mono, hero-scale, `.sec` grammar are CSS-only). Map geometry, edge/gate logic, and every existing slot id are untouched; four new `program` headline slots (plus `foundation-headline`) are added. The hub `sequence` slot now defaults empty (like `decisions`) instead of pre-filling the raw `## Sequencing` section, so an uncurated render degrades to the standard slot placeholder rather than a wall of text; the Phase 3 curation contract gains a concrete `.tl-row` timeline shape and a distill-not-dump directive. 1 new unit-test class (6 cases). |
 | 0.6.0 | Red-team tombstone skip. `render_site.py` now skips a red-team **tombstone** slot (a `### N.` gold section with no `**Key:**` line, kept in place by `cro-roadmap-red-team` so audit-trail "Experiment N" cross-references stay valid) in the bet/test altitudes instead of crashing on the missing `**Key:**`/`**Scores:**`, and assigns surviving bet/test ids **contiguously in document order** (`sb-01, sb-02, ...`; `p-01, p-02, ...`) so a red-teamed roadmap renders with a hole-free id sequence. This unblocks re-rendering any roadmap that has been through a red-team pass. Compatibility: a roadmap with no tombstones and no ordinal gaps renders **byte-identically** to 0.5.x (contiguous ids equal the raw ordinals); the only output shift is when a tombstone precedes a surviving item, where the survivor ids close the gap. A present-but-empty `**Key:**` is an authoring bug, not a tombstone, and still raises. Account plays are exempt and keep raw-ordinal `ap-NN` ids (unchanged). Documented in `edge-contract.md` (`Red-team tombstones` subsection + the contiguous-over-survivors `id` derivation bullet). 4 new unit-test classes. |

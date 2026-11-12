@@ -1,15 +1,15 @@
 ---
 name: cro-roadmap-red-team
-version: 0.3.0
-description: "When the user wants to independently red-team, stress-test, or critique a produced CRO roadmap (experiment roadmap or strategic roadmap) before it ships. Also use when the user mentions 'red team,' 'red-team the roadmap,' 'critique the roadmap,' 'stress-test the hypotheses,' 'pressure-test the experiments,' 'are these experiments sound,' or 'independent review of the roadmap.' Re-derives each hypothesis cold from its cited evidence, grades the roadmap's own self-critiques (rebut vs deflect), runs a cross-cutting structural checklist, and emits per-item dispositions plus a routed research backlog. In KB mode (see KB Mode (Dual-Mode Output)) it reads the scope's gold roadmaps. No research, no web fetches, no edits to the target."
-updated: 2026-10-23
+version: 0.4.0
+description: "When the user wants to independently red-team, stress-test, or critique a produced CRO roadmap (experiment roadmap or strategic roadmap) before it ships. Also use when the user mentions 'red team,' 'red-team the roadmap,' 'critique the roadmap,' 'stress-test the hypotheses,' 'pressure-test the experiments,' 'are these experiments sound,' or 'independent review of the roadmap.' Re-derives each write-up cold from its cited evidence, runs a cross-cutting structural checklist with a breadth check over the whole backlog, grades any self-critiques the roadmap carries (rebut vs deflect), and emits per-item dispositions plus a routed research backlog. In KB mode (see KB Mode (Dual-Mode Output)) it reads the scope's gold roadmaps. No research, no web fetches, no edits to the target."
+updated: 2026-11-11
 ---
 
 # CRO Roadmap Red-Team
 
-You are an independent red team for a produced CRO roadmap. You did not write it and you are not rewarded for defending it. You re-derive each hypothesis cold from the evidence the roadmap itself cites, grade whether its self-critiques genuinely rebut or merely deflect, run a structural checklist across the whole portfolio, and recommend dispositions plus the research that would de-risk each item.
+You are an independent red team for a produced CRO roadmap. You did not write it and you are not rewarded for defending it. You re-derive each write-up cold from the evidence the roadmap itself cites, run a structural checklist across the whole portfolio, backlog rows included, grade any self-critiques the roadmap carries, and recommend dispositions plus the research that would de-risk each item.
 
-**Why this skill exists.** A generator that grades its own work rubber-stamps it. Roadmaps carry per-hypothesis self-critique blocks, but they are written by the same reasoning that built the hypotheses, so they reliably end in a confident rebuttal and rarely concede. The value of a red team comes entirely from independence: re-deriving each claim from the source evidence without deference to the roadmap's framing, and being explicitly licensed to concede. That independence cannot live inside `hypothesis-generator`; it lives here.
+**Why this skill exists.** A generator that grades its own work rubber-stamps it. Older roadmaps carried per-hypothesis self-critique blocks written by the same reasoning that built the hypotheses. They reliably ended in a confident rebuttal and rarely conceded, so the current generator renders none and leaves critique here. The value of a red team comes from independence: re-deriving each claim from the source evidence without deference to the roadmap's framing, and being licensed to concede. That independence cannot live inside `hypothesis-generator`; it lives here.
 
 **You are an analytical, read-only skill.**
 - You NEVER perform web research, API calls, or data collection. You reason over the roadmap and its cited sources only. A fact the sources lack is a research-backlog item, not something you go fetch.
@@ -93,11 +93,31 @@ The whole skill depends on re-deriving cold. Phase order is load-bearing and enf
 
 ### Disposition vocabulary
 
-Per-item recommendation, one of: **keep** (sound as-is), **reframe** (keep but reposition or add a threshold), **demote** (lower tier, or out of scored experiments into a research/verification item), **park behind dependencies** (gate on named blockers), **drop** (evidence contradicts the premise or a settled prior result resolved it). A genuinely sound item must be able to reach **keep** -- a red team that never keeps anything is as broken as a self-critique that never concedes.
+Per-item recommendation, one of: **keep** (sound as-is), **reframe** (keep but reposition or add a threshold), **demote** (a later readiness tier, out of the write-ups into a backlog row, or out of the roadmap into a research/verification item), **park behind dependencies** (gate on named blockers), **drop** (evidence contradicts the premise or a settled prior result resolved it). A genuinely sound item must be able to reach **keep** -- a red team that never keeps anything is as broken as a self-critique that never concedes.
 
 ### Altitude model
 
-The roadmap comes at two altitudes. **Tactical** items (the experiment roadmap: Quick Win / Strategic Bet / Exploration) are A/B tests with an MDE and a denominator, read at the roadmap's declared decision posture. **Strategic** items (the strategic roadmap: business-level levers with non-A/B measurement designs -- holdouts, pre/post, directional reads) plus an unscored `## Measurement Foundation` section of instrumentation prerequisites. Checklist checks carry a tactical form and, where the tactical form is A/B-specific, a strategic analog. Foundation entries are exempt from scoring/threshold checks and get one integrity check (CC-MF).
+The roadmap comes at two altitudes. **Tactical** items (the experiment roadmap) are page-level tests. **Strategic** items (the strategic roadmap) are business-level levers, plus an unscored `## Measurement Foundation` section of instrumentation prerequisites. Checklist checks carry a tactical form and, where the tactical form is A/B-specific, a strategic analog. Foundation entries are exempt from scoring/threshold checks and get one integrity check (CC-MF).
+
+Both roadmaps share one body shape:
+
+- **Readiness tiers:** `## Ready Now`, `## Needs a Design Change`, `## Needs Measurement`, `## Needs a Client Decision`. ICE orders items within a tier. Every tier but `Ready Now` gives each write-up a `**Readiness:**` line naming its blocker.
+- **Write-ups:** the top items, as `### N. Title` sections under the readiness H2s. Each carries a `**Key:**`, an `**Evidence:**` line and a `**Read model:**` line.
+- **Backlog rows:** every other item, one row each in the `## Backlog` table (key, title, surface, mechanism, readiness, read model, ICE, evidence pointer).
+- **Read models:** A/B, Directional, Pre/post, Holdout, or Not yet sized. A/B and directional reads state the six-part read threshold; pre/post and holdout reads state a pre-registered read criterion and window.
+- **Closing sections:** `## Exclusions` (hard-rule discards, cards under a standing engagement exclusion, spec items and history items not advanced, and prior write-ups not carried forward, each with grounds), then `## Method`, which holds `### Experiment Program Continuity` and, on the strategic roadmap, `### Levers Reviewed`.
+
+Write-ups get per-item skeptics (Phase 2). Backlog rows get checklist coverage only (Phase 3).
+
+### 1.x Roadmaps
+
+A roadmap from hypothesis-generator 1.x has no `## Backlog` table, no `## Exclusions` and no `### Levers Reviewed`. It is still read; nothing fails. This is the one place the 1.x shape is described:
+
+- **Items:** every scored item under the tier sections of a 1.x roadmap counts as a write-up. Record its tier label in place of readiness, and its Test Feasibility line in place of a read model.
+- **Exclusions:** its `What's Not Here` section stands in for `## Exclusions` wherever a check reads exclusions (CC13).
+- **Self-critique:** 1.x output from 1.5.0 on carries `Self-critique` blocks, which Phase 4 grades.
+- **Breadth:** CC14's lever test returns "cannot assess: no lever declaration"; its evidence test still runs.
+- **Posture:** output before 1.18 declares no posture, so CC2 audits against its fallback reference.
 
 ### Boundary with experiment-measurement-audit
 
@@ -113,15 +133,15 @@ Resolve mode, target roadmap(s), and their cited sources; read sources first, th
 
 ### Phase 2 -- Independent re-derivation
 
-Spawn skeptic subagents (Task tool, `subagent_type: "general-purpose"`, `mode: "bypassPermissions"`, `model: "opus"`, each given `agent-header.md`) to re-derive each scored item cold, before reading its self-critique. Tier-gated depth: full cold-mechanism + perspective-diverse skeptics for Quick Win / Strategic Bet / strategic bets; lighter single-skeptic pass for Explorations. **Procedure:** read `phases/rederive.md` and execute. **When to use:** after Phase 1, before Phase 3.
+Spawn skeptic subagents (Task tool, `subagent_type: "general-purpose"`, `mode: "bypassPermissions"`, `model: "opus"`, each given `agent-header.md`) to re-derive each write-up cold. Write-up-gated depth: every write-up at either altitude gets cold mechanism derivation and three perspective-diverse skeptics. Backlog rows get no per-item skeptic; the checklist covers them. **Procedure:** read `phases/rederive.md` and execute. **When to use:** after Phase 1, before Phase 3.
 
 ### Phase 3 -- Cross-cutting checklist
 
-Run the authoritative, non-skippable checklist (CC1-CC13, CC-MF, plus the completeness step) across all items; each check emits a cited finding or an affirmative clean pass; gate-verdict audit where the generator's `validation_gates` cover the dimension, full re-derivation otherwise. **Procedure:** read `phases/checklist.md` and execute. **When to use:** after Phase 2, before Phase 4.
+Run the authoritative, non-skippable checklist (CC1-CC14, CC-MF, plus the completeness step) across all items, write-ups and backlog rows alike. CC14 checks breadth: sources no item cites, and lever families with no row; each check emits a cited finding or an affirmative clean pass; a 2.0 roadmap carries no gate records, so every check runs as full re-derivation; a gate-verdict audit applies only to a 1.x roadmap that carries `validation_gates`. **Procedure:** read `phases/checklist.md` and execute. **When to use:** after Phase 2, before Phase 4.
 
 ### Phase 4 -- Self-critique grading
 
-Grade each item's self-critique rebut / partial / deflect, citing the specific rebuttal sentence and the checklist finding it failed to confront. Skip if the roadmap has no self-critique blocks. **Procedure:** read `phases/grade.md` and execute. **When to use:** after Phase 3.
+Grade self-critique blocks only when a roadmap carries them: rebut / partial / deflect, citing the specific rebuttal sentence and the checklist finding it failed to confront. Current output carries none, so the phase is skipped and the header says so. **Procedure:** read `phases/grade.md` and execute. **When to use:** after Phase 3.
 
 ### Phase 5 -- Disposition and research routing
 
@@ -144,10 +164,10 @@ One standalone critique document, dated in the body header, written to the resol
 
 1. **Header** -- date; target roadmap(s) + version(s); altitude(s) covered; sources read in full (the experiment history by section and surface, per Phase 1); a line noting this is analysis only, the target was not edited, and (if applicable) which altitude/source was absent or which schema-tolerance path was taken.
 2. **One-paragraph overall verdict** -- lead with the single most material finding ("the biggest hole"), then the disposition headline (how many items change).
-3. **Cross-cutting findings** -- the Phase 3 checklist findings, materiality-ranked (most structurally material first), each with cited basis. Affirmative clean passes are summarized, not omitted.
-4. **Per-item red team** -- one block per scored item: independent verdict, strongest failure mode, self-critique grade (with the quoted rebuttal sentence and the unconfronted finding), research required, recommended disposition.
+3. **Cross-cutting findings** -- the Phase 3 checklist findings, CC14's evidence-test and lever-test verdicts included, materiality-ranked (most structurally material first), each with cited basis. Affirmative clean passes are summarized, not omitted.
+4. **Per-item red team** -- one block per write-up: independent verdict, strongest failure mode, self-critique grade when the item carries one (with the quoted rebuttal sentence and the unconfronted finding), research required, recommended disposition. A backlog row gets a short block only when a checklist finding touches it.
 5. **Prioritized research backlog** -- the Phase 5 ranked table: item | unblocks | cost | why now | routed-to.
-6. **Disposition changes vs the roadmap as written** -- table: item | roadmap tier/ICE | red-team recommendation | driver.
+6. **Disposition changes vs the roadmap as written** -- table: item | roadmap readiness, read model and ICE | red-team recommendation | driver.
 7. **What the roadmap does well (do not regress)** -- the genuine strengths, so a revision does not remove them.
 
 ## Reference Documents
@@ -156,7 +176,7 @@ One standalone critique document, dated in the body header, written to the resol
 |---|---|---|
 | [agent-header.md](agent-header.md) | Shared skeptic-subagent posture and hard constraints | Given verbatim to every skeptic subagent (Phase 2) |
 | [phases/resolve.md](phases/resolve.md) | Phase 1 -- scope, cold load, dual-mode source resolution, schema tolerance | Phase 1 |
-| [phases/rederive.md](phases/rederive.md) | Phase 2 -- skeptic re-derivation, tier-gated depth | Phase 2 |
+| [phases/rederive.md](phases/rederive.md) | Phase 2 -- skeptic re-derivation, write-up-gated depth | Phase 2 |
 | [phases/checklist.md](phases/checklist.md) | Phase 3 -- the cross-cutting checklist (core IP) | Phase 3 |
 | [phases/grade.md](phases/grade.md) | Phase 4 -- self-critique grading | Phase 4 |
 | [phases/disposition.md](phases/disposition.md) | Phase 5 -- dispositions + routed research backlog | Phase 5 |
@@ -175,6 +195,7 @@ One standalone critique document, dated in the body header, written to the resol
 
 | Version | Changes |
 |---|---|
+| 0.4.0 | Reads the hypothesis-generator 2.0 roadmap body (readiness tiers, write-ups, `## Backlog`, `## Exclusions`, `### Levers Reviewed`); 1.x roadmaps are still read. New CC14 breadth check (CC1-CC14 + CC-MF + completeness step): a resolved source no write-up or backlog row cites, and a declared lever family with no row, are findings routed to a `/hypothesis-generator` re-run. Phase 2 gates by write-up versus backlog row: every write-up gets the full skeptic pass, backlog rows get checklist coverage only. CC2 audits read models and sizing against the declared posture; CC13 reads the backlog table and the ledger. Phase 4 grades self-critique blocks only when a roadmap carries them. |
 | 0.3.0 | Posture-aware audit and history-backlog coverage. CC2 audits tiers, feasibility lines, and read windows against the roadmap's declared decision posture, using the pre-1.18 reference only when none is declared, and passes a stopping rule only when all six threshold parts are present; CC10 reads directional priors at the declared posture and never credits an unverified outcome as a win; new CC12 deployed-state accuracy and CC13 history-backlog coverage (CC1-CC13 + CC-MF + completeness step); Phase 1 resolves the legacy `experiment-history.md` and `insight.md` records and reads the history by section and surface, never through the generator's script; the measurability skeptic computes power and MDE at the declared posture; CC13 gaps route to a `/hypothesis-generator` regeneration. |
 | 0.2.0 | Prose-style guidance consolidated to the shared `modules/prose-craft.md` module in `agent-header.md` and `SKILL.md`; the cite-or-it-is-not-a-finding independence posture stays local. |
 | 0.1.0 | Initial build. Six-phase pipeline (resolve, re-derive, checklist, grade, disposition, render); adversarial skeptic subagents with tier-gated cold mechanism re-derivation; altitude-aware cross-cutting checklist (CC1-CC11 + CC-MF + completeness step) with gate-verdict-audit calibration against hypothesis-generator's validation gates; dual-mode consumer I/O; grounded boundary with experiment-measurement-audit. |

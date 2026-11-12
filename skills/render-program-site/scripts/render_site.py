@@ -4,7 +4,7 @@
 Pipeline: parse two markdown inputs (strategic layer + tactical roadmap) ->
 validate the cross-altitude edge contract (hard gate, fail-closed) -> derive
 reverse edges, intake flags, Impact-by-Ease map coordinates, edge classes and
-tier groups -> emit a static site (styles.css + site.js + index.html hub +
+readiness-tier groups -> emit a static site (styles.css + site.js + index.html hub +
 sb-NN/p-NN spokes) from templates.
 
 This is the deterministic, drift-proof half of the render-program-site skill.
@@ -15,7 +15,9 @@ emitted as labeled HTML-comment slots, pre-filled with the verbatim source
 section text as raw material, that the skill's LLM curation pass rewrites.
 The script never calls an LLM and never touches the network.
 
-Stdlib only (no pip dependencies). Exit 0 on success, non-zero on gate failure.
+Stdlib only (no pip dependencies). Exit codes: 0 on success, 2 when the
+edge-contract gate fails, 3 when a roadmap carries a pre-2.0 body (tier H2s
+from the older roadmap contract) and must be regenerated before rendering.
 """
 
 import argparse
@@ -35,13 +37,19 @@ EDGE_TYPES = ("expresses", "informs", "gates")
 OFF_PAGE_SURFACES = frozenset({"routing"})
 EXECUTOR_STATUSES = ("on-page", "off-page", "unexpressed")
 
-# Tier metadata: key -> (display label, css suffix, count caption).
+# Readiness-tier metadata: key -> (display label, css suffix, count caption).
 TIERS = {
-    "quick-win": ("Quick Wins", "qw", "high confidence, fast signal"),
-    "strategic-bet": ("Strategic Bets", "sb", "higher effort, higher payoff"),
-    "exploration": ("Explorations", "ex", "lower confidence, high learning"),
+    "ready-now": ("Ready Now", "rn", "can run as designed today"),
+    "needs-design-change": ("Needs a Design Change", "dc", "needs a design change before it runs"),
+    "needs-measurement": ("Needs Measurement", "nm", "needs tracking or sizing before it can be read"),
+    "needs-client-decision": ("Needs a Client Decision", "cd", "waits on a client decision"),
 }
-TIER_ORDER = ("quick-win", "strategic-bet", "exploration")
+TIER_ORDER = ("ready-now", "needs-design-change", "needs-measurement", "needs-client-decision")
+
+# Write-up labels that state what an item waits on: (gold label, slot name).
+# A spoke shows each one present, in this order, under its own label.
+BLOCKER_LABELS = (("Readiness", "readiness"), ("Requires", "requires"),
+                  ("Before launch", "before-launch"))
 
 # Type-label map, printed verbatim, never paraphrased (bet side / test side).
 EDGE_LABEL_BET = {"expresses": "Expressed on-page by", "informs": "Informs", "gates": "Gates"}
@@ -60,6 +68,21 @@ def x_of(ease):
 
 def y_of(impact):
     return PLOT_TOP + (5 - impact) / 4.0 * (PLOT_BOTTOM - PLOT_TOP)
+
+
+class ContractError(Exception):
+    """Raised when a roadmap body follows the pre-2.0 contract.
+
+    The message names the file and the offending H2 and tells the operator to
+    regenerate the roadmap with hypothesis-generator 2.0. `main` writes it to
+    stderr and exits 3.
+    """
+
+    def __init__(self, path, heading):
+        self.path = path
+        self.heading = heading
+        super().__init__("%s: 1.x roadmap body (heading '%s'); regenerate it with "
+                         "hypothesis-generator 2.0 before rendering." % (path, heading))
 
 
 class GateError(Exception):
@@ -275,19 +298,40 @@ def parse_frontmatter(text, required=True):
 # --------------------------------------------------------------------------
 # render-program-site consumes hypothesis-generator's prose gold roadmaps
 # (gold-experiment-roadmap / gold-strategic-roadmap). Both altitudes use the
-# same body shape: `### N. Title` experiment sections nested under tier H2s
-# (`## Quick Wins` / `## Strategic Bets` / `## Explorations`), each carrying a
-# `**Key:** <slug>` line, a `**Scores:** Impact X | Confidence Y | Ease Z` line,
-# and bold-labeled prose paragraphs. The structured contract data (id, key,
-# title, tier, ICE, page) is DERIVED from this body; only the cross-altitude
-# edge binding is authored, in the sidecar.
+# same body shape: `### N. Title` write-ups nested under readiness-tier H2s
+# (`## Ready Now` / `## Needs a Design Change` / `## Needs Measurement` /
+# `## Needs a Client Decision`), each carrying a `**Key:** <slug>` line, a
+# `**Scores:** Impact X | Confidence Y | Ease Z` line, and bold-labeled prose
+# paragraphs. The `## Backlog` table, `## Exclusions` and `## Method` hold no
+# `### N.` sections, so backlog rows never become items. The structured
+# contract data (id, key, title, tier, ICE, page) is DERIVED from the
+# write-ups; only the cross-altitude edge binding is authored, in the sidecar.
 
-# Tier H2 heading text -> tier key. Anything else is a non-tier H2.
+# Readiness H2 heading text -> tier key. Anything else is a non-tier H2.
 TIER_HEADINGS = (
-    ("quick win", "quick-win"),
-    ("strategic bet", "strategic-bet"),
-    ("exploration", "exploration"),
+    ("ready now", "ready-now"),
+    ("needs a design change", "needs-design-change"),
+    ("needs measurement", "needs-measurement"),
+    ("needs a client decision", "needs-client-decision"),
 )
+
+# H2 prefixes that mark a pre-2.0 roadmap body (lowercase, matched
+# case-insensitively). A body carrying one fails closed with ContractError.
+LEGACY_TIER_PREFIXES = ("quick win", "strategic bet", "exploration")
+
+
+def check_body_contract(body, path):
+    """Raise ContractError when `body` carries a pre-2.0 tier H2.
+
+    Scans every `## ` line (H3 and deeper are ignored). The first H2 whose
+    text starts with one of LEGACY_TIER_PREFIXES, case-insensitive, raises
+    with `path` and that heading's text. A 2.0 body returns None.
+    """
+    for ln in body.split("\n"):
+        if ln.startswith("## "):
+            text = ln[3:].strip()
+            if text.lower().startswith(LEGACY_TIER_PREFIXES):
+                raise ContractError(path, text)
 
 
 def _tier_key(heading):
@@ -318,7 +362,8 @@ def extract_sections(body, kind):
 
     Returns {id: {"title", "key", "tier", "labels": {label: text}, "paras": [..]}}.
     `kind` is "bet" (id prefix `sb`), "test" (id prefix `p`), or "play" (id prefix
-    `ap`, the account-program altitude). `tier` is the enclosing tier H2. Bold-labeled
+    `ap`, the account-program altitude). `tier` is the enclosing readiness H2's
+    key, or None under any other H2. Bold-labeled
     paragraphs (`**Label:** text` or `**Label.** text`) are collected into
     `labels` with the trailing `:`/`.` stripped; `**Key:**` is also surfaced as
     `key`. Numbered sections only appear under tier H2s in the gold format, so a
@@ -503,9 +548,11 @@ def load_strategic(path, sidecar):
     """Load the strategic gold roadmap, deriving bets from the body and merging
     the sidecar's per-bet edge binding + classification (keyed by gold Key).
     Also extracts the optional `## Measurement Foundation` section as foundation
-    entries (unscored, keyless; see `parse_foundation`)."""
+    entries (unscored, keyless; see `parse_foundation`). Raises ContractError on
+    a pre-2.0 body (see `check_body_contract`) before any section is read."""
     with open(path, encoding="utf-8") as fh:
         fm, body = parse_frontmatter(fh.read(), required=False)
+    check_body_contract(body, path)
     # None = the roadmap carries no frontmatter version (legacy mode); gate 7
     # skips the lock for that file, with an explicit report.
     gold_version = str(fm["version"]) if fm.get("version") is not None else None
@@ -525,6 +572,7 @@ def load_strategic(path, sidecar):
             "id": cid,
             "key": sec["key"],
             "title": sec["title"],
+            "tier": sec["tier"],
             "lever": sec["labels"].get("Lever", ""),
             "decided_on": (sb["decided_on"] if sb else ""),
             "run_tag": (sb["run_tag"] if sb else ""),
@@ -542,9 +590,12 @@ def load_strategic(path, sidecar):
 
 def load_tactical(path, sidecar):
     """Load the tactical gold roadmap, deriving tests from the body and merging
-    the sidecar's per-test mechanism_class + status (keyed by gold Key)."""
+    the sidecar's per-test mechanism_class + status (keyed by gold Key). Raises
+    ContractError on a pre-2.0 body (see `check_body_contract`) before any
+    section is read."""
     with open(path, encoding="utf-8") as fh:
         fm, body = parse_frontmatter(fh.read(), required=False)
+    check_body_contract(body, path)
     # None = no frontmatter version (legacy mode); see load_strategic.
     gold_version = str(fm["version"]) if fm.get("version") is not None else None
     sections = extract_sections(body, "test")
@@ -846,7 +897,7 @@ def derive(strategic, tactical):
                 dx, dy = radius * math.cos(ang), radius * math.sin(ang)
             n["cx"], n["cy"] = int(round(bx + dx)), int(round(by + dy))
 
-    # tier groups for the backlog (active tests only; superseded shown dimmed last)
+    # readiness-tier groups for the backlog (active tests only; superseded shown dimmed last)
     grouped = {key: [] for key in TIER_ORDER}
     superseded = []
     for t in tests:
@@ -914,6 +965,21 @@ def slot(item_id, name, source_text):
     body = md_inline(source_text) if source_text else \
         '<span class="slot">[no source prose for %s; curation pass fills this]</span>' % esc(name)
     return "<!--PROSE id=%s slot=%s-->%s<!--/PROSE-->" % (item_id, name, body)
+
+
+def build_blockers(item_id, labels):
+    """Build the spoke hero's blocker lines from a write-up's `labels`.
+
+    Emits one labeled line per `BLOCKER_LABELS` entry the write-up carries with
+    non-empty text, each through its own prose slot. Returns '' when it carries
+    none, so the `{{BLOCKERS}}` token adds no bytes to the spoke."""
+    rows = []
+    for label, name in BLOCKER_LABELS:
+        text = labels.get(label)
+        if text:
+            rows.append('<div class="wait"><span class="x-lab">%s</span><p>%s</p></div>'
+                        % (esc(label), slot(item_id, name, text)))
+    return ('<div class="waits">%s</div>' % "".join(rows)) if rows else ""
 
 
 # --------------------------------------------------------------------------
@@ -990,6 +1056,10 @@ def build_bet_cards(bets):
         if b["run_tag"]:
             long_cls = " long" if b["run_tag"].lower() in ("long game", "long-game") else ""
             run = '<span class="b-run%s">%s</span>' % (long_cls, esc(b["run_tag"]))
+        tier = ""
+        if b["tier"] in TIERS:
+            label, css, _ = TIERS[b["tier"]]
+            tier = '<span class="tag %s">%s</span>' % (css, esc(label))
         tag_cls = {"on-page": "on", "off-page": "off", "unexpressed": "gap"}[b["executor_status"]]
         tag_txt = {"on-page": "On-page", "off-page": "Off-page move", "unexpressed": "Unexpressed"}[b["executor_status"]]
         rels = []
@@ -1001,13 +1071,13 @@ def build_bet_cards(bets):
         decided = ('<p class="b-decided">Decided on <b>%s</b></p>' % esc(b["decided_on"])) if b["decided_on"] else ""
         cards.append(
             '<div class="bet" id="%s">'
-            '<div class="b-top"><span class="b-code">%s</span>%s</div>'
+            '<div class="b-top"><span class="b-code">%s</span>%s%s</div>'
             '<h3><a href="%s.html">%s</a></h3>%s'
             '<p class="b-body">%s</p>'
             '<span class="ice"><span class="t mono">ICE %d</span><span class="mono">I%d &middot; C%d &middot; E%d</span></span>'
             '<div class="exec"><span class="x-tag %s">%s</span>%s<p class="x-note">%s</p></div>'
             '</div>'
-            % (b["id"], bet_label(b["id"]), run, b["id"], esc(b["title"]), decided,
+            % (b["id"], bet_label(b["id"]), tier, run, b["id"], esc(b["title"]), decided,
                slot(b["id"], "card-body", b["section"]["labels"].get("Lever", b["lever"])),
                ice_total(b["ice"]), b["ice"]["i"], b["ice"]["c"], b["ice"]["e"],
                tag_cls, tag_txt, "".join(rels),
@@ -1016,9 +1086,11 @@ def build_bet_cards(bets):
 
 
 def build_backlog(tier_groups, superseded):
-    """Audit-style rows grouped under tier headers (not a card wall). Each row: mono
-    number + title link (to the test spoke) + one-line page target + ICE + ladder chip
-    + a mono `.tag` tier chip. Superseded rows are dimmed, unscored, non-linking."""
+    """Build audit-style rows grouped under readiness-tier headers (not a card wall).
+
+    Each row: mono number + title link (to the test spoke) + one-line page target +
+    ICE + ladder chip + a mono `.tag` readiness chip. Tiers render in TIER_ORDER and
+    only when non-empty. Superseded rows are dimmed, unscored, non-linking."""
     out = []
     for key in TIER_ORDER:
         tests = tier_groups.get(key, [])
@@ -1169,12 +1241,11 @@ def build_stats_band(strategic, tactical, derived):
             cap = "page tests execute a strategic bet; the rest are standalone intake tests"
         boxes.append(("blue", "%d/%d" % (laddered, total), cap))
 
-    # 2. Quick wins that can run before any stand-up work (front-loaded value).
-    quick = len(derived["tier_groups"].get(TIER_ORDER[0], []))
-    if quick:
-        label = TIERS[TIER_ORDER[0]][0].lower()
-        boxes.append(("green", "%d/%d" % (quick, total),
-                      "are %s: high-confidence, high-ease tests that run before any stand-up work" % label))
+    # 2. Tests ready to run as designed today (front-loaded value).
+    ready = len(derived["tier_groups"].get("ready-now", []))
+    if ready:
+        boxes.append(("green", "%d/%d" % (ready, total),
+                      "are ready now: they can run as designed today"))
 
     # 3. One further claim, only if the data supports a real one (never a bare count).
     mocked = sum(1 for t in active if t.get("mockup"))
@@ -1287,7 +1358,8 @@ def build_spoke_strategic(b, program, templates):
     client = esc(program.get("client", ""))
     tag_cls = {"on-page": "on", "off-page": "off", "unexpressed": "gap"}[b["executor_status"]]
     tag_txt = {"on-page": "On-page", "off-page": "Off-page move", "unexpressed": "Unexpressed"}[b["executor_status"]]
-    meta = '<span class="x-tag %s">%s</span>' % (tag_cls, tag_txt)
+    meta = ('<span class="tier">%s</span>' % esc(TIERS[b["tier"]][0])) if b["tier"] in TIERS else ""
+    meta += '<span class="x-tag %s">%s</span>' % (tag_cls, tag_txt)
     if b["keystone"]:
         meta += '<span class="kw">Keystone</span>'
     meta += '<span class="ice mono">ICE %d &middot; %s</span>' % (ice_total(b["ice"]), ice_str(b["ice"]))
@@ -1307,10 +1379,11 @@ def build_spoke_strategic(b, program, templates):
         "META": meta,
         "TITLE_H1": esc(b["title"]),
         "LEAD": slot(b["id"], "lead", lab.get("Lever", b["lever"])),
+        "BLOCKERS": build_blockers(b["id"], lab),
         "LEVER": slot(b["id"], "lever", lab.get("Lever", "")),
         "MOVE": slot(b["id"], "move", lab.get("What to stand up", "")),
         "CONNECTIONS": "".join(conn),
-        "EVIDENCE": slot(b["id"], "evidence", lab.get("Stand-up dependency / Requires", lab.get("What to stand up", ""))),
+        "EVIDENCE": slot(b["id"], "evidence", lab.get("Evidence", lab.get("Requires", lab.get("What to stand up", "")))),
         "FOOT_ID": "%s &middot; %s" % (bet_label(b["id"]), esc(program.get("name", ""))),
     })
     return _spoke_base(templates, "%s %s | %s" % (bet_label(b["id"]), esc(b["title"]), esc(program.get("name", ""))),
@@ -1386,10 +1459,11 @@ def build_spoke_tactical(t, program, templates, out_dir):
         "META": meta,
         "TITLE_H1": esc(t["title"]),
         "LEAD": slot(t["id"], "lead", lab.get("What to test", "")),
+        "BLOCKERS": build_blockers(t["id"], lab),
         "HYPOTHESIS": slot(t["id"], "hypothesis", lab.get("Why this should work", lab.get("What to test", ""))),
         "MOCKUP": mockup_html,
         "LADDER": "".join(conn),
-        "SCORE": slot(t["id"], "score", lab.get("Test Feasibility",
+        "SCORE": slot(t["id"], "score", lab.get("Read model",
                       "Scored ICE %d (%s)." % (ice_total(t["ice"]), ice_str(t["ice"])))),
         "FOOT_ID": "#%s &middot; %s" % (test_num(t["id"]), esc(program.get("name", ""))),
     })
@@ -1519,8 +1593,12 @@ def main(argv=None):
     tpl_dir = os.path.abspath(tpl_dir)
 
     sidecar = load_sidecar(args.edges)
-    strategic = load_strategic(args.strategic, sidecar)
-    tactical = load_tactical(args.tactical, sidecar)
+    try:
+        strategic = load_strategic(args.strategic, sidecar)
+        tactical = load_tactical(args.tactical, sidecar)
+    except ContractError as ce:
+        sys.stderr.write("%s\n" % ce)
+        return 3
     account = load_account(args.account_program)
     link_edges(strategic, tactical)
     # stash the sidecar dir for mockup asset resolution

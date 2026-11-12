@@ -1,7 +1,7 @@
 # Procurement Pattern Library (archetype: procurement)
 
-Version: 1.0.0
-Last updated: 2026-06-08
+Version: 1.1.0
+Last updated: 2026-11-11
 Pattern count: 6
 Categories: 4 (Headline/Messaging, Navigation/UX, Content/Resource, Page Structure/Layout)
 
@@ -26,7 +26,7 @@ Each pattern follows the Pattern Schema defined in `experiment-patterns.md`. Pat
 
 **ICE baseline:** Impact 4 | Confidence 3 | Ease 5
 **Modifiers:**
-- Confidence +1 if the gate exceeds 5,000 entries/mo AND a variant-instrumented proxy (CTA click-through) is available (proxy-readable at volume; makes the hypothesis Quick-Win-eligible)
+- Confidence +1 if the gate exceeds 5,000 entries/mo AND a variant-instrumented proxy (CTA click-through) is available (proxy-readable at volume; supports an A/B read)
 - Impact +1 if the gate absorbs >50% of store entry traffic (funnel-wide effect)
 - Confidence -1 if exact current gate copy is not in context
 - Ease -1 if the gate template was missed in tag migration (verify injection coverage first)
@@ -53,7 +53,7 @@ Each pattern follows the Pattern Schema defined in `experiment-patterns.md`. Pat
 
 **ICE baseline:** Impact 4 | Confidence 3 | Ease 4
 **Modifiers:**
-- Confidence +1 if router interaction is variant-instrumented on a high-traffic gate (proxy-readable; Quick-Win-eligible)
+- Confidence +1 if router interaction is variant-instrumented on a high-traffic gate (proxy-readable; A/B-readable)
 - Impact +1 if the gate absorbs >50% of entry traffic (top-of-funnel plus measurement-hygiene payoff)
 - Confidence +1 if the store's own error strings already encode the routes (verified routing logic)
 - Ease -1 if injection on the unauthenticated surface is unverified

@@ -1,6 +1,18 @@
 #!/bin/bash
-# Validation script for hypothesis-generator skill implementation
+# Validation script for the hypothesis-generator skill.
 # Run from repo root: bash scripts/validate-hypothesis-generator.sh
+#
+# Every check falls in one of six classes:
+#   [1] Files              the skill, its phase files and its scripts exist
+#   [2] Kept hard rules    each hard rule's anchor text sits in its home; Decision Posture holds every row the script reads
+#   [3] Output shape       both output formats name their sections and required write-up labels
+#   [4] Removed rules      searches for deleted 1.x rule text print nothing
+#   [5] Fixture            every source file the synthetic fixture's planted list names exists
+#   [6] Prohibited content content hygiene over the skill and its modules
+# Behavior is tested by _tests/ (consolidate_backlog.py, history_backlog.py); this script checks text.
+# Limit: the hard-rule checks confirm each rule's anchor text is present in its home file.
+# They do not read meaning, so a reworded rule body can pass. The fixture run and the
+# red team (cro-roadmap-red-team) are the checks that read meaning.
 
 set -e
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -68,657 +80,165 @@ check_warn() {
   fi
 }
 
+# Print the body of the first heading in file $1 matching regex $2, up to the next heading at
+# the same or a higher level. Lines inside ``` fences are never read as headings, so a section
+# that holds a fenced markdown template keeps the template's own headings as content.
+sect() {
+  awk -v pat="$2" '
+    function lvl(s) { match(s, /^#+/); return RLENGTH }
+    /^```/ { fence = !fence }
+    !on && !fence && /^#/ && $0 ~ pat { on = 1; L = lvl($0); next }
+    on && !fence && /^#/ && lvl($0) <= L { exit }
+    on { print }' "$1"
+}
+
+HG=skills/hypothesis-generator
+SKILL=$HG/SKILL.md
+PH=$HG/phases
+# The hypothesis-generator file set: the skill, its phase files and the five modules only it loads.
+HG_SET="$SKILL $PH modules/ice-scoring.md modules/contrarian-triggers.md modules/experiment-patterns.md modules/hypothesis-interactions.md modules/patterns-procurement.md"
+FIX=_tests/fixtures/hypothesis-generator/synthetic-scope
+
 echo "=== Hypothesis Generator: Validation ==="
 echo ""
 
-echo "[1] New skill files exist"
-check_exists "SKILL.md" "skills/hypothesis-generator/SKILL.md"
-check_exists "phases/detect.md" "skills/hypothesis-generator/phases/detect.md"
-check_exists "phases/detect-strategic.md" "skills/hypothesis-generator/phases/detect-strategic.md"
-check_exists "phases/construct.md" "skills/hypothesis-generator/phases/construct.md"
-check_exists "phases/validate.md" "skills/hypothesis-generator/phases/validate.md"
-check_exists "phases/score.md" "skills/hypothesis-generator/phases/score.md"
-check_exists "modules/experiment-patterns.md" "modules/experiment-patterns.md"
+echo "[1] Files"
+check_exists "SKILL.md" "$SKILL"
+for f in detect.md detect-strategic.md validate.md score.md construct.md; do
+  check_exists "phases/$f" "$PH/$f"
+done
+check "phases/ holds exactly the five phase files" \
+  "ls $PH/*.md | wc -l | tr -d ' '" \
+  "5"
+check_exists "scripts/consolidate_backlog.py" "$HG/scripts/consolidate_backlog.py"
+check_exists "scripts/history_backlog.py" "$HG/scripts/history_backlog.py"
+check_exists "modules/experiment-patterns.md (lens prompt library)" "modules/experiment-patterns.md"
 check_exists "modules/ice-scoring.md" "modules/ice-scoring.md"
 echo ""
 
-echo "[2] SKILL.md frontmatter"
-check "has name: hypothesis-generator" \
-  "head -5 skills/hypothesis-generator/SKILL.md | grep -c 'name: hypothesis-generator'" \
-  "1"
+echo "[2] Kept hard rules"
+check "Documented-live lever: no build card (detect-strategic.md Gap Status)" \
+  "sect $PH/detect-strategic.md '^## Gap Status' | grep 'Documented live' | grep 'Hard rule: no build card'" \
+  "NONZERO"
+check "Identical forms: no form-swap test (detect.md)" \
+  "grep -F '**Hard rule, identical forms:**' $PH/detect.md" \
+  "NONZERO"
+check "Hard-rule discards go to Exclusions (detect.md Return Format)" \
+  "sect $PH/detect.md '^### Return Format' | grep 'Exclusions:' | grep 'hard-rule discard'" \
+  "NONZERO"
+check "Never size on a refused window (Measurement-Regime Boundary)" \
+  "sect $SKILL '^## Measurement-Regime Boundary' | grep -F '**Hard rule: never size on a refused window.**'" \
+  "NONZERO"
+check "Size only from the Decision Posture (Decision Posture)" \
+  "sect $SKILL '^## Decision Posture' | grep -F '**Hard rule: size only from this table.**'" \
+  "NONZERO"
+check "Pre/post reads state their detectable change from the sizing object (construct.md Read Model and Read Threshold)" \
+  "sect $PH/construct.md '^### Read Model and Read Threshold' | grep -F '*Pre/post with a sizing object:*' | grep -F 'mde_achievable' | grep -F 'Count read'" \
+  "NONZERO"
+check "History ledger blocks the write while any id is unaccounted (score.md)" \
+  "sect $PH/score.md '^## Step 3: Close the History Ledger' | grep 'Hard rule' | grep 'not written while .history_unaccounted. is non-empty'" \
+  "NONZERO"
+check "Dropped prior write-ups block the write while any is unaccounted (score.md)" \
+  "sect $PH/score.md '^## Step 4: Account for Dropped Prior Write-Ups' | grep -F '**Hard rule:** no roadmap is written while any dropped prior write-up has neither outcome'" \
+  "NONZERO"
+check "Standing engagement exclusions go to Exclusions (detect.md Engagement Constraints)" \
+  "sect $PH/detect.md '^### Engagement Constraints' | grep -F '**Standing exclusion:**' | grep 'Exclusions:'" \
+  "NONZERO"
+check "History full-entry cap of 20 (Phase 1 step 5b)" \
+  "sect $SKILL '^### Phase 1: ' | grep 'Full-entry cap (hard rule)' | grep 'at most 20 full record entries'" \
+  "NONZERO"
+check "Write-up evidence must resolve (construct.md Evidence and Scores)" \
+  "sect $PH/construct.md '^### Evidence and Scores' | grep -F '**Correctness rule, evidence must resolve:**'" \
+  "NONZERO"
+check "Unresolved evidence returns the row to the backlog (construct.md Evidence and Scores)" \
+  "sect $PH/construct.md '^### Evidence and Scores' | grep -F 'evidence did not resolve'" \
+  "NONZERO"
+check "Deliverable purity names no internal identifier" \
+  "sect $SKILL '^## Deliverable Purity Constraint' | grep 'name no internal identifier'" \
+  "NONZERO"
+for row in 'Significance' 'Power' 'Multiplier M' 'Relative MDE' 'Maximum A/B read window' 'Hard gates'; do
+  check "Decision Posture has the '$row' row consolidate_backlog.py reads" \
+    "sect $SKILL '^## Decision Posture' | grep '^| $row'" \
+    "NONZERO"
+done
 echo ""
 
-echo "[3] Phase file count"
-check "phases/ has exactly 6 files" \
-  "ls skills/hypothesis-generator/phases/ | wc -l | tr -d ' '" \
-  "6"
+echo "[3] Output shape"
+OF="sect $SKILL '^## Output Format'"
+SOF="sect $SKILL '^## Strategic Roadmap Output Format'"
+for h in 'Ready Now' 'Needs a Design Change' 'Needs Measurement' 'Needs a Client Decision' 'Backlog' 'Exclusions' 'Method'; do
+  check "Output Format names '## $h'" \
+    "$OF | grep -x '## $h'" \
+    "NONZERO"
+done
+check "Output Format carries the exact Backlog header" \
+  "$OF | grep -xF '| Key | Title | Surface | Mechanism | Readiness | Read model | ICE | Evidence |'" \
+  "NONZERO"
+for label in 'Key' 'Page' 'Mechanism' 'What to test' 'Change type' 'Current state' 'Proposed change' \
+             'Read model' 'Why this should work' 'Target metric' 'Expected effect and read threshold' \
+             'Evidence' 'Scores' 'What a win proves' 'What a loss teaches'; do
+  check "Output Format template carries required label '$label'" \
+    "$OF | grep '^\\*\\*$label:\\*\\* '" \
+    "NONZERO"
+done
+check "Output Format adds a Readiness line outside Ready Now" \
+  "$OF | grep -F '**Readiness:**'" \
+  "NONZERO"
+check "Strategic Roadmap Output Format names '## Measurement Foundation'" \
+  "$SOF | grep -x '## Measurement Foundation'" \
+  "NONZERO"
+check "Strategic Roadmap Output Format names '### Levers Reviewed'" \
+  "$SOF | grep -x '### Levers Reviewed'" \
+  "NONZERO"
 echo ""
 
-echo "[4] Pattern count"
-check "experiment-patterns.md has 32 patterns" \
-  "grep -c '^### [A-Z]\{2\}-[0-9]\{2\}:' modules/experiment-patterns.md" \
-  "32"
+echo "[4] Removed rules"
+check "No --max flag (skill and phase files)" \
+  "grep -rn -- '--max\\b' $SKILL $PH" \
+  "EMPTY"
+check "No 1.x tier names" \
+  "grep -rnE 'Quick[- ]Wins?|Strategic[- ]Bets?|Explorations?\\b' $HG_SET" \
+  "EMPTY"
+check "No self-critique or FM8" \
+  "grep -rnE 'Self-critique|self-critique|Key risk|FM8' $HG_SET" \
+  "EMPTY"
+check "No evidence-module ceiling" \
+  "grep -rnE 'evidence-\\*|evidence modules?' $HG_SET" \
+  "EMPTY"
+check "No route-out instruction" \
+  "grep -rn 'Do not include in roadmap' $HG_SET" \
+  "EMPTY"
+check "No What's Not Here routing" \
+  "grep -rn \"What's Not Here\" $HG_SET" \
+  "EMPTY"
+check "No input bars on minting" \
+  "grep -rnE 'never mint|never mints|cannot mint' $HG_SET" \
+  "EMPTY"
+check "No Quick-Win-eligible modifiers (procurement module)" \
+  "grep -n 'Quick-Win-eligible' modules/patterns-procurement.md" \
+  "EMPTY"
 echo ""
 
-echo "[5] ICE calibration completeness"
-check "Impact calibration" \
-  "grep -c '^## Impact Calibration' modules/ice-scoring.md" \
-  "1"
-check "Confidence calibration" \
-  "grep -c '^## Confidence Calibration' modules/ice-scoring.md" \
-  "1"
-check "Ease calibration" \
-  "grep -c '^## Ease Calibration' modules/ice-scoring.md" \
-  "1"
+echo "[5] Fixture"
+fixture_sources() {
+  grep -E '^\| P[0-9]+ ' "$FIX/planted-opportunities.md" | awk -F'|' '{print $4}' | tr -d ' `'
+}
+check "planted-opportunities.md names source files" \
+  "fixture_sources" \
+  "NONZERO"
+check "Every planted source file exists" \
+  "for f in \$(fixture_sources); do [ -e \"$FIX/\$f\" ] || echo \"\$f\"; done" \
+  "EMPTY"
 echo ""
 
 echo "[6] Prohibited content"
-# Block [6] greps recurse skills/hypothesis-generator/ as a directory, so
-# phases/detect-strategic.md (Phase 2c) is already covered by the em-dash and
-# ClickUp greps below; no path addition is needed. modules/ice-scoring.md is in
-# the explicit module list below.
+# These greps recurse skills/hypothesis-generator/ as a directory, so every phase file is
+# covered without listing it. The modules are listed explicitly.
 check "No ClickUp references in new files" \
   "grep -ri 'clickup\|click_up' skills/hypothesis-generator/ modules/experiment-patterns.md modules/ice-scoring.md modules/contrarian-triggers.md modules/hypothesis-interactions.md modules/patterns-procurement.md | head -1" \
   "EMPTY"
 check "No em dashes in new files" \
   "grep -rP '\xe2\x80\x94' skills/hypothesis-generator/ modules/experiment-patterns.md modules/ice-scoring.md modules/contrarian-triggers.md modules/hypothesis-interactions.md modules/patterns-procurement.md | head -1" \
-  "EMPTY"
-echo ""
-
-echo "[7] Extension points preserved"
-check "evidence-*.md referenced in SKILL.md" \
-  "grep -c 'evidence-\*' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-check "evidence-*.md referenced in detect.md" \
-  "grep -c 'evidence-\*' skills/hypothesis-generator/phases/detect.md" \
-  "NONZERO"
-echo ""
-
-echo "[8] render-default-deliverables changes"
-check "No experiment-roadmap in render deliverables" \
-  "grep -ci 'experiment.roadmap' skills/render-default-deliverables/SKILL.md | tr -d ' '" \
-  "NONZERO"
-# NOTE: This check expects a cross-reference note mentioning experiment roadmap.
-# If it finds zero matches, render-default-deliverables was not updated yet.
-# After Phase 2, this should find the cross-reference note but NOT the old section.
-echo ""
-
-echo "[9] Reference updates"
-check_warn "CLAUDE.md lists hypothesis-generator" \
-  "grep -c 'hypothesis-generator' CLAUDE.md" \
-  "NONZERO"
-check_warn "ARCHITECTURE.md includes hypothesis-generator" \
-  "grep -c 'hypothesis-generator' ARCHITECTURE.md" \
-  "NONZERO"
-echo ""
-
-echo "[10] Manifest check"
-# This verifies the manifest template in render-default-deliverables doesn't list experiment-roadmap
-check_warn "Manifest template excludes experiment-roadmap.md" \
-  "grep -c 'experiment-roadmap.md' skills/render-default-deliverables/SKILL.md" \
-  "NONZERO"
-# NOTE: After Phase 2, any remaining match should only be in the cross-reference note.
-echo ""
-
-echo "[11] Procurement archetype module"
-check_exists "modules/patterns-procurement.md" "modules/patterns-procurement.md"
-check "patterns-procurement.md has 6 patterns" \
-  "grep -c '^### PR-[0-9]\{2\}:' modules/patterns-procurement.md" \
-  "6"
-echo ""
-
-echo "[12] Contrarian trigger count"
-check "contrarian-triggers.md has 14 triggers" \
-  "grep -c '^### CTR-[0-9]\{2\}:' modules/contrarian-triggers.md" \
-  "14"
-check "contrarian-triggers.md count line says 14" \
-  "grep -c '^Trigger count: 14' modules/contrarian-triggers.md" \
-  "1"
-echo ""
-
-echo "[13] Experiment-history consumption"
-check "Output Format has Evidence From Completed Experiments section" \
-  "grep -c '^## Evidence From Completed Experiments' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "Read-side Mapping references experiment-history (gold-experiment-index producer KB)" \
-  "grep -c 'gold-experiment-index. (producer KB)' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "experiment_history_available guarded in Deliverable Purity Constraint" \
-  "grep -c 'experiment_history_available' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "prior_winner guarded in Deliverable Purity Constraint" \
-  "grep -c 'prior_winner' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "replication_candidate guarded in Deliverable Purity Constraint" \
-  "grep -c 'replication_candidate' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "transferable_rule guarded in Deliverable Purity Constraint" \
-  "grep -c 'transferable_rule' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "replication_target_surfaces guarded in Deliverable Purity Constraint" \
-  "grep -c 'replication_target_surfaces' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "Output Format has Experiment Program Continuity section" \
-  "grep -c '^## Experiment Program Continuity' skills/hypothesis-generator/SKILL.md" \
-  "1"
-# history_type/parent_outcome also appear in the in-KB interpretation contract
-# (Read-side Mapping) and the Outcome normalization table, not only the Purity
-# Constraint ban list -- counts bumped from 1 accordingly (in-kb-experiment-history-read-path).
-# parent_outcome dropped to 2 in 1.18.0: the Outcome mapping table header says "Maps to" and the
-# directional rule no longer restates the field (legacy-history-binding-and-decision-posture).
-check "history_type guarded in Deliverable Purity Constraint" \
-  "grep -c 'history_type' skills/hypothesis-generator/SKILL.md" \
-  "3"
-check "parent_outcome guarded in Deliverable Purity Constraint" \
-  "grep -c 'parent_outcome' skills/hypothesis-generator/SKILL.md" \
-  "2"
-check "source_priority guarded in Deliverable Purity Constraint" \
-  "grep -c 'source_priority' skills/hypothesis-generator/SKILL.md" \
-  "1"
-echo ""
-
-echo "[14] Strategic-track surfaces (separate deliverable)"
-check "SKILL.md has Client-Facing Register section" \
-  "grep -c '^## Client-Facing Register' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "Execution Pipeline has Phase 2c" \
-  "grep -c '^### Phase 2c' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "measurement_design guarded in Deliverable Purity Constraint" \
-  "grep -o 'measurement_design' skills/hypothesis-generator/SKILL.md | head -1" \
-  "NONZERO"
-check "strategic-lane lane tag guarded in Deliverable Purity Constraint" \
-  "grep -oE 'strategic-lever|lane' skills/hypothesis-generator/SKILL.md | head -1" \
-  "NONZERO"
-check "SKILL.md has Strategic Roadmap Output Format section" \
-  "grep -c '^## Strategic Roadmap Output Format' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "strategic-roadmap.md deliverable path documented" \
-  "grep -o 'strategic-roadmap.md' skills/hypothesis-generator/SKILL.md | head -1" \
-  "NONZERO"
-check "gold-strategic-roadmap KB artifact type referenced" \
-  "grep -o 'gold-strategic-roadmap' skills/hypothesis-generator/SKILL.md | head -1" \
-  "NONZERO"
-check "Strategic Key risk relabel present" \
-  "grep -o 'Key risk' skills/hypothesis-generator/SKILL.md | head -1" \
-  "NONZERO"
-check "No in-tier render mandate (render in the existing tiers) remains" \
-  "grep -c 'render in the existing tiers' skills/hypothesis-generator/SKILL.md | tr -d ' '" \
-  "0"
-echo ""
-
-echo "[15] Premise & measurement rigor (tranche 2)"
-check "phases/validate.md gate-record marker present" \
-  "grep -c '^## The validation_gates record' skills/hypothesis-generator/phases/validate.md" \
-  "1"
-# NOTE: the NONZERO checks below use plain grep, NOT grep -c. The check() NONZERO
-# branch tests for non-empty output; grep -c always prints a count (even "0"),
-# which would pass spuriously. Plain grep yields empty output when a term is
-# absent, so an absent term correctly fails.
-check "validate.md emits all six named gates" \
-  "grep -E 'premise_contradicted|metric_instrumented|baseline_exists|control_stable|powerable|segmentation_satisfied' skills/hypothesis-generator/phases/validate.md" \
-  "NONZERO"
-check "validate.md states tri-state semantics" \
-  "grep 'pass / fail / not-assessed' skills/hypothesis-generator/phases/validate.md" \
-  "NONZERO"
-check "detect.md has Step 1f header" \
-  "grep -c '^### Step 1f: Measurement Inventory and Staleness Signals' skills/hypothesis-generator/phases/detect.md" \
-  "1"
-check "score.md has gated-rubric marker (Step 4d)" \
-  "grep -c '^#### Step 4d: Gated Confidence Rubric' skills/hypothesis-generator/phases/score.md" \
-  "1"
-check "score.md states tri-state verbatim in the rubric" \
-  "grep 'pass / fail / not-assessed' skills/hypothesis-generator/phases/score.md" \
-  "NONZERO"
-# Field-name purity: confirm the new internal field names are GUARDED in the
-# Deliverable Purity Constraint so they are prohibited from the rendered body.
-# (Em-dash and ClickUp purity over these files is already covered by block [6],
-#  which recurses skills/hypothesis-generator/. Body-template grep-for-absence is
-#  left to the deliverable-time constraint per the change doc, since the Output
-#  Format body template is not mechanically bounded from the rest of SKILL.md.)
-check "validation_gates guarded in Deliverable Purity Constraint" \
-  "grep 'validation_gates' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-check "instrumented_metrics guarded in Deliverable Purity Constraint" \
-  "grep 'instrumented_metrics' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-check "premise_contradicted guarded in Deliverable Purity Constraint" \
-  "grep 'premise_contradicted' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-echo ""
-
-echo "[16] Strategic rigor (gates + criterion-7 tri-state + Measurement Foundation)"
-check "validate.md has Strategic Lane Gates heading" \
-  "grep -c '^## Strategic Lane Gates' skills/hypothesis-generator/phases/validate.md" \
-  "1"
-check "validate.md defines baseline_reliable gate" \
-  "grep 'baseline_reliable' skills/hypothesis-generator/phases/validate.md" \
-  "NONZERO"
-check "validate.md has strategic metric_instrumented application" \
-  "grep -c '^### Strategic Gate 2: metric_instrumented (strategic application)' skills/hypothesis-generator/phases/validate.md" \
-  "1"
-check "validate.md has strategic premise_contradicted application" \
-  "grep -c '^### Strategic Gate 3: premise_contradicted (strategic application)' skills/hypothesis-generator/phases/validate.md" \
-  "1"
-check "detect-strategic.md criterion 7 has Documented live state" \
-  "grep -c 'Documented live.' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "1"
-check "detect-strategic.md criterion 7 has Documented absent state" \
-  "grep -c 'Documented absent.' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "1"
-check "detect-strategic.md criterion 7 has Context is silent state" \
-  "grep -c 'Context is silent.' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "1"
-check "detect-strategic.md record carries absence_verified" \
-  "grep 'absence_verified' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "detect-strategic.md record carries confirm_first" \
-  "grep 'confirm_first' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "detect-strategic.md family 1 routes to Measurement Foundation" \
-  "grep 'Measurement Foundation' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "detect-strategic.md no longer conflates instrument-and-measure in family 1" \
-  "grep -c 'and measure interventions against it' skills/hypothesis-generator/phases/detect-strategic.md | tr -d ' '" \
-  "0"
-check "score.md Step 6b has Strategic gated-Confidence ceiling" \
-  "grep 'Strategic gated-Confidence ceiling' skills/hypothesis-generator/phases/score.md" \
-  "NONZERO"
-check "score.md Step 6b has Dependency-count ordering" \
-  "grep 'Dependency-count ordering' skills/hypothesis-generator/phases/score.md" \
-  "NONZERO"
-check "SKILL.md strategic body spec has Measurement Foundation section" \
-  "grep -c '^## Measurement Foundation' skills/hypothesis-generator/SKILL.md" \
-  "1"
-# Purity: the new internal field tokens must be GUARDED in the Deliverable
-# Purity Constraint (present in SKILL.md as prohibited terms). Em-dash and
-# ClickUp coverage over all edited files is already provided by block [6],
-# which recurses skills/hypothesis-generator/ and lists modules/ice-scoring.md.
-check "absence_verified guarded in Deliverable Purity Constraint" \
-  "grep 'absence_verified' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-check "confirm_first guarded in Deliverable Purity Constraint" \
-  "grep 'confirm_first' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-check "baseline_reliable guarded in Deliverable Purity Constraint" \
-  "grep 'baseline_reliable' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-echo ""
-
-echo "[17] Strategic catch-all leg"
-check "detect-strategic.md has Catch-All Leg heading" \
-  "grep -c '^### Catch-All Leg (family-agnostic detection)' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "1"
-check "catch-all requires two independent artifacts" \
-  "grep 'TWO independent loaded artifacts' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "catch-all states zero-survivor expectation" \
-  "grep 'zero survivors on most runs' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "catch-all states family precedence" \
-  "grep 'routes through that family' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "lever_family enum includes catch-all" \
-  "grep 'offer-architecture | catch-all' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "score.md Step 6b names the catch-all modifier" \
-  "grep 'lever_family: catch-all' skills/hypothesis-generator/phases/score.md" \
-  "NONZERO"
-check "ice-scoring.md names the catch-all additional -1" \
-  "grep 'Catch-All Leg' modules/ice-scoring.md" \
-  "NONZERO"
-check "catch-all token guarded in Deliverable Purity Constraint" \
-  "grep 'offer-architecture., .catch-all' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-check "catch-all defines evidence-origin independence" \
-  "grep 'evidence-origin level' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "catch-all anti-patterns cover channel-scale programs" \
-  "grep 'generative/AI-search optimization' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "family precedence matches on definition, not name" \
-  "grep 'DEFINITION sentence, not its name' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "catch-all measurement-shaped finds route to Foundation" \
-  "grep -c '^- \*\*Measurement-shaped finds' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "1"
-check "criterion 7 names the built-but-disabled state" \
-  "grep 'Built-but-disabled is this state' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-echo ""
-
-echo "[18] 1.13.0: soft-input elicitation, archetype family extension, strategic-lane clarifiers"
-# NONZERO checks use plain grep, not grep -c, per the block [15] note (grep -c
-# prints "0" on absence, which would pass spuriously).
-check "detect-strategic.md has the soft-input elicitation rule" \
-  "grep 'ONE consolidated pre-flight question' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "detect-strategic.md has Archetype Family Extension heading" \
-  "grep -c '^### Archetype Family Extension' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "1"
-check "detect-strategic.md has blocked-pending-decision routing" \
-  "grep 'Blocked-pending-decision routing' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "ice-scoring.md has the strategic Ease clause" \
-  "grep 'anchor Ease on stand-up scope' modules/ice-scoring.md" \
-  "NONZERO"
-check "detect-strategic.md Step 3 covers regeneration-only runs" \
-  "grep 'regeneration-only strategic run' skills/hypothesis-generator/phases/detect-strategic.md" \
-  "NONZERO"
-check "purity covers archetype-defined lever-family tokens" \
-  "grep 'any archetype-defined lever-family token' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-echo ""
-
-echo "[19] Measurement-method-aware tactical feasibility"
-# (a) detect.md testing-method detection step: three-tier precedence + penalty-free default.
-# NONZERO checks use plain grep (not grep -c) per the block [15] note.
-check "detect.md has testing-method detection step (Step 1h)" \
-  "grep -c '^### Step 1h: Testing-Method Detection' skills/hypothesis-generator/phases/detect.md" \
-  "1"
-check "detect.md testing-method step has three-tier resolution precedence" \
-  "grep 'Resolution precedence (first match wins)' skills/hypothesis-generator/phases/detect.md" \
-  "NONZERO"
-check "detect.md testing-method step states the penalty-free no-regression default" \
-  "grep 'deliberate no-regression choice' skills/hypothesis-generator/phases/detect.md" \
-  "NONZERO"
-# (b) construct.md Step 5b method-branch names the tactical non-A/B path.
-check "construct.md Step 5b method branch names the non-A/B tactical method" \
-  "grep 'non-A/B tactical method' skills/hypothesis-generator/phases/construct.md" \
-  "NONZERO"
-check "construct.md Step 5b references testing_method" \
-  "grep 'testing_method' skills/hypothesis-generator/phases/construct.md" \
-  "NONZERO"
-# (b2) score.md Step 6 enforces the non-A/B read-window against the Quick-Win fast-signal bar (QA Open Issue #1).
-check "score.md Step 6 substitutes read-window for estimated_duration_weeks under non-A/B" \
-  "grep 'read-window length for' skills/hypothesis-generator/phases/score.md" \
-  "NONZERO"
-# (c) SKILL.md Quality Rules 10 and 16 carry the method-aware qualification.
-check "SKILL.md Quality Rule 10 is method-aware" \
-  "grep 'Test feasibility is honest, and method-aware' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-check "SKILL.md Quality Rule 16 keys on read-window under non-A/B method" \
-  "grep 'the bar keys on the read-window length' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-check "testing_method guarded in Deliverable Purity Constraint" \
-  "grep 'Testing-method field reference' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-echo ""
-
-echo "[20] Displacement-lesson primary-read propagation"
-# (a) detect.md Step 1g displacement / inverted-proxy read emits the displacement_surfaces annotation.
-# NONZERO checks use plain grep (not grep -c) per the block [15] note.
-check "detect.md Step 1g has the displacement / inverted-proxy read block" \
-  "grep -c 'Displacement / inverted-proxy read (net-new annotation)' skills/hypothesis-generator/phases/detect.md" \
-  "1"
-check "detect.md displacement read emits the displacement_surfaces annotation" \
-  "grep 'displacement_surfaces' skills/hypothesis-generator/phases/detect.md" \
-  "NONZERO"
-check "detect.md displacement read is tri-state and penalty-free" \
-  "grep 'behaves byte-identically to today' skills/hypothesis-generator/phases/detect.md" \
-  "NONZERO"
-# (b) construct.md Step 5 bounded primary-metric override + same-type bound + all-hypotheses consistency.
-check "construct.md Step 5 carries the displacement primary-metric override" \
-  "grep -c 'Displacement primary-metric override' skills/hypothesis-generator/phases/construct.md" \
-  "1"
-check "construct.md Step 5 override states the strictly same-type propagation bound" \
-  "grep 'strictly same-type surface the mechanism plausibly covers' skills/hypothesis-generator/phases/construct.md" \
-  "NONZERO"
-check "construct.md Step 5 override applies to every hypothesis on the surface (consistency)" \
-  "grep 'Apply the override to EVERY hypothesis targeting an in-scope surface' skills/hypothesis-generator/phases/construct.md" \
-  "NONZERO"
-# (c) construct.md Step 5a guardrail_primary reconciliation for the uninstrumented-downstream branch.
-check "construct.md Step 5a reconciles the uninstrumented-downstream displacement branch" \
-  "grep 'Displacement surface, uninstrumented downstream metric' skills/hypothesis-generator/phases/construct.md" \
-  "NONZERO"
-check "construct.md Step 5a states one rule with two instrumentation branches (no double-count)" \
-  "grep 'one rule with two instrumentation branches' skills/hypothesis-generator/phases/construct.md" \
-  "NONZERO"
-# (d) SKILL.md guards displacement_surfaces in the Deliverable Purity Constraint.
-check "displacement_surfaces guarded in Deliverable Purity Constraint" \
-  "grep 'displacement_surfaces' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-echo ""
-
-echo "[21] Live-program fold gate"
-# (a) detect.md Step 1g live-program state read emits the live_program annotation.
-# NONZERO checks use plain grep (not grep -c) per the block [15] note.
-check "detect.md Step 1g has the live-program state read block" \
-  "grep -c 'Live-program state read (net-new annotation)' skills/hypothesis-generator/phases/detect.md" \
-  "1"
-check "detect.md live-program read emits the live_program annotation" \
-  "grep 'live_program' skills/hypothesis-generator/phases/detect.md" \
-  "NONZERO"
-check "detect.md live-program read carries occupied_slots and recorded_folds" \
-  "grep -E 'occupied_slots|recorded_folds' skills/hypothesis-generator/phases/detect.md" \
-  "NONZERO"
-check "detect.md live-program read is tri-state and penalty-free (byte-identical when absent)" \
-  "grep 'behaves byte-identically to today' skills/hypothesis-generator/phases/detect.md" \
-  "NONZERO"
-# (b) validate.md Gate 7 slot_available, routing-only, excluded from the Step 4d cap count.
-check "validate.md defines Gate 7 slot_available" \
-  "grep -c '^### Gate 7: slot_available' skills/hypothesis-generator/phases/validate.md" \
-  "1"
-check "validate.md states slot_available is excluded from the Step 4d cap arithmetic" \
-  "grep 'NOT counted among the gates in the Step 4d' skills/hypothesis-generator/phases/validate.md" \
-  "NONZERO"
-check "validate.md Gate 7 is scoped tactical-only" \
-  "grep 'Scope: tactical hypotheses only' skills/hypothesis-generator/phases/validate.md" \
-  "NONZERO"
-# (c) score.md Step 5b fold routing + the KB-mode caveat + Step 7 sequencing note.
-check "score.md Step 5b carries the live-program fold routing" \
-  "grep 'Live-program fold routing' skills/hypothesis-generator/phases/score.md" \
-  "NONZERO"
-check "score.md renders the live-program-not-reconciled caveat" \
-  "grep 'live program not reconciled' skills/hypothesis-generator/phases/score.md" \
-  "NONZERO"
-check "score.md Step 7 carries the live-program one-test-per-surface sequencing note" \
-  "grep 'Live-program one-test-per-surface' skills/hypothesis-generator/phases/score.md" \
-  "NONZERO"
-# (d) SKILL.md purity guards + Quality Rule 20.
-check "live_program guarded in Deliverable Purity Constraint" \
-  "grep 'live_program' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-check "slot_available guarded in Deliverable Purity Constraint" \
-  "grep 'slot_available' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-check "SKILL.md carries Quality Rule 20 (live-program ownership)" \
-  "grep -c '^20. \*\*A running experiment owns its surface' skills/hypothesis-generator/SKILL.md" \
-  "1"
-echo ""
-
-echo "[22] Decision Posture and legacy experiment-history binding"
-# (a) One SKILL.md Decision Posture section, placed before the Execution Pipeline.
-# NONZERO checks use plain grep (not grep -c) per the block [15] note.
-check "SKILL.md has the Decision Posture section" \
-  "grep -c '^## Decision Posture' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "Decision Posture precedes the Execution Pipeline" \
-  "awk '/^## Decision Posture/{d=NR} /^## Execution Pipeline/{e=NR} END{if (d && e && d < e) print \"ok\"}' skills/hypothesis-generator/SKILL.md" \
-  "ok"
-check "Decision Posture carries the z table" \
-  "grep -c '^\*\*z table\.\*\*' skills/hypothesis-generator/SKILL.md" \
-  "1"
-check "Decision Posture carries the M grid" \
-  "grep -c '^\*\*M grid\*\*' skills/hypothesis-generator/SKILL.md" \
-  "1"
-# (b) No retired threshold literal survives anywhere in the skill or the ICE module. The one
-# Decision Posture sentence that names the retired values (to forbid them) is exempted by its
-# own anchor text, "are not the posture".
-HG_FILES="skills/hypothesis-generator/SKILL.md skills/hypothesis-generator/phases/*.md modules/ice-scoring.md"
-check "no retired 15% MDE literal (any spelling)" \
-  "grep -nE '15% (MDE|relative|minimum detectable)' $HG_FILES | grep -v 'are not the posture'" \
-  "EMPTY"
-check "no retired relative_mde = 0.15 literal" \
-  "grep -nE 'relative_mde\`? *= *0?\.15' $HG_FILES" \
-  "EMPTY"
-check "no retired constant 16 in the sample-size formula" \
-  "grep -nE 'n_per_variant *= *16|16 \* p' $HG_FILES" \
-  "EMPTY"
-check "no retired six-week Quick Win literal (any spelling)" \
-  "grep -nE '\b(six|6)[- ]weeks?\b|<= ?6\b' $HG_FILES | grep -v 'are not the posture'" \
-  "EMPTY"
-check "no retired 95% significance literal" \
-  "grep -nE '95% significance|80% power, 95%' $HG_FILES" \
-  "EMPTY"
-check "no Not configurable MDE statement" \
-  "grep -n 'Not configurable' $HG_FILES" \
-  "EMPTY"
-check "no directional soft-coding (no second look, no conditional deployment)" \
-  "grep -niE 'soft-cod' $HG_FILES" \
-  "EMPTY"
-check "no MDE-without-a-number read threshold form" \
-  "grep -n \"beats control by the test's MDE\" $HG_FILES" \
-  "EMPTY"
-check "construct.md requires the six-part read threshold" \
-  "grep 'the six-part threshold defined in SKILL.md' skills/hypothesis-generator/phases/construct.md" \
-  "NONZERO"
-check "construct.md formula takes M from the Decision Posture" \
-  "grep 'n_per_variant  = M \* p' skills/hypothesis-generator/phases/construct.md" \
-  "NONZERO"
-check "score.md Step 4 computes proxy_qw_eligible after the validation phase" \
-  "grep 'Guarded-proxy eligibility (computed here, after Phase 3.5)' skills/hypothesis-generator/phases/score.md" \
-  "NONZERO"
-check "score.md Quick Win tier requires a non-proxy primary or proxy_qw_eligible" \
-  "grep 'is not proxy OR .proxy_qw_eligible.' skills/hypothesis-generator/phases/score.md" \
-  "NONZERO"
-check "construct.md Step 6 carries the directional read (no soft-coding)" \
-  "grep -c 'Directional read' skills/hypothesis-generator/phases/construct.md" \
-  "1"
-# (c) Legacy history binding: minting, surface derivation, ledger, close-out.
-check "detect.md mints new_hypothesis items" \
-  "grep 'new_hypothesis' skills/hypothesis-generator/phases/detect.md" \
-  "NONZERO"
-check "detect.md carries the Coverage ledger" \
-  "grep 'Coverage ledger' skills/hypothesis-generator/phases/detect.md" \
-  "NONZERO"
-check "detect.md replaces penalty-free surface skips with surface derivation" \
-  "grep 'Surface derivation (no item is skipped for its surface)' skills/hypothesis-generator/phases/detect.md" \
-  "NONZERO"
-check "score.md closes the ledger in Step 6c" \
-  "grep -c '^### Step 6c: Coverage Ledger Close-Out' skills/hypothesis-generator/phases/score.md" \
-  "1"
-check "SKILL.md carries Quality Rules 21 and 22" \
-  "grep -cE '^2[12]\. \*\*' skills/hypothesis-generator/SKILL.md" \
-  "2"
-check "SKILL.md has the If directional bullet" \
-  "grep 'If directional:' skills/hypothesis-generator/SKILL.md" \
-  "NONZERO"
-check "SKILL.md has a Scripts table naming history_backlog.py" \
-  "grep -A4 '^## Scripts' skills/hypothesis-generator/SKILL.md | grep 'history_backlog.py'" \
-  "NONZERO"
-check_exists "history_backlog.py script" "skills/hypothesis-generator/scripts/history_backlog.py"
-check_exists "history_backlog.py unit tests" "_tests/unit/test_history_backlog.py"
-# (d) Purity guards for the new tokens.
-check "directional_win guarded in Deliverable Purity Constraint" \
-  "grep 'directional_win' skills/hypothesis-generator/SKILL.md | grep 'producer.s raw type/outcome tokens'" \
-  "NONZERO"
-check "new_hypothesis guarded in Deliverable Purity Constraint" \
-  "grep 'new_hypothesis' skills/hypothesis-generator/SKILL.md | grep 'producer.s raw type/outcome tokens'" \
-  "NONZERO"
-check "relative_mde guarded in Deliverable Purity Constraint" \
-  "grep 'Decision-posture constant references' skills/hypothesis-generator/SKILL.md | grep 'relative_mde'" \
-  "NONZERO"
-echo ""
-
-echo "[23] Measurement-regime boundary"
-# NONZERO checks use plain grep (not grep -c) per the block [15] note.
-# sect FILE PATTERN prints one section: from the first heading matching PATTERN to the next
-# heading of the same or a higher level. item FILE PATTERN prints one top-level list item
-# and its indented continuation lines.
-sect() {
-  awk -v pat="$2" '
-    function lvl(s) { match(s, /^#+/); return RLENGTH }
-    !on && /^#/ && $0 ~ pat { on = 1; L = lvl($0); next }
-    on && /^#/ && lvl($0) <= L { exit }
-    on { print }' "$1"
-}
-item() {
-  awk -v pat="$2" '
-    !on && $0 ~ pat { on = 1; print; next }
-    on && (/^- / || /^#/ || /^$/) { exit }
-    on { print }' "$1"
-}
-HG23_SKILL=skills/hypothesis-generator/SKILL.md
-HG23_PH=skills/hypothesis-generator/phases
-# (a) One SKILL.md section, placed after Decision Posture and before the Execution Pipeline.
-check "SKILL.md has exactly one Measurement-Regime Boundary section" \
-  "grep -c '^## Measurement-Regime Boundary$' $HG23_SKILL" \
-  "1"
-check "Measurement-Regime Boundary sits after Decision Posture and before the Execution Pipeline" \
-  "awk '/^## Decision Posture/{d=NR} /^## Measurement-Regime Boundary/{m=NR} /^## Execution Pipeline/{e=NR} END{if (d && m && e && d < m && m < e) print \"ok\"}' $HG23_SKILL" \
-  "ok"
-# (b) The Preconditions engagement-constraints bullet carries the structured-field list.
-check "Preconditions engagement-constraints bullet names testing_method" \
-  "item $HG23_SKILL '^- .engagement-constraints. [(]optional[)]' | grep 'testing_method'" \
-  "NONZERO"
-check "Preconditions engagement-constraints bullet names measurement_regime_boundaries" \
-  "item $HG23_SKILL '^- .engagement-constraints. [(]optional[)]' | grep 'measurement_regime_boundaries'" \
-  "NONZERO"
-# (c) Purity guard and pre-flight line.
-check "measurement_regime_boundaries guarded in Deliverable Purity Constraint" \
-  "sect $HG23_SKILL '^## Deliverable Purity Constraint' | grep 'measurement_regime_boundaries'" \
-  "NONZERO"
-check "pre-flight template carries the Measurement boundary line" \
-  "grep '^Measurement boundary: ' $HG23_SKILL" \
-  "NONZERO"
-# (d) Every consumer section cites the section by name.
-check "SKILL.md Phase 1 cites Measurement-Regime Boundary" \
-  "sect $HG23_SKILL '^### Phase 1: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "validate.md Gate 3 cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/validate.md '^### Gate 3: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "validate.md Gate 5 cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/validate.md '^### Gate 5: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "validate.md Strategic Gate 1 cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/validate.md '^### Strategic Gate 1: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "construct.md Step 2 cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/construct.md '^### Step 2: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "construct.md Step 4c cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/construct.md '^### Step 4c: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "construct.md Step 5b cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/construct.md '^### Step 5b: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "detect.md Step 1c cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/detect.md '^### Step 1c: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "detect.md Step 1d cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/detect.md '^### Step 1d: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "score.md Step 4 cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/score.md '^### Step 4: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "score.md Step 6b cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/score.md '^### Step 6b: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "score.md Step 8 cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/score.md '^### Step 8: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "construct.md Step 5 cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/construct.md '^### Step 5: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "validate.md Gate 1 cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/validate.md '^### Gate 1: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-check "validate.md Strategic Gate 3 cites Measurement-Regime Boundary" \
-  "sect $HG23_PH/validate.md '^### Strategic Gate 3: ' | grep 'Measurement-Regime Boundary'" \
-  "NONZERO"
-# (f) The Windows table lists the primary window's premise-check reader, and quoted figures reach
-# a pre-boundary completed experiment's absolute rates.
-check "Windows table lists Gate 1 among the profile primary window's consumers" \
-  "grep '^| Profile primary window |' $HG23_SKILL | grep 'Gates 1, 3 and 5'" \
-  "NONZERO"
-check "Quoted figures covers a completed experiment's absolute rates" \
-  "sect $HG23_SKILL '^## Measurement-Regime Boundary' | grep '^\\*\\*Quoted figures\\.\\*\\*' | grep 'completed experiment'" \
-  "NONZERO"
-# (e) The exhaustive Gate 3 fail claim is retired.
-check "validate.md no longer says baseline_exists fails only when a baseline was expected" \
-  "grep -n 'reads .fail. only when a baseline was expected' $HG23_PH/validate.md" \
   "EMPTY"
 echo ""
 
