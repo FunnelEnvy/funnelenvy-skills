@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [2.0.0] - 2026-11-12
 
 ### 2026-11-11 opportunity backlog rebuild
 
@@ -17,6 +17,14 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 #### Added
 - **hypothesis-generator** (1.19.0): an engagement can declare the date its measurement changed (`measurement_regime_boundaries` in the engagement-constraints frontmatter, for example a consent banner or a tracking migration). A baseline whose window predates or straddles that date, or has no stated dates, is refused: it fails the baseline gate, sizes and scores nothing, and adds one Prerequisites line asking for a baseline that starts on or after the change. Trends across the boundary are not read, a pre-boundary history record no longer sizes a test, and strategic before-and-after designs treat the boundary as a tracking discontinuity. The engagement-constraints input gains a convention for structured frontmatter fields. Runs without a declared boundary are unchanged.
+
+### 2026-11-02 test suite live layer
+
+#### Added
+- **_tests** (1.1.0): an opt-in `live/` test layer, with helpers that skip live tests unless opted in and guard their writes. `CLAUDE.md` and `README.md` document the layer and how to run it.
+
+#### Changed
+- **_tests** (1.1.0): `CLAUDE.md` synced with the shared test-suite standard. A fail-first proof now runs against the pre-change code and records a partition line, and the opening paragraph points to the docstring standard before any docstring edit.
 
 ### 2026-10-23 decision posture and experiment-history binding
 
@@ -38,11 +46,45 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 - **modules/section-taxonomy.md**: `pain-lead` headline names the pain and what is sold.
 - **schemas/campaign-brief.md**: qa-report reference copy re-synced to schema 2.1.
 
+### 2026-10-13 README governance section
+
+#### Added
+- **Docs**: README gains a `Governance` section. It names where the repo's rules, settings and managed workflows come from and where they live.
+
+### 2026-09-22 test suite becomes a managed resource
+
+#### Added
+- **_tests** (1.0.0): `_tests` gains its own `CLAUDE.md`, `README.md` and changelog. They carry the rules for when a test is needed and how to trust a test verdict, plus the suite's layout and conventions. No test files changed.
+
 ### 2026-08-31 deployed-state reads
 
 #### Changed
-- **hypothesis-generator** (1.18.0): reads deployed state and delivered sample from the bound experiment-history source, so a Current state block tracks the shipped control rather than a build a prior experiment replaced, and a feasibility window tracks enrolled participants rather than page visits. Change doc `skills/hypothesis-generator/_dev/7-closed/chg_2026-08-31_deployed-state-and-enrollment-denominator-reads.md`.
+- **hypothesis-generator** (1.18.0): reads deployed state and delivered sample from the bound experiment-history source, so a Current state block tracks the shipped control rather than a build a prior experiment replaced, and a feasibility window tracks enrolled participants rather than page visits.
 - **cro-roadmap-red-team** (0.3.0): CC12 deployed-state accuracy, a standing check for an item whose stated control describes a build a prior experiment or feature release has since replaced.
+
+### 2026-07-23 mockup capture fidelity
+
+#### Changed
+- **experiment-mockup** (1.6.0): captures now show the change at a glance. Floating overlays such as consent banners and chat widgets are hidden before every screenshot pair. The frame scales to the change type: a tight crop for element and copy changes, the viewport for section changes. A spot-the-diff check runs before the first presentation. When the hypothesis names a region that does not match the page's visual structure, the skill stops and asks instead of guessing. `placement.md` gains a `Capture Fidelity Notes` section.
+
+### 2026-07-22 live-program fold gate
+
+#### Added
+- **hypothesis-generator** (1.17.0): candidates are checked against the client's live experiment program before scoring. A candidate on a surface and lever that a running or queued experiment already owns folds into that experiment as an iteration instead of becoming a competing test. A different lever on the same surface gets a sequencing note, and a concluded experiment frees its slot. When program state cannot be read, the roadmap says so.
+
+### 2026-07-22 KB-native adaptations
+
+#### Added
+- **ga4-audit** (2.5.0): KB mode. With a CRO knowledge base binding, the performance profile is written as a typed `silver-performance-analysis` artifact instead of `.claude/context/performance-profile.md`. New `--scope` and `--no-kb` flags. Legacy runs are unchanged.
+- **aa-audit** (1.2.0): the same KB mode as ga4-audit, writing the same artifact type. New `--scope` and `--no-kb` flags. Legacy runs are unchanged.
+- **render-default-deliverables** (1.1.0): KB mode. Reads the scope's silver artifacts and writes the executive summary, messaging guide and comparison matrix as `gold-strategy-deliverable` artifacts and one `gold-battle-card` per competitor. Bodies match legacy output, and no manifest is written. New `--scope` and `--no-kb` flags.
+- **hypothesis-generator** (1.16.0): KB mode reads every silver artifact in the scope, not a fixed list. Unrecognized reference docs inform framing, constraints and guardrails only; they never create a hypothesis or move a score. KB mode also falls back to an experiment history stored in the output KB when no external history source binds.
+- **modules/kb-mode.md**: lists the newly dual-mode skills.
+
+#### Changed
+- **positioning-framework** (1.2.0): KB mode now auto-runs render-default-deliverables at standard and deep depth and passes `--scope`, as legacy mode does.
+- **hypothesis-generator** (1.16.0): test feasibility follows the engagement's measurement method. Pre/post and cohort engagements are sized by baseline and read window and are never demoted on A/B traffic grounds. When history shows an on-page metric moving opposite to the downstream business metric on a surface, hypotheses there read the downstream metric as primary.
+- **schemas/performance-profile.md**: states the schema-version contract between the audit skills that write the profile and the skills that read it.
 
 ## [1.9.0] - 2026-07-14
 
