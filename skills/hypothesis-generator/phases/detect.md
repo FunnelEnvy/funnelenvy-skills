@@ -182,7 +182,7 @@ Fire only when the structural observation is present. Fields are tri-state (`pre
 **Rules:**
 - Structure supplies targets and current state. Performance data supplies firing counts for engagement patterns. Do not fire the same pattern twice on one page from both.
 - A page block status other than clean, a low page confidence or a viewport divergence makes signals from that page a partial match.
-- **Mobile render signals:** this rule is its one home. `mobile_render_clean: false` means the capture recorded at least one console error or failed request on the mobile viewport. It does not mean the page renders broken. A measured break is a viewport's `render_correctness` in the `viewport_divergence` block reading other than clean; a missing or `not_checked` value is not a break. The surface lens sets the blocker `design-change` on a card only when:
+- **Mobile render signals:** this rule is its one home. `mobile_render_clean: false` means the capture recorded at least one console error or failed request on the mobile viewport. It does not mean the page renders broken. A measured break is a viewport's `render_correctness` in the `viewport_divergence` block reading other than clean; a missing, `not_checked` or `[NOT AVAILABLE: static mode]` value is not a break. The surface lens sets the blocker `design-change` on a card only when:
   - the card's change targets the mobile experience or a device gap, and its page has `mobile_render_clean: false`; or
   - `render_correctness` records a break on a viewport the card targets. A card that targets no device targets every captured viewport.
 

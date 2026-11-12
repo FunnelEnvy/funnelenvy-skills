@@ -10,7 +10,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 #### Changed
 - **hypothesis-generator** (2.0.0): breaking. Five parallel lens subagents generate evidence-cited candidate cards; `scripts/consolidate_backlog.py` merges, sizes, keys and ranks them; the roadmap body becomes four readiness tiers (ready now, needs a design change, needs measurement, needs a client decision) with full write-ups for the top items, a backlog table for every other row, `## Exclusions` (which also accounts for every prior write-up a re-run drops) and a closing `## Method`. `--write-ups` replaces `--max`. Count caps, score quotas and tier thresholds are gone; no self-critique is rendered. Every pre/post read with a baseline states the conversions each period expects, the smallest change it can detect and how long a 20% change would need, from the script. Each scope regenerates its roadmaps with 2.0 before running the renderer or red team on them.
-- **render-program-site** (1.0.0): breaking. Reads the 2.0 body, renders write-ups only, and refuses a pre-2.0 roadmap with exit 3 and a message to regenerate it.
+- **render-program-site** (1.0.0): breaking. Reads the 2.0 body, renders write-ups only, shows each bet's and test's readiness tier and each spoke's Readiness, Requires and Before launch lines, and refuses a pre-2.0 roadmap with exit 3 and a message to regenerate it.
 - **cro-roadmap-red-team** (0.4.0): reads the 2.0 body (1.x still read), gates skeptics by write-up versus backlog row, adds the CC14 breadth check, and grades self-critiques only when a roadmap carries them.
 
 ### 2026-11-02 measurement-regime boundary
