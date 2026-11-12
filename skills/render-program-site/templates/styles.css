@@ -265,6 +265,11 @@ section:first-of-type{border-top:none}
 .spoke-hero .meta .tgt{font-family:var(--mono);font-size:11px;color:var(--faint)}
 .spoke-hero h1{font-size:38px;font-weight:800;line-height:1.1;letter-spacing:-.02em;color:var(--ink);margin:0 0 16px}
 .lead{font-size:20px;line-height:1.5;color:var(--muted);max-width:62ch;margin:0}
+/* spoke blocker lines (`.waits`): the write-up's Readiness / Requires / Before launch
+ * text, each under its own mono label. Emitted only when the write-up carries one. */
+.waits{display:grid;gap:14px;max-width:64ch;margin-top:26px;padding-top:18px;border-top:1px solid var(--line)}
+.waits .x-lab{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);display:block;margin-bottom:5px}
+.waits p{font-size:15px;line-height:1.55;color:var(--body);margin:0}
 .sec{padding:40px 0;border-bottom:1px solid var(--line)}
 .sec h2{font-size:12px;font-family:var(--mono);font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--faint);margin:0 0 16px}
 .sec p{font-size:16px;line-height:1.6;color:var(--body);max-width:64ch;margin:0 0 12px}

@@ -51,12 +51,17 @@ check. The site does not render the backlog table. `render_site.py` derives:
 - `title` -- the `### N. Title` heading text.
 - `tier` -- the enclosing readiness H2's key: `ready-now`, `needs-design-change`,
   `needs-measurement` or `needs-client-decision`. Its CSS suffix is `rn`, `dc`,
-  `nm` or `cd`.
+  `nm` or `cd`. Derived for bets and tests alike, and rendered as the tier tag
+  on hub bet cards and backlog rows and as the tier pill on both spoke types.
 - `ice` -- parsed from `**Scores:** Impact X | Confidence Y | Ease Z` (trailing
   rationale on the line is ignored).
 - `target_page` -- the tactical `**Page:**` label.
 - prose slots -- the bold-labeled paragraphs, mapped to spoke prose regions and
   rewritten by the curation pass.
+- blocker lines -- the `**Readiness:**`, `**Requires:**` and `**Before launch:**`
+  labels. Each one a write-up carries renders in its spoke's hero under its own
+  label, through the `readiness`, `requires` or `before-launch` slot. A write-up
+  with none of the three adds nothing to its spoke.
 
 **Pre-2.0 bodies fail closed.** Before any section is read, each roadmap body
 is checked for an H2 whose text starts with one of the three tier names of the

@@ -1222,5 +1222,122 @@ class TestAuditDesignRestyle(unittest.TestCase):
                       '[no source prose for sequence', html)
 
 
+# --------------------------------------------------------------------------
+# Readiness tier on bets, and the spoke blocker lines (Readiness / Requires /
+# Before launch). Synthetic: the offer-ladder bet (sb-03, already carrying
+# **Readiness:**) gains the other two labels, and the conversational signup
+# form test (p-02) gains all three. sb-02 and p-01 carry none of them.
+# --------------------------------------------------------------------------
+
+STRATEGIC_BLOCKERS = STRATEGIC.replace(
+    "**What to stand up:** A lower-commitment offer tier.\n",
+    "**What to stand up:** A lower-commitment offer tier.\n"
+    "**Requires:** A second offer page and a routing rule.\n"
+    "**Before launch:** Confirm the current offer page is still live.\n")
+
+TACTICAL_BLOCKERS = TACTICAL.replace(
+    "**What to test:** A conversational multi-step signup form.\n",
+    "**What to test:** A conversational multi-step signup form.\n"
+    "**Readiness:** The form needs a step-two layout before it can run.\n"
+    "**Requires:** A form builder that supports branching steps.\n"
+    "**Before launch:** Check the signup event still fires on submit.\n")
+
+# Item id -> (label, slot name, source text) for each blocker line the fixtures carry.
+BLOCKER_CASES = {
+    "sb-03": (("Readiness", "readiness", "Needs sign-off on a lower-commitment offer."),
+              ("Requires", "requires", "A second offer page and a routing rule."),
+              ("Before launch", "before-launch", "Confirm the current offer page is still live.")),
+    "p-02": (("Readiness", "readiness", "The form needs a step-two layout before it can run."),
+             ("Requires", "requires", "A form builder that supports branching steps."),
+             ("Before launch", "before-launch", "Check the signup event still fires on submit.")),
+}
+
+
+class TestReadinessAndBlockers(unittest.TestCase):
+    """Bets show their readiness tier on the hub and their spoke, and each spoke
+    shows the write-up's Readiness / Requires / Before launch lines.
+
+    Partition (harness: `git show HEAD:` of render_site.py and templates/):
+    4 fail-pre-change, 1 positive control, 5 cases."""
+
+    def _site(self, strategic=STRATEGIC_BLOCKERS, tactical=TACTICAL_BLOCKERS):
+        td = tempfile.TemporaryDirectory()
+        self.addCleanup(td.cleanup)
+        paths = []
+        for name, text in (("strategic.md", strategic), ("tactical.md", tactical),
+                           ("edges.md", SIDECAR)):
+            path = os.path.join(td.name, name)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(text)
+            paths.append(path)
+        out = os.path.join(td.name, "site")
+        with contextlib.redirect_stdout(io.StringIO()):
+            rc = rs.main(["--strategic", paths[0], "--tactical", paths[1],
+                          "--edges", paths[2], "--out", out])
+        self.assertEqual(rc, 0)
+        return out
+
+    def _read(self, out, name):
+        with open(os.path.join(out, name), encoding="utf-8") as f:
+            return f.read()
+
+    def test_hub_bet_cards_carry_tier_tag(self):
+        # Fail-pre-change: bet cards carried no readiness tag. Each card must carry
+        # its own tier, so a constant tag on every card fails the sb-03 check.
+        hub = self._read(self._site(), "index.html")
+        for bid, tag in (("sb-01", '<span class="tag rn">Ready Now</span>'),
+                         ("sb-03", '<span class="tag cd">Needs a Client Decision</span>')):
+            start = hub.index('<div class="bet" id="%s">' % bid)
+            card = hub[start:hub.index('<div class="exec">', start)]
+            self.assertIn(tag, card, bid)
+
+    def test_strategic_spoke_carries_tier_pill(self):
+        # Fail-pre-change: the strategic spoke meta had no readiness pill, while the
+        # tactical spoke meta did. The bet uses the same `.meta .tier` markup.
+        spoke = self._read(self._site(), "sb-03.html")
+        meta = spoke[spoke.index('<div class="meta">'):spoke.index("<h1>")]
+        self.assertIn('<span class="tier">Needs a Client Decision</span>', meta)
+
+    def _assert_blockers(self, item_id, page):
+        spoke = self._read(self._site(), page)
+        hero = spoke[:spoke.index('<section class="sec">')]
+        positions = []
+        for label, name, text in BLOCKER_CASES[item_id]:
+            line = ('<div class="wait"><span class="x-lab">%s</span><p><!--PROSE id=%s slot=%s-->'
+                    '%s<!--/PROSE--></p></div>' % (label, item_id, name, text))
+            with self.subTest(label=label):
+                self.assertIn(line, hero)
+            positions.append(hero.find(line))
+        self.assertEqual(positions, sorted(positions))  # Readiness, Requires, Before launch
+
+    def test_strategic_spoke_shows_blocker_lines(self):
+        # Fail-pre-change: the three labels never reached the strategic spoke hero.
+        self._assert_blockers("sb-03", "sb-03.html")
+
+    def test_tactical_spoke_shows_blocker_lines(self):
+        # Fail-pre-change: the three labels never reached the tactical spoke hero.
+        self._assert_blockers("p-02", "p-02.html")
+
+    def test_no_blocker_labels_adds_no_bytes(self):
+        # Positive control: a spoke whose write-up carries none of the three labels
+        # renders exactly as it does from templates without the {{BLOCKERS}} token.
+        # Passes against the pre-change code by design (no token to strip there).
+        s, t, _ = _load_all(STRATEGIC_BLOCKERS, TACTICAL_BLOCKERS)
+        rs.derive(s, t)
+        tpl_dir = os.path.join(os.path.dirname(_MODULE_PATH), "..", "templates")
+        live = rs.load_templates(tpl_dir)
+        bare = {k: v.replace("{{BLOCKERS}}", "") for k, v in live.items()}
+        td = tempfile.TemporaryDirectory()
+        self.addCleanup(td.cleanup)
+        bet = next(b for b in s["bets"] if b["id"] == "sb-02")
+        test = next(x for x in t["tests"] if x["id"] == "p-01")
+        program = s["program"]
+        self.assertEqual(rs.build_spoke_strategic(bet, program, live),
+                         rs.build_spoke_strategic(bet, program, bare))
+        self.assertEqual(rs.build_spoke_tactical(test, program, live, td.name),
+                         rs.build_spoke_tactical(test, program, bare, td.name))
+        self.assertNotIn('class="waits"', rs.build_spoke_tactical(test, program, live, td.name))
+
+
 if __name__ == "__main__":
     unittest.main()

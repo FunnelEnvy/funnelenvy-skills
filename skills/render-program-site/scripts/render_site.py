@@ -46,6 +46,11 @@ TIERS = {
 }
 TIER_ORDER = ("ready-now", "needs-design-change", "needs-measurement", "needs-client-decision")
 
+# Write-up labels that state what an item waits on: (gold label, slot name).
+# A spoke shows each one present, in this order, under its own label.
+BLOCKER_LABELS = (("Readiness", "readiness"), ("Requires", "requires"),
+                  ("Before launch", "before-launch"))
+
 # Type-label map, printed verbatim, never paraphrased (bet side / test side).
 EDGE_LABEL_BET = {"expresses": "Expressed on-page by", "informs": "Informs", "gates": "Gates"}
 EDGE_LABEL_TEST = {"expresses": "Expresses", "informs": "Informed by", "gates": "Gated by"}
@@ -567,6 +572,7 @@ def load_strategic(path, sidecar):
             "id": cid,
             "key": sec["key"],
             "title": sec["title"],
+            "tier": sec["tier"],
             "lever": sec["labels"].get("Lever", ""),
             "decided_on": (sb["decided_on"] if sb else ""),
             "run_tag": (sb["run_tag"] if sb else ""),
@@ -961,6 +967,21 @@ def slot(item_id, name, source_text):
     return "<!--PROSE id=%s slot=%s-->%s<!--/PROSE-->" % (item_id, name, body)
 
 
+def build_blockers(item_id, labels):
+    """Build the spoke hero's blocker lines from a write-up's `labels`.
+
+    Emits one labeled line per `BLOCKER_LABELS` entry the write-up carries with
+    non-empty text, each through its own prose slot. Returns '' when it carries
+    none, so the `{{BLOCKERS}}` token adds no bytes to the spoke."""
+    rows = []
+    for label, name in BLOCKER_LABELS:
+        text = labels.get(label)
+        if text:
+            rows.append('<div class="wait"><span class="x-lab">%s</span><p>%s</p></div>'
+                        % (esc(label), slot(item_id, name, text)))
+    return ('<div class="waits">%s</div>' % "".join(rows)) if rows else ""
+
+
 # --------------------------------------------------------------------------
 # Emit: chrome fragments built from data
 # --------------------------------------------------------------------------
@@ -1035,6 +1056,10 @@ def build_bet_cards(bets):
         if b["run_tag"]:
             long_cls = " long" if b["run_tag"].lower() in ("long game", "long-game") else ""
             run = '<span class="b-run%s">%s</span>' % (long_cls, esc(b["run_tag"]))
+        tier = ""
+        if b["tier"] in TIERS:
+            label, css, _ = TIERS[b["tier"]]
+            tier = '<span class="tag %s">%s</span>' % (css, esc(label))
         tag_cls = {"on-page": "on", "off-page": "off", "unexpressed": "gap"}[b["executor_status"]]
         tag_txt = {"on-page": "On-page", "off-page": "Off-page move", "unexpressed": "Unexpressed"}[b["executor_status"]]
         rels = []
@@ -1046,13 +1071,13 @@ def build_bet_cards(bets):
         decided = ('<p class="b-decided">Decided on <b>%s</b></p>' % esc(b["decided_on"])) if b["decided_on"] else ""
         cards.append(
             '<div class="bet" id="%s">'
-            '<div class="b-top"><span class="b-code">%s</span>%s</div>'
+            '<div class="b-top"><span class="b-code">%s</span>%s%s</div>'
             '<h3><a href="%s.html">%s</a></h3>%s'
             '<p class="b-body">%s</p>'
             '<span class="ice"><span class="t mono">ICE %d</span><span class="mono">I%d &middot; C%d &middot; E%d</span></span>'
             '<div class="exec"><span class="x-tag %s">%s</span>%s<p class="x-note">%s</p></div>'
             '</div>'
-            % (b["id"], bet_label(b["id"]), run, b["id"], esc(b["title"]), decided,
+            % (b["id"], bet_label(b["id"]), tier, run, b["id"], esc(b["title"]), decided,
                slot(b["id"], "card-body", b["section"]["labels"].get("Lever", b["lever"])),
                ice_total(b["ice"]), b["ice"]["i"], b["ice"]["c"], b["ice"]["e"],
                tag_cls, tag_txt, "".join(rels),
@@ -1333,7 +1358,8 @@ def build_spoke_strategic(b, program, templates):
     client = esc(program.get("client", ""))
     tag_cls = {"on-page": "on", "off-page": "off", "unexpressed": "gap"}[b["executor_status"]]
     tag_txt = {"on-page": "On-page", "off-page": "Off-page move", "unexpressed": "Unexpressed"}[b["executor_status"]]
-    meta = '<span class="x-tag %s">%s</span>' % (tag_cls, tag_txt)
+    meta = ('<span class="tier">%s</span>' % esc(TIERS[b["tier"]][0])) if b["tier"] in TIERS else ""
+    meta += '<span class="x-tag %s">%s</span>' % (tag_cls, tag_txt)
     if b["keystone"]:
         meta += '<span class="kw">Keystone</span>'
     meta += '<span class="ice mono">ICE %d &middot; %s</span>' % (ice_total(b["ice"]), ice_str(b["ice"]))
@@ -1353,6 +1379,7 @@ def build_spoke_strategic(b, program, templates):
         "META": meta,
         "TITLE_H1": esc(b["title"]),
         "LEAD": slot(b["id"], "lead", lab.get("Lever", b["lever"])),
+        "BLOCKERS": build_blockers(b["id"], lab),
         "LEVER": slot(b["id"], "lever", lab.get("Lever", "")),
         "MOVE": slot(b["id"], "move", lab.get("What to stand up", "")),
         "CONNECTIONS": "".join(conn),
@@ -1432,6 +1459,7 @@ def build_spoke_tactical(t, program, templates, out_dir):
         "META": meta,
         "TITLE_H1": esc(t["title"]),
         "LEAD": slot(t["id"], "lead", lab.get("What to test", "")),
+        "BLOCKERS": build_blockers(t["id"], lab),
         "HYPOTHESIS": slot(t["id"], "hypothesis", lab.get("Why this should work", lab.get("What to test", ""))),
         "MOCKUP": mockup_html,
         "LADDER": "".join(conn),
