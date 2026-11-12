@@ -4,14 +4,14 @@ name: tests-changelog
 description: Changelog for the automated test suite.
 governed_by: change-management/changelog
 managed_by: change-management
-version: "1.0.0"
+version: "1.1.0"
 created: 2026-09-22
-updated: 2026-09-22
+updated: 2026-11-12
 title: Changelog
 ---
 # Changelog
 
-## [Unreleased]
+## [1.1.0] - 2026-11-12
 
 ### Added
 - Opt-in `live/` layer synced from fe-sys-hq `_tests` v2.0.0 (fe-sys-hq v3.42.0): `CLAUDE.md` `Live Tests` section (v1.2.0), `README.md` layer row and run command, `helpers.py` `live_opt_in_skip_reason` and `LiveWriteGuard` with their unit and functional tests, and an empty `live/` package
