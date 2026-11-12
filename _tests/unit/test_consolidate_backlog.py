@@ -307,6 +307,18 @@ class TestRank(unittest.TestCase):
         self.assertEqual(out["a"]["readiness"], "needs-client-decision")
         self.assertEqual(out["b"]["readiness"], "needs-design-change")
         self.assertEqual(out["c"]["readiness"], "needs-measurement")
+        self.assertFalse(out["a"]["prelaunch_check"])
+
+    def test_current_state_check_does_not_set_tier(self):
+        out = by_key(cb.rank([
+            row("only-check", (3, 3, 3), blockers=["verify-current-state"]),
+            row("check-and-baseline", (3, 3, 3), blockers=["verify-current-state", "no-baseline"]),
+        ], 8))
+        self.assertEqual(out["only-check"]["readiness"], "ready-now")
+        self.assertTrue(out["only-check"]["prelaunch_check"])
+        self.assertEqual(out["only-check"]["blockers"], ["verify-current-state"])
+        self.assertEqual(out["check-and-baseline"]["readiness"], "needs-measurement")
+        self.assertTrue(out["check-and-baseline"]["prelaunch_check"])
 
     def test_rank_order_isolates_keys(self):
         rows = [

@@ -73,6 +73,10 @@ Write the causal chain in two or three sentences: the observation, the behaviora
 ### Evidence and Scores
 
 - `**Evidence:**` the row's evidence pointers, in plain words: what was observed, where.
+- **Correctness rule, evidence must resolve:** before a write-up renders, check each claim in its `**Evidence:**` line, and each factual claim in `**Current state:**`, against a passage in a source Phase 1 loaded.
+  - *Resolves:* the claim stays.
+  - *Does not resolve:* rewrite it to what the source says, or remove it.
+  - *Nothing left:* the row returns to the backlog with the note "evidence did not resolve", and the next-ranked row takes its write-up slot.
 - `**Scores:**` from the row's `ice`, in the exact `Output Format` shape, then one sentence per score.
 
 ### Bundled Elements
@@ -88,11 +92,12 @@ Count the elements the variant changes: headline, subhead, CTA copy, CTA destina
 - `**What a win proves:**` what a positive result validates about positioning, messaging or audience. For variations, what it means if the recommended one wins and if another does.
 - `**What a loss teaches:**` what a negative result reveals and where to go next. For a bundle, say a loss does not isolate the element. For a proxy read, cover a proxy win with a flat guardrail.
 - `**Notes:**` the row's annotations in plain words: a partial fit and what is missing, counter-evidence, a running experiment named in plain words, an engagement constraint, unregistered proof, a comparative claim. Name any roadmap section in plain words, never in a code span. Omit when none.
-- `**Readiness:**` under every tier except `Ready Now`: one line from the row's `blocker_reasons`.
+- `**Readiness:**` under every tier except `Ready Now`: one line from the row's `blocker_reasons`, leaving out the `verify-current-state` reason.
+- `**Before launch:**` only when the row has `prelaunch_check: true`: the `verify-current-state` reason from `blocker_reasons`, as the check to run before launch. It renders in any tier and never moves the row.
 
 ## Strategic Labels
 
-- `**Key:**`, `**Mechanism:**`, `**Evidence:**`, `**Scores:**`, `**What a win proves:**`, `**What a loss teaches:**`, `**Notes:**` and `**Readiness:**` follow the tactical rules.
+- `**Key:**`, `**Mechanism:**`, `**Evidence:**`, `**Scores:**`, `**What a win proves:**`, `**What a loss teaches:**`, `**Notes:**`, `**Readiness:**` and `**Before launch:**` follow the tactical rules, including the evidence-must-resolve correctness rule.
 - `**Lever:**` the row's surfaces: the named program, offer, motion or asset.
 - `**What to stand up:**` what gets built, published, routed or changed. Bundle the parts that serve one idea (the asset, where it lives and the copy that frames it); a second idea is a second row.
 - `**Measurement:**` the design in plain words (a regional holdout, a before-and-after window, a cohort comparison, a tracked operational metric), and its limits: what it cannot isolate, such as seasonality, contamination or mix shift. When a randomized read is available now and a qualified-layer read only after a Foundation entry lands, describe the second read as a later enrichment.

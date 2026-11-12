@@ -1,13 +1,13 @@
 # Phase 4: Per-Row Checks
 
-This phase checks every consolidated row against the evidence already loaded. It maps what it finds to blockers, which set the row's readiness tier in `rank`, and to annotations. It never removes a row. It performs no web research and writes nothing to disk except the row fields below.
+This phase checks every consolidated row against the evidence already loaded. It maps what it finds to blockers, which set the row's readiness tier in `rank`, and to annotations. One blocker, `verify-current-state`, records a pre-launch check instead of setting the tier. It never removes a row. It performs no web research and writes nothing to disk except the row fields below.
 
 ## Output Per Row
 
 Add to each row in the `consolidate` output:
 
 - **`blockers`:** append any blocker below that applies, without duplicating one the lens set.
-- **`blocker_reasons`:** an object mapping each blocker on the row to a one-line reason in plain words. It renders as the write-up's `**Readiness:**` line, or in the backlog row's `Readiness` cell as `[Tier]: [reason]`. Lens-set blockers need a reason too; take it from the row's annotations or evidence.
+- **`blocker_reasons`:** an object mapping each blocker on the row to a one-line reason in plain words. It renders as the write-up's `**Readiness:**` line, or in the backlog row's `Readiness` cell as `[Tier]: [reason]`. The `verify-current-state` reason renders as the write-up's `**Before launch:**` line instead, and in the backlog cell as `Ready now; before launch: [check]`, or `[Tier]: [reason]; before launch: [check]` when another blocker sets the tier. Lens-set blockers need a reason too; take it from the row's annotations or evidence.
 - **`annotations`:** append any annotation below.
 - **`validation_gates`:** one verdict per gate, `pass`, `fail` or `not-assessed`, each with a one-line note.
 
@@ -22,6 +22,8 @@ Add to each row in the `consolidate` output:
 | The captured control is stale or contested, or the current state cannot be confirmed (`control_stable` fails); a confirm-first lever | `verify-current-state` |
 | The read cannot work as designed but a redesign could (`powerable` or `segmentation_satisfied` fails); a strategic design that needs a disqualified baseline | `design-change` |
 | Another artifact contradicts the premise (`premise_contradicted` fails); a blocking engagement constraint; a change so obvious it should ship rather than be tested | `client-decision` |
+
+**Pre-launch check:** `verify-current-state` does not set the tier. `rank` marks the row `prelaunch_check: true` and places it by its other blockers, so a row whose only blocker it is ranks ready now. The check still runs before launch.
 
 Traffic alone never sets a blocker. A row too slow for an A/B read already carries a directional or pre/post read model from the script.
 

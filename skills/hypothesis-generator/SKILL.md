@@ -477,6 +477,8 @@ $PY <skill-dir>/scripts/consolidate_backlog.py rank --rows "$SCORED" --write-ups
 
 Read and follow `phases/construct.md` for every row with `write_up: true`. Each write-up carries the labels in `Output Format` (tactical) or `Strategic Roadmap Output Format` (strategic). Sized figures come from the row's sizing object only.
 
+- **Check:** each `**Evidence:**` and `**Current state:**` claim resolves to a loaded source passage, or is rewritten or removed. A write-up left with no evidence returns to the backlog.
+
 ### Phase 6: Render
 
 1. **Spec coverage** (when `--spec` was given): every spec id maps to a write-up, a backlog row (via the row's `spec_items`) or an `## Exclusions` entry. Out-of-scope and blocked items go to `## Exclusions` with their routing text:
@@ -589,6 +591,7 @@ Numbers come from `Decision Posture`.]
 **What a win proves:** [learning from a positive result]
 **What a loss teaches:** [learning from a negative result]
 **Notes:** [annotations in plain words: a partial pattern fit and what is missing, counter-evidence against the standard advice, a running experiment on this page and how this sequences after it, an engagement constraint. Name any roadmap section in plain words, never in a code span. Omit when none]
+**Before launch:** [only when a current-state check is pending: the check to run before launch. The item keeps its readiness group]
 
 ## Needs a Design Change
 
@@ -598,7 +601,7 @@ Numbers come from `Decision Posture`.]
 ## Needs Measurement
 
 ### N. [Title]
-[Same labels, plus **Readiness:** one plain line naming what must be measured or verified first]
+[Same labels, plus **Readiness:** one plain line naming what must be measured first]
 
 ## Needs a Client Decision
 
@@ -609,7 +612,7 @@ Numbers come from `Decision Posture`.]
 
 | Key | Title | Surface | Mechanism | Readiness | Read model | ICE | Evidence |
 |---|---|---|---|---|---|---|---|
-| [key] | [title] | [pages] | [mechanism words] | [Ready now; otherwise "[Tier]: [reason]", for example "Needs measurement: pull the homepage baseline"] | [A/B / Directional / Pre/post / Holdout / Not yet sized] | I4 C3 E2 (9) | [source, in plain words] |
+| [key] | [title] | [pages] | [mechanism words] | [Ready now; otherwise "[Tier]: [reason]", for example "Needs measurement: pull the homepage baseline". A pending current-state check is appended and never sets the tier: "Ready now; before launch: [check]" or "[Tier]: [reason]; before launch: [check]"] | [A/B / Directional / Pre/post / Holdout / Not yet sized] | I4 C3 E2 (9) | [source, in plain words] |
 
 ## Exclusions
 
@@ -650,7 +653,7 @@ Numbers come from `Decision Posture`.]
 
 - Write-ups are numbered from 1 across the whole roadmap, in rank order, under the readiness H2 the row's readiness names.
 - **Required labels:** `**Key:**`, `**Page:**`, `**Mechanism:**`, `**What to test:**`, `**Change type:**`, `**Current state:**`, `**Proposed change:**`, `**Read model:**`, `**Why this should work:**`, `**Target metric:**`, `**Expected effect and read threshold:**`, `**Evidence:**`, `**Scores:**`, `**What a win proves:**`, `**What a loss teaches:**`. Add `**Readiness:**` under every readiness H2 except `## Ready Now`.
-- **Conditional labels:** `**Baseline:**`, `> **Before:**` and `> **After:**`, the variation block with `**Recommended:**`, `**Guardrail metric:**`, `**Audience:**`, `**Bundled elements:**`, `**Notes:**`.
+- **Conditional labels:** `**Baseline:**`, `> **Before:**` and `> **After:**`, the variation block with `**Recommended:**`, `**Guardrail metric:**`, `**Audience:**`, `**Bundled elements:**`, `**Notes:**`, `**Before launch:**`.
 - `**Mechanism:**` holds the row's mechanism words only, so a later run can match the write-up to its row. The mechanism sentence goes in `**Why this should work:**`.
 - A backlog row is not a mockup target until a later run promotes it to a write-up.
 - **Live-program note:** a row that sequences after a running or queued experiment names that experiment in plain words: on a write-up's `**Notes:**` line, or in a backlog row's `Readiness` cell ("Ready now; runs after the current hero test on this page").
@@ -712,6 +715,7 @@ The body follows `Output Format` section for section, with these differences:
 **What a win proves:** [the business learning]
 **What a loss teaches:** [what a flat or negative read reveals]
 **Notes:** [annotations, when any]
+**Before launch:** [only when a current-state check is pending: the check to run before launch. The item keeps its readiness group]
 
 [Needs a Design Change, Needs Measurement and Needs a Client Decision follow, as in the tactical roadmap, each write-up adding **Readiness:**.]
 
@@ -837,3 +841,4 @@ SKILL.md (this file)
 15. **Thresholds come from `Decision Posture`**, sizing from `consolidate_backlog.py`, and every A/B or directional read threshold carries all six parts.
 16. **Lenses do not pad.** A lens below the floor reports its shortfall.
 17. **FunnelEnvy branding in the footer.**
+18. **Write-up evidence resolves.** Every claim in `**Evidence:**` and every factual claim in `**Current state:**` traces to a passage in a loaded source, or is rewritten or removed (`phases/construct.md`).

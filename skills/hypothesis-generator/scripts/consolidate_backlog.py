@@ -105,9 +105,12 @@ rows_out, dropped_prior_keys. Rows are ordered by altitude (tactical first), the
 rank input: the consolidate rows (a JSON array, or the whole consolidate object) with
 ice {i, c, e} (integers 1 to 5) added to every row; keys must be unique across the
 input. Readiness, first match wins:
-client-decision blocker -> needs-client-decision; metric-not-tracked, no-baseline or
-verify-current-state blocker, or read_model unsized -> needs-measurement;
-design-change blocker -> needs-design-change; otherwise ready-now. Within each
+client-decision blocker -> needs-client-decision; metric-not-tracked or no-baseline
+blocker, or read_model unsized -> needs-measurement; design-change blocker ->
+needs-design-change; otherwise ready-now. A verify-current-state blocker records a
+pre-launch check and does not set the tier: a row whose only blocker it is ranks
+ready-now. Each row gets prelaunch_check, true when its blockers contain
+verify-current-state; the blocker itself stays on the row. Within each
 altitude rows sort by readiness tier (ready-now, needs-design-change,
 needs-measurement, needs-client-decision), then ICE total descending, then Confidence
 descending, then key ascending. Each row gets rank (1-based within its altitude) and
@@ -132,7 +135,7 @@ BLOCKERS = ("metric-not-tracked", "no-baseline", "verify-current-state", "design
             "client-decision")
 READ_MODELS = ("ab", "directional", "pre-post", "holdout", "unsized")
 READINESS = ("ready-now", "needs-design-change", "needs-measurement", "needs-client-decision")
-MEASUREMENT_BLOCKERS = ("metric-not-tracked", "no-baseline", "verify-current-state")
+MEASUREMENT_BLOCKERS = ("metric-not-tracked", "no-baseline")
 LIST_FIELDS = ("surfaces", "evidence", "lenses", "blockers", "annotations", "history_items",
                "spec_items")
 
@@ -748,6 +751,7 @@ def rank(rows_data, write_ups, history_items=(), excluded_history=()):
         alt_rows = [dict(r) for r in rows_data if r["altitude"] == altitude]
         for row in alt_rows:
             row["readiness"] = readiness(row)
+            row["prelaunch_check"] = "verify-current-state" in (row.get("blockers") or [])
         alt_rows.sort(key=lambda r: (READINESS.index(r["readiness"]),
                                      -(r["ice"]["i"] + r["ice"]["c"] + r["ice"]["e"]),
                                      -r["ice"]["c"], r["key"]))

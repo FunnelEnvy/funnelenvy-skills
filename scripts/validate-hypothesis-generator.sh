@@ -10,6 +10,9 @@
 #   [5] Fixture            every source file the synthetic fixture's planted list names exists
 #   [6] Prohibited content content hygiene over the skill and its modules
 # Behavior is tested by _tests/ (consolidate_backlog.py, history_backlog.py); this script checks text.
+# Limit: the hard-rule checks confirm each rule's anchor text is present in its home file.
+# They do not read meaning, so a reworded rule body can pass. The fixture run and the
+# red team (cro-roadmap-red-team) are the checks that read meaning.
 
 set -e
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -134,6 +137,12 @@ check "History ledger blocks the write while any id is unaccounted (score.md)" \
   "NONZERO"
 check "History full-entry cap of 20 (Phase 1 step 5b)" \
   "sect $SKILL '^### Phase 1: ' | grep 'Full-entry cap (hard rule)' | grep 'at most 20 full record entries'" \
+  "NONZERO"
+check "Write-up evidence must resolve (construct.md Evidence and Scores)" \
+  "sect $PH/construct.md '^### Evidence and Scores' | grep -F '**Correctness rule, evidence must resolve:**'" \
+  "NONZERO"
+check "Unresolved evidence returns the row to the backlog (construct.md Evidence and Scores)" \
+  "sect $PH/construct.md '^### Evidence and Scores' | grep -F 'evidence did not resolve'" \
   "NONZERO"
 check "Deliverable purity names no internal identifier" \
   "sect $SKILL '^## Deliverable Purity Constraint' | grep 'name no internal identifier'" \
