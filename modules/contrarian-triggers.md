@@ -110,8 +110,8 @@ Annotations are plain words. They never name a trigger ID.
 ### CTR-14: Device or OS Defect Misattribution
 
 **When wrong:** A device gap explained by an OS or browser-family error, not message fit.
-**Signals (any):** error-session rate concentrates by OS or browser family; a device gap coincides with a script-error family; the card proposes a device messaging or rendering change on such a surface; the structural capture records `mobile_render_clean: false` on the target surface.
-**Action:** Counter-evidence: fix the defect and re-measure the gap before reading any device-targeted test. The `design-change` blocker for a broken mobile render has one home: `phases/detect.md` > `Structural Triggers`. A clean observed render rules out the rendering family only; script-error telemetry still needs its own rule-out.
+**Signals (any):** error-session rate concentrates by OS or browser family; a device gap coincides with a script-error family; the card proposes a device messaging or rendering change on such a surface; the card targets the mobile experience or a device gap on a surface where the structural capture records `mobile_render_clean: false` (console errors or failed requests on the mobile viewport), or the capture's measured `render_correctness` records a break on the viewport the card targets.
+**Action:** Counter-evidence: fix the defect and re-measure the gap before reading any device-targeted test. Which cards take the `design-change` blocker has one home: `phases/detect.md` > `Structural Triggers` > `Mobile render signals`. Console errors alone are not a broken render. A clean capture rules out the rendering family only; script-error telemetry still needs its own rule-out.
 **Evidence basis:** Tests on error-degraded sessions cannot separate message effect from error effect.
 
 ---

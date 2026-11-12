@@ -48,7 +48,7 @@ The script sizes every card from this object and the `Decision Posture` in `SKIL
 
 - **Inputs:** read every input path you were given. In KB mode that includes every silver in the scope, supplementary silver included, and any cross-scope artifact reached through a declared `depends_on` edge. Read no other scope.
 - **Floor:** aim for at least the floor you were given (default 10 cards). It is a target. If the evidence supports fewer, return fewer. Never pad, split one idea into several cards, or repeat a card.
-- **One floor on candidacy:** every card carries an evidence pointer. Nothing else keeps a card out. Do not drop a card for low traffic, a missing metric, a running experiment, contrary advice or a partial fit. Record those facts as `blockers` or `annotations`.
+- **One floor on candidacy:** every card carries an evidence pointer. Beyond that, only a hard rule or a standing engagement exclusion keeps a card out, and each goes under `Exclusions:`. Do not drop a card for low traffic, a missing metric, a running experiment, contrary advice or a partial fit. Record those facts as `blockers` or `annotations`.
 - **One idea per card:** elements that serve one testable idea belong on one card (a headline, subhead and CTA rewritten together). Two independent ideas are two cards. The cross-surface bundling rule in `modules/hypothesis-interactions.md` decides multi-surface cases.
 - **Merging is automatic:** cards with the same `altitude`, the same `mechanism_key` and an overlapping surface merge in the script, and only one title survives. Reuse a pattern `Key` exactly only for the same change on that surface, so your card merges with other lenses' cards. A different element or claim under the same pattern gets `<pattern-key>-<element>`, such as `proof-placement-pricing-table`. Use a distinct key too when the test design differs.
 - **Hard rule, identical forms:** do not emit a form-swap test between two forms with the same fields and structure. Report the discard (see `Return Format`).
@@ -75,6 +75,7 @@ When an engagement-constraints input is present, read it for what it implies for
 - **Approval bandwidth:** annotate the concurrency limit the input implies, for example "two or three concurrent tests at most".
 - **Internal testers or delivery risk:** annotate the launch check, for example a tester exclusion or a blocked delivery domain.
 - **Blocking constraint:** when the input says the client has not approved work on this surface or lever, add the blocker `client-decision` and say what is needed.
+- **Standing exclusion:** when the input declares an area the engagement keeps out of testing, set aside each card that falls under it. List the card under `Exclusions:`, naming the exclusion in plain words. Work not yet approved is not a standing exclusion; it takes the blocker above.
 
 ### Testing Method
 
@@ -90,7 +91,7 @@ Under a non-A/B method, give every tactical card `design: pre-post`. Under `ab`,
 
 Return one JSON array of cards. Two kinds of item are not cards; list them after the array, under these headings, only when any exist:
 
-- `Exclusions:` one line each, `<item>: <grounds>`, for a hard-rule discard (a form swap between identical forms, a lever documented as already live) or a history item outside the requested focus.
+- `Exclusions:` one line each, `<item>: <grounds>`, for a hard-rule discard (a form swap between identical forms, a lever documented as already live), a card set aside under a standing engagement exclusion (the grounds name the exclusion), or a history item outside the requested focus.
 - `Measurement Foundation:` strategic lens only; see `phases/detect-strategic.md`.
 
 When you return fewer cards than the floor, end with one line: `Shortfall: <n> of <floor>; <why the evidence supports no more>`.
@@ -181,7 +182,11 @@ Fire only when the structural observation is present. Fields are tri-state (`pre
 **Rules:**
 - Structure supplies targets and current state. Performance data supplies firing counts for engagement patterns. Do not fire the same pattern twice on one page from both.
 - A page block status other than clean, a low page confidence or a viewport divergence makes signals from that page a partial match.
-- **Broken mobile render:** this rule is its one home. When `mobile_render_clean: false` on a page, the surface lens sets the blocker `design-change` on each of its cards for that page and annotates the defect: fix it and re-measure before reading any device-targeted test (the counter-evidence is CTR-14 in `modules/contrarian-triggers.md`).
+- **Mobile render signals:** this rule is its one home. `mobile_render_clean: false` means the capture recorded at least one console error or failed request on the mobile viewport. It does not mean the page renders broken. A measured break is a viewport's `render_correctness` in the `viewport_divergence` block reading other than clean; a missing or `not_checked` value is not a break. The surface lens sets the blocker `design-change` on a card only when:
+  - the card's change targets the mobile experience or a device gap, and its page has `mobile_render_clean: false`; or
+  - `render_correctness` records a break on a viewport the card targets. A card that targets no device targets every captured viewport.
+
+  Any other card on the page gets no blocker from this rule. The annotation states what the capture recorded, for example "the capture recorded console errors or failed requests on this page's mobile view; fix them and re-measure the device gap before reading this test". It says the page renders broken only when `render_correctness` records the break. The counter-evidence is CTR-14 in `modules/contrarian-triggers.md`.
 - Personalization needs cross-session data and exit paths need behavioral data; a single capture cannot fire them.
 
 ---

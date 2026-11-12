@@ -139,7 +139,7 @@ For each deliverable, glob its KB path. When present, the run supersedes it in p
 
 - Preserve `created`, set `updated` to today, overwrite the body.
 - Bump `version`: minor when the consumed silver set or any consumed artifact changed since the prior render, patch for a re-render of unchanged inputs.
-- Pass the prior file to `consolidate_backlog.py consolidate --prior` for key carry-forward (`Re-render Behavior`).
+- Pass the prior file to `consolidate_backlog.py consolidate --prior` for key carry-forward (`Re-render Behavior`), and account for every prior write-up it drops (`phases/score.md`).
 
 ### Post-Write Validation Gate
 
@@ -433,7 +433,7 @@ Dispatch all five lens subagents in one message, in parallel, each with `model: 
 - the prompt library paths (base plus archetype module), `--focus` categories, the spec checklist, the floor, B when it governs, and the step 5d baseline table;
 - for the history lens, the projection path `$PROJ` (or the producer index paths with the numbered item list) and the full-entry budget left.
 
-Pass paths, never pasted context bodies. Each lens returns one JSON array of cards, followed only by the optional `Exclusions:`, `Measurement Foundation:` and `Shortfall:` lists that `phases/detect.md` `Return Format` defines. A card that fails the card schema is fixed by the orchestrator from the lens's own text, or dropped and named in the completion message. Hard-rule discards a lens reports (a documented-live lever, a form swap between identical forms) go to `## Exclusions` with their grounds.
+Pass paths, never pasted context bodies. Each lens returns one JSON array of cards, followed only by the optional `Exclusions:`, `Measurement Foundation:` and `Shortfall:` lists that `phases/detect.md` `Return Format` defines. A card that fails the card schema is fixed by the orchestrator from the lens's own text, or dropped and named in the completion message. Hard-rule discards a lens reports (a documented-live lever, a form swap between identical forms) and cards it sets aside under a standing engagement exclusion go to `## Exclusions` with their grounds.
 
 ### Phase 3: Consolidate
 
@@ -472,6 +472,7 @@ $PY <skill-dir>/scripts/consolidate_backlog.py rank --rows "$SCORED" --write-ups
    - `--history-items` lists every lead or high ledger id, plus each typed item with an unrecognized priority that the history lens minted. `--excluded-history` lists those that go to `## Exclusions`. The script reports every listed id that no row carries and no exclusion covers as unaccounted.
    - The output carries ranked `rows` (each with `readiness`, `rank` and `write_up`), `history_ledger` and `history_unaccounted`.
 4. **Close the ledger** per `phases/score.md`. **Hard rule:** while `history_unaccounted` is non-empty, no roadmap is written.
+5. **Account for dropped prior write-ups** per `phases/score.md`. **Hard rule:** while any dropped prior write-up is neither restored as a row nor given an `## Exclusions` line, no roadmap is written.
 
 ### Phase 5: Write-Ups
 
@@ -504,6 +505,7 @@ Experiment roadmap written to .claude/deliverables/experiment-roadmap.md
   History ledger: [n] lead/high (A adopted, M merged, F folded, S strategic, D not advanced), 0 unaccounted; [L] medium/low considered [; coverage partial: what was not read]  [only when history is bound]
   Exclusions: [n]
   Keys: [t] carried by title, [m] carried by mechanism, [k] minted; dropped prior keys: [key (title), ... | none]
+  Dropped prior write-ups: [n] ([r] restored, [e] in Exclusions), 0 unaccounted  [only when a prior roadmap was passed]
 
 Strategic roadmap written to .claude/deliverables/strategic-roadmap.md
   [the same lines, for the strategic rows]
@@ -616,7 +618,7 @@ Numbers come from `Decision Posture`.]
 
 ## Exclusions
 
-[Only: opportunities set aside because they already exist or would swap identical forms; spec items not advanced; lead or high prior-test follow-ups not advanced. One line each, with its grounds. Out-of-scope spec items keep their routing text. A shipped winner is not an exclusion: its live-state check is a prerequisite under Prerequisites and Data Gaps. Omit the section when empty.]
+[Only: opportunities set aside because they already exist or would swap identical forms; opportunities set aside under a standing engagement exclusion, naming it; spec items not advanced; lead or high prior-test follow-ups not advanced; items from the previous roadmap's write-ups not carried forward, named by title (merged into a named row, superseded by a named row, or no longer supported and why). One line each, with its grounds. Out-of-scope spec items keep their routing text. A shipped winner is not an exclusion: its live-state check is a prerequisite under Prerequisites and Data Gaps. Omit the section when empty.]
 
 ## Method
 
@@ -725,7 +727,7 @@ The body follows `Output Format` section for section, with these differences:
 
 ## Exclusions
 
-[Levers set aside because the capability already exists and operates, framed neutrally with no build recommendation; spec items and lead or high history items not advanced. Omit when empty.]
+[Levers set aside because the capability already exists and operates, framed neutrally with no build recommendation; levers set aside under a standing engagement exclusion, naming it; spec items and lead or high history items not advanced; items from the previous strategic roadmap's write-ups not carried forward, with grounds as in the tactical roadmap. Omit when empty.]
 
 ## Method
 
@@ -785,7 +787,7 @@ Each run overwrites both deliverables as a complete fresh projection of current 
 - Prior entries are every `### N.` write-up with a `**Key:**` line plus every `## Backlog` row. Each prior key is used at most once.
 - A row keeps its key when it moves between the backlog and the write-ups.
 - A 1.x prior roadmap has no mechanism field, so only the title pass can match it.
-- Prior keys matched by no row are listed in the completion message as dropped.
+- Prior keys matched by no row are listed in the completion message as dropped. Each dropped prior write-up is restored as a row or gets an `## Exclusions` line before the write (`phases/score.md` > `Step 4`).
 - A human edit to a displayed title needs none of this: leave the persisted `**Key:**` untouched.
 
 **No strategic rows.** When a prior strategic roadmap exists and the run yields no strategic row or Foundation entry, leave the prior file untouched and say so in the completion message. Never overwrite a deliverable to an empty body.
@@ -842,3 +844,5 @@ SKILL.md (this file)
 16. **Lenses do not pad.** A lens below the floor reports its shortfall.
 17. **FunnelEnvy branding in the footer.**
 18. **Write-up evidence resolves.** Every claim in `**Evidence:**` and every factual claim in `**Current state:**` traces to a passage in a loaded source, or is rewritten or removed (`phases/construct.md`).
+19. **Every prior write-up is accounted for.** One the consolidation drops is restored as a row or has an `## Exclusions` line with its grounds, and no roadmap is written while any is unaccounted (`phases/score.md`).
+20. **A set-aside card is visible.** A hard-rule discard or a card set aside under a standing engagement exclusion lands in `## Exclusions`, naming its grounds.

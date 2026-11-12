@@ -71,7 +71,7 @@ Read the structural capture's date and compare artifacts that describe the same 
 - Two artifacts describe the element differently with no shipped treatment to explain it (a redesign may be in progress), or the capture is stale enough that the control likely changed: `fail`.
 - No structural capture: `not-assessed`.
 
-A broken mobile render is not a staleness signal. Its blocker is set by the surface lens, per `phases/detect.md` > `Structural Triggers`.
+Mobile console errors and a measured render break are not staleness signals. Their blocker is set per `phases/detect.md` > `Structural Triggers` > `Mobile render signals`.
 
 ### `powerable`
 

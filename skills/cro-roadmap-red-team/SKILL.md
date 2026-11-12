@@ -105,7 +105,7 @@ Both roadmaps share one body shape:
 - **Write-ups:** the top items, as `### N. Title` sections under the readiness H2s. Each carries a `**Key:**`, an `**Evidence:**` line and a `**Read model:**` line.
 - **Backlog rows:** every other item, one row each in the `## Backlog` table (key, title, surface, mechanism, readiness, read model, ICE, evidence pointer).
 - **Read models:** A/B, Directional, Pre/post, Holdout, or Not yet sized. A/B and directional reads state the six-part read threshold; pre/post and holdout reads state a pre-registered read criterion and window.
-- **Closing sections:** `## Exclusions` (hard-rule discards, spec items and history items not advanced, each with grounds), then `## Method`, which holds `### Experiment Program Continuity` and, on the strategic roadmap, `### Levers Reviewed`.
+- **Closing sections:** `## Exclusions` (hard-rule discards, cards under a standing engagement exclusion, spec items and history items not advanced, and prior write-ups not carried forward, each with grounds), then `## Method`, which holds `### Experiment Program Continuity` and, on the strategic roadmap, `### Levers Reviewed`.
 
 Write-ups get per-item skeptics (Phase 2). Backlog rows get checklist coverage only (Phase 3).
 

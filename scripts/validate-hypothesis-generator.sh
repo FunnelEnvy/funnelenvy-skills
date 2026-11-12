@@ -135,6 +135,12 @@ check "Size only from the Decision Posture (Decision Posture)" \
 check "History ledger blocks the write while any id is unaccounted (score.md)" \
   "sect $PH/score.md '^## Step 3: Close the History Ledger' | grep 'Hard rule' | grep 'not written while .history_unaccounted. is non-empty'" \
   "NONZERO"
+check "Dropped prior write-ups block the write while any is unaccounted (score.md)" \
+  "sect $PH/score.md '^## Step 4: Account for Dropped Prior Write-Ups' | grep -F '**Hard rule:** no roadmap is written while any dropped prior write-up has neither outcome'" \
+  "NONZERO"
+check "Standing engagement exclusions go to Exclusions (detect.md Engagement Constraints)" \
+  "sect $PH/detect.md '^### Engagement Constraints' | grep -F '**Standing exclusion:**' | grep 'Exclusions:'" \
+  "NONZERO"
 check "History full-entry cap of 20 (Phase 1 step 5b)" \
   "sect $SKILL '^### Phase 1: ' | grep 'Full-entry cap (hard rule)' | grep 'at most 20 full record entries'" \
   "NONZERO"

@@ -1,6 +1,6 @@
 # Phase 4: Scoring, Ranking and the History Ledger
 
-This phase scores every row, runs `rank`, and closes the history ledger. ICE orders rows within a readiness tier. There are no thresholds, quotas or caps: a low score sorts a row down its tier, never out of the roadmap.
+This phase scores every row, runs `rank`, closes the history ledger and accounts for dropped prior write-ups. ICE orders rows within a readiness tier. There are no thresholds, quotas or caps: a low score sorts a row down its tier, never out of the roadmap.
 
 ## Step 1: Score Every Row
 
@@ -42,7 +42,7 @@ $PY <skill-dir>/scripts/consolidate_backlog.py rank --rows <scored rows> --write
 ```
 
 - `--history-items`: every lead or high ledger id, plus each typed item with an unrecognized priority that the history lens minted. On the producer index path these are the `I` ids the orchestrator numbered in Phase 1. The script reports every listed id that no row carries and no exclusion covers as unaccounted.
-- `--excluded-history`: the ids a lens listed under `Exclusions:`, each with its grounds.
+- `--excluded-history`: the ids a lens listed under `Exclusions:`, each with its grounds, standing engagement exclusions included.
 
 The output gives each row `readiness`, `rank` and `write_up`, plus `history_ledger` and `history_unaccounted`.
 
@@ -67,7 +67,19 @@ Skip when no history source is bound.
    - The completion message's history line counts each status, with 0 unaccounted.
 5. **Partial coverage:** when the projection reported COVERAGE PARTIAL or a WARNING, or the bounded-read fallback ran, the ledger covers only what was read. The completion message says "coverage partial" and names what was not read.
 
-## Step 4: Sequencing
+## Step 4: Account for Dropped Prior Write-Ups
+
+Skip when no prior roadmap was passed to `consolidate`.
+
+1. A key in `dropped_prior_keys` is a dropped prior write-up when its prior roadmap carries it on a `**Key:**` line. A dropped prior backlog row needs no entry: the backlog is regenerated from current context each run, and the completion message lists the key.
+2. Give each dropped prior write-up one outcome:
+   - *Restored:* add a card with the prior title, so the title pass carries its key, and re-run from consolidation.
+   - *Excluded:* one `## Exclusions` line in its own altitude's roadmap, naming the prior item by title, with its grounds: merged into a named row, superseded by a named row, or no longer supported and why.
+3. **Hard rule:** no roadmap is written while any dropped prior write-up has neither outcome. Never drop one silently.
+4. A prior strategic roadmap the run leaves untouched (`Re-render Behavior` > `No strategic rows` in `SKILL.md`) loses nothing, so its write-ups need no outcome.
+5. The completion message counts each outcome, with 0 unaccounted.
+
+## Step 5: Sequencing
 
 Write the `### Sequencing` method section. It explains order; it never changes `rank`.
 
