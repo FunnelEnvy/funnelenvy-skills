@@ -1,6 +1,6 @@
 ---
-version: "1.2.0"
-updated: 2026-11-04
+version: "1.3.0"
+updated: 2026-11-13
 ---
 # Writing Standards
 
@@ -31,7 +31,7 @@ Readability is not dumbing-down. Keep load-bearing terms, numbers, names and cav
 ## House Style
 
 - **Title Case headings:** Every heading, H1 and `title` field. Articles, coordinating conjunctions and short prepositions stay lowercase unless first, as in `Ready to Fix`. Code spans keep their own case.
-- **Bold lead labels:** Open a labelled bullet, numbered step or paragraph with `**Label:** Detail`, the colon inside the bold. Labels are not headings, so they stay in sentence case. Nested lists take italic sub-labels in the same form, `*Label:* Detail`.
+- **Bold lead labels:** Open a labelled bullet, numbered step or paragraph with `**Label:** Detail`, the colon inside the bold. Labels are not headings, so they stay in sentence case. Nested lists take italic sub-labels in the same form, `*Label:* Detail`. In both forms, never open the detail with a lowercase letter: write `**Headline:** This is the sentence.`, not `**Headline:** this is the sentence.` A code span, link, quotation or fixed-case name, such as a skill or repo name, may open the detail. It keeps its own case.
 - **Implied subjects:** In first-person writing, drop the subject when the actor is obvious. A directive lead-in keeps its subject: "You" before the RFC 2119 verb.
 
 ## Output Structure
