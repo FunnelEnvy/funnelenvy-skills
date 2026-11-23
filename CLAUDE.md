@@ -327,7 +327,7 @@ When a consuming skill (render-default-deliverables, future L2 skills) needs `co
 1. **`/positioning-framework <url> --depth quick`** (optional fast triage, ~5-8 min, ~70-90K tokens)
 2. **`/positioning-framework <url>`** (standard depth, produces all L0 + L1 context + deliverables, ~450-500K tokens across subagents)
 3. **`/positioning-framework <url> --depth deep`** (extends competitive context to deep, ~550-650K tokens across subagents)
-4. **`/positioning-update`** (optional, apply client feedback/corrections to context files, ~20-40K tokens)
+4. **`/positioning-update`** (optional, apply client feedback, corrections or new research to context files, or to the scope's KB artifacts in KB mode, ~20-40K tokens)
 5. **`/ga4-audit <property_id>`** (optional, produces performance-profile.md for traffic-driven hypotheses, ~5-8 min; for Adobe Analytics properties, run **`/aa-audit --config <path>`** instead, same output file)
 6. **`/hypothesis-generator`** (produces experiment roadmap from L0 + L1 context + optional performance data)
 7. **`/render-default-deliverables`** (produces human-readable deliverables from L0 + L1 context)
@@ -479,15 +479,19 @@ B2B paid landing page generator. Four-phase pipeline: Brief Builder, Copy Agent,
 
 **Runtime:** ~310-505K tokens for full pipeline. Individual phases: Brief ~50-80K, Copy ~85-125K, Design ~105-155K, QA ~65-105K (the review-gate share is an estimate, not measured).
 
-### positioning-update (v1.0.1)
-Client feedback amendment skill. Parses freeform client feedback (emails, Slack messages, meeting notes), classifies each piece of intelligence, presents a structured change plan for approval, and executes surgical updates to L0+L1 context files. No web research. Triggers deliverable re-render after changes.
+### positioning-update (v1.1.0)
+Positioning amendment skill. Parses freeform client feedback (emails, Slack messages, meeting notes) or other source material such as a research extraction, classifies each piece of intelligence, presents a structured change plan for approval, and executes surgical updates to L0+L1 context. No web research. Triggers deliverable re-render after changes. It is also the refresh path for existing positioning context: positioning-framework researches the web and stops a same-depth re-run.
 
-**Invocation:** `/positioning-update [--file path/to/feedback.md] [--dry-run] [--context-dir path/] [--skip-render]`
+**Invocation:** `/positioning-update [--file path/to/feedback.md] [--provenance client|research] [--dry-run] [--context-dir path/] [--skip-render] [--scope <slug>] [--no-kb]`
 
 **Change classifications:** CORRECT (fix wrong data), ADD (net-new intelligence), REMOVE (no longer true), AMEND (modify nuance), CONSTRAINT (business guardrail), GAP (targets missing file/section).
 
+**Provenance:** `--provenance` (default `client`) sets the origin comments, `has_client_input` and which confidence rules apply. `research` input follows positioning-framework's standard rules.
+
+**Dual-mode I/O:** legacy reads and amends `.claude/context/` files; KB mode (requires `--scope`, `--no-kb` forces legacy) finds the scope's `bronze-company-facts`, `silver-strategy-context` and optional L1 silver artifacts by type and amends them in place. The input must be a bronze capture inside the KB, added to `depends_on` where the type declares it. With kb-start loaded its write routing governs; otherwise a per-artifact `kb_type_validate.py` gate runs. Step 7 hands off to render-default-deliverables in the run's mode (`--no-kb` in legacy, `--scope` in KB mode). See SKILL.md > KB Mode (Dual-Mode Output).
+
 **Dependencies:**
-- Hard: at least one context file, `company-identity.md` confidence >= 2
+- Hard: at least one context file, `company-identity.md` confidence >= 2 (KB mode: the scope's `bronze-company-facts` and `silver-strategy-context`, lower confidence >= 2, and a `--file` bronze capture inside the KB)
 - Soft: L1 files (feedback targeting missing L1 files flagged as research gap)
 
 **Key behaviors:**
