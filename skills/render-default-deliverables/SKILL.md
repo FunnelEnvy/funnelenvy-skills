@@ -95,7 +95,7 @@ Run this after mode resolution and before Context Discovery step 5 presents the 
 
 **Field classes:** For each field a definition describes that this skill does not set, record one class from the field's own description:
 
-- *Tied:* The value records an event on a specific version of the artifact, such as an approval, a review, a sign-off or a send.
+- *Tied:* The value is tied to a specific version of the artifact, or records a review or send event, such as an approval, a sign-off or a send.
 - *Standing:* The value holds across versions, or describes the content, its scope or its source.
 - *Unclear:* The description says neither.
 
@@ -173,7 +173,7 @@ Deliverables are always a complete projection of current context (the legacy `Re
 
 - *Tied:* The field takes the stated default the type definition gives it, even when the prior value differs. A tied field with no stated default is a HARD STOP before any write. Name the field and the type.
 - *Standing, or not described by the definition:* The field keeps its prior value. The plan lists each kept value that differs from the field's stated default. A field with no stated default is kept and not listed.
-- *Unclear:* The plan names the field and its prior value and asks Reset or Keep. Reset gives it the stated default. Keep keeps the prior value.
+- *Unclear:* The plan names the field and its prior value and asks Reset or Keep. Reset gives it the stated default. Keep keeps the prior value, and the completion message then lists it with the kept values when it differs from the stated default.
 
 **Missing required fields:** On a first write or an overwrite, the `Required-field check` in `Type Definition Read` supplies any required field that neither the skill nor the prior render carries. A first write has no prior fields, so a required tied field takes its stated default by that check, and the skill adds no optional field.
 
@@ -222,7 +222,7 @@ Deliverables written to the knowledge base ({scope}):
 2. Read YAML frontmatter only (between `---` markers) for each file found
 3. Build inventory: file name, schema type, confidence, depth, generated_by, last_updated
 4. Determine which deliverable tiers can be produced (see Deliverable Tiering below)
-5. Present plan to user (**KB mode:** after `KB Mode (Dual-Mode Output)` > `Type Definition Read`, also list each resolved output path, each prior-render match beside its resolved path, and each prior field reset, kept at a non-default value or unclear, per `Prior Work Detection (KB Mode)`; the plan asks Relocate or Confirm for each match and Reset or Keep for each unclear field, and the confirmation carries the operator's answer for each one):
+5. Present plan to user (**KB mode:** after `KB Mode (Dual-Mode Output)` > `Type Definition Read`, also show what `Prior Work Detection (KB Mode)` > `Plan` lists, and ask for each answer its `Answer` and `No answer` bullets require):
 
 ```
 Available context:
