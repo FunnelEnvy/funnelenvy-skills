@@ -1,8 +1,8 @@
 # KB Mode: Canonical Dual-Mode Contract
 
 **This module is the canonical editing source for KB-mode semantics.** Every skill listed below
-carries an inline copy of the mode-resolution procedure so their runtime read is self-contained (the same
-inline-authority pattern the schemas use). When KB-mode semantics change, edit THIS file first,
+carries an inline copy of the mode-resolution procedure so its runtime read is self-contained
+(the same inline-authority pattern the schemas use). When KB-mode semantics change, edit THIS file first,
 then re-sync every skill listed below in the same change. A drift canary in
 `scripts/registry_check.py` verifies the invariant sentences below exist in every dual-mode
 SKILL.md.

@@ -4,12 +4,12 @@ version: 1.1.0
 updated: 2026-11-23
 description: >-
   When the user wants to apply client feedback, corrections or new research
-  to existing positioning context, or refresh positioning from new source
-  material. Also use for 'update positioning,' 'client feedback,' 'amend
-  context,' 'client says,' 'they told us,' 'refresh
-  positioning,' or 'amend the knowledge base.' Amendment skill, not research:
-  change plan, then surgical edits. Amends L0+L1 context files, or a bound
-  knowledge base's company facts and silver positioning artifacts (--scope).
+  to existing positioning context. Also use for 'update positioning,' 'apply
+  feedback,' 'client feedback,' 'stakeholder input,' 'correct positioning,'
+  'update company identity,' 'amend context,' 'client says,' 'they told us,'
+  'refresh positioning,' or 'amend the knowledge base.' Amendment skill, not
+  research. Amends L0+L1 context files or a bound knowledge base's positioning
+  artifacts (--scope).
 ---
 
 # Positioning Update
@@ -41,7 +41,7 @@ You are a senior positioning analyst applying new intelligence to an existing po
 /positioning-update --context-dir path/to/context/
 /positioning-update --skip-render
 /positioning-update --provenance research --file path/to/extraction.md
-/positioning-update --scope <slug> --file <kb-root-relative-capture>
+/positioning-update --scope <slug> --file <path-to-capture-in-kb>
 /positioning-update --no-kb
 ```
 
@@ -109,7 +109,7 @@ The bound type definitions at `.claude/skills/{kb-type}/artifacts/{artifact-type
 
 In KB mode the input must already be a KB source, so every amended artifact can cite it.
 
-- **Rule:** `--file` must resolve to a file inside `kb_root` whose frontmatter has `kb_layer: bronze`.
+- **Rule:** `--file` must resolve to a file inside `kb_root` whose frontmatter has `kb_layer: bronze`. Resolve the path from the working repo root, as in legacy mode.
 - **Failure:** No `--file`, pasted input, a file outside `kb_root` or a file of another layer is a HARD STOP before Step 1. Tell the user to capture the input into the KB with `kb-capture` first, then re-run with `--file` naming the capture.
 - **Scope:** The input need not carry the run's scope. A meeting or email capture often spans scopes. Scope isolation governs discovery, not this operator-named input.
 - **Held value:** Hold the input's KB-root-relative path in session as `input_path`.
@@ -446,7 +446,7 @@ Positioning update complete.
 
 ## Confidence Rules (Client Feedback)
 
-These rules apply to `--provenance client` input. `--provenance research` input follows the standard rules in `skills/positioning-framework/agent-header.md` alone, with no additions, and its origin comments read `research`.
+These rules apply to `--provenance client` input. `--provenance research` input follows the standard rules in `skills/positioning-framework/agent-header.md` alone, with no additions, and its origin comments read `research`. The authority hierarchy below and `Quality Rules` still hold for research input: a research item that contradicts an `origin: client` data point is a conflict. Flag it in the change plan, and leave the client data point as it is unless the user approves the change.
 
 Client feedback follows a modified confidence protocol. The standard rules from `skills/positioning-framework/agent-header.md` (the shared agent rules governing the context files this skill amends) apply with these additions:
 

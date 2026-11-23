@@ -48,9 +48,11 @@ Each condition exercises one arm of the render-default-deliverables 1.2.0 KB mod
 
 The strategy context's type declares `depends_on` and `data_provenance`, and the company facts' type declares neither. The audience analysis depends on the strategy context, and the competitive analysis on the company facts, so both are stale after a run that amends the two L0 artifacts.
 
+The company facts departs from positioning-framework's bronze contract in two places. Its `Target Segments` section belongs in the strategy context by the L0 section table, and its `data_provenance: public` is a field positioning-framework writes on silver only. So a run leaves the bronze `Target Segments` unamended, and a client run leaves `data_provenance: public` beside `has_client_input: true`. A kb-start review flags both. Neither is a skill defect.
+
 Run commands, each on a fresh copy made per `Run Setup`:
 
-- **Run 1, input outside the KB:** `/positioning-update --scope acme --file README.md --context-dir foo`. `Run Setup` deletes `README.md` from the copy, so the path names no bronze artifact inside `kb/`.
+- **Run 1, input outside the KB:** `/positioning-update --scope acme --file CLAUDE.md --context-dir foo`. The copy's root `CLAUDE.md` sits outside `kb/` and has no `kb_layer`, so the path names no bronze artifact inside the KB.
 - **Run 2, research input:** `/positioning-update --scope acme --file kb/captures/notes/2026-11-20_acme-positioning-update.md --provenance research`
 - **Run 3, client input:** `/positioning-update --scope acme --file kb/captures/notes/2026-11-20_acme-positioning-update.md --provenance client --skip-render`
 

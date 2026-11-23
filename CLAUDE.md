@@ -486,7 +486,7 @@ Positioning amendment skill. Parses freeform client feedback (emails, Slack mess
 
 **Change classifications:** CORRECT (fix wrong data), ADD (net-new intelligence), REMOVE (no longer true), AMEND (modify nuance), CONSTRAINT (business guardrail), GAP (targets missing file/section).
 
-**Provenance:** `--provenance` (default `client`) sets the origin comments, `has_client_input` and which confidence rules apply. `research` input follows positioning-framework's standard rules.
+**Provenance:** `--provenance` (default `client`) sets the origin comments, `has_client_input` and which confidence rules apply. `research` input follows positioning-framework's standard rules, and a research item that contradicts client-origin data is flagged, not applied without approval.
 
 **Dual-mode I/O:** legacy reads and amends `.claude/context/` files; KB mode (requires `--scope`, `--no-kb` forces legacy) finds the scope's `bronze-company-facts`, `silver-strategy-context` and optional L1 silver artifacts by type and amends them in place. The input must be a bronze capture inside the KB, added to `depends_on` where the type declares it. With kb-start loaded its write routing governs; otherwise a per-artifact `kb_type_validate.py` gate runs. Step 7 hands off to render-default-deliverables in the run's mode (`--no-kb` in legacy, `--scope` in KB mode). See SKILL.md > KB Mode (Dual-Mode Output).
 
