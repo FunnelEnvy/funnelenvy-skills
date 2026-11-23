@@ -4,14 +4,14 @@ name: tests-changelog
 description: Changelog for the automated test suite.
 governed_by: change-management/changelog
 managed_by: change-management
-version: "1.1.0"
+version: "1.2.0"
 created: 2026-09-22
-updated: 2026-11-12
+updated: 2026-11-23
 title: Changelog
 ---
 # Changelog
 
-## [Unreleased]
+## [1.2.0] - 2026-11-23
 
 ### Added
 - Fixture knowledge base at `_tests/fixtures/kb-mode/acme-cro-repo/` (fictional company, bound type skill, seven type definitions, silver inputs and two prior renders) for KB-mode functional runs of the dual-mode skills. [render-default-deliverables-kb-type-authority]

@@ -8,9 +8,9 @@ description: >
   coverage floor.
 governed_by: document-management
 managed_by: change-management
-version: "1.1.0"
+version: "1.2.0"
 created: 2026-09-22
-updated: 2026-11-12
+updated: 2026-11-23
 title: Tests
 ---
 # Tests

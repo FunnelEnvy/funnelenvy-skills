@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
+## [2.1.0] - 2026-11-23
 
 ### 2026-11-23 positioning-update KB mode
 
