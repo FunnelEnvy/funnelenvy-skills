@@ -446,7 +446,7 @@ Positioning update complete.
 
 ## Confidence Rules (Client Feedback)
 
-These rules apply to `--provenance client` input. `--provenance research` input follows the standard rules in `skills/positioning-framework/agent-header.md` alone, with no additions, and its origin comments read `research`. The authority hierarchy below and `Quality Rules` still hold for research input: a research item that contradicts an `origin: client` data point is a conflict. Flag it in the change plan, and leave the client data point as it is unless the user approves the change.
+These rules apply to `--provenance client` input. `--provenance research` input follows the standard rules in `skills/positioning-framework/agent-header.md`, and its origin comments read `research`. Of the additions below, only the authority hierarchy holds for research input, together with `Quality Rules`: a research item that contradicts an `origin: client` data point is a conflict. Flag it in the change plan, and leave the client data point as it is unless the user approves the change.
 
 Client feedback follows a modified confidence protocol. The standard rules from `skills/positioning-framework/agent-header.md` (the shared agent rules governing the context files this skill amends) apply with these additions:
 
