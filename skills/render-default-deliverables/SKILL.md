@@ -91,7 +91,7 @@ Run this after mode resolution and before Context Discovery step 5 presents the 
 
 **Path resolution:** Fill the pattern's `{scope}`, `{deliverable_type}` and `{competitor-slug}` placeholders. The competitor slug follows `modules/slugify.md`, resolved as `5.4 Battle Cards` > `Module resolution` says. The resolved path is relative to `kb_root`. Each artifact's `name` is its resolved file name without `.md`.
 
-**Required-field check:** Before any write, find each required field the skill has no source for on an artifact with no prior render (see `Prior Work Detection (KB Mode)`). Such a field takes the default the type definition states. With no stated default, HARD STOP and name the field and the type. Checking here means a stop leaves the KB unchanged.
+**Required-field check:** Before any write, find each required field that neither this skill nor the artifact's prior render supplies (see `Prior Work Detection (KB Mode)`). Such a field takes the default the type definition states. With no stated default, HARD STOP and name the field and the type. Checking here means a stop leaves the KB unchanged.
 
 ### Read-side Mapping
 
@@ -141,7 +141,7 @@ KB frontmatter prepended to each gold artifact:
 - `depends_on`: KB-root-relative paths of the silver artifacts actually composed, gold-to-silver edges only, omitting missing optional ones
 - `tags`: 3-7 semantic
 - `version`, `created`, `updated`
-- Every other field `Type Definition Read` recorded as required. On a first write, a field with no source here takes the type definition's stated default (`Required-field check`).
+- Every other field `Type Definition Read` recorded as required. A field with no source here and none on the prior render takes the type definition's stated default (`Required-field check`).
 
 On an overwrite, `Prior Work Detection (KB Mode)` says which prior values survive.
 
@@ -157,11 +157,11 @@ Deliverables are always a complete projection of current context (the legacy `Re
 - **Answer:** Each match needs the operator's answer before any write.
   - *Relocate:* The operator moves the prior render to the resolved path with the KB's own tooling, then re-runs.
   - *Confirm:* The operator states the match is not a prior render. The run writes a first render at the resolved path.
-- **No answer:** The run stops and writes nothing. This skill moves, renames and deletes no file.
+- **No answer:** A bare proceed at the plan is not an answer. The run stops and writes nothing. This skill moves, renames and deletes no file.
 
 **Overwrite:** Every field on the prior artifact that this skill does not set keeps its value, required or optional. Keep `created`. Bump `version` (minor when the consumed silver changed since the prior render, patch for a re-render of unchanged inputs). Set `updated` to today. Replace the body, with no diffing and no merging.
 
-**First write:** With no prior render, the `Required-field check` in `Type Definition Read` supplies any required field the skill has no source for.
+**Missing required fields:** On a first write or an overwrite, the `Required-field check` in `Type Definition Read` supplies any required field that neither the skill nor the prior render carries.
 
 A battle card whose competitor no longer appears in `silver-competitive-analysis` is left in place (never auto-deleted); note orphaned cards in the completion message.
 
@@ -205,7 +205,7 @@ Deliverables written to the knowledge base ({scope}):
 2. Read YAML frontmatter only (between `---` markers) for each file found
 3. Build inventory: file name, schema type, confidence, depth, generated_by, last_updated
 4. Determine which deliverable tiers can be produced (see Deliverable Tiering below)
-5. Present plan to user (**KB mode:** after `KB Mode (Dual-Mode Output)` > `Type Definition Read`, also list each resolved output path and each prior-render match beside its resolved path, per `Prior Work Detection (KB Mode)`; the confirmation carries the operator's answer for each match):
+5. Present plan to user (**KB mode:** after `KB Mode (Dual-Mode Output)` > `Type Definition Read`, also list each resolved output path and each prior-render match beside its resolved path, per `Prior Work Detection (KB Mode)`; the plan asks Relocate or Confirm for each match, and the confirmation carries the operator's answer for each one):
 
 ```
 Available context:

@@ -3,8 +3,8 @@ fe-managed: true
 name: acme-competitive-comparison-matrix
 title: "Competitive Comparison: Acme vs. Market"
 description: >
-  Prior render of Acme's competitive matrix at a path off its type's output pattern. Test
-  fixture: a prior render the run must find by type, scope and deliverable_type.
+  Comparison grid of Acme against Northwind and Globex, with wins, losses, white space and
+  claim overlap.
 kb_layer: gold
 governed_by: kb-type-acme-cro/gold-strategy-deliverable
 managed_by: kb-type-acme-cro

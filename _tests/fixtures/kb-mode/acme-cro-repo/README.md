@@ -16,8 +16,9 @@ Never run a skill against this directory in place. Every run uses a copy.
 
 1. Copy the fixture to a dated directory under the repo's `tmp/`, such as `tmp/<date>_rdd-kb-run/`.
 2. Run `git init -q` in the copy. The copy is then its own repo root, so the KB validator finds the repo-local type skill there.
-3. Record `find kb -type f -exec sha256sum {} +` in the copy, to tell later what a run wrote.
-4. Run the skill with the copy as the working repo and `--scope acme`.
+3. Delete `README.md` from the copy. It names the planted conditions and the behavior each one expects, so a runner must not read it.
+4. Record `find kb -type f -exec sha256sum {} +` in the copy, to tell later what a run wrote.
+5. Run the skill with the copy as the working repo and `--scope acme`.
 
 ## Layout
 

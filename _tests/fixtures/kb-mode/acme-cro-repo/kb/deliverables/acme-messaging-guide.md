@@ -3,8 +3,8 @@ fe-managed: true
 name: acme-messaging-guide
 title: "Acme: Messaging Guide"
 description: >
-  Prior render of Acme's messaging guide, reviewed and approved. Test fixture: a prior render at
-  its resolved path carrying fields the render skill does not set.
+  Persona-by-persona messaging guide for Acme: positioning statement, brand voice, message
+  hierarchy and proof points.
 kb_layer: gold
 governed_by: kb-type-acme-cro/gold-strategy-deliverable
 managed_by: kb-type-acme-cro
