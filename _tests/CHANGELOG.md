@@ -11,6 +11,11 @@ title: Changelog
 ---
 # Changelog
 
+## [Unreleased]
+
+### Added
+- Fixture knowledge base at `_tests/fixtures/kb-mode/acme-cro-repo/` (fictional company, bound type skill, seven type definitions, silver inputs and two prior renders) for KB-mode functional runs of the dual-mode skills. [render-default-deliverables-kb-type-authority]
+
 ## [1.1.0] - 2026-11-12
 
 ### Added

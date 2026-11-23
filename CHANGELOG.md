@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### 2026-11-23 KB render follows the bound type definitions
+
+#### Fixed
+- **render-default-deliverables** (1.2.0): KB mode reads `deliverable_type` values, output paths and required fields from the bound gold type definitions instead of the skill's defaults, and stops on a deliverable with no match. A prior render at another path is named before any write. On an overwrite, a prior field resets or keeps by its type definition. The validation gate runs once per written artifact with the type layer on; the 1.1.0 gate passed several paths to a validator that takes one. [render-default-deliverables-kb-type-authority]
+
+#### Added
+- **_tests**: fixture knowledge base at `_tests/fixtures/kb-mode/acme-cro-repo/` (fictional company) for KB-mode functional runs. [render-default-deliverables-kb-type-authority]
+
 ## [2.0.0] - 2026-11-12
 
 ### 2026-11-11 opportunity backlog rebuild
