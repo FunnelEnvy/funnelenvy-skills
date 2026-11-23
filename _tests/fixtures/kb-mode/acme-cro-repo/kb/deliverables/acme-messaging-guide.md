@@ -11,6 +11,8 @@ managed_by: kb-type-acme-cro
 scope: acme
 deliverable_type: messaging-guide
 review_approved: true
+confidential: true
+sales_ready: true
 data_provenance: public
 source_name: Acme brand workshop notes
 source_ref: brand-workshop-2026-09-24

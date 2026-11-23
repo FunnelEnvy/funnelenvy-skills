@@ -93,6 +93,14 @@ Run this after mode resolution and before Context Discovery step 5 presents the 
 
 **Required-field check:** Before any write, find each required field that neither this skill nor the artifact's prior render supplies (see `Prior Work Detection (KB Mode)`). Such a field takes the default the type definition states. With no stated default, HARD STOP and name the field and the type. Checking here means a stop leaves the KB unchanged.
 
+**Field classes:** For each field a definition describes that this skill does not set, record one class from the field's own description:
+
+- *Tied:* The value records an event on a specific version of the artifact, such as an approval, a review, a sign-off or a send.
+- *Standing:* The value holds across versions, or describes the content, its scope or its source.
+- *Unclear:* The description says neither.
+
+`Prior Work Detection (KB Mode)` applies the class on every write.
+
 ### Read-side Mapping
 
 In KB mode, Context Discovery globs the scope's silver artifacts instead of `.claude/context/*.md`. **Resolve each input by its KB artifact TYPE**, not by an assumed basename (the directory is always `reference/cro-{scope}/`; the basename is KB-type-dependent). Map each silver type to the legacy context file the tiering rules already consume:
@@ -153,15 +161,21 @@ Deliverables are always a complete projection of current context (the legacy `Re
 
 - **At the resolved path:** An artifact there is the prior render. Overwrite it in place.
 - **Elsewhere:** With nothing at the resolved path, search the directory of the resolved path. A match is an artifact whose `governed_by` names the same type and whose `scope` matches, with the same `deliverable_type`, or the same `competitor` for a battle card.
-- **Plan:** Context Discovery's step-5 plan lists each resolved output path, and each match beside its resolved path.
+- **Plan:** Context Discovery's step-5 plan lists each resolved output path, each match beside its resolved path, and each prior field `Prior Fields` resets, keeps at a non-default value or finds unclear.
 - **Answer:** Each match needs the operator's answer before any write.
   - *Relocate:* The operator moves the prior render to the resolved path with the KB's own tooling, then re-runs.
   - *Confirm:* The operator states the match is not a prior render. The run writes a first render at the resolved path.
-- **No answer:** A bare proceed at the plan is not an answer. The run stops and writes nothing. This skill moves, renames and deletes no file.
+- **No answer:** Each match and each unclear field needs an answer. A bare proceed at the plan is not an answer. Without one the run stops and writes nothing. This skill moves, renames and deletes no file.
 
-**Overwrite:** Every field on the prior artifact that this skill does not set keeps its value, required or optional. Keep `created`. Bump `version` (minor when the consumed silver changed since the prior render, patch for a re-render of unchanged inputs). Set `updated` to today. Replace the body, with no diffing and no merging.
+**Overwrite:** Replace the body, with no diffing and no merging. Keep `created`. Bump `version` (minor when the consumed silver changed since the prior render, patch for a re-render of unchanged inputs). Set `updated` to today. Every other prior field this skill does not set follows `Prior Fields`.
 
-**Missing required fields:** On a first write or an overwrite, the `Required-field check` in `Type Definition Read` supplies any required field that neither the skill nor the prior render carries.
+**Prior Fields:** Each prior field takes the class `Type Definition Read` recorded for it.
+
+- *Tied:* The field takes the stated default the type definition gives it, even when the prior value differs. A tied field with no stated default is a HARD STOP before any write. Name the field and the type.
+- *Standing, or not described by the definition:* The field keeps its prior value. The plan lists each kept value that differs from the field's stated default. A field with no stated default is kept and not listed.
+- *Unclear:* The plan names the field and its prior value and asks Reset or Keep. Reset gives it the stated default. Keep keeps the prior value.
+
+**Missing required fields:** On a first write or an overwrite, the `Required-field check` in `Type Definition Read` supplies any required field that neither the skill nor the prior render carries. A first write has no prior fields, so a required tied field takes its stated default by that check, and the skill adds no optional field.
 
 A battle card whose competitor no longer appears in `silver-competitive-analysis` is left in place (never auto-deleted); note orphaned cards in the completion message.
 
@@ -191,6 +205,9 @@ Deliverables written to the knowledge base ({scope}):
   (one entry per written artifact)
 
   Prior renders at another path: [match -> resolved path (Relocate | Confirm)] | none
+  Prior fields reset to default: [path: field -> default] | none
+  Prior fields kept at a non-default value: [path: field = value] | none
+  Unclear prior fields: [path: field (Reset | Keep)] | none
   Skipped (missing silver): [tier] ([reason])
   Orphaned prior battle cards (competitor no longer in silver): [list | none]
 
@@ -205,7 +222,7 @@ Deliverables written to the knowledge base ({scope}):
 2. Read YAML frontmatter only (between `---` markers) for each file found
 3. Build inventory: file name, schema type, confidence, depth, generated_by, last_updated
 4. Determine which deliverable tiers can be produced (see Deliverable Tiering below)
-5. Present plan to user (**KB mode:** after `KB Mode (Dual-Mode Output)` > `Type Definition Read`, also list each resolved output path and each prior-render match beside its resolved path, per `Prior Work Detection (KB Mode)`; the plan asks Relocate or Confirm for each match, and the confirmation carries the operator's answer for each one):
+5. Present plan to user (**KB mode:** after `KB Mode (Dual-Mode Output)` > `Type Definition Read`, also list each resolved output path, each prior-render match beside its resolved path, and each prior field reset, kept at a non-default value or unclear, per `Prior Work Detection (KB Mode)`; the plan asks Relocate or Confirm for each match and Reset or Keep for each unclear field, and the confirmation carries the operator's answer for each one):
 
 ```
 Available context:

@@ -34,8 +34,8 @@ Each condition exercises one arm of the render-default-deliverables 1.2.0 KB mod
 
 1. **Values:** `gold-strategy-deliverable` allows `exec-summary`, `messaging-guide` and `competitive-matrix`, with output path `deliverables/{scope}-{deliverable_type}.md`. None of them is the old default `executive-summary` or `competitive-comparison-matrix`.
 2. **Card path:** `gold-battle-card` sets `deliverables/battle-cards/{scope}-{competitor-slug}.md` and requires `competitor`. The old default was `battle-cards/` at the KB root.
-3. **Prose default:** Both gold types require a boolean `review_approved`. Only their prose states its default, `false`.
-4. **Prior at the resolved path:** `kb/deliverables/acme-messaging-guide.md` carries `review_approved: true`, `source_name`, `source_ref`, `created: 2026-10-01` and `version: "1.0.0"`. An overwrite must keep the first four and raise the version.
+3. **Prose defaults and field classes:** Both gold types require a boolean `review_approved`, described as recording a reviewer's approval of one version, so it is tied. `gold-strategy-deliverable` adds two optional booleans. `confidential` holds across versions, so it is standing. `sales_ready` says neither, so it is unclear. Only the prose states each default, `false`.
+4. **Prior at the resolved path:** `kb/deliverables/acme-messaging-guide.md` carries `review_approved: true`, `confidential: true`, `sales_ready: true`, `source_name`, `source_ref`, `created: 2026-10-01` and `version: "1.0.0"`. The plan must list `review_approved` as reset to `false` and `confidential: true` as kept at a non-default value, and must ask Reset or Keep for `sales_ready`. An overwrite must reset `review_approved`, keep `confidential`, `source_name`, `source_ref` and `created`, apply the operator's answer to `sales_ready`, and raise the version.
 5. **Prior at another path:** `kb/deliverables/acme-competitive-comparison-matrix.md` is set to `deliverable_type: competitive-matrix` and carries no `generated_by`. Nothing exists at `kb/deliverables/acme-competitive-matrix.md`, the path that value resolves to.
 
 ## Left Out

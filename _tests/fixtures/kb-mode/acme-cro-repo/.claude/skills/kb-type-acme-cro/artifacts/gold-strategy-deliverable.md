@@ -27,6 +27,12 @@ field_definitions:
   review_approved:
     type: boolean
     required: true
+  confidential:
+    type: boolean
+    required: false
+  sales_ready:
+    type: boolean
+    required: false
   depends_on:
     type: array
     required: true
@@ -43,6 +49,8 @@ One client-ready strategy deliverable for a scope, composed from the scope's sil
 | `deliverable_type` | string | Yes | One of the allowed values below. |
 | `data_provenance` | string | Yes | `client` when any consumed silver is client-provenance, else `public`. |
 | `review_approved` | boolean | Yes | Whether a reviewer approved this version for sharing. Default: `false`. Only a reviewer sets it to `true`. |
+| `confidential` | boolean | No | Whether the deliverable must stay inside the client's core team. Default: `false`. The account lead sets it, and the setting holds across versions. |
+| `sales_ready` | boolean | No | Whether the sales team may use the deliverable in deals. Default: `false`. |
 | `depends_on` | array | Yes | KB-root-relative paths of the silver artifacts composed. |
 
 ### Allowed `deliverable_type` Values
