@@ -1,8 +1,8 @@
 ---
 name: render-default-deliverables
-version: 1.1.0
+version: 1.2.0
 description: "When the user wants to generate client-ready deliverables from existing positioning context. Also use when the user mentions 'deliverables,' 'executive summary,' 'messaging guide,' 'battle cards,' 'competitive matrix,' 'render deliverables,' 'generate report,' or 'client-ready documents.' Reads L0 + L1 context files from .claude/context/ and produces polished, human-readable documents in .claude/deliverables/. Dual-mode I/O: when the working repo declares a CRO knowledge base binding, reads the scope's silver artifacts and writes typed gold-strategy-deliverable / gold-battle-card artifacts instead (--scope required; --no-kb forces legacy). No research, no analysis, no web fetches. Pure synthesis and formatting."
-updated: 2026-07-22
+updated: 2026-11-23
 ---
 
 # Render Deliverables
@@ -16,7 +16,7 @@ You are a senior marketing strategist producing client-ready deliverables. Your 
 - Your output is human-readable: no YAML frontmatter, no confidence scores inline, no `[NEEDS CONFIRMATION]` inline (footnotes only), no references to agents, skills, context files, frontmatter, or any system internals
 - Your output is designed to be forwarded, pasted into decks, printed, shared with stakeholders
 
-**Output location:** `.claude/deliverables/` (KB mode: typed gold artifacts under `{kb_root}/deliverables/` and `{kb_root}/battle-cards/`, see `KB Mode (Dual-Mode Output)`)
+**Output location:** `.claude/deliverables/` (KB mode: typed gold artifacts at the output paths the bound type definitions set, see `KB Mode (Dual-Mode Output)` > `Type Definition Read`)
 **Token budget:** ~80-100K (reading and writing only, no web fetches)
 **Runtime:** ~5-8 minutes
 **Agents:** Single agent. No multi-agent pipeline.
@@ -58,7 +58,7 @@ This skill runs in one of two I/O modes, resolved ONCE at startup (before Contex
 - **Legacy mode** (default): read `.claude/context/*.md`, write `.claude/deliverables/`.
 - **KB mode:** read the scope's silver artifacts from the bound KB, write each deliverable as its typed gold artifact into the KB.
 
-This is a single-agent skill: there is no agent parameter-block threading. Mode resolution produces in-session KB state (`kb_root`, `kb_type`, `scope`, type-def paths) consulted by Context Discovery (reads) and the write steps.
+This is a single-agent skill: there is no agent parameter-block threading. Mode resolution produces in-session KB state (`kb_root`, `kb_type`, `scope`, type-def paths), and `Type Definition Read` adds what each type definition allows and requires. Context Discovery (reads) and the write steps consult both.
 
 ### Mode Resolution Procedure
 
@@ -73,7 +73,33 @@ There is deliberately no `--kb` force flag. A failed detection of the output KB 
 
 ### Schema Authority
 
-This SKILL.md's Deliverable Specifications remain the authority for deliverable body content and structure. In KB mode, the bound gold type defs (`.claude/skills/{kb-type}/artifacts/gold-strategy-deliverable.md`, `.../gold-battle-card.md`) are the authority for the KB output path and the gold frontmatter contract: read them before writing. `governed_by` is composed at runtime as `{kb-type}/{gold-type}`. This skill never hardcodes a KB type skill name or client-specific path.
+This SKILL.md's Deliverable Specifications remain the authority for deliverable body content and structure. In KB mode, the bound gold type defs (`.claude/skills/{kb-type}/artifacts/gold-strategy-deliverable.md`, `.../gold-battle-card.md`) are the authority for the `deliverable_type` values, the KB output path and the gold frontmatter contract. Read them per `Type Definition Read` before writing. `governed_by` is composed at runtime as `{kb-type}/{gold-type}`. This skill never hardcodes a KB type skill name, a `deliverable_type` value, a KB output path or a client-specific path.
+
+### Type Definition Read
+
+Run this after mode resolution and before Context Discovery step 5 presents the plan. Read both bound gold type definitions, `gold-strategy-deliverable` and `gold-battle-card`, and record in session state, per type:
+
+- **Allowed values:** The `deliverable_type` values the definition lists. `field_definitions` has no enum, so the list lives in the definition's prose.
+- **Output path pattern:** The definition's output path, relative to `kb_root`.
+- **Required fields:** Every field its `field_definitions` marks `required: true`, with any default its prose states for that field.
+
+**Value mapping:** Map the Executive Summary, the Messaging Guide and the Competitive Comparison Matrix each to one listed value by meaning.
+
+- *No match:* HARD STOP. Name the deliverable and the values the definition lists.
+- *More than one match:* HARD STOP. Name the deliverable and the values it matches.
+- *Written value:* The skill writes no `deliverable_type` value other than the mapped one.
+
+**Path resolution:** Fill the pattern's `{scope}`, `{deliverable_type}` and `{competitor-slug}` placeholders. The competitor slug follows `modules/slugify.md`, resolved as `5.4 Battle Cards` > `Module resolution` says. The resolved path is relative to `kb_root`. Each artifact's `name` is its resolved file name without `.md`.
+
+**Required-field check:** Before any write, find each required field that neither this skill nor the artifact's prior render supplies (see `Prior Work Detection (KB Mode)`). Such a field takes the default the type definition states. With no stated default, HARD STOP and name the field and the type. Checking here means a stop leaves the KB unchanged.
+
+**Field classes:** For each field a definition describes that this skill does not set, record one class from the field's own description:
+
+- *Tied:* The value is tied to a specific version of the artifact, or records a review or send event, such as an approval, a sign-off or a send.
+- *Standing:* The value holds across versions, or describes the content, its scope or its source.
+- *Unclear:* The description says neither.
+
+`Prior Work Detection (KB Mode)` applies the class on every write.
 
 ### Read-side Mapping
 
@@ -94,48 +120,94 @@ In KB mode, Context Discovery globs the scope's silver artifacts instead of `.cl
 
 Each deliverable body (produced exactly per its Deliverable Specification) is written as a typed gold artifact:
 
-| Legacy deliverable | KB artifact type | Path under KB root | depends_on (gold -> silver) |
-|---|---|---|---|
-| `executive-summary.md` | `gold-strategy-deliverable` (`deliverable_type: executive-summary`) | `deliverables/{scope}-executive-summary.md` | `silver-positioning-scorecard`, `silver-strategy-context` (+ `silver-competitive-analysis` when the competitive section rendered) |
-| `messaging-guide.md` | `gold-strategy-deliverable` (`deliverable_type: messaging-guide`) | `deliverables/{scope}-messaging-guide.md` | `silver-audience-analysis`, `silver-strategy-context` |
-| `competitive-comparison-matrix.md` | `gold-strategy-deliverable` (`deliverable_type: competitive-comparison-matrix`) | `deliverables/{scope}-competitive-comparison-matrix.md` | `silver-competitive-analysis`, `silver-strategy-context` |
-| `battle-cards/[competitor-slug].md` | `gold-battle-card` | `battle-cards/{scope}-{competitor-slug}.md` | `silver-competitive-analysis` |
-| `manifest.md` | (not a KB artifact) | (not written) | (n/a) |
+| Legacy deliverable | KB artifact type | depends_on (gold -> silver) |
+|---|---|---|
+| `executive-summary.md` | `gold-strategy-deliverable` (Executive Summary) | `silver-positioning-scorecard`, `silver-strategy-context` (+ `silver-competitive-analysis` when the competitive section rendered) |
+| `messaging-guide.md` | `gold-strategy-deliverable` (Messaging Guide) | `silver-audience-analysis`, `silver-strategy-context` |
+| `competitive-comparison-matrix.md` | `gold-strategy-deliverable` (Competitive Comparison Matrix) | `silver-competitive-analysis`, `silver-strategy-context` |
+| `battle-cards/[competitor-slug].md` | `gold-battle-card` | `silver-competitive-analysis` |
+| `manifest.md` | (not a KB artifact) | (n/a) |
 
-- **Basename by type, not assumption.** Paths above show the funnelenvy default; the bound gold type def is the path authority. Match/write by artifact TYPE.
+- **Values and paths come from the type definitions.** The table fixes only each deliverable's type and its `depends_on` edges. Its `deliverable_type` value comes from `Type Definition Read` > `Value mapping`, and its path from `Path resolution`. Match and write by artifact type.
 - **`manifest.md` is not written in KB mode.** The KB's own artifact graph (frontmatter `depends_on`, the KB index) is the manifest; a plain provenance index has no gold type. The completion message reports what was written and its `depends_on` instead. (If the bound KB defines an index artifact for deliverables, that is a KB-start concern, not this skill's output.)
-- **`deliverable_type`** distinguishes the three `gold-strategy-deliverable` instances (per the type def's tag/field; the 2026-06-03 pilot confirmed the gold type carries a `deliverable_type` discriminator). Battle cards are their own `gold-battle-card` type, one per competitor, sluged via `modules/slugify.md` (unchanged rule) and prefixed with `{scope}-`.
+- **`deliverable_type`** distinguishes the three `gold-strategy-deliverable` instances. The bound type definition lists the allowed values, and the skill writes only the mapped one. Battle cards are their own `gold-battle-card` type, one per competitor, slugged via `modules/slugify.md` (unchanged rule).
 
-KB frontmatter prepended to each gold artifact: `fe-managed: true`, `name` (`{scope}-{deliverable}` / `{scope}-{competitor}`), `description` (one line, generated), `kb_layer: gold`, `governed_by: {kb-type}/{gold-type}`, `scope`, `deliverable_type` (strategy-deliverable only), `data_provenance` (`client` when any consumed silver is `client`-provenance, else `public`), `generated_by: render-default-deliverables`, `depends_on` (KB-root-relative paths of the silver artifacts actually composed, gold-to-silver edges only, omitting missing optional ones), `tags` (3-7 semantic), `version`, `created`, `updated`.
+KB frontmatter prepended to each gold artifact:
+
+- `fe-managed: true`
+- `name`: the resolved file name without `.md` (`Path resolution`)
+- `title`: the body's H1 text
+- `description`: one line, generated
+- `kb_layer: gold`
+- `governed_by: {kb-type}/{gold-type}`
+- `managed_by`: the `governed_by` owner of the nearest KB root above the artifact, per document-management's `Frontmatter` rule for KB artifacts. A KB root's `CLAUDE.md` declares `governed_by: {owner}/kb-claude-md`, and `{owner}` is the value.
+- `scope`
+- `deliverable_type`: strategy deliverables only, the mapped value
+- `competitor`: battle cards only, the competitor's name as `silver-competitive-analysis` gives it, unless the type definition states another form
+- `data_provenance`: `client` when any consumed silver is `client`-provenance, else `public`
+- `generated_by: render-default-deliverables`
+- `depends_on`: KB-root-relative paths of the silver artifacts actually composed, gold-to-silver edges only, omitting missing optional ones
+- `tags`: 3-7 semantic
+- `version`, `created`, `updated`
+- Every other field `Type Definition Read` recorded as required. A field with no source here and none on the prior render takes the type definition's stated default (`Required-field check`).
+
+On an overwrite, `Prior Work Detection (KB Mode)` says which prior values survive.
 
 **Purity holds unchanged.** The gold artifact **frontmatter** is the only system surface; the **body** obeys the `Deliverable Purity Constraint` exactly as in legacy mode (no layer/file/agent/schema references, natural source attribution only). Frontmatter is not body.
 
 ### Prior Work Detection (KB Mode)
 
-Deliverables are always a complete projection of current context (the legacy `Re-render Behavior`). Glob the scope's existing gold deliverable artifacts. For each that already exists, overwrite in place: preserve `created`, bump `version` (minor when the consumed silver changed since the prior render, patch for a re-render of unchanged inputs), set `updated` to today, replace the body. No diffing, no merging. A battle card whose competitor no longer appears in `silver-competitive-analysis` is left in place (never auto-deleted); note orphaned cards in the completion message.
+Deliverables are always a complete projection of current context (the legacy `Re-render Behavior`). For each artifact the run will write, look for its prior render before any write:
+
+- **At the resolved path:** An artifact there is the prior render. Overwrite it in place.
+- **Elsewhere:** With nothing at the resolved path, search the directory of the resolved path. A match is an artifact whose `governed_by` names the same type and whose `scope` matches, with the same `deliverable_type`, or the same `competitor` for a battle card.
+- **Plan:** Context Discovery's step-5 plan lists each resolved output path, each match beside its resolved path, and each prior field `Prior Fields` resets, keeps at a non-default value or finds unclear.
+- **Answer:** Each match needs the operator's answer before any write.
+  - *Relocate:* The operator moves the prior render to the resolved path with the KB's own tooling, then re-runs.
+  - *Confirm:* The operator states the match is not a prior render. The run writes a first render at the resolved path.
+- **No answer:** Each match and each unclear field needs an answer. A bare proceed at the plan is not an answer. Without one the run stops and writes nothing. This skill moves, renames and deletes no file.
+
+**Overwrite:** Replace the body, with no diffing and no merging. Keep `created`. Bump `version` (minor when the consumed silver changed since the prior render, patch for a re-render of unchanged inputs). Set `updated` to today. Every other prior field this skill does not set follows `Prior Fields`.
+
+**Prior Fields:** Each prior field takes the class `Type Definition Read` recorded for it.
+
+- *Tied:* The field takes the stated default the type definition gives it, even when the prior value differs. A tied field with no stated default is a HARD STOP before any write. Name the field and the type.
+- *Standing, or not described by the definition:* The field keeps its prior value. The plan lists each kept value that differs from the field's stated default. A field with no stated default is kept and not listed.
+- *Unclear:* The plan names the field and its prior value and asks Reset or Keep. Reset gives it the stated default. Keep keeps the prior value, and the completion message then lists it with the kept values when it differs from the stated default.
+
+**Missing required fields:** On a first write or an overwrite, the `Required-field check` in `Type Definition Read` supplies any required field that neither the skill nor the prior render carries. A first write has no prior fields, so a required tied field takes its stated default by that check, and the skill adds no optional field.
+
+A battle card whose competitor no longer appears in `silver-competitive-analysis` is left in place (never auto-deleted); note orphaned cards in the completion message.
 
 ### Post-Write Validation Gate
 
-After writing the gold artifacts:
+After writing the gold artifacts, validate each written artifact at its resolved path, against the type definition `Type Definition Read` read for its type:
 
 ```
 PY=$(python3 --version >/dev/null 2>&1 && echo python3 || echo python)
-$PY <kb-start-scripts>/kb_type_validate.py validate {kb_root}/deliverables/{scope}-*.md {kb_root}/battle-cards/{scope}-*.md
+$PY <kb-start-scripts>/kb_type_validate.py validate <resolved-path> --artifact-type-path <type-definition-path>
 ```
 
-Resolve `<kb-start-scripts>` from the fe-knowledge-base plugin's kb-start skill `scripts/` directory (marketplace plugin cache or source repo). If validation reports errors, fix the artifact frontmatter/sections and re-validate. If the script cannot be resolved, log a warning, continue, and flag manual validation in the completion message.
+Run the command once per written artifact. The validator takes one target per call. Passing the type definition makes its type layer run wherever the repo root sits.
+
+- **Failure:** Any non-zero exit fails the gate, a usage error included. So does a `governed_by` finding that says the type layer did not run, even though that finding alone exits 0.
+- **Fix:** If validation reports errors, fix the artifact frontmatter/sections and re-validate.
+- **Unresolved script:** Resolve `<kb-start-scripts>` from the fe-knowledge-base plugin's kb-start skill `scripts/` directory (marketplace plugin cache or source repo). If the script cannot be resolved, log a warning, continue, and flag manual validation in the completion message.
 
 ### KB Mode Completion Message
 
-Replace the `.claude/deliverables/` file list in the standard completion output with the KB artifact list (path + type + `deliverable_type` + `depends_on` per artifact) and append validation status:
+Replace the `.claude/deliverables/` file list in the standard completion output with the KB artifact list. Each line gives one written artifact's resolved path, type, `deliverable_type` (or `competitor` for a battle card), `depends_on` and gate result. Paths and values are the ones `Type Definition Read` resolved, never a default.
 
 ```
 Deliverables written to the knowledge base ({scope}):
-  {kb_root}/deliverables/{scope}-executive-summary.md         (gold-strategy-deliverable / executive-summary)
-  {kb_root}/deliverables/{scope}-messaging-guide.md           (gold-strategy-deliverable / messaging-guide)
-  {kb_root}/deliverables/{scope}-competitive-comparison-matrix.md  (gold-strategy-deliverable / competitive-comparison-matrix)
-  {kb_root}/battle-cards/{scope}-[competitor].md              (gold-battle-card)  x N
+  {kb_root}/{resolved-path}   ({gold-type} / {deliverable_type or competitor})   gate: passed | failed (fixed and re-validated) | unresolved
+    depends_on: [paths]
+  (one entry per written artifact)
 
+  Prior renders at another path: [match -> resolved path (Relocate | Confirm)] | none
+  Prior fields reset to default: [path: field -> default] | none
+  Prior fields kept at a non-default value: [path: field = value] | none
+  Unclear prior fields: [path: field (Reset | Keep)] | none
   Skipped (missing silver): [tier] ([reason])
   Orphaned prior battle cards (competitor no longer in silver): [list | none]
 
@@ -150,7 +222,7 @@ Deliverables written to the knowledge base ({scope}):
 2. Read YAML frontmatter only (between `---` markers) for each file found
 3. Build inventory: file name, schema type, confidence, depth, generated_by, last_updated
 4. Determine which deliverable tiers can be produced (see Deliverable Tiering below)
-5. Present plan to user:
+5. Present plan to user (**KB mode:** after `KB Mode (Dual-Mode Output)` > `Type Definition Read`, also show what `Prior Work Detection (KB Mode)` > `Plan` lists, and ask for each answer its `Answer` and `No answer` bullets require):
 
 ```
 Available context:

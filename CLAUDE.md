@@ -233,7 +233,7 @@ L0: COMPANY IDENTITY (machine-readable foundation)
 
 **Note:** The experiment-mockup paths above are legacy mode. In KB mode, experiment-mockup writes these artifacts under `{kb_root}/deliverables/experiments/<slug>/` instead, co-located with the gold roadmap so render-program-site resolves them via each test's `mockup` block.
 
-**Note:** The render-default-deliverables paths above (executive-summary, messaging-guide, competitive-comparison-matrix, battle-cards) are legacy mode. In KB mode (v1.1.0+), the skill writes these as typed gold artifacts into the KB instead: the three strategy deliverables as `gold-strategy-deliverable` (distinguished by `deliverable_type`) at `{kb_root}/deliverables/{scope}-*.md`, and one `gold-battle-card` per competitor at `{kb_root}/battle-cards/{scope}-{competitor}.md`, each carrying gold-to-silver `depends_on`. The deliverable bodies are identical to legacy; only gold frontmatter is prepended, and the Deliverable Purity Constraint still governs the body. `manifest.md` is not written in KB mode (the KB artifact graph is the index). See the skill's `KB Mode (Dual-Mode Output)` section. This is the same class of dual-mode output as positioning-framework and hypothesis-generator, not a new exception to the L2 rules: it remains pure synthesis (no research, no new analysis).
+**Note:** The render-default-deliverables paths above (executive-summary, messaging-guide, competitive-comparison-matrix, battle-cards) are legacy mode. In KB mode (v1.1.0+), the skill writes these as typed gold artifacts into the KB instead: the three strategy deliverables as `gold-strategy-deliverable` (distinguished by `deliverable_type`) and one `gold-battle-card` per competitor, each carrying gold-to-silver `depends_on`. The bound type definitions set the `deliverable_type` values and the output paths (v1.2.0+). The deliverable bodies are identical to legacy; only gold frontmatter is prepended, and the Deliverable Purity Constraint still governs the body. `manifest.md` is not written in KB mode (the KB artifact graph is the index). See the skill's `KB Mode (Dual-Mode Output)` section. This is the same class of dual-mode output as positioning-framework and hypothesis-generator, not a new exception to the L2 rules: it remains pure synthesis (no research, no new analysis).
 
 **Migration notes:**
 - Prior to v1.0, competitive and messaging data lived in separate files (`market-landscape.md` + `competitor-profiles.md`, `audience-personas.md` + `messaging-framework.md` + `brand-voice.md`). These were merged into `competitive-landscape.md` and `audience-messaging.md`. Deprecated schema files have been removed.
@@ -414,7 +414,7 @@ Runs up to 4 sequential agents depending on depth (Research+L0, Competitive, Mes
 
 Four modes: Autonomous Research (default), Guided Interview, Audit & Update, Reconciliation (compare research against client's manual worksheet).
 
-### render-default-deliverables (v1.1.0)
+### render-default-deliverables (v1.2.0)
 L2 rendering skill. Consumes L0 + L1 context files and produces human-readable deliverables. No research, no analysis. Pure synthesis and formatting.
 
 Auto-invoked by positioning-framework at standard/deep depth (in both legacy and KB mode). Also available standalone via `/render-default-deliverables` for re-rendering after context updates.
@@ -424,9 +424,9 @@ Auto-invoked by positioning-framework at standard/deep depth (in both legacy and
 - Tier 2: Messaging Guide (needs L0 + audience-messaging)
 - Tier 3: Competitive Comparison Matrix, Battle Cards (needs L0 + competitive-landscape)
 
-**Dual-mode I/O:** legacy reads `.claude/context/` and writes `.claude/deliverables/` with a manifest; KB mode (requires `--scope`, `--no-kb` forces legacy) reads the scope's silver artifacts and writes typed `gold-strategy-deliverable` (executive-summary / messaging-guide / competitive-comparison-matrix, by `deliverable_type`) + per-competitor `gold-battle-card` artifacts into the KB with gold-to-silver `depends_on` (no manifest; the KB graph is the index). Bodies are identical across modes; the Deliverable Purity Constraint governs the body in both. See SKILL.md > KB Mode (Dual-Mode Output).
+**Dual-mode I/O:** legacy reads `.claude/context/` and writes `.claude/deliverables/` with a manifest; KB mode (requires `--scope`, `--no-kb` forces legacy) reads the scope's silver artifacts and writes typed `gold-strategy-deliverable` (one per deliverable, distinguished by `deliverable_type`) + per-competitor `gold-battle-card` artifacts into the KB with gold-to-silver `depends_on` (no manifest; the KB graph is the index). The bound type definitions set the `deliverable_type` values, output paths and required fields; a prior render found at another path stops the run until the operator answers. Bodies are identical across modes; the Deliverable Purity Constraint governs the body in both. See SKILL.md > KB Mode (Dual-Mode Output).
 
-**Output:** `.claude/deliverables/` with manifest (legacy); `{kb_root}/deliverables/` + `{kb_root}/battle-cards/` (KB mode)
+**Output:** `.claude/deliverables/` with manifest (legacy); the output paths the bound type definitions set, under `{kb_root}` (KB mode)
 
 ### ga4-audit (v2.5.0)
 GA4 analytics audit. Pulls 11-15 targeted reports from a GA4 property via direct API (`ga4_client.py`, preferred) or analytics-mcp fallback, classifies conversion events, segments AI-referrer (LLM) traffic, discovers element-level interactions (CTA clicks, link text, custom parameters), and produces a v2.3 `performance-profile.md` L1 context file with page grouping, opportunity sizing, trend analysis, element interaction data, and optional L0 enrichment. Single agent, no depth flag. Overwrites on each run (analytics snapshots, not incremental).
