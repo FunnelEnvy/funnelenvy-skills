@@ -1,8 +1,8 @@
 # KB Mode: Canonical Dual-Mode Contract
 
-**This module is the canonical editing source for KB-mode semantics.** Nine skills carry an
-inline copy of the mode-resolution procedure so their runtime read is self-contained (the same
-inline-authority pattern the schemas use). When KB-mode semantics change, edit THIS file first,
+**This module is the canonical editing source for KB-mode semantics.** Every skill listed below
+carries an inline copy of the mode-resolution procedure so its runtime read is self-contained
+(the same inline-authority pattern the schemas use). When KB-mode semantics change, edit THIS file first,
 then re-sync every skill listed below in the same change. A drift canary in
 `scripts/registry_check.py` verifies the invariant sentences below exist in every dual-mode
 SKILL.md.
@@ -20,8 +20,9 @@ SKILL.md.
 | ga4-audit | KB Mode (Dual-Mode Output) | Step 0 (before Step 1) | `silver-performance-analysis` (write output; single-agent write-side, no read-side mapping) |
 | aa-audit | KB Mode (Dual-Mode Output) | Step 0 (before Step 1) | `silver-performance-analysis` (write output; single-agent write-side, no read-side mapping) |
 | render-default-deliverables | KB Mode (Dual-Mode Output) | startup, before Context Discovery | `gold-strategy-deliverable` + `gold-battle-card` (write outputs) + `silver-strategy-context` + `bronze-company-facts` (L0-equivalent read precondition) |
+| positioning-update | KB Mode (Dual-Mode Output) | startup, before Step 1 | `bronze-company-facts` + `silver-strategy-context` (amends existing artifacts only; the three L1 silver types are optional, and an item aimed at a missing one is a GAP) |
 
-All nine sections use the exact header `KB Mode (Dual-Mode Output)` -- skills cross-reference
+Every listed section uses the exact header `KB Mode (Dual-Mode Output)` -- skills cross-reference
 each other's sections by that name.
 
 ## Canonical Mode Resolution Procedure
@@ -42,7 +43,8 @@ and quality rules are identical in both.
    type skill. If `--scope` is missing or invalid: HARD STOP. Display the valid scope list and
    ask the user to re-run with `--scope`. Do not guess a scope.
 5. (Skill-specific extra gates run here, e.g., positioning-framework's quick-depth HARD STOP or
-   hypothesis-generator's optional producer-KB discovery.)
+   hypothesis-generator's optional producer-KB discovery, or positioning-update's input source
+   check.)
 
 ## Invariants (must hold verbatim in spirit in every dual-mode skill)
 

@@ -6,6 +6,16 @@ Format based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### 2026-11-23 positioning-update KB mode
+
+#### Added
+- **positioning-update** (1.1.0): KB mode. With a CRO knowledge base binding and `--scope`, the skill amends the scope's company facts and silver positioning artifacts, found by type, from a bronze capture in the bound knowledge base. The change plan and surgical edits are unchanged. New `--provenance client|research` flag, default `client`. [positioning-update-kb-mode]
+- **modules/kb-mode.md**: positioning-update is registered as a dual-mode skill, and the module's two unchecked prose counts are gone. [positioning-update-kb-mode]
+- **_tests**: bronze note capture added to the KB-mode fixture as the input for positioning-update runs. [positioning-update-kb-mode]
+
+#### Fixed
+- **positioning-update** (1.1.0): Step 7 passes the run's mode to render-default-deliverables. A legacy run in a repo with a KB binding no longer stops the re-render on a missing `--scope`. [positioning-update-kb-mode]
+
 ### 2026-11-23 KB render follows the bound type definitions
 
 #### Fixed

@@ -24,6 +24,7 @@ Load kb-start and the `kb-type-acme-cro` type skill before proceeding. In a run 
 | Directory | Layer | Artifact Type | Content |
 |---|---|---|---|
 | `captures/company-facts/` | Bronze | `bronze-company-facts` | Company facts per scope |
+| `captures/notes/` | Bronze | `bronze-note-capture` (kb-start shared type) | Notes captured as input to a positioning update |
 | `reference/cro-acme/` | Silver | `silver-strategy-context`, `silver-positioning-scorecard`, `silver-audience-analysis`, `silver-competitive-analysis` | Positioning analysis for scope `acme` |
 | `deliverables/` | Gold | `gold-strategy-deliverable` | Executive summary, messaging guide, competitive matrix |
 | `deliverables/battle-cards/` | Gold | `gold-battle-card` | One battle card per major competitor |
